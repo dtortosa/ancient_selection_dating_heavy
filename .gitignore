@@ -1,4 +1,22 @@
+*.tgz
+*.pdf
 
 
+sweep_enrichments/david_pipeline/exdef_folder/valid_file.txt
+sweep_enrichments/david_pipeline/exdef_folder/Note_for_elife_reviewers.txt
+sweep_enrichments/david_pipeline/exdef_folder/neighbors_number.txt
+sweep_enrichments/david_pipeline/exdef_folder/genes_set_file.txt
+sweep_enrichments/david_pipeline/exdef_folder/Factors_table.txt
+sweep_enrichments/david_pipeline/exdef_folder/ensembl_protcoding_genes_v83
+sweep_enrichments/david_pipeline/exdef_folder/ensembl_HGNC_file.txt
+sweep_enrichments/david_pipeline/exdef_folder/ensembl_gene_neighbors.txt
+sweep_enrichments/david_pipeline/exdef_folder/ensembl_gene_coords_v69
+sweep_enrichments/david_pipeline/exdef_folder/distance_file.txt
+sweep_enrichments/david_pipeline/exdef_folder/confounding_factor_pnps.txt
+sweep_enrichments/david_pipeline/exdef_folder/all_*
 
-data/
+sweep_enrichments/david_pipeline/exdef_folder/test_outputs/
+sweep_enrichments/david_pipeline/exdef_folder/shuffled_sweep_files_simplified/
+sweep_enrichments/david_pipeline/exdef_folder/shuffled_sweep_files/
+sweep_enrichments/david_pipeline/exdef_folder/real_simple/
+sweep_enrichments/david_pipeline/original_files
