@@ -1,6 +1,6 @@
 *.tgz
 *.pdf
-
+*.RData
 
 sweep_enrichments/david_pipeline/exdef_folder/valid_file.txt
 sweep_enrichments/david_pipeline/exdef_folder/Note_for_elife_reviewers.txt

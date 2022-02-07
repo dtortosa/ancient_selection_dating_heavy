@@ -8,9 +8,9 @@
 
 
 
-##########################################################################################
-############ PREPARE VALID, GENE AND GENE DISTANCE FILES #################################
-##########################################################################################
+###################################################################################
+########################### PREPARE FACTORS TABLE #################################
+###################################################################################
 
 #IMPORTANT: 
 	#Note that this script was wrote and run in 2022 using the version of April 28th 2022 of David's pipeline.
@@ -21,11 +21,6 @@
 
 	#Manual from David
 		#/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder/exdef_pipeline_manual.pdf
-
-#This script create three needed inputs for the pipeline of David:
-	#valid_file: file with all the ensemble gene used
-	#genes_set_file: file with the interest genes
-	#distance_file.txt: file with the distance of each gene to the closest interest gene
 
 
 
@@ -56,16 +51,14 @@ setwd(wd_path)
 
 
 
-########################################
-######## CONFOUNDING FACTORS ###########
-########################################
+##########################################################
+########### CONFOUNDING FACTORS ACROSS WINDOWS ###########
+##########################################################
 
 #Factors_table.txt: create a table file that contains all the confounding factors that the bootstrap test will control for. First column is Ensembl gene ID, next columns are each factor that will be matched. The example file is Factors_table.txt
 
 #for each confounding factor, we are going to consider two window sizes, i.e., average values in 50 and 500 kb windows, following the approach of David. Therefore, for each factor, we will have two columns, i.e., to variables for which the control genes have to be matched.
 
-
-##predictors across gene windows
 #get the path of all partitions
 list_factors_across_windows_paths = list.files("/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/predictors_gene_windows_v2/factors_across_windows", pattern=".txt", full.names=TRUE)
 
@@ -109,8 +102,7 @@ str(list_factors_across_windows)
 
 #merge all partitions maintaining all rows
 factors_across_windows = Reduce(function(dtf1, dtf2) full_join(dtf1, dtf2, by="gene_id"), list_factors_across_windows)
-	#this can be done with inner_join, which is similar to use merge with all=FALSE.
-		#For ‘full_join()’, all ‘x’ rows, followed by unmatched ‘y’ rows.
+	#this can be done with full_join, which is similar to use merge with all=TRUE
 		#https://stackoverflow.com/questions/21841146/is-there-an-r-dplyr-method-for-merge-with-all-true
 		#https://stackoverflow.com/questions/28250948/how-to-dplyrinner-join-multi-tbls-or-data-frames-in-r
 		#https://www.datasciencemadesimple.com/join-in-r-merge-in-r/
@@ -129,7 +121,11 @@ print(check_1)
 print("################################################")
 
 
-##predictors across gene windows
+
+##########################################################
+########### CONFOUNDING FACTORS CENTER WINDOWS ###########
+##########################################################
+
 #get the path of all partitions
 list_factors_gene_center_paths = list.files("/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/predictors_gene_windows_v2/factors_gene_center", pattern=".txt", full.names=TRUE)
 
@@ -141,7 +137,7 @@ reading_factors_gene_center = function(selected_path){
 	full_table = read.table(selected_path, sep="\t", header=TRUE)
 
 	#if the factors is related to transcription factor density (i.e., includes tbfs in any column name), change the column names, because all regulatory factors are named as tbfs
-	if(TRUE %in% grepl("gene_expression", selected_path)){
+	if(TRUE %in% grepl("gene_expression", selected_path, fixed=TRUE)){
 
 		#select only columns corresponding to gene_id, along average gene expression across all tissues, in testis and immune cells
 		columns_to_select = which(grepl("gene_id", colnames(full_table), fixed=TRUE) | grepl("mean_expres_all_tissues", colnames(full_table), fixed=TRUE) | grepl("Testis", colnames(full_table), fixed=TRUE) | grepl("Cells...EBV.transformed.lymphocytes", colnames(full_table), fixed=TRUE))
@@ -153,7 +149,7 @@ reading_factors_gene_center = function(selected_path){
 		#change the names of the columns for 50 and 500kb
 		colnames(full_table_subset)[which(colnames(full_table_subset) == "Cells...EBV.transformed.lymphocytes")] = "immune_cells"
 		colnames(full_table_subset)[which(colnames(full_table_subset) == "Testis")] = "testis"
-		colnames(full_table_subset)[which(colnames(full_table_subset) == "Testis")] = "average_expression"
+		colnames(full_table_subset)[which(colnames(full_table_subset) == "mean_expres_all_tissues")] = "average_gene_expression"
 	} else { #if not
 
 		#save the table as it is
@@ -172,8 +168,7 @@ str(list_factors_gene_center)
 
 #merge all partitions maintaining all rows
 factors_gene_center = Reduce(function(dtf1, dtf2) full_join(dtf1, dtf2, by="gene_id"), list_factors_gene_center)
-	#this can be done with inner_join, which is similar to use merge with all=FALSE.
-		#For ‘full_join()’, all ‘x’ rows, followed by unmatched ‘y’ rows.
+	#this can be done with full_join, which is similar to use merge with all=TRUE
 		#https://stackoverflow.com/questions/21841146/is-there-an-r-dplyr-method-for-merge-with-all-true
 		#https://stackoverflow.com/questions/28250948/how-to-dplyrinner-join-multi-tbls-or-data-frames-in-r
 		#https://www.datasciencemadesimple.com/join-in-r-merge-in-r/
@@ -183,11 +178,23 @@ str(factors_gene_center)
 head(factors_gene_center)
 summary(factors_gene_center)
 
-##merge all the factors into one single table
-#merge maintaining all the tables
+#check that we have the correct number of columns
+print("################################################")
+print("DO WE HAVE THE CORRECT NUMBER OF COLUMNS IN factors_gene_center?")
+check_2 = length(list_factors_gene_center_paths)+1+2 == ncol(factors_gene_center)
+	#the correct number of columns should be the number of paths plus 1 (gene_id column) plus 2 (gene expression in testis and immune cells)
+print(check_2)
+print("################################################")
+
+
+
+###################################################
+########### MERGE INTO ONE SINGLE TABLE ###########
+###################################################
+
+#merge maintaining all the rows
 factors_table = full_join(factors_across_windows, factors_gene_center, by="gene_id")
-	#this can be done with inner_join, which is similar to use merge with all=FALSE.
-		#For ‘full_join()’, all ‘x’ rows, followed by unmatched ‘y’ rows.
+	#this can be done with full_join, which is similar to use merge with all=TRUE
 		#https://stackoverflow.com/questions/21841146/is-there-an-r-dplyr-method-for-merge-with-all-true
 		#https://stackoverflow.com/questions/28250948/how-to-dplyrinner-join-multi-tbls-or-data-frames-in-r
 		#https://www.datasciencemadesimple.com/join-in-r-merge-in-r/
@@ -196,3 +203,21 @@ factors_table = full_join(factors_across_windows, factors_gene_center, by="gene_
 str(factors_table)
 head(factors_table)
 summary(factors_table)
+
+
+
+#####################################################
+########### PREPARE THE TABLE TO BE SAVED ###########
+#####################################################
+
+#remove NAs
+factors_table_final = na.omit(factors_table)
+	#We not interested in any gene for which we do not have data across factors If a gene has no data for a factor, it cannot be matched for that factor. Maybe in some comparisons, that gene is not used, but it could be used in others. In order to use the same factors for matching always, we remove any gene with NA for any confounding factor.
+
+#see the table
+str(factors_table_final)
+head(factors_table_final)
+
+#save
+write.table(factors_table_final, "/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder/Factors_table.txt", row.names=FALSE, col.names=FALSE, sep=" ", quote=FALSE)
+	#avoid column and row names, and remove quotes from the gene IDs to match the format used by David in his pipeline.

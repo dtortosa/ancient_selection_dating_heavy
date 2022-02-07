@@ -1,0 +1,720 @@
+
+R version 3.6.3 (2020-02-29) -- "Holding the Windsock"
+Copyright (C) 2020 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+[1] FALSE
+Warning message:
+In file.remove(".RData") :
+  cannot remove file '.RData', reason 'No such file or directory'
+         used (Mb) gc trigger (Mb) max used (Mb)
+Ncells 125133  6.7     350000 18.7   201111 10.8
+Vcells 242045  1.9    8388608 64.0   997272  7.7
+Loading required package: colorout
+Loading required package: SistWrapper
+> #!/usr/bin/env Rscript
+> 
+> #This is done to have the possibility to run this script as an executable: 'chmod +x myscript.R' and then ' ./myscript.R'. If you run the script as 'R CMD BATCH myscript.R', i THINK this is not used, because it is annotated. 
+> 	#https://www.jonzelner.net/statistics/make/docker/reproducibility/2016/05/31/script-is-a-program/
+> 
+> #In case you run this script as an executable, you can save the output without warnings "./myscript.R > myscript.Rout" or with errors "./myscript.R &> myscript.Rout"
+> 	#https://askubuntu.com/questions/420981/how-do-i-save-terminal-output-to-a-file
+> 
+> 
+> 
+> ###################################################################################
+> ########################### PREPARE FACTORS TABLE #################################
+> ###################################################################################
+> 
+> #IMPORTANT: 
+> 	#Note that this script was wrote and run in 2022 using the version of April 28th 2022 of David's pipeline.
+> 		#The pipeline of David has been downloaded from 
+> 			#https://github.com/DavidPierreEnard/Gene_Set_Enrichment_Pipeline
+> 			#last commit done on Apr 28, 2021
+> 				#7b755c0c23dd4d7c3f54c4b53e74366e4041ac8f 
+> 
+> 	#Manual from David
+> 		#/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder/exdef_pipeline_manual.pdf
+> 
+> 
+> 
+> #################################################################
+> ####################### PREVIOUS VERSIONS #######################
+> #################################################################
+> 
+> 
+> 
+> #################################################################
+> ####################### REQUIRED PACKAGES #######################
+> #################################################################
+> 
+> require(data.table) #for fread
+Loading required package: data.table
+> require(dplyr) #for full_join
+Loading required package: dplyr
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:data.table’:
+
+    between, first, last
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+> 
+> 
+> 
+> ###########################
+> ######## SET WD ###########
+> ###########################
+> 
+> #path
+> wd_path = "/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments"
+> 
+> #set this path
+> setwd(wd_path)
+> 
+> 
+> 
+> ##########################################################
+> ########### CONFOUNDING FACTORS ACROSS WINDOWS ###########
+> ##########################################################
+> 
+> #Factors_table.txt: create a table file that contains all the confounding factors that the bootstrap test will control for. First column is Ensembl gene ID, next columns are each factor that will be matched. The example file is Factors_table.txt
+> 
+> #for each confounding factor, we are going to consider two window sizes, i.e., average values in 50 and 500 kb windows, following the approach of David. Therefore, for each factor, we will have two columns, i.e., to variables for which the control genes have to be matched.
+> 
+> #get the path of all partitions
+> list_factors_across_windows_paths = list.files("/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/predictors_gene_windows_v2/factors_across_windows", pattern=".txt", full.names=TRUE)
+> 
+> #create a function to read the factor
+> #selected_path=list_factors_across_windows_paths[1]
+> reading_factors_across_windows = function(selected_path){
++ 
++ 	#read the table in the selected_path
++ 	full_table = read.table(selected_path, sep="\t", header=TRUE)
++ 
++ 	#select only columns corresponding to gene_id, along with 50 and 500kb
++ 	columns_to_select = which(grepl("gene_id", colnames(full_table), fixed=TRUE) | grepl("50kb", colnames(full_table), fixed=TRUE) | grepl("500kb", colnames(full_table), fixed=TRUE))
++ 		#If ‘TRUE’, ‘pattern’ is a string to be matched as is. This is our case, we are not using regular expressions, just select column names that include an string.
++ 
++ 	#select these columns from the full table
++ 	full_table_subset = full_table[, columns_to_select]
++ 
++ 	#if the factors is related to transcription factor density (i.e., includes tbfs in any column name), change the column names, because all regulatory factors are named as tbfs
++ 	if(TRUE %in% grepl("tfbs", colnames(full_table_subset))){
++ 
++ 		#extract the name of the factor from the path
++ 		raw_split = strsplit(selected_path, split="/|.txt")
++ 			#we use "|" to apply two conditions for the split
++ 		new_colname = raw_split[[1]][length(raw_split[[1]])]
++ 			#select the last element, which is the factor name
++ 
++ 		#change the names of the columns for 50 and 500kb
++ 		colnames(full_table_subset)[which(colnames(full_table_subset) == "tfbs_50kb")] = paste(new_colname, "_50kb", sep="")
++ 		colnames(full_table_subset)[which(colnames(full_table_subset) == "tfbs_500kb")] = paste(new_colname, "_500kb", sep="")
++ 	}
++ 
++ 	#return the result
++ 	return(full_table_subset)
++ }
+> 
+> #load all of the tables into a list using the new function
+> list_factors_across_windows = lapply(list_factors_across_windows_paths, reading_factors_across_windows)
+> 
+> #see the list
+> str(list_factors_across_windows)
+List of 9
+ $ :'data.frame':	19252 obs. of  3 variables:
+  ..$ gene_id                    : Factor w/ 19252 levels "ENSG00000000419",..: 1 2 3 4 5 6 7 8 9 10 ...
+  ..$ chip_density_final_v1_50kb : num [1:19252] 0.21 0.148 0.093 0.505 0.071 ...
+  ..$ chip_density_final_v1_500kb: num [1:19252] 0.2492 0.09 0.1131 0.2593 0.0612 ...
+ $ :'data.frame':	19252 obs. of  3 variables:
+  ..$ gene_id                           : Factor w/ 19252 levels "ENSG00000000419",..: 1 2 3 4 5 6 7 8 9 10 ...
+  ..$ chip_immune_density_final_v1_50kb : num [1:19252] 0.14 0.0666 0.0064 0.3491 0.0271 ...
+  ..$ chip_immune_density_final_v1_500kb: num [1:19252] 0.08986 0.03467 0.03538 0.12012 0.00794 ...
+ $ :'data.frame':	19252 obs. of  3 variables:
+  ..$ gene_id                           : Factor w/ 19252 levels "ENSG00000000419",..: 1 2 3 4 5 6 7 8 9 10 ...
+  ..$ chip_testis_density_final_v1_50kb : num [1:19252] 0.0844 0 0 0.0855 0 ...
+  ..$ chip_testis_density_final_v1_500kb: num [1:19252] 0.02458 0.00519 0.00492 0.03757 0.00202 ...
+ $ :'data.frame':	19252 obs. of  3 variables:
+  ..$ gene_id             : Factor w/ 19252 levels "ENSG00000000419",..: 2 3 4 5 9 10 44 47 131 168 ...
+  ..$ coding_density_50kb : num [1:19252] 0.05694 0.00074 0.0318 0.0272 0.02054 ...
+  ..$ coding_density_500kb: num [1:19252] 0.0231 0.039 0.0273 0.0169 0.0153 ...
+ $ :'data.frame':	19252 obs. of  3 variables:
+  ..$ gene_id   : Factor w/ 19252 levels "ENSG00000000419",..: 1 2 3 4 5 6 7 8 9 10 ...
+  ..$ cons_50kb : num [1:19252] 0.09232 0.04854 0.01584 0.14528 0.00884 ...
+  ..$ cons_500kb: num [1:19252] 0.0404 0.0397 0.0446 0.1298 0.0129 ...
+ $ :'data.frame':	19252 obs. of  3 variables:
+  ..$ gene_id         : Factor w/ 19252 levels "ENSG00000000419",..: 1 2 3 4 5 6 7 8 9 10 ...
+  ..$ gc_content_50kb : num [1:19252] 42.2 39.5 39.4 52.9 35.5 ...
+  ..$ gc_content_500kb: num [1:19252] 46.4 37.8 38.4 48.3 35.1 ...
+ $ :'data.frame':	19252 obs. of  3 variables:
+  ..$ gene_id      : Factor w/ 19252 levels "ENSG00000000419",..: 2 3 4 5 9 10 44 47 131 168 ...
+  ..$ n_genes_50kb : int [1:19252] 2 2 2 1 2 1 1 1 2 1 ...
+  ..$ n_genes_500kb: int [1:19252] 7 8 12 6 8 6 11 6 11 9 ...
+ $ :'data.frame':	19252 obs. of  3 variables:
+  ..$ gene_id     : Factor w/ 19252 levels "ENSG00000000419",..: 1 2 3 4 5 6 7 8 9 10 ...
+  ..$ recomb_50kb : num [1:19252] 0.27 0.148 0.196 2.313 0.144 ...
+  ..$ recomb_500kb: num [1:19252] 2.904 0.271 1.363 0.707 0.123 ...
+ $ :'data.frame':	19252 obs. of  3 variables:
+  ..$ gene_id                    : Factor w/ 19252 levels "ENSG00000000419",..: 1 2 3 4 5 6 7 8 9 10 ...
+  ..$ tbfs_density_final_v3_50kb : num [1:19252] 0.1618 0.1225 0.0982 0.3662 0.0376 ...
+  ..$ tbfs_density_final_v3_500kb: num [1:19252] 0.2226 0.065 0.0773 0.2465 0.0246 ...
+> 
+> #merge all partitions maintaining all rows
+> factors_across_windows = Reduce(function(dtf1, dtf2) full_join(dtf1, dtf2, by="gene_id"), list_factors_across_windows)
+> 	#this can be done with full_join, which is similar to use merge with all=TRUE
+> 		#https://stackoverflow.com/questions/21841146/is-there-an-r-dplyr-method-for-merge-with-all-true
+> 		#https://stackoverflow.com/questions/28250948/how-to-dplyrinner-join-multi-tbls-or-data-frames-in-r
+> 		#https://www.datasciencemadesimple.com/join-in-r-merge-in-r/
+> 
+> #see the table
+> str(factors_across_windows)
+'data.frame':	19252 obs. of  19 variables:
+ $ gene_id                           : Factor w/ 19252 levels "ENSG00000000419",..: 1 2 3 4 5 6 7 8 9 10 ...
+ $ chip_density_final_v1_50kb        : num  0.21 0.148 0.093 0.505 0.071 ...
+ $ chip_density_final_v1_500kb       : num  0.2492 0.09 0.1131 0.2593 0.0612 ...
+ $ chip_immune_density_final_v1_50kb : num  0.14 0.0666 0.0064 0.3491 0.0271 ...
+ $ chip_immune_density_final_v1_500kb: num  0.08986 0.03467 0.03538 0.12012 0.00794 ...
+ $ chip_testis_density_final_v1_50kb : num  0.0844 0 0 0.0855 0 ...
+ $ chip_testis_density_final_v1_500kb: num  0.02458 0.00519 0.00492 0.03757 0.00202 ...
+ $ coding_density_50kb               : num  0.04542 0.05694 0.00074 0.0318 0.0272 ...
+ $ coding_density_500kb              : num  0.0181 0.0231 0.039 0.0273 0.0169 ...
+ $ cons_50kb                         : num  0.09232 0.04854 0.01584 0.14528 0.00884 ...
+ $ cons_500kb                        : num  0.0404 0.0397 0.0446 0.1298 0.0129 ...
+ $ gc_content_50kb                   : num  42.2 39.5 39.4 52.9 35.5 ...
+ $ gc_content_500kb                  : num  46.4 37.8 38.4 48.3 35.1 ...
+ $ n_genes_50kb                      : int  3 2 2 2 1 2 1 3 2 1 ...
+ $ n_genes_500kb                     : int  6 7 8 12 6 6 4 11 8 6 ...
+ $ recomb_50kb                       : num  0.27 0.148 0.196 2.313 0.144 ...
+ $ recomb_500kb                      : num  2.904 0.271 1.363 0.707 0.123 ...
+ $ tbfs_density_final_v3_50kb        : num  0.1618 0.1225 0.0982 0.3662 0.0376 ...
+ $ tbfs_density_final_v3_500kb       : num  0.2226 0.065 0.0773 0.2465 0.0246 ...
+> head(factors_across_windows)
+          gene_id chip_density_final_v1_50kb chip_density_final_v1_500kb
+1 ENSG00000000419                    0.20968                    0.249210
+2 ENSG00000000457                    0.14820                    0.090018
+3 ENSG00000000460                    0.09304                    0.113074
+4 ENSG00000000938                    0.50530                    0.259314
+5 ENSG00000000971                    0.07100                    0.061174
+6 ENSG00000001036                    0.09550                    0.123938
+  chip_immune_density_final_v1_50kb chip_immune_density_final_v1_500kb
+1                           0.14002                           0.089862
+2                           0.06662                           0.034672
+3                           0.00640                           0.035380
+4                           0.34914                           0.120116
+5                           0.02706                           0.007944
+6                           0.05198                           0.031132
+  chip_testis_density_final_v1_50kb chip_testis_density_final_v1_500kb
+1                           0.08444                           0.024580
+2                           0.00000                           0.005190
+3                           0.00000                           0.004922
+4                           0.08546                           0.037570
+5                           0.00000                           0.002020
+6                           0.00000                           0.004388
+  coding_density_50kb coding_density_500kb cons_50kb cons_500kb gc_content_50kb
+1             0.04542             0.018126   0.09232   0.040372     42.24175347
+2             0.05694             0.023134   0.04854   0.039726     39.54833984
+3             0.00074             0.038970   0.01584   0.044632     39.37500000
+4             0.03180             0.027268   0.14528   0.129840     52.92317708
+5             0.02720             0.016906   0.00884   0.012874     35.45138889
+6             0.03476             0.008164   0.03066   0.038208     39.25564236
+  gc_content_500kb n_genes_50kb n_genes_500kb  recomb_50kb recomb_500kb
+1      46.39537693            3             6 0.2697387083 2.9042354281
+2      37.79378255            2             7 0.1483487096 0.2712441844
+3      38.35353576            2             8 0.1960942309 1.3625925132
+4      48.26131604            2            12 2.3127164034 0.7069284847
+5      35.14356476            1             6 0.1440136406 0.1227206256
+6      39.73220039            2             6 2.1132176840 1.3342800695
+  tbfs_density_final_v3_50kb tbfs_density_final_v3_500kb
+1                    0.16180                     0.22263
+2                    0.12250                     0.06498
+3                    0.09824                     0.07728
+4                    0.36622                     0.24652
+5                    0.03760                     0.02461
+6                    0.06044                     0.09737
+> summary(factors_across_windows)
+            gene_id      chip_density_final_v1_50kb chip_density_final_v1_500kb
+ ENSG00000000419:    1   Min.   :0.000000           Min.   :0.0000000          
+ ENSG00000000457:    1   1st Qu.:0.083120           1st Qu.:0.1014410          
+ ENSG00000000460:    1   Median :0.153790           Median :0.1502460          
+ ENSG00000000938:    1   Mean   :0.187413           Mean   :0.1635872          
+ ENSG00000000971:    1   3rd Qu.:0.258100           3rd Qu.:0.2131850          
+ ENSG00000001036:    1   Max.   :1.000000           Max.   :0.5674644          
+ (Other)        :19246   NA's   :4                  NA's   :121                
+ chip_immune_density_final_v1_50kb chip_immune_density_final_v1_500kb
+ Min.   :0.00000000                Min.   :0.00000000                
+ 1st Qu.:0.01762000                1st Qu.:0.02927100                
+ Median :0.04972000                Median :0.04981363                
+ Mean   :0.07556105                Mean   :0.05946207                
+ 3rd Qu.:0.10260000                3rd Qu.:0.07936676                
+ Max.   :1.00000000                Max.   :0.31763800                
+ NA's   :4                         NA's   :121                       
+ chip_testis_density_final_v1_50kb chip_testis_density_final_v1_500kb
+ Min.   :0.00000000                Min.   :0.00000000                
+ 1st Qu.:0.00000000                1st Qu.:0.00450000                
+ Median :0.00000000                Median :0.01007400                
+ Mean   :0.01831114                Mean   :0.01406745                
+ 3rd Qu.:0.02352000                3rd Qu.:0.01883200                
+ Max.   :0.56760000                Max.   :0.16172800                
+ NA's   :4                         NA's   :121                       
+ coding_density_50kb  coding_density_500kb   cons_50kb         
+ Min.   :0.00000000   Min.   :0.0000000    Min.   :0.00000000  
+ 1st Qu.:0.01656000   1st Qu.:0.0135500    1st Qu.:0.02731500  
+ Median :0.03330000   Median :0.0237800    Median :0.04825000  
+ Mean   :0.04506853   Mean   :0.0307546    Mean   :0.06237748  
+ 3rd Qu.:0.05977000   3rd Qu.:0.0405920    3rd Qu.:0.08082000  
+ Max.   :0.38451777   Max.   :0.2439260    Max.   :0.49454000  
+ NA's   :4            NA's   :121          NA's   :4           
+   cons_500kb         gc_content_50kb    gc_content_500kb    n_genes_50kb      
+ Min.   :0.00000000   Min.   :30.90712   Min.   :33.28588   Min.   : 1.000000  
+ 1st Qu.:0.03129300   1st Qu.:39.78190   1st Qu.:40.60557   1st Qu.: 1.000000  
+ Median :0.04499800   Median :44.28602   Median :44.19718   Median : 2.000000  
+ Mean   :0.05153241   Mean   :45.24093   Mean   :44.75428   Mean   : 2.291569  
+ 3rd Qu.:0.06428900   3rd Qu.:50.31141   3rd Qu.:48.36074   3rd Qu.: 3.000000  
+ Max.   :0.25526600   Max.   :66.35254   Max.   :61.44552   Max.   :22.000000  
+ NA's   :121          NA's   :9          NA's   :121        NA's   :1          
+ n_genes_500kb       recomb_50kb          recomb_500kb      
+ Min.   : 1.00000   Min.   : 0.0000000   Min.   :0.0032596  
+ 1st Qu.: 5.00000   1st Qu.: 0.1069135   1st Qu.:0.5728550  
+ Median : 8.00000   Median : 0.4993658   Median :1.0741306  
+ Mean   :10.27526   Mean   : 1.2597678   Mean   :1.3544687  
+ 3rd Qu.:14.00000   3rd Qu.: 1.5700154   3rd Qu.:1.8401609  
+ Max.   :54.00000   Max.   :23.7189292   Max.   :7.9825349  
+ NA's   :121        NA's   :1274         NA's   :1916       
+ tbfs_density_final_v3_50kb tbfs_density_final_v3_500kb
+ Min.   :0.0000000          Min.   :0.0000000          
+ 1st Qu.:0.0688900          1st Qu.:0.0856700          
+ Median :0.1423000          Median :0.1428111          
+ Mean   :0.1736282          Mean   :0.1562828          
+ 3rd Qu.:0.2631500          3rd Qu.:0.2169040          
+ Max.   :0.7477000          Max.   :0.4500222          
+ NA's   :4                  NA's   :121                
+> 
+> #check that we have the correct number of columns
+> print("################################################")
+[1] "################################################"
+> print("DO WE HAVE THE CORRECT NUMBER OF COLUMNS IN factors_across_windows?")
+[1] "DO WE HAVE THE CORRECT NUMBER OF COLUMNS IN factors_across_windows?"
+> check_1 = (length(list_factors_across_windows_paths)*2)+1 == ncol(factors_across_windows)
+> 	#the correct number of columns should be the number of paths multiplied by 2 and then summed 1 for the gene_id column
+> print(check_1)
+[1] TRUE
+> print("################################################")
+[1] "################################################"
+> 
+> 
+> 
+> ##########################################################
+> ########### CONFOUNDING FACTORS CENTER WINDOWS ###########
+> ##########################################################
+> 
+> #get the path of all partitions
+> list_factors_gene_center_paths = list.files("/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/predictors_gene_windows_v2/factors_gene_center", pattern=".txt", full.names=TRUE)
+> 
+> #create a function to read the factor
+> #selected_path=list_factors_gene_center_paths[1]
+> reading_factors_gene_center = function(selected_path){
++ 
++ 	#read the table in the selected_path
++ 	full_table = read.table(selected_path, sep="\t", header=TRUE)
++ 
++ 	#if the factors is related to transcription factor density (i.e., includes tbfs in any column name), change the column names, because all regulatory factors are named as tbfs
++ 	if(TRUE %in% grepl("gene_expression", selected_path, fixed=TRUE)){
++ 
++ 		#select only columns corresponding to gene_id, along average gene expression across all tissues, in testis and immune cells
++ 		columns_to_select = which(grepl("gene_id", colnames(full_table), fixed=TRUE) | grepl("mean_expres_all_tissues", colnames(full_table), fixed=TRUE) | grepl("Testis", colnames(full_table), fixed=TRUE) | grepl("Cells...EBV.transformed.lymphocytes", colnames(full_table), fixed=TRUE))
++ 			#If ‘TRUE’, ‘pattern’ is a string to be matched as is. This is our case, we are not using regular expressions, just select column names that include an string.
++ 
++ 		#select these columns from the full table
++ 		full_table_subset = full_table[, columns_to_select]
++ 
++ 		#change the names of the columns for 50 and 500kb
++ 		colnames(full_table_subset)[which(colnames(full_table_subset) == "Cells...EBV.transformed.lymphocytes")] = "immune_cells"
++ 		colnames(full_table_subset)[which(colnames(full_table_subset) == "Testis")] = "testis"
++ 		colnames(full_table_subset)[which(colnames(full_table_subset) == "mean_expres_all_tissues")] = "average_gene_expression"
++ 	} else { #if not
++ 
++ 		#save the table as it is
++ 		full_table_subset = full_table
++ 	}
++ 
++ 	#return the result
++ 	return(full_table_subset)
++ }
+> 
+> #load all of the tables into a list using the new function
+> list_factors_gene_center = lapply(list_factors_gene_center_paths, reading_factors_gene_center)
+> 
+> #see the list
+> str(list_factors_gene_center)
+List of 4
+ $ :'data.frame':	18905 obs. of  4 variables:
+  ..$ gene_id                : Factor w/ 18905 levels "ENSG00000000419",..: 1 2 3 4 5 6 7 8 9 10 ...
+  ..$ immune_cells           : num [1:18905] 6.52 3.47 3.37 6.47 -2.29 ...
+  ..$ testis                 : num [1:18905] 6.27 2.91 3.3 2.1 3.42 ...
+  ..$ average_gene_expression: num [1:18905] 5.4 2.3 0.65 2.97 4.54 ...
+ $ :'data.frame':	19252 obs. of  2 variables:
+  ..$ gene_id    : Factor w/ 19252 levels "ENSG00000000419",..: 2 3 4 5 9 10 44 47 131 168 ...
+  ..$ gene_length: int [1:19252] 44637 191977 23214 95627 59936 57183 73013 64242 21556 97308 ...
+ $ :'data.frame':	18077 obs. of  2 variables:
+  ..$ gene_id: Factor w/ 18077 levels "ENSG00000000419",..: 17051 9212 17563 16095 12122 4676 9213 9214 4684 9215 ...
+  ..$ ppi    : num [1:18077] 0.001 1.387 0.001 1.61 0.001 ...
+ $ :'data.frame':	20189 obs. of  2 variables:
+  ..$ gene_id     : Factor w/ 20189 levels "ENSG00000000003",..: 1 2 3 4 5 6 7 8 9 10 ...
+  ..$ vip_distance: num [1:20189] 196325 238312 0 398412 283039 ...
+> 
+> #merge all partitions maintaining all rows
+> factors_gene_center = Reduce(function(dtf1, dtf2) full_join(dtf1, dtf2, by="gene_id"), list_factors_gene_center)
+> 	#this can be done with full_join, which is similar to use merge with all=TRUE
+> 		#https://stackoverflow.com/questions/21841146/is-there-an-r-dplyr-method-for-merge-with-all-true
+> 		#https://stackoverflow.com/questions/28250948/how-to-dplyrinner-join-multi-tbls-or-data-frames-in-r
+> 		#https://www.datasciencemadesimple.com/join-in-r-merge-in-r/
+> 
+> #see the table
+> str(factors_gene_center)
+'data.frame':	21422 obs. of  7 variables:
+ $ gene_id                : Factor w/ 21422 levels "ENSG00000000419",..: 1 2 3 4 5 6 7 8 9 10 ...
+ $ immune_cells           : num  6.52 3.47 3.37 6.47 -2.29 ...
+ $ testis                 : num  6.27 2.91 3.3 2.1 3.42 ...
+ $ average_gene_expression: num  5.4 2.3 0.65 2.97 4.54 ...
+ $ gene_length            : int  23689 44637 191977 23214 95627 16880 119630 27032 59936 57183 ...
+ $ ppi                    : num  1.61 0.694 0.001 2.566 1.387 ...
+ $ vip_distance           : num  0 398412 283039 175147 0 ...
+> head(factors_gene_center)
+          gene_id immune_cells      testis average_gene_expression gene_length
+1 ENSG00000000419  6.517842580 6.269238910            5.3985444201       23689
+2 ENSG00000000457  3.466757616 2.911308090            2.3032713462       44637
+3 ENSG00000000460  3.367510855 3.299684258            0.6504829022      191977
+4 ENSG00000000938  6.466480298 2.104672131            2.9678851623       23214
+5 ENSG00000000971 -2.285952351 3.423712619            4.5375323046       95627
+6 ENSG00000001036  4.366741846 3.627723556            4.2105662536       16880
+           ppi vip_distance
+1 1.6104379124            0
+2 0.6941471806       398412
+3 0.0010000000       283039
+4 2.5659493575       175147
+5 1.3872943611            0
+6 0.0010000000            0
+> summary(factors_gene_center)
+            gene_id       immune_cells            testis         
+ ENSG00000000419:    1   Min.   :-9.9657843   Min.   :-9.965784  
+ ENSG00000000457:    1   1st Qu.:-3.7070769   1st Qu.: 1.020769  
+ ENSG00000000460:    1   Median : 1.9945797   Median : 3.374483  
+ ENSG00000000938:    1   Mean   : 0.2659497   Mean   : 2.568274  
+ ENSG00000000971:    1   3rd Qu.: 4.6946574   3rd Qu.: 4.935035  
+ ENSG00000001036:    1   Max.   :13.4754803   Max.   :14.371096  
+ (Other)        :21416   NA's   :2517         NA's   :2517       
+ average_gene_expression  gene_length              ppi          
+ Min.   :-9.9657843      Min.   :     59.00   Min.   :0.001000  
+ 1st Qu.:-1.4192438      1st Qu.:   8690.50   1st Qu.:0.001000  
+ Median : 2.3258541      Median :  25811.00   Median :0.001000  
+ Mean   : 0.8326609      Mean   :  65677.91   Mean   :0.794098  
+ 3rd Qu.: 4.0983548      3rd Qu.:  68094.25   3rd Qu.:1.387294  
+ Max.   :11.7371802      Max.   :2304638.00   Max.   :5.818111  
+ NA's   :2517            NA's   :2170         NA's   :3345      
+  vip_distance         
+ Min.   :           0  
+ 1st Qu.:           0  
+ Median :       63814  
+ Mean   :   455915629  
+ 3rd Qu.:      221259  
+ Max.   :100000000000  
+ NA's   :1233          
+> 
+> #check that we have the correct number of columns
+> print("################################################")
+[1] "################################################"
+> print("DO WE HAVE THE CORRECT NUMBER OF COLUMNS IN factors_gene_center?")
+[1] "DO WE HAVE THE CORRECT NUMBER OF COLUMNS IN factors_gene_center?"
+> check_2 = length(list_factors_gene_center_paths)+1+2 == ncol(factors_gene_center)
+> 	#the correct number of columns should be the number of paths plus 1 (gene_id column) plus 2 (gene expression in testis and immune cells)
+> print(check_2)
+[1] TRUE
+> print("################################################")
+[1] "################################################"
+> 
+> 
+> 
+> ###################################################
+> ########### MERGE INTO ONE SINGLE TABLE ###########
+> ###################################################
+> 
+> #merge maintaining all the rows
+> factors_table = full_join(factors_across_windows, factors_gene_center, by="gene_id")
+> 	#this can be done with full_join, which is similar to use merge with all=TRUE
+> 		#https://stackoverflow.com/questions/21841146/is-there-an-r-dplyr-method-for-merge-with-all-true
+> 		#https://stackoverflow.com/questions/28250948/how-to-dplyrinner-join-multi-tbls-or-data-frames-in-r
+> 		#https://www.datasciencemadesimple.com/join-in-r-merge-in-r/
+> 
+> #see the table
+> str(factors_table)
+'data.frame':	21422 obs. of  25 variables:
+ $ gene_id                           : Factor w/ 21422 levels "ENSG00000000419",..: 1 2 3 4 5 6 7 8 9 10 ...
+ $ chip_density_final_v1_50kb        : num  0.21 0.148 0.093 0.505 0.071 ...
+ $ chip_density_final_v1_500kb       : num  0.2492 0.09 0.1131 0.2593 0.0612 ...
+ $ chip_immune_density_final_v1_50kb : num  0.14 0.0666 0.0064 0.3491 0.0271 ...
+ $ chip_immune_density_final_v1_500kb: num  0.08986 0.03467 0.03538 0.12012 0.00794 ...
+ $ chip_testis_density_final_v1_50kb : num  0.0844 0 0 0.0855 0 ...
+ $ chip_testis_density_final_v1_500kb: num  0.02458 0.00519 0.00492 0.03757 0.00202 ...
+ $ coding_density_50kb               : num  0.04542 0.05694 0.00074 0.0318 0.0272 ...
+ $ coding_density_500kb              : num  0.0181 0.0231 0.039 0.0273 0.0169 ...
+ $ cons_50kb                         : num  0.09232 0.04854 0.01584 0.14528 0.00884 ...
+ $ cons_500kb                        : num  0.0404 0.0397 0.0446 0.1298 0.0129 ...
+ $ gc_content_50kb                   : num  42.2 39.5 39.4 52.9 35.5 ...
+ $ gc_content_500kb                  : num  46.4 37.8 38.4 48.3 35.1 ...
+ $ n_genes_50kb                      : int  3 2 2 2 1 2 1 3 2 1 ...
+ $ n_genes_500kb                     : int  6 7 8 12 6 6 4 11 8 6 ...
+ $ recomb_50kb                       : num  0.27 0.148 0.196 2.313 0.144 ...
+ $ recomb_500kb                      : num  2.904 0.271 1.363 0.707 0.123 ...
+ $ tbfs_density_final_v3_50kb        : num  0.1618 0.1225 0.0982 0.3662 0.0376 ...
+ $ tbfs_density_final_v3_500kb       : num  0.2226 0.065 0.0773 0.2465 0.0246 ...
+ $ immune_cells                      : num  6.52 3.47 3.37 6.47 -2.29 ...
+ $ testis                            : num  6.27 2.91 3.3 2.1 3.42 ...
+ $ average_gene_expression           : num  5.4 2.3 0.65 2.97 4.54 ...
+ $ gene_length                       : int  23689 44637 191977 23214 95627 16880 119630 27032 59936 57183 ...
+ $ ppi                               : num  1.61 0.694 0.001 2.566 1.387 ...
+ $ vip_distance                      : num  0 398412 283039 175147 0 ...
+> head(factors_table)
+          gene_id chip_density_final_v1_50kb chip_density_final_v1_500kb
+1 ENSG00000000419                    0.20968                    0.249210
+2 ENSG00000000457                    0.14820                    0.090018
+3 ENSG00000000460                    0.09304                    0.113074
+4 ENSG00000000938                    0.50530                    0.259314
+5 ENSG00000000971                    0.07100                    0.061174
+6 ENSG00000001036                    0.09550                    0.123938
+  chip_immune_density_final_v1_50kb chip_immune_density_final_v1_500kb
+1                           0.14002                           0.089862
+2                           0.06662                           0.034672
+3                           0.00640                           0.035380
+4                           0.34914                           0.120116
+5                           0.02706                           0.007944
+6                           0.05198                           0.031132
+  chip_testis_density_final_v1_50kb chip_testis_density_final_v1_500kb
+1                           0.08444                           0.024580
+2                           0.00000                           0.005190
+3                           0.00000                           0.004922
+4                           0.08546                           0.037570
+5                           0.00000                           0.002020
+6                           0.00000                           0.004388
+  coding_density_50kb coding_density_500kb cons_50kb cons_500kb gc_content_50kb
+1             0.04542             0.018126   0.09232   0.040372     42.24175347
+2             0.05694             0.023134   0.04854   0.039726     39.54833984
+3             0.00074             0.038970   0.01584   0.044632     39.37500000
+4             0.03180             0.027268   0.14528   0.129840     52.92317708
+5             0.02720             0.016906   0.00884   0.012874     35.45138889
+6             0.03476             0.008164   0.03066   0.038208     39.25564236
+  gc_content_500kb n_genes_50kb n_genes_500kb  recomb_50kb recomb_500kb
+1      46.39537693            3             6 0.2697387083 2.9042354281
+2      37.79378255            2             7 0.1483487096 0.2712441844
+3      38.35353576            2             8 0.1960942309 1.3625925132
+4      48.26131604            2            12 2.3127164034 0.7069284847
+5      35.14356476            1             6 0.1440136406 0.1227206256
+6      39.73220039            2             6 2.1132176840 1.3342800695
+  tbfs_density_final_v3_50kb tbfs_density_final_v3_500kb immune_cells
+1                    0.16180                     0.22263  6.517842580
+2                    0.12250                     0.06498  3.466757616
+3                    0.09824                     0.07728  3.367510855
+4                    0.36622                     0.24652  6.466480298
+5                    0.03760                     0.02461 -2.285952351
+6                    0.06044                     0.09737  4.366741846
+       testis average_gene_expression gene_length          ppi vip_distance
+1 6.269238910            5.3985444201       23689 1.6104379124            0
+2 2.911308090            2.3032713462       44637 0.6941471806       398412
+3 3.299684258            0.6504829022      191977 0.0010000000       283039
+4 2.104672131            2.9678851623       23214 2.5659493575       175147
+5 3.423712619            4.5375323046       95627 1.3872943611            0
+6 3.627723556            4.2105662536       16880 0.0010000000            0
+> summary(factors_table)
+            gene_id      chip_density_final_v1_50kb chip_density_final_v1_500kb
+ ENSG00000000419:    1   Min.   :0.000000           Min.   :0.0000000          
+ ENSG00000000457:    1   1st Qu.:0.083120           1st Qu.:0.1014410          
+ ENSG00000000460:    1   Median :0.153790           Median :0.1502460          
+ ENSG00000000938:    1   Mean   :0.187413           Mean   :0.1635872          
+ ENSG00000000971:    1   3rd Qu.:0.258100           3rd Qu.:0.2131850          
+ ENSG00000001036:    1   Max.   :1.000000           Max.   :0.5674644          
+ (Other)        :21416   NA's   :2174               NA's   :2291               
+ chip_immune_density_final_v1_50kb chip_immune_density_final_v1_500kb
+ Min.   :0.0000000                 Min.   :0.0000000                 
+ 1st Qu.:0.0176200                 1st Qu.:0.0292710                 
+ Median :0.0497200                 Median :0.0498136                 
+ Mean   :0.0755611                 Mean   :0.0594621                 
+ 3rd Qu.:0.1026000                 3rd Qu.:0.0793668                 
+ Max.   :1.0000000                 Max.   :0.3176380                 
+ NA's   :2174                      NA's   :2291                      
+ chip_testis_density_final_v1_50kb chip_testis_density_final_v1_500kb
+ Min.   :0.0000000                 Min.   :0.0000000                 
+ 1st Qu.:0.0000000                 1st Qu.:0.0045000                 
+ Median :0.0000000                 Median :0.0100740                 
+ Mean   :0.0183111                 Mean   :0.0140675                 
+ 3rd Qu.:0.0235200                 3rd Qu.:0.0188320                 
+ Max.   :0.5676000                 Max.   :0.1617280                 
+ NA's   :2174                      NA's   :2291                      
+ coding_density_50kb coding_density_500kb   cons_50kb        
+ Min.   :0.0000000   Min.   :0.0000000    Min.   :0.0000000  
+ 1st Qu.:0.0165600   1st Qu.:0.0135500    1st Qu.:0.0273150  
+ Median :0.0333000   Median :0.0237800    Median :0.0482500  
+ Mean   :0.0450685   Mean   :0.0307546    Mean   :0.0623775  
+ 3rd Qu.:0.0597700   3rd Qu.:0.0405920    3rd Qu.:0.0808200  
+ Max.   :0.3845178   Max.   :0.2439260    Max.   :0.4945400  
+ NA's   :2174        NA's   :2291         NA's   :2174       
+   cons_500kb        gc_content_50kb    gc_content_500kb    n_genes_50kb      
+ Min.   :0.0000000   Min.   :30.90712   Min.   :33.28588   Min.   : 1.000000  
+ 1st Qu.:0.0312930   1st Qu.:39.78190   1st Qu.:40.60557   1st Qu.: 1.000000  
+ Median :0.0449980   Median :44.28602   Median :44.19718   Median : 2.000000  
+ Mean   :0.0515324   Mean   :45.24093   Mean   :44.75428   Mean   : 2.291569  
+ 3rd Qu.:0.0642890   3rd Qu.:50.31141   3rd Qu.:48.36074   3rd Qu.: 3.000000  
+ Max.   :0.2552660   Max.   :66.35254   Max.   :61.44552   Max.   :22.000000  
+ NA's   :2291        NA's   :2179       NA's   :2291       NA's   :2171       
+ n_genes_500kb       recomb_50kb         recomb_500kb     
+ Min.   : 1.00000   Min.   : 0.000000   Min.   :0.003260  
+ 1st Qu.: 5.00000   1st Qu.: 0.106913   1st Qu.:0.572855  
+ Median : 8.00000   Median : 0.499366   Median :1.074131  
+ Mean   :10.27526   Mean   : 1.259768   Mean   :1.354469  
+ 3rd Qu.:14.00000   3rd Qu.: 1.570015   3rd Qu.:1.840161  
+ Max.   :54.00000   Max.   :23.718929   Max.   :7.982535  
+ NA's   :2291       NA's   :3444        NA's   :4086      
+ tbfs_density_final_v3_50kb tbfs_density_final_v3_500kb  immune_cells       
+ Min.   :0.0000000          Min.   :0.0000000           Min.   :-9.9657843  
+ 1st Qu.:0.0688900          1st Qu.:0.0856700           1st Qu.:-3.7070769  
+ Median :0.1423000          Median :0.1428111           Median : 1.9945797  
+ Mean   :0.1736282          Mean   :0.1562828           Mean   : 0.2659497  
+ 3rd Qu.:0.2631500          3rd Qu.:0.2169040           3rd Qu.: 4.6946574  
+ Max.   :0.7477000          Max.   :0.4500222           Max.   :13.4754803  
+ NA's   :2174               NA's   :2291                NA's   :2517        
+     testis          average_gene_expression  gene_length        
+ Min.   :-9.965784   Min.   :-9.9657843      Min.   :     59.00  
+ 1st Qu.: 1.020769   1st Qu.:-1.4192438      1st Qu.:   8690.50  
+ Median : 3.374483   Median : 2.3258541      Median :  25811.00  
+ Mean   : 2.568274   Mean   : 0.8326609      Mean   :  65677.91  
+ 3rd Qu.: 4.935035   3rd Qu.: 4.0983548      3rd Qu.:  68094.25  
+ Max.   :14.371096   Max.   :11.7371802      Max.   :2304638.00  
+ NA's   :2517        NA's   :2517            NA's   :2170        
+      ppi            vip_distance         
+ Min.   :0.001000   Min.   :           0  
+ 1st Qu.:0.001000   1st Qu.:           0  
+ Median :0.001000   Median :       63814  
+ Mean   :0.794098   Mean   :   455915629  
+ 3rd Qu.:1.387294   3rd Qu.:      221259  
+ Max.   :5.818111   Max.   :100000000000  
+ NA's   :3345       NA's   :1233          
+> 
+> 
+> 
+> #####################################################
+> ########### PREPARE THE TABLE TO BE SAVED ###########
+> #####################################################
+> 
+> #remove NAs
+> factors_table_final = na.omit(factors_table)
+> 	#We not interested in any gene for which we do not have data across factors If a gene has no data for a factor, it cannot be matched for that factor. Maybe in some comparisons, that gene is not used, but it could be used in others. In order to use the same factors for matching always, we remove any gene with NA for any confounding factor.
+> 
+> #see the table
+> str(factors_table_final)
+'data.frame':	15571 obs. of  25 variables:
+ $ gene_id                           : Factor w/ 21422 levels "ENSG00000000419",..: 1 2 3 4 5 6 7 8 9 10 ...
+ $ chip_density_final_v1_50kb        : num  0.21 0.148 0.093 0.505 0.071 ...
+ $ chip_density_final_v1_500kb       : num  0.2492 0.09 0.1131 0.2593 0.0612 ...
+ $ chip_immune_density_final_v1_50kb : num  0.14 0.0666 0.0064 0.3491 0.0271 ...
+ $ chip_immune_density_final_v1_500kb: num  0.08986 0.03467 0.03538 0.12012 0.00794 ...
+ $ chip_testis_density_final_v1_50kb : num  0.0844 0 0 0.0855 0 ...
+ $ chip_testis_density_final_v1_500kb: num  0.02458 0.00519 0.00492 0.03757 0.00202 ...
+ $ coding_density_50kb               : num  0.04542 0.05694 0.00074 0.0318 0.0272 ...
+ $ coding_density_500kb              : num  0.0181 0.0231 0.039 0.0273 0.0169 ...
+ $ cons_50kb                         : num  0.09232 0.04854 0.01584 0.14528 0.00884 ...
+ $ cons_500kb                        : num  0.0404 0.0397 0.0446 0.1298 0.0129 ...
+ $ gc_content_50kb                   : num  42.2 39.5 39.4 52.9 35.5 ...
+ $ gc_content_500kb                  : num  46.4 37.8 38.4 48.3 35.1 ...
+ $ n_genes_50kb                      : int  3 2 2 2 1 2 1 3 2 1 ...
+ $ n_genes_500kb                     : int  6 7 8 12 6 6 4 11 8 6 ...
+ $ recomb_50kb                       : num  0.27 0.148 0.196 2.313 0.144 ...
+ $ recomb_500kb                      : num  2.904 0.271 1.363 0.707 0.123 ...
+ $ tbfs_density_final_v3_50kb        : num  0.1618 0.1225 0.0982 0.3662 0.0376 ...
+ $ tbfs_density_final_v3_500kb       : num  0.2226 0.065 0.0773 0.2465 0.0246 ...
+ $ immune_cells                      : num  6.52 3.47 3.37 6.47 -2.29 ...
+ $ testis                            : num  6.27 2.91 3.3 2.1 3.42 ...
+ $ average_gene_expression           : num  5.4 2.3 0.65 2.97 4.54 ...
+ $ gene_length                       : int  23689 44637 191977 23214 95627 16880 119630 27032 59936 57183 ...
+ $ ppi                               : num  1.61 0.694 0.001 2.566 1.387 ...
+ $ vip_distance                      : num  0 398412 283039 175147 0 ...
+ - attr(*, "na.action")= 'omit' Named int  15 16 31 33 48 70 77 83 97 100 ...
+  ..- attr(*, "names")= chr  "15" "16" "31" "33" ...
+> head(factors_table_final)
+          gene_id chip_density_final_v1_50kb chip_density_final_v1_500kb
+1 ENSG00000000419                    0.20968                    0.249210
+2 ENSG00000000457                    0.14820                    0.090018
+3 ENSG00000000460                    0.09304                    0.113074
+4 ENSG00000000938                    0.50530                    0.259314
+5 ENSG00000000971                    0.07100                    0.061174
+6 ENSG00000001036                    0.09550                    0.123938
+  chip_immune_density_final_v1_50kb chip_immune_density_final_v1_500kb
+1                           0.14002                           0.089862
+2                           0.06662                           0.034672
+3                           0.00640                           0.035380
+4                           0.34914                           0.120116
+5                           0.02706                           0.007944
+6                           0.05198                           0.031132
+  chip_testis_density_final_v1_50kb chip_testis_density_final_v1_500kb
+1                           0.08444                           0.024580
+2                           0.00000                           0.005190
+3                           0.00000                           0.004922
+4                           0.08546                           0.037570
+5                           0.00000                           0.002020
+6                           0.00000                           0.004388
+  coding_density_50kb coding_density_500kb cons_50kb cons_500kb gc_content_50kb
+1             0.04542             0.018126   0.09232   0.040372     42.24175347
+2             0.05694             0.023134   0.04854   0.039726     39.54833984
+3             0.00074             0.038970   0.01584   0.044632     39.37500000
+4             0.03180             0.027268   0.14528   0.129840     52.92317708
+5             0.02720             0.016906   0.00884   0.012874     35.45138889
+6             0.03476             0.008164   0.03066   0.038208     39.25564236
+  gc_content_500kb n_genes_50kb n_genes_500kb  recomb_50kb recomb_500kb
+1      46.39537693            3             6 0.2697387083 2.9042354281
+2      37.79378255            2             7 0.1483487096 0.2712441844
+3      38.35353576            2             8 0.1960942309 1.3625925132
+4      48.26131604            2            12 2.3127164034 0.7069284847
+5      35.14356476            1             6 0.1440136406 0.1227206256
+6      39.73220039            2             6 2.1132176840 1.3342800695
+  tbfs_density_final_v3_50kb tbfs_density_final_v3_500kb immune_cells
+1                    0.16180                     0.22263  6.517842580
+2                    0.12250                     0.06498  3.466757616
+3                    0.09824                     0.07728  3.367510855
+4                    0.36622                     0.24652  6.466480298
+5                    0.03760                     0.02461 -2.285952351
+6                    0.06044                     0.09737  4.366741846
+       testis average_gene_expression gene_length          ppi vip_distance
+1 6.269238910            5.3985444201       23689 1.6104379124            0
+2 2.911308090            2.3032713462       44637 0.6941471806       398412
+3 3.299684258            0.6504829022      191977 0.0010000000       283039
+4 2.104672131            2.9678851623       23214 2.5659493575       175147
+5 3.423712619            4.5375323046       95627 1.3872943611            0
+6 3.627723556            4.2105662536       16880 0.0010000000            0
+> 
+> #save
+> write.table(factors_table_final, "/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder/Factors_table.txt", row.names=FALSE, col.names=FALSE, sep=" ", quote=FALSE)
+> 	#avoid column and row names, and remove quotes from the gene IDs to match the format used by David in his pipeline.
+> 
+> proc.time()
+   user  system elapsed 
+  2.457   0.056   2.514 
