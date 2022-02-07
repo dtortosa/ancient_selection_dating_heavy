@@ -12,6 +12,8 @@
 ########################### PREPARE FACTORS TABLE #################################
 ###################################################################################
 
+#create a table file that contains all the confounding factors that the bootstrap test will control for. First column is Ensembl gene ID, next columns are each factor that will be matched. The example file is Factors_table.txt
+
 #IMPORTANT: 
 	#Note that this script was wrote and run in 2022 using the version of April 28th 2022 of David's pipeline.
 		#The pipeline of David has been downloaded from 
@@ -220,4 +222,4 @@ head(factors_table_final)
 
 #save
 write.table(factors_table_final, "/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder/Factors_table.txt", row.names=FALSE, col.names=FALSE, sep=" ", quote=FALSE)
-	#avoid column and row names, and remove quotes from the gene IDs to match the format used by David in his pipeline.
+	#separated with space, avoid column and row names, and remove quotes from the gene IDs to match the format used by David in his pipeline.

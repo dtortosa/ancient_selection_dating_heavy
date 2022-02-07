@@ -1,0 +1,364 @@
+
+R version 3.6.3 (2020-02-29) -- "Holding the Windsock"
+Copyright (C) 2020 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+[1] FALSE
+Warning message:
+In file.remove(".RData") :
+  cannot remove file '.RData', reason 'No such file or directory'
+         used (Mb) gc trigger (Mb) max used (Mb)
+Ncells 125133  6.7     350000 18.7   201111 10.8
+Vcells 242045  1.9    8388608 64.0   997272  7.7
+Loading required package: colorout
+Loading required package: SistWrapper
+> #!/usr/bin/env Rscript
+> 
+> #This is done to have the possibility to run this script as an executable: 'chmod +x myscript.R' and then ' ./myscript.R'. If you run the script as 'R CMD BATCH myscript.R', i THINK this is not used, because it is annotated. 
+> 	#https://www.jonzelner.net/statistics/make/docker/reproducibility/2016/05/31/script-is-a-program/
+> 
+> #In case you run this script as an executable, you can save the output without warnings "./myscript.R > myscript.Rout" or with errors "./myscript.R &> myscript.Rout"
+> 	#https://askubuntu.com/questions/420981/how-do-i-save-terminal-output-to-a-file
+> 
+> 
+> 
+> ####################################################################################################
+> ########################### PREPARE VALID, GENE LIST AND DISTANCIE #################################
+> ####################################################################################################
+> 
+> #IMPORTANT: 
+> 	#Note that this script was wrote and run in 2022 using the version of April 28th 2022 of David's pipeline.
+> 		#The pipeline of David has been downloaded from 
+> 			#https://github.com/DavidPierreEnard/Gene_Set_Enrichment_Pipeline
+> 			#last commit done on Apr 28, 2021
+> 				#7b755c0c23dd4d7c3f54c4b53e74366e4041ac8f 
+> 
+> 	#Manual from David
+> 		#/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder/exdef_pipeline_manual.pdf
+> 
+> 
+> 
+> #################################################################
+> ####################### PREVIOUS VERSIONS #######################
+> #################################################################
+> 
+> 
+> 
+> #################################################################
+> ####################### REQUIRED PACKAGES #######################
+> #################################################################
+> 
+> require(plyr) #for apply functions across lists and data.frames.
+Loading required package: plyr
+> 
+> 
+> 
+> ###############################
+> ######## VALID FILE ###########
+> ###############################
+> 
+> #valid_file: Creation of file with the genes used for the test. The file contains the Ensembl IDs of the genes that are going to be used by the pipeline. One line in the file = one Ensembl gene ID. Use your own code to generate this file. In the provided folder the example file is valid_file.txt.
+> 
+> #we are going to use our list of genes with coordinates to get the list of gene ids used in the bootstrap. Some of these genes have no confounding factors data, but this is ok. The valid_file example of David also has IDs that are not present in Factors_table and iHS ranks, and vice versa.
+> 
+> #load our curate list of ensembl genes (hg19)
+> gene_coords = read.table("/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/postdoc_enard_lab/projects/method_deep/data/search_diego/results/gene_number_cds_coords.txt", sep="\t", header=TRUE)
+> str(gene_coords) #this dataset include our curated list of genes with symbol and ensembl ID. It is well curated and has not repeated ensemble IDs.
+'data.frame':	643588 obs. of  60 variables:
+ $ chromosome_name              : int  1 1 1 1 1 1 1 1 1 1 ...
+ $ hgnc_symbol                  : Factor w/ 18306 levels "","A1BG","A1CF",..: 13872 13872 13872 13872 13872 13872 13872 13872 13872 13872 ...
+ $ gene_id                      : Factor w/ 19252 levels "ENSG00000000419",..: 2 2 2 2 2 2 2 2 2 2 ...
+ $ test_rows_initial_datasets_1 : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ test_rows_initial_datasets_2 : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ test_gene_id                 : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ gene_biotype                 : Factor w/ 1 level "protein_coding": 1 1 1 1 1 1 1 1 1 1 ...
+ $ transcript_id                : Factor w/ 78783 levels "ENST00000000233",..: 19180 19180 19180 19180 19180 19180 19180 19180 19180 19180 ...
+ $ transcript_biotype           : Factor w/ 1 level "protein_coding": 1 1 1 1 1 1 1 1 1 1 ...
+ $ exon_id                      : Factor w/ 282672 levels "ENSE00000327880",..: 263360 234061 197588 252389 235470 11078 279395 246185 220447 11079 ...
+ $ test_gene_transcripts_biotype: logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ gene_start                   : int  169818772 169818772 169818772 169818772 169818772 169818772 169818772 169818772 169818772 169818772 ...
+ $ gene_end                     : int  169863408 169863408 169863408 169863408 169863408 169863408 169863408 169863408 169863408 169863408 ...
+ $ gene_length                  : int  44637 44637 44637 44637 44637 44637 44637 44637 44637 44637 ...
+ $ middle_point                 : num  1.7e+08 1.7e+08 1.7e+08 1.7e+08 1.7e+08 ...
+ $ test_gene_length_center      : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ windows_check_1              : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ windows_check_2              : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ windows_check_3              : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ windows_check_4              : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ windows_check_5              : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ lower_end_window_50kb        : int  169816090 169816090 169816090 169816090 169816090 169816090 169816090 169816090 169816090 169816090 ...
+ $ upper_end_window_50kb        : int  169866089 169866089 169866089 169866089 169866089 169866089 169866089 169866089 169866089 169866089 ...
+ $ lower_end_window_100kb       : int  169791090 169791090 169791090 169791090 169791090 169791090 169791090 169791090 169791090 169791090 ...
+ $ upper_end_window_100kb       : int  169891089 169891089 169891089 169891089 169891089 169891089 169891089 169891089 169891089 169891089 ...
+ $ lower_end_window_200kb       : int  169741090 169741090 169741090 169741090 169741090 169741090 169741090 169741090 169741090 169741090 ...
+ $ upper_end_window_200kb       : int  169941089 169941089 169941089 169941089 169941089 169941089 169941089 169941089 169941089 169941089 ...
+ $ lower_end_window_500kb       : int  169591090 169591090 169591090 169591090 169591090 169591090 169591090 169591090 169591090 169591090 ...
+ $ upper_end_window_500kb       : int  170091089 170091089 170091089 170091089 170091089 170091089 170091089 170091089 170091089 170091089 ...
+ $ lower_end_window_1000kb      : int  169341090 169341090 169341090 169341090 169341090 169341090 169341090 169341090 169341090 169341090 ...
+ $ upper_end_window_1000kb      : int  170341089 170341089 170341089 170341089 170341089 170341089 170341089 170341089 170341089 170341089 ...
+ $ n_genes_50kb                 : int  2 2 2 2 2 2 2 2 2 2 ...
+ $ n_genes_100kb                : int  3 3 3 3 3 3 3 3 3 3 ...
+ $ n_genes_200kb                : int  4 4 4 4 4 4 4 4 4 4 ...
+ $ n_genes_500kb                : int  7 7 7 7 7 7 7 7 7 7 ...
+ $ n_genes_1000kb               : int  12 12 12 12 12 12 12 12 12 12 ...
+ $ check_n_genes_0              : Factor w/ 2 levels "TRUE","TRUE/NA": 1 1 1 1 1 1 1 1 1 1 ...
+ $ check_n_genes_1              : Factor w/ 2 levels "TRUE","TRUE/NA": 1 1 1 1 1 1 1 1 1 1 ...
+ $ check_n_genes_2              : Factor w/ 2 levels "TRUE","TRUE/NA": 1 1 1 1 1 1 1 1 1 1 ...
+ $ check_n_genes_3              : Factor w/ 2 levels "TRUE","TRUE/NA": 1 1 1 1 1 1 1 1 1 1 ...
+ $ check_n_genes_4              : Factor w/ 2 levels "TRUE","TRUE/NA": 1 1 1 1 1 1 1 1 1 1 ...
+ $ check_coding_density_1       : Factor w/ 2 levels "TRUE","TRUE/NA": 1 1 1 1 1 1 1 1 1 1 ...
+ $ check_coding_density_2       : Factor w/ 2 levels "TRUE","TRUE/NA": 1 1 1 1 1 1 1 1 1 1 ...
+ $ check_coding_density_4       : Factor w/ 2 levels "TRUE","TRUE/NA": NA NA NA NA NA NA NA NA NA NA ...
+ $ check_coding_density_5       : Factor w/ 2 levels "TRUE","TRUE/NA": 1 1 1 1 1 1 1 1 1 1 ...
+ $ check_coding_density_6       : logi  FALSE FALSE FALSE FALSE FALSE FALSE ...
+ $ check_coding_density_7       : Factor w/ 2 levels "TRUE","TRUE/NA": 1 1 1 1 1 1 1 1 1 1 ...
+ $ test_all_ranges_included     : Factor w/ 2 levels "TRUE","TRUE/NA": 1 1 1 1 1 1 1 1 1 1 ...
+ $ test_iranges                 : Factor w/ 2 levels "TRUE","TRUE/NA": 1 1 1 1 1 1 1 1 1 1 ...
+ $ test_start_end               : Factor w/ 2 levels "TRUE","TRUE/NA": 1 1 1 1 1 1 1 1 1 1 ...
+ $ test_ranges_overlap          : Factor w/ 2 levels "TRUE","TRUE/NA": 1 1 1 1 1 1 1 1 1 1 ...
+ $ test_ranges_overlap_2        : Factor w/ 2 levels "TRUE","TRUE/NA": 1 1 1 1 1 1 1 1 1 1 ...
+ $ coding_density_50kb          : num  0.0569 0.0569 0.0569 0.0569 0.0569 ...
+ $ coding_density_100kb         : num  0.0414 0.0414 0.0414 0.0414 0.0414 ...
+ $ coding_density_200kb         : num  0.0325 0.0325 0.0325 0.0325 0.0325 ...
+ $ coding_density_500kb         : num  0.0231 0.0231 0.0231 0.0231 0.0231 ...
+ $ coding_density_1000kb        : num  0.0259 0.0259 0.0259 0.0259 0.0259 ...
+ $ test_position_gene_exons     : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ test_chr_name                : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ test_na_cds                  : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+> 
+> #remove duplicated
+> gene_coords_no_duplicated = gene_coords[which(!duplicated(gene_coords$gene_id)),]
+> 	#remember that in gene_coords we have several rows (i.e., exons) for the same gene, so the gene IDs are repeated.
+> 
+> #extract the unique ensemble IDs
+> valid_file = unique(gene_coords_no_duplicated$gene_id)
+> 
+> #save
+> write.table(valid_file, "/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder/valid_file.txt", sep=" ", col.names=FALSE, row.names=FALSE, quote=FALSE)
+> 	#without quotes and separated by space to follow the exact same format than David used.
+> 
+> 
+> 
+> ##################################
+> ######## GENE SET FILE ###########
+> ##################################
+> 
+> #create the file that defines the gene set of interest. Genes of interest (VIPs, disease genes, etc.) in the first column are flagged with “yes” in the second column. The other genes are flagged with “no” in the second column. Only the genes also present in the file of used genes (Step 1) will be used by the pipeline. In the folder the example file is genes_set_file.txt.
+> 
+> #load the list of metabolic genes
+> metabolic_gene_list = read.table("/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating/data/metabolic_genes/metabolic_gene_list.txt.gz", sep="\t", header=TRUE)
+> str(metabolic_gene_list)
+'data.frame':	1038 obs. of  2 variables:
+ $ gene_symbol : Factor w/ 1038 levels "AAAS","AACS",..: 5 8 11 15 16 18 31 32 33 44 ...
+ $ ensembl_gene: Factor w/ 1038 levels "ENSG00000002330",..: 730 298 122 711 263 633 290 632 653 571 ...
+> head(metabolic_gene_list)
+  gene_symbol    ensembl_gene
+1       ABHD6 ENSG00000163686
+2       ACADL ENSG00000115361
+3        ACHE ENSG00000087085
+4      ACOT11 ENSG00000162390
+5      ACOT13 ENSG00000112304
+6       ACSL1 ENSG00000151726
+> 
+> #create a data.frame with the IDs used for valid file and then add a second column for indicating whether or not a gene belongs to our list
+> genes_set_file = data.frame(gene_id=valid_file, metabolic_gene="no")
+> 
+> #add "yes" as another level for metabolic_genes variable
+> levels(genes_set_file$metabolic_gene) = c("no", "yes")
+> 
+> #those genes with an ID included in the metabolic list are considered as metabolic genes
+> genes_set_file[which(genes_set_file$gene_id %in% metabolic_gene_list$ensembl_gene),]$metabolic_gene = "yes"
+> 
+> #check that genes with "no" for metabolic_gene are not present in the list of metabolic genes
+> print("##########################################################################")
+[1] "##########################################################################"
+> print("CHECK THAT GENES WITH 'NO' FOR METABOLIC_GENE ARE NOT PRESENT IN THE LIST OF METABOLIC GENES")
+[1] "CHECK THAT GENES WITH 'NO' FOR METABOLIC_GENE ARE NOT PRESENT IN THE LIST OF METABOLIC GENES"
+> length(which(genes_set_file[which(genes_set_file$metabolic_gene == "no"),]$gene_id %in% metabolic_gene_list$ensembl_gene)) == 0
+[1] TRUE
+> print("##########################################################################")
+[1] "##########################################################################"
+> 
+> #check that genes with "yes" for metabolic_gene are those present in the list of metabolic genes
+> print("##########################################################################")
+[1] "##########################################################################"
+> print("CHECK THAT GENES WITH 'NO' FOR METABOLIC_GENE ARE NOT PRESENT IN THE LIST OF METABOLIC GENES")
+[1] "CHECK THAT GENES WITH 'NO' FOR METABOLIC_GENE ARE NOT PRESENT IN THE LIST OF METABOLIC GENES"
+> length(which(!genes_set_file[which(genes_set_file$metabolic_gene == "yes"),]$gene_id %in% metabolic_gene_list$ensembl_gene)) == 0
+[1] TRUE
+> print("##########################################################################")
+[1] "##########################################################################"
+> 
+> #check we have all metabolic genes
+> print("##########################################################################")
+[1] "##########################################################################"
+> print("CHECK WE HAVE ALL METABOLIC GENES")
+[1] "CHECK WE HAVE ALL METABOLIC GENES"
+> length(which(genes_set_file$metabolic_gene == "yes")) == nrow(metabolic_gene_list)
+[1] TRUE
+> print("##########################################################################")
+[1] "##########################################################################"
+> 
+> 
+> #see the table
+> str(genes_set_file)
+'data.frame':	19252 obs. of  2 variables:
+ $ gene_id       : Factor w/ 19252 levels "ENSG00000000419",..: 2 3 4 5 9 10 44 47 131 168 ...
+ $ metabolic_gene: Factor w/ 2 levels "no","yes": 1 1 1 1 1 1 1 2 1 1 ...
+> head(genes_set_file)
+          gene_id metabolic_gene
+1 ENSG00000000457             no
+2 ENSG00000000460             no
+3 ENSG00000000938             no
+4 ENSG00000000971             no
+5 ENSG00000001460             no
+6 ENSG00000001461             no
+> summary(genes_set_file)
+            gene_id      metabolic_gene
+ ENSG00000000419:    1   no :18214     
+ ENSG00000000457:    1   yes: 1038     
+ ENSG00000000460:    1                 
+ ENSG00000000938:    1                 
+ ENSG00000000971:    1                 
+ ENSG00000001036:    1                 
+ (Other)        :19246                 
+> 
+> #save
+> write.table(genes_set_file, "/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder/genes_set_file.txt", row.names=FALSE, col.names=FALSE, sep=" ", quote = FALSE)
+> 	#separated with space, avoid column and row names, and remove quotes from the gene IDs to match the format used by David in his pipeline.
+> 
+> 
+> 
+> ##################################
+> ######## GENE DIST FILE ##########
+> ##################################
+> 
+> #Step 3: for every gene, compute a file with the distance of every gene from the closest gene of interest (using gene genomic centers as reference points). If a gene is a gene of interest, then the distance is zero. This is done to be able to choose control genes far enough from the genes of interest. The example file is distance_file.txt
+> 
+> 
+> #selected_gene=genes_set_file[94,]
+> dist_close_met = function(selected_gene){
++ 
++ 	#if the selected gene is NOT a metabolic gene
++ 	if(selected_gene$metabolic_gene == "no"){
++ 
++ 		#select the genomic center of the selected gene, we use our curated list of gene coordinates
++ 		selected_gene_center = gene_coords_no_duplicated[which(gene_coords_no_duplicated$gene_id == selected_gene$gene_id),]$middle_point
++ 
++ 		#select the genomic center of the metabolic genes, we use our curated list of gene coordinates
++ 		metabolic_genes_center = gene_coords_no_duplicated[which(gene_coords_no_duplicated$gene_id %in%  genes_set_file[which(genes_set_file$metabolic_gene=="yes"),]$gene_id),]$middle_point
++ 
++ 		#check we have all metabolic genes
++ 		check_1 = length(metabolic_genes_center) == nrow(metabolic_gene_list)
++ 
++ 		#calculate the distance en absolute value between the center of the selected gene and the rest of genes
++ 		distances = abs(selected_gene_center - metabolic_genes_center)
++ 
++ 		#select the min distance between the selected gene and the metabolic genes
++ 		min_dist_met_genes = distances[which(distances == min(distances))]
++ 	}
++ 
++ 	#if the selected gene is a metabolic gene
++ 	if(selected_gene$metabolic_gene == "yes"){
++ 
++ 		#check_1
++ 		check_1=NA
++ 
++ 		#then the distance is zero
++ 		min_dist_met_genes=0
++ 	}
++ 
++ 	final_results = data.frame(selected_gene, min_dist_met_genes=min_dist_met_genes, check_1=check_1)
++ 
++ 	#return the results
++ 	return(final_results)
++ }
+> 
+> #apply the function
+> distance_file = ddply(.data=genes_set_file, .variables="gene_id", .fun=dist_close_met, .inform=TRUE, .parallel=FALSE, .paropts=NULL)
+> 	#".inform=TRUE" generates and shows the errors. This increases the computation time, BUT is very useful to detect problems in your analyses.
+> 	#".parallel" to paralelize with foreach. 
+> 	#".paropts" is used to indicate additional arguments in for each, specially interesting for using the .export and .packages arguments to supply them so that all cluster nodes have the correct environment set up for computing. 
+> 		#ADD PACKAGES USED INSIDE THE FUNCTION
+> 
+> #check we have calculated the distance for all genes
+> print("###################################################")
+[1] "###################################################"
+> print("CHECK WE HAVE CALCULATED THE DISTANCE FOR ALL GENES")
+[1] "CHECK WE HAVE CALCULATED THE DISTANCE FOR ALL GENES"
+> nrow(distance_file) == nrow(genes_set_file)
+[1] TRUE
+> print("###################################################")
+[1] "###################################################"
+> 
+> #check we have all genes from valid file
+> print("###################################################")
+[1] "###################################################"
+> print("CHECK WE HAVE ALL GENES FROM VALID FILE")
+[1] "CHECK WE HAVE ALL GENES FROM VALID FILE"
+> !FALSE %in% c(valid_file %in% distance_file$gene_id)
+[1] TRUE
+> !FALSE %in% c(distance_file$gene_id %in% valid_file)
+[1] TRUE
+> print("###################################################")
+[1] "###################################################"
+> 
+> #check metabolic genes have zero distance and na for check_1
+> print("###################################################")
+[1] "###################################################"
+> print("CHECK METABOLIC GENES HAVE ZERO DISTANCE AND NA FOR CHECK_1")
+[1] "CHECK METABOLIC GENES HAVE ZERO DISTANCE AND NA FOR CHECK_1"
+> !FALSE %in% c(distance_file[which(distance_file$metabolic_gene=="yes"),]$min_dist_met_genes == 0)
+[1] TRUE
+> !FALSE %in% c(is.na(distance_file[which(distance_file$metabolic_gene=="yes"),]$check_1))
+[1] TRUE
+> print("###################################################")
+[1] "###################################################"
+> 
+> #check metabolic genes have zero distance and na for check_1
+> print("###################################################")
+[1] "###################################################"
+> print("CHECK NON-METABOLIC GENES HAVE DISTANCE AND NO NA FOR CHECK_1")
+[1] "CHECK NON-METABOLIC GENES HAVE DISTANCE AND NO NA FOR CHECK_1"
+> !FALSE %in% c(distance_file[which(distance_file$metabolic_gene=="no"),]$min_dist_met_genes != 0)
+[1] TRUE
+> !c(FALSE, NA) %in% c(distance_file[which(distance_file$metabolic_gene=="no"),]$check_1)
+[1] TRUE TRUE
+> print("###################################################")
+[1] "###################################################"
+> 
+> #see the table
+> summary(distance_file)
+            gene_id      metabolic_gene min_dist_met_genes   check_1       
+ ENSG00000000419:    1   no :18214      Min.   :      0.00   Mode:logical  
+ ENSG00000000457:    1   yes: 1038      1st Qu.:  17785.38   TRUE:18214    
+ ENSG00000000460:    1                  Median :  51347.75   NA's:1038     
+ ENSG00000000938:    1                  Mean   : 115231.80                 
+ ENSG00000000971:    1                  3rd Qu.: 122110.62                 
+ ENSG00000001036:    1                  Max.   :2869351.00                 
+ (Other)        :19246                                                     
+> 
+> #select only the gene_id and the distance columns
+> distance_file = distance_file[,which(colnames(distance_file) %in% c("gene_id", "min_dist_met_genes"))]
+> 
+> #save
+> write.table(distance_file, "/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder/distance_file.txt", row.names=FALSE, col.names=FALSE, sep="\t", quote = FALSE)
+> 	#separated with tabs, avoid column and row names, and remove quotes from the gene IDs to match the format used by David in his pipeline.
+> 
+> proc.time()
+   user  system elapsed 
+501.851   9.695 511.548 

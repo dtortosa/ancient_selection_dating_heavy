@@ -2,6 +2,8 @@
 *.pdf
 *.RData
 
+sweep_enrichments/david_pipeline/exdef_folder/ensemble_gene_coords_v99.txt
+sweep_enrichments/david_pipeline/exdef_folder/used_genes.txt
 sweep_enrichments/david_pipeline/exdef_folder/valid_file.txt
 sweep_enrichments/david_pipeline/exdef_folder/Note_for_elife_reviewers.txt
 sweep_enrichments/david_pipeline/exdef_folder/neighbors_number.txt
