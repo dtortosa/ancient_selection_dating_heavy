@@ -39,23 +39,40 @@ require(plyr) #for apply functions across lists and data.frames.
 
 
 ###############################
+######## GENE COORD ###########
+###############################
+
+#we are going to use our curated list of gene coordinates for obtaining many of the files we need for the pipeline to run.
+
+#load our curate list of ensembl genes (hg19)
+gene_coords = read.table("/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/postdoc_enard_lab/projects/method_deep/data/search_diego/results/gene_number_cds_coords.txt", sep="\t", header=TRUE)
+str(gene_coords) 
+head(gene_coords) #this dataset include our curated list of genes with symbol and ensembl ID. It is well curated and has not repeated ensemble IDs.
+
+#remove duplicated
+gene_coords_no_duplicated = gene_coords[which(!duplicated(gene_coords$gene_id)),]
+	#remember that in gene_coords we have several rows (i.e., exons) for the same gene, so the gene IDs are repeated.
+str(gene_coords_no_duplicated) 
+head(gene_coords_no_duplicated)
+
+#check there are no duplicated ids in the gene coord file processed
+print("##########################################################################")
+print("CHECK THERE ARE NO DUPLICATED IDS IN THE GENE COORD FILE PROCESSED")
+print(length(which(duplicated(gene_coords_no_duplicated$gene_id))) == 0)
+print("##########################################################################")
+
+
+
+###############################
 ######## VALID FILE ###########
 ###############################
 
 #valid_file: Creation of file with the genes used for the test. The file contains the Ensembl IDs of the genes that are going to be used by the pipeline. One line in the file = one Ensembl gene ID. Use your own code to generate this file. In the provided folder the example file is valid_file.txt.
 
-#we are going to use our list of genes with coordinates to get the list of gene ids used in the bootstrap. Some of these genes have no confounding factors data, but this is ok. The valid_file example of David also has IDs that are not present in Factors_table and iHS ranks, and vice versa.
-
-#load our curate list of ensembl genes (hg19)
-gene_coords = read.table("/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/postdoc_enard_lab/projects/method_deep/data/search_diego/results/gene_number_cds_coords.txt", sep="\t", header=TRUE)
-str(gene_coords) #this dataset include our curated list of genes with symbol and ensembl ID. It is well curated and has not repeated ensemble IDs.
-
-#remove duplicated
-gene_coords_no_duplicated = gene_coords[which(!duplicated(gene_coords$gene_id)),]
-	#remember that in gene_coords we have several rows (i.e., exons) for the same gene, so the gene IDs are repeated.
+#we are going to use our list of genes with coordinates to get the list of gene ids used in the bootstrap. Some of these genes have no confounding factors data, but this is ok. The valid_file example of David also has IDs that are not present in factors_table and iHS ranks, and vice versa.
 
 #extract the unique ensemble IDs
-valid_file = unique(gene_coords_no_duplicated$gene_id)
+valid_file = gene_coords_no_duplicated$gene_id
 
 #save
 write.table(valid_file, "/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder/valid_file.txt", sep=" ", col.names=FALSE, row.names=FALSE, quote=FALSE)
@@ -63,11 +80,43 @@ write.table(valid_file, "/home/dftortosa/singularity/dating_climate_adaptation/s
 
 
 
+##############################
+######## HGNC FILE ###########
+##############################
+
+#HGNC_file: file with HGNC names for Ensembl genes to be able to exclude HLA (extreme outliers that can bias results) and histone genes (notorious for abundant gene conversion). Replace this file with your own file if needed. This file has two columns: "Ensembl Gene ID" and "HGNC symbol".
+
+#we are going to use our curated list of genes coordinates to get the gene id plus hgnc symbol. Our valid_files, i.e., the list of ensembl IDs considered in the pipeline, comes from here, so it makes sense to use it.
+
+#from our curated list of genes select only the columns used by david
+ensembl_hgnc_file = gene_coords_no_duplicated[, c("gene_id", "hgnc_symbol")]
+
+#check the number of ensembl IDs without gene symbol
+print("##########################################################################")
+print("CHECK THE NUMBER OF ENSEMBL IDS WITHOUT GENE SYMBOL")
+print(length(which(ensembl_hgnc_file$hgnc_symbol == "")))
+print("##########################################################################")
+	#From 19252 genes, 947 have no hgnc gene symbol. This is ok, because the example file of David has 1488 genes without gene symbol from 22080 genes: (1488/22080)*100=6.74, while (947/19252)*100=4.91. Therefore, we do not have a greater proportion of genes without gene symbol in our list.
+
+#match names in the file of David
+colnames(ensembl_hgnc_file)[which(colnames(ensembl_hgnc_file) == "gene_id")] = "Ensembl Gene ID"
+colnames(ensembl_hgnc_file)[which(colnames(ensembl_hgnc_file) == "hgnc_symbol")] = "HGNC symbol"
+
+#see the table
+str(ensembl_hgnc_file)
+head(ensembl_hgnc_file)
+
+#save
+write.table(ensembl_hgnc_file, "/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder/ensembl_hgnc_file.txt", sep="\t", col.names=TRUE, row.names=FALSE, quote=FALSE)
+	#without quotes and separated by tab to follow the exact same format than David used.
+
+
+
 ###############################
 ######## COORD FILE ###########
 ###############################
 
-#create also a file with ensemble coordinates
+#create also a file with ensemble coordinates.
 
 #from our curated list of genes select only the columns used by david
 ensemble_gene_coords_v99 = gene_coords_no_duplicated[, c("chromosome_name", "gene_id", "gene_start", "gene_end")]
@@ -75,14 +124,15 @@ ensemble_gene_coords_v99 = gene_coords_no_duplicated[, c("chromosome_name", "gen
 		#it is needed to include the strand? the variables about gene start and end I used referred only to the forward strand (see gene_coordinates_v10.r; line 1677)
 		#CHECK
 
-#reorder columns
-ensemble_gene_coords_v99 = ensemble_gene_coords_v99[, c("gene_id", "chromosome_name", "gene_start", "gene_end")]
-
 #match names in the file of David
 colnames(ensemble_gene_coords_v99)[which(colnames(ensemble_gene_coords_v99) == "chromosome_name")] = "Chromosome Name"
 colnames(ensemble_gene_coords_v99)[which(colnames(ensemble_gene_coords_v99) == "gene_id")] = "Ensembl Gene ID"
 colnames(ensemble_gene_coords_v99)[which(colnames(ensemble_gene_coords_v99) == "gene_start")] = "Gene Start (bp)"
 colnames(ensemble_gene_coords_v99)[which(colnames(ensemble_gene_coords_v99) == "gene_end")] = "Gene End (bp)"
+
+#see the table
+str(ensemble_gene_coords_v99)
+head(ensemble_gene_coords_v99)
 
 #save
 write.table(ensemble_gene_coords_v99, "/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder/ensemble_gene_coords_v99.txt", sep="\t", col.names=TRUE, row.names=FALSE, quote=FALSE)

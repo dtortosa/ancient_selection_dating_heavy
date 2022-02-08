@@ -16,3 +16,5 @@ cd /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david
 chmod +x ./*.pl
 	#you have to add "./" first so the result of the wild card will be pasted to "./". In that way, you get all the perl script names along with "./", which is needed to use chmod and allow for running.
 
+#run the pipeline using the input parameters file
+./exdef_pipeline.pl exdef_input_parameters_file.txt

@@ -4,6 +4,12 @@
 
 sweep_enrichments/david_pipeline/exdef_folder/ensemble_gene_coords_v99.txt
 sweep_enrichments/david_pipeline/exdef_folder/used_genes.txt
+sweep_enrichments/david_pipeline/exdef_folder/VIPs/
+sweep_enrichments/david_pipeline/exdef_folder/VIPs_parts/
+sweep_enrichments/david_pipeline/exdef_folder/ensembl_hgnc_file.txt
+sweep_enrichments/david_pipeline/exdef_folder/factors_table.txt
+sweep_enrichments/david_pipeline/exdef_folder/nonVIPs/
+sweep_enrichments/david_pipeline/exdef_folder/nonVIPs_parts/
 sweep_enrichments/david_pipeline/exdef_folder/valid_file.txt
 sweep_enrichments/david_pipeline/exdef_folder/Note_for_elife_reviewers.txt
 sweep_enrichments/david_pipeline/exdef_folder/neighbors_number.txt

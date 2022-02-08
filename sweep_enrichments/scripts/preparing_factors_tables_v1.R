@@ -221,5 +221,5 @@ str(factors_table_final)
 head(factors_table_final)
 
 #save
-write.table(factors_table_final, "/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder/Factors_table.txt", row.names=FALSE, col.names=FALSE, sep=" ", quote=FALSE)
+write.table(factors_table_final, "/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder/factors_table.txt", row.names=FALSE, col.names=FALSE, sep=" ", quote=FALSE)
 	#separated with space, avoid column and row names, and remove quotes from the gene IDs to match the format used by David in his pipeline.
