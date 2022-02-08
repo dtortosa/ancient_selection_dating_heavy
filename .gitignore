@@ -2,7 +2,7 @@
 *.pdf
 *.RData
 
-sweep_enrichments/david_pipeline/exdef_folder/ensemble_gene_coords_v99.txt
+sweep_enrichments/david_pipeline/exdef_folder/ensembl_gene_coords_v99.txt
 sweep_enrichments/david_pipeline/exdef_folder/used_genes.txt
 sweep_enrichments/david_pipeline/exdef_folder/VIPs/
 sweep_enrichments/david_pipeline/exdef_folder/VIPs_parts/

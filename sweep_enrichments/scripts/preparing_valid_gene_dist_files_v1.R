@@ -135,7 +135,7 @@ str(ensemble_gene_coords_v99)
 head(ensemble_gene_coords_v99)
 
 #save
-write.table(ensemble_gene_coords_v99, "/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder/ensemble_gene_coords_v99.txt", sep="\t", col.names=TRUE, row.names=FALSE, quote=FALSE)
+write.table(ensemble_gene_coords_v99, "/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder/ensembl_gene_coords_v99.txt", sep="\t", col.names=TRUE, row.names=FALSE, quote=FALSE)
 	#without quotes and separated by tab to follow the exact same format than David used.
 
 
@@ -178,7 +178,6 @@ print("CHECK WE HAVE ALL METABOLIC GENES")
 length(which(genes_set_file$metabolic_gene == "yes")) == nrow(metabolic_gene_list)
 print("##########################################################################")
 
-
 #see the table
 str(genes_set_file)
 head(genes_set_file)
@@ -194,10 +193,13 @@ write.table(genes_set_file, "/home/dftortosa/singularity/dating_climate_adaptati
 ######## GENE DIST FILE ##########
 ##################################
 
-#Step 3: for every gene, compute a file with the distance of every gene from the closest gene of interest (using gene genomic centers as reference points). If a gene is a gene of interest, then the distance is zero. This is done to be able to choose control genes far enough from the genes of interest. The example file is distance_file.txt
+#Step 3: compute a file with the distance of every gene from the closest gene of interest (using gene genomic centers as reference points). If a gene is a gene of interest, then the distance is zero. This is done to be able to choose control genes far enough from the genes of interest. The example file is distance_file.txt
 
 
-#selected_gene=genes_set_file[94,]
+##write a function to do so
+#for debugging
+#selected_gene=genes_set_file[1,] #non-metabolic gene
+#selected_gene=genes_set_file[94,] #metabolic gene
 dist_close_met = function(selected_gene){
 
 	#if the selected gene is NOT a metabolic gene
@@ -216,7 +218,7 @@ dist_close_met = function(selected_gene){
 		distances = abs(selected_gene_center - metabolic_genes_center)
 
 		#select the min distance between the selected gene and the metabolic genes
-		min_dist_met_genes = distances[which(distances == min(distances))]
+		min_dist_met_genes = min(distances)
 	}
 
 	#if the selected gene is a metabolic gene
@@ -229,6 +231,7 @@ dist_close_met = function(selected_gene){
 		min_dist_met_genes=0
 	}
 
+	#bind the results
 	final_results = data.frame(selected_gene, min_dist_met_genes=min_dist_met_genes, check_1=check_1)
 
 	#return the results
