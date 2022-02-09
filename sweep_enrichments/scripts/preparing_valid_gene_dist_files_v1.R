@@ -119,14 +119,14 @@ write.table(ensembl_hgnc_file, "/home/dftortosa/singularity/dating_climate_adapt
 #create also a file with ensemble coordinates.
 
 #from our curated list of genes select only the columns used by david
-ensemble_gene_coords_v99 = gene_coords_no_duplicated[, c("chromosome_name", "gene_id", "gene_start", "gene_end")]
+ensemble_gene_coords_v99 = gene_coords_no_duplicated[, c("gene_id", "chromosome_name", "gene_start", "gene_end")]
 	#we are not using the strand
 		#it is needed to include the strand? the variables about gene start and end I used referred only to the forward strand (see gene_coordinates_v10.r; line 1677)
 		#CHECK
 
 #match names in the file of David
-colnames(ensemble_gene_coords_v99)[which(colnames(ensemble_gene_coords_v99) == "chromosome_name")] = "Chromosome Name"
 colnames(ensemble_gene_coords_v99)[which(colnames(ensemble_gene_coords_v99) == "gene_id")] = "Ensembl Gene ID"
+colnames(ensemble_gene_coords_v99)[which(colnames(ensemble_gene_coords_v99) == "chromosome_name")] = "Chromosome Name"
 colnames(ensemble_gene_coords_v99)[which(colnames(ensemble_gene_coords_v99) == "gene_start")] = "Gene Start (bp)"
 colnames(ensemble_gene_coords_v99)[which(colnames(ensemble_gene_coords_v99) == "gene_end")] = "Gene End (bp)"
 
@@ -211,11 +211,12 @@ dist_close_met = function(selected_gene){
 		#select the genomic center of the metabolic genes, we use our curated list of gene coordinates
 		metabolic_genes_center = gene_coords_no_duplicated[which(gene_coords_no_duplicated$gene_id %in%  genes_set_file[which(genes_set_file$metabolic_gene=="yes"),]$gene_id),]$middle_point
 
-		#check we have all metabolic genes
-		check_1 = length(metabolic_genes_center) == nrow(metabolic_gene_list)
+		#check we have all metabolic genes and just one position for the selected gene
+		check_1 = length(metabolic_genes_center) == nrow(metabolic_gene_list) & length(selected_gene_center) == 1
 
 		#calculate the distance en absolute value between the center of the selected gene and the rest of genes
 		distances = abs(selected_gene_center - metabolic_genes_center)
+			#we are not interested in the sense of the difference, but just the distance. We do not care if a metabolic gene is before or after a control gene, but the number of bases between them.
 
 		#select the min distance between the selected gene and the metabolic genes
 		min_dist_met_genes = min(distances)

@@ -17,13 +17,10 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
-[1] FALSE
-Warning message:
-In file.remove(".RData") :
-  cannot remove file '.RData', reason 'No such file or directory'
+[1] TRUE
          used (Mb) gc trigger (Mb) max used (Mb)
-Ncells 125133  6.7     350000 18.7   201111 10.8
-Vcells 242045  1.9    8388608 64.0   997272  7.7
+Ncells 123903  6.7     350000 18.7   199378 10.7
+Vcells 239924  1.9    8388608 64.0   985637  7.6
 Loading required package: colorout
 Loading required package: SistWrapper
 > #!/usr/bin/env Rscript
@@ -39,6 +36,8 @@ Loading required package: SistWrapper
 > ###################################################################################
 > ########################### PREPARE FACTORS TABLE #################################
 > ###################################################################################
+> 
+> #create a table file that contains all the confounding factors that the bootstrap test will control for. First column is Ensembl gene ID, next columns are each factor that will be matched. The example file is Factors_table.txt
 > 
 > #IMPORTANT: 
 > 	#Note that this script was wrote and run in 2022 using the version of April 28th 2022 of David's pipeline.
@@ -712,9 +711,9 @@ List of 4
 6 3.627723556            4.2105662536       16880 0.0010000000            0
 > 
 > #save
-> write.table(factors_table_final, "/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder/Factors_table.txt", row.names=FALSE, col.names=FALSE, sep=" ", quote=FALSE)
-> 	#avoid column and row names, and remove quotes from the gene IDs to match the format used by David in his pipeline.
+> write.table(factors_table_final, "/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder/factors_table.txt", row.names=FALSE, col.names=FALSE, sep=" ", quote=FALSE)
+> 	#separated with space, avoid column and row names, and remove quotes from the gene IDs to match the format used by David in his pipeline.
 > 
 > proc.time()
    user  system elapsed 
-  2.457   0.056   2.514 
+  2.471   0.047   2.513 
