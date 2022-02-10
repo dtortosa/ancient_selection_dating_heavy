@@ -8,13 +8,13 @@
 	#/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder/exdef_pipeline_manual.pdf
 
 #remove the folder with the pipeline
-#rm -rf /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder
+rm -rf /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder
 	#r: removes directories and their content recursively
 	#f: forces the removal of all files or directories
 	#https://phoenixnap.com/kb/remove-directory-linux
 
 #copy the folder with the original pipeline to the folder where we will run the pipeline
-#cp -avr /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/original_files/exdef_folder /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/
+cp -avr /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/original_files/exdef_folder /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/
 	#a: preserve the specific attributes (e.g., mode)
 	#v: verbose output
 	#r: copy directories recursively
@@ -26,6 +26,7 @@ cd /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/scrip
 #run the scripts for preparing the files needed for the pipeline
 R CMD BATCH preparing_valid_gene_dist_files_v1.R
 R CMD BATCH preparing_factors_tables_v1.R
+R CMD BATCH statistics_ranks_v1.R
 
 #go to the folder with the pipeline
 cd /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder

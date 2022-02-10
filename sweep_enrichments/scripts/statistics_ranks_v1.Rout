@@ -1,0 +1,577 @@
+
+R version 3.6.3 (2020-02-29) -- "Holding the Windsock"
+Copyright (C) 2020 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+[1] FALSE
+Warning message:
+In file.remove(".RData") :
+  cannot remove file '.RData', reason 'No such file or directory'
+         used (Mb) gc trigger (Mb) max used (Mb)
+Ncells 125133  6.7     350000 18.7   201111 10.8
+Vcells 242045  1.9    8388608 64.0   997272  7.7
+Loading required package: colorout
+Loading required package: SistWrapper
+> #!/usr/bin/env Rscript
+> 
+> #This is done to have the possibility to run this script as an executable: 'chmod +x myscript.R' and then ' ./myscript.R'. If you run the script as 'R CMD BATCH myscript.R', i THINK this is not used, because it is annotated. 
+> 	#https://www.jonzelner.net/statistics/make/docker/reproducibility/2016/05/31/script-is-a-program/
+> 
+> #In case you run this script as an executable, you can save the output without warnings "./myscript.R > myscript.Rout" or with errors "./myscript.R &> myscript.Rout"
+> 	#https://askubuntu.com/questions/420981/how-do-i-save-terminal-output-to-a-file
+> 
+> 
+> 
+> ###########################################################################
+> ########################### PREPARE RANKS #################################
+> ###########################################################################
+> 
+> #create tables with the sweep rank files to test. The first column in a sweep file is the Ensembl gene IDs (if you are not using Ensembl human gene annotations, add ENSG to the start of your gene IDs). The following columns corresponding to gene ranks, for all the populations included, from the gene with the strongest sweep signal to the one with the lowest signal in each specific population. For example, the all_ihsfreqabs_ranks_”size” files have 27 columns with 26 corresponding to gene sweep ranks according to iHS in the 26 populations from 1000 Genomes phase 3.
+> 
+> #IMPORTANT: 
+> 	#Note that this script was wrote and run in 2022 using the version of April 28th 2022 of David's pipeline.
+> 		#The pipeline of David has been downloaded from 
+> 			#https://github.com/DavidPierreEnard/Gene_Set_Enrichment_Pipeline
+> 			#last commit done on Apr 28, 2021
+> 				#7b755c0c23dd4d7c3f54c4b53e74366e4041ac8f 
+> 
+> 	#Manual from David
+> 		#/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder/exdef_pipeline_manual.pdf
+> 
+> 
+> 
+> #################################################################
+> ####################### PREVIOUS VERSIONS #######################
+> #################################################################
+> 
+> 
+> 
+> #################################################################
+> ####################### REQUIRED PACKAGES #######################
+> #################################################################
+> 
+> require(dplyr) #for full_join
+Loading required package: dplyr
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+> require(foreach) #for parallel
+Loading required package: foreach
+> require(doParallel) #for parallel
+Loading required package: doParallel
+Loading required package: iterators
+Loading required package: parallel
+> 
+> 
+> 
+> #######################################
+> ############ FILES PREPARATION ########
+> #######################################
+> 
+> #use the valid_file as source for the gene IDs
+> valid_file=read.table("/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder/valid_file.txt", sep="\t", header=FALSE)
+> 	#this file includes all the ensembl gene IDs used in the pipeline, which in our case come from our curated list of gene coordinates.
+> 
+> #make a new folder in data/ to save summary statistics data
+> system("mkdir /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics")
+mkdir: cannot create directory ‘/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics’: File exists
+> 
+> #add the summary statistics
+> #iHS from our calculations and remove raw files and number iHS datapoints
+> system("cp -avr /home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/; cd /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows; rm *_raw_v1.txt.gz; rm *_n_ihs_gene_windows_final_v1.txt.gz")
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/ESND_mean_ihs_gene_windows_raw_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/ESND_mean_ihs_gene_windows_raw_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/YRID_mean_ihs_gene_windows_raw_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/YRID_mean_ihs_gene_windows_raw_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/MSLD_mean_ihs_gene_windows_raw_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/MSLD_mean_ihs_gene_windows_raw_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/LWKD_mean_ihs_gene_windows_raw_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/LWKD_mean_ihs_gene_windows_raw_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/ACBD_mean_ihs_gene_windows_raw_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/ACBD_mean_ihs_gene_windows_raw_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/GWDD_mean_ihs_gene_windows_raw_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/GWDD_mean_ihs_gene_windows_raw_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/ASWD_mean_ihs_gene_windows_raw_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/ASWD_mean_ihs_gene_windows_raw_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/PURD_mean_ihs_gene_windows_raw_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/PURD_mean_ihs_gene_windows_raw_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/IBSD_mean_ihs_gene_windows_raw_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/IBSD_mean_ihs_gene_windows_raw_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/CLMD_mean_ihs_gene_windows_raw_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/CLMD_mean_ihs_gene_windows_raw_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/TSID_mean_ihs_gene_windows_raw_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/TSID_mean_ihs_gene_windows_raw_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/CEUD_mean_ihs_gene_windows_raw_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/CEUD_mean_ihs_gene_windows_raw_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/FIND_mean_ihs_gene_windows_raw_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/FIND_mean_ihs_gene_windows_raw_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/PJLD_mean_ihs_gene_windows_raw_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/PJLD_mean_ihs_gene_windows_raw_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/ITUD_mean_ihs_gene_windows_raw_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/ITUD_mean_ihs_gene_windows_raw_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/STUD_mean_ihs_gene_windows_raw_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/STUD_mean_ihs_gene_windows_raw_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/BEBD_mean_ihs_gene_windows_raw_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/BEBD_mean_ihs_gene_windows_raw_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/GBRD_mean_ihs_gene_windows_raw_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/GBRD_mean_ihs_gene_windows_raw_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/GIHD_mean_ihs_gene_windows_raw_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/GIHD_mean_ihs_gene_windows_raw_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/MXLD_mean_ihs_gene_windows_raw_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/MXLD_mean_ihs_gene_windows_raw_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/CHSD_mean_ihs_gene_windows_raw_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/CHSD_mean_ihs_gene_windows_raw_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/JPTD_mean_ihs_gene_windows_raw_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/JPTD_mean_ihs_gene_windows_raw_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/KHVD_mean_ihs_gene_windows_raw_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/KHVD_mean_ihs_gene_windows_raw_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/CHBD_mean_ihs_gene_windows_raw_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/CHBD_mean_ihs_gene_windows_raw_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/CDXD_mean_ihs_gene_windows_raw_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/CDXD_mean_ihs_gene_windows_raw_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/PELD_mean_ihs_gene_windows_raw_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/PELD_mean_ihs_gene_windows_raw_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/CLMD_mean_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/CLMD_mean_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/TSID_mean_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/TSID_mean_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/CEUD_mean_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/CEUD_mean_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/IBSD_mean_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/IBSD_mean_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/MXLD_mean_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/MXLD_mean_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/FIND_mean_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/FIND_mean_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/ASWD_mean_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/ASWD_mean_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/BEBD_mean_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/BEBD_mean_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/ITUD_mean_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/ITUD_mean_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/YRID_mean_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/YRID_mean_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/ACBD_mean_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/ACBD_mean_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/ESND_mean_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/ESND_mean_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/GBRD_mean_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/GBRD_mean_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/PJLD_mean_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/PJLD_mean_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/LWKD_mean_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/LWKD_mean_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/PURD_mean_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/PURD_mean_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/MSLD_mean_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/MSLD_mean_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/GWDD_mean_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/GWDD_mean_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/STUD_mean_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/STUD_mean_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/GIHD_mean_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/GIHD_mean_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/KHVD_mean_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/KHVD_mean_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/JPTD_mean_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/JPTD_mean_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/CHSD_mean_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/CHSD_mean_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/CDXD_mean_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/CDXD_mean_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/CHBD_mean_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/CHBD_mean_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/PELD_mean_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/PELD_mean_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/ESND_n_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/ESND_n_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/YRID_n_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/YRID_n_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/MSLD_n_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/MSLD_n_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/LWKD_n_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/LWKD_n_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/ACBD_n_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/ACBD_n_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/GWDD_n_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/GWDD_n_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/ASWD_n_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/ASWD_n_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/PURD_n_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/PURD_n_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/CLMD_n_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/CLMD_n_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/PJLD_n_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/PJLD_n_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/ITUD_n_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/ITUD_n_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/TSID_n_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/TSID_n_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/BEBD_n_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/BEBD_n_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/IBSD_n_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/IBSD_n_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/FIND_n_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/FIND_n_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/STUD_n_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/STUD_n_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/CEUD_n_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/CEUD_n_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/GIHD_n_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/GIHD_n_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/GBRD_n_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/GBRD_n_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/MXLD_n_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/MXLD_n_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/KHVD_n_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/KHVD_n_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/JPTD_n_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/JPTD_n_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/CHBD_n_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/CHBD_n_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/CDXD_n_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/CDXD_n_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/CHSD_n_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/CHSD_n_ihs_gene_windows_final_v1.txt.gz'
+'/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/PELD_n_ihs_gene_windows_final_v1.txt.gz' -> '/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows/PELD_n_ihs_gene_windows_final_v1.txt.gz'
+> 	#a: preserve the specific attributes (e.g., mode)
+> 	#v: verbose output
+> 	#r: copy directories recursively
+> 	#https://www.cyberciti.biz/faq/copy-folder-linux-command-line/
+> 
+> 
+> 
+> #####################################
+> ########### WRITE FUNCTION ##########
+> #####################################
+> 
+> #for debugging
+> #statistics=c("ihs"); pop_group="eas"; window_sizes=c("50kb", "1000kb")
+> statistics_ranks = function(statistics, pop_group, window_sizes){
++ 
++ 	##load the selected statistic
++ 	#if ihs
++ 	if("ihs" %in% statistics){
++ 
++ 		#select the folder with this statistic
++ 		paths_to_statistics = "/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows"
++ 
++ 		#load the files of this statistic across populations
++ 		list_files_statistic_paths = list.files(paths_to_statistics, pattern="_mean_ihs_gene_windows_final_v1.txt.gz", full=TRUE)
++ 	}
++ 
++ 
++ 	##load the data for the selected population group
++ 	#if eas
++ 	if(pop_group == "eas"){
++ 		pops = c("CDX", "CHB", "CHS", "JPT", "KHV")
++ 	}
++ 	
++ 	#select only those paths belonging to the selected populations
++ 	list_files_statistic_paths_selected = list_files_statistic_paths[which(grepl(paste(pops, collapse="|"), list_files_statistic_paths, fixed=FALSE))]
++ 		#we use fixed=FALSE so we can use a regular expression, which is matching for each pop name (separated by "|")
++ 
++ 	#check that we have the paths for all selected pops
++ 	print("########################################")
++ 	print("CHECK THAT WE HAVE THE PATHS FOR ALL SELECTED POPS")
++ 	print(length(list_files_statistic_paths_selected) == length(pops))
++ 	print("########################################")
++ 
++ 	#load the data for all the selected populations
++ 	list_files_statistic = lapply(list_files_statistic_paths_selected, read.table, sep="\t", header=TRUE)
++ 
++ 	##calculate the ranks per window size
++ 
++ 	#write function
++ 	#for debugging
++ 	#window_size = window_sizes[2]
++ 	ranks_cal_window = function(window_size){
++ 
++ 		#open a data.frame to save the ranks for all populations as different columns. The first column will be gene_id (obtained from valid_file)
++ 		final_ranks = data.frame(gene_id=valid_file$V1)
++ 
++ 		#for each population
++ 		for(i in 1:length(list_files_statistic_paths_selected)){
++ 
++ 			#select the [i] path
++ 			selected_path = list_files_statistic_paths_selected[[i]]
++ 
++ 			##extract the population name
++ 			#split the whole path
++ 			pop_name_raw = strsplit(selected_path, split="/|_")
++ 			#select the element with the population name
++ 			pop_name = pop_name_raw[[1]][which(grepl(paste(pops, collapse="|"), pop_name_raw[[1]]))]
++ 				#we use fixed=FALSE so we can use a regular expression, which is matching for each pop name (separated by "|")
++ 
++ 			#extract the data for the selected population
++ 			selected_pop = list_files_statistic[[i]]
++ 				#remember that list_files_statistic comes from list_files_statistic_paths_selected, so we can use the same index
++ 
++ 			#select the columns of gene id and the selected window size
++ 			selected_pop_subset = selected_pop[, which(grepl(paste("gene_id|", window_size, sep=""), colnames(selected_pop), fixed=FALSE))]
++ 				#we use fixed=FALSE so we can use a regular expression, which is matching for several conditions
++ 
++ 			#change column name of the selected statistic and size
++ 			colnames(selected_pop_subset)[which(grepl(window_size, colnames(selected_pop_subset), fixed=TRUE))] = "summary_statistic"
++ 
++ 
++ 			##make the rank
++ 			#calculate a new order of the rows based on the statistic value on decreasing order
++ 			decreasing_order_statistic = order(selected_pop_subset$summary_statistic, decreasing=TRUE)
++ 				#we select the column with the selected statistic and size
++ 			#reorder
++ 			selected_pop_subset_ordered = selected_pop_subset[decreasing_order_statistic, ]
++ 			
++ 			#make the rank
++ 			selected_pop_subset_ordered$rank = 1:nrow(selected_pop_subset_ordered)
++ 			#set the name of the column rank as the pop name
++ 			colnames(selected_pop_subset_ordered)[which(colnames(selected_pop_subset_ordered) == "rank")] = pop_name
++ 
++ 
++ 			##prepare the final file
++ 			#remove NAs for the statistic
++ 			selected_pop_subset_ordered = selected_pop_subset_ordered[which(!is.na(selected_pop_subset_ordered$summary_statistic)),]
++ 				#select the column with the selected statistic and size
++ 
++ 			#check the calculation of the rank with sort
++ 			print("########################################")
++ 			print("CHECK THE CALCULATION OF THE RANK WITH SORT")
++ 			print(identical(selected_pop_subset_ordered$summary_statistic, sort(selected_pop_subset$summary_statistic, decreasing=TRUE)))
++ 			print("########################################")
++ 
++ 			#merge the new columns used ensembl gene id
++ 			final_ranks = full_join(final_ranks, selected_pop_subset_ordered[, c("gene_id", pop_name)], by="gene_id")
++ 				#this can be done with full_join, which is similar to use merge with all=TRUE
++ 					#https://stackoverflow.com/questions/21841146/is-there-an-r-dplyr-method-for-merge-with-all-true
++ 					#https://stackoverflow.com/questions/28250948/how-to-dplyrinner-join-multi-tbls-or-data-frames-in-r
++ 					#https://www.datasciencemadesimple.com/join-in-r-merge-in-r/
++ 		}
++ 
++ 		#remove NAs, i.e., genes that do not have statistic data for all studied populations
++ 		final_ranks = na.omit(final_ranks)
++ 
++ 		#see the table
++ 		summary(final_ranks)
++ 		str(final_ranks)
++ 
++ 		#print the population names in order
++ 		print("########################################")
++ 		print("PRINT THE POPULATION NAMES IN ORDER")
++ 		print(paste(colnames(final_ranks)[which(!colnames(final_ranks) == "gene_id")], collapse=","))
++ 		print("########################################")
++ 
++ 
++ 		#save the data
++ 		write.table(final_ranks, paste("/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder/", statistics, "_", pop_group, "_ranks_", window_size, sep=""), sep=" ", col.names=FALSE, row.names=FALSE, quote=FALSE) 
++ 	}
++ 
++ 	#apply the function across the window sizes
++ 	lapply(window_sizes, ranks_cal_window)
++ }
+> 
+> 
+> 
+> #####################################
+> ###### PARALLELIZE THE PROCESS ######
+> #####################################
+> 
+> #statistics
+> statistics_rank = c("ihs")
+> 
+> #set up cluster
+> clust <- makeCluster(length(statistics_rank), outfile="") #outfile let you to see the output in the terminal "https://blog.revolutionanalytics.com/2015/02/monitoring-progress-of-a-foreach-parallel-job.html"
+[1] FALSE
+Warning message:
+In file.remove(".RData") :
+  cannot remove file '.RData', reason 'No such file or directory'
+         used (Mb) gc trigger (Mb) max used (Mb)
+Ncells 125122  6.7     350000 18.7   201010 10.8
+Vcells 242042  1.9    8388608 64.0   997250  7.7
+Loading required package: colorout
+Loading required package: SistWrapper
+starting worker pid=10435 on localhost:11060 at 08:45:08.119
+> registerDoParallel(clust)
+> 
+> #run the function for East Asian populations
+> foreach(i=statistics_rank, .packages=c("plyr", "dplyr")) %dopar% {
++     statistics_ranks(statistics=i, pop_group="eas", window_sizes=c("50kb", "100kb", "200kb", "500kb", "1000kb"))
++ } 
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:plyr’:
+
+    arrange, count, desc, failwith, id, mutate, rename, summarise,
+    summarize
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+[1] "########################################"
+[1] "CHECK THAT WE HAVE THE PATHS FOR ALL SELECTED POPS"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+'data.frame':	17996 obs. of  6 variables:
+ $ gene_id: Factor w/ 19252 levels "ENSG00000000419",..: 2 3 4 5 9 10 44 47 131 168 ...
+ $ CDXD   : int  4158 6600 16261 17884 11511 14149 17674 12526 14899 1333 ...
+ $ CHBD   : int  5331 7592 15816 15578 12963 17317 17629 3736 12633 1256 ...
+ $ CHSD   : int  3833 4044 14627 18012 11296 15216 17589 10033 12351 3068 ...
+ $ JPTD   : int  3543 5571 8152 15392 10707 16708 14859 2047 16905 1323 ...
+ $ KHVD   : int  3823 7290 12640 17845 9218 9553 7399 5755 14598 1376 ...
+ - attr(*, "na.action")= 'omit' Named int  16 17 82 119 144 204 358 361 362 477 ...
+  ..- attr(*, "names")= chr  "16" "17" "82" "119" ...
+[1] "########################################"
+[1] "PRINT THE POPULATION NAMES IN ORDER"
+[1] "CDXD,CHBD,CHSD,JPTD,KHVD"
+[1] "########################################"
+[1] "########################################"
+[1] "CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+'data.frame':	18251 obs. of  6 variables:
+ $ gene_id: Factor w/ 19252 levels "ENSG00000000419",..: 2 3 4 5 9 10 44 47 131 168 ...
+ $ CDXD   : int  3595 3911 15215 14216 15705 14809 17313 9182 16281 661 ...
+ $ CHBD   : int  4928 6586 17567 15003 16739 17218 15886 4563 10811 875 ...
+ $ CHSD   : int  3559 2445 17284 17298 13377 15960 18025 11076 11210 1462 ...
+ $ JPTD   : int  3330 5380 12121 16036 13709 17120 16854 3658 15765 553 ...
+ $ KHVD   : int  4086 5526 16520 15313 10052 11148 8510 11123 15485 1359 ...
+ - attr(*, "na.action")= 'omit' Named int  16 17 144 204 358 361 362 477 478 502 ...
+  ..- attr(*, "names")= chr  "16" "17" "144" "204" ...
+[1] "########################################"
+[1] "PRINT THE POPULATION NAMES IN ORDER"
+[1] "CDXD,CHBD,CHSD,JPTD,KHVD"
+[1] "########################################"
+[1] "########################################"
+[1] "CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+'data.frame':	18480 obs. of  6 variables:
+ $ gene_id: Factor w/ 19252 levels "ENSG00000000419",..: 2 3 4 5 9 10 44 47 131 168 ...
+ $ CDXD   : int  5617 4007 3085 4215 17276 17418 17353 8744 17233 995 ...
+ $ CHBD   : int  7131 7834 17436 7246 16699 16973 17481 7515 14134 1010 ...
+ $ CHSD   : int  4295 3156 15801 3609 17402 16661 18293 10837 14816 1417 ...
+ $ JPTD   : int  4697 5689 17974 7084 17208 17416 16541 8969 12009 498 ...
+ $ KHVD   : int  6596 6934 17907 4458 13397 14087 13049 16801 16699 1523 ...
+ - attr(*, "na.action")= 'omit' Named int  16 144 204 358 361 362 477 478 502 527 ...
+  ..- attr(*, "names")= chr  "16" "144" "204" "358" ...
+[1] "########################################"
+[1] "PRINT THE POPULATION NAMES IN ORDER"
+[1] "CDXD,CHBD,CHSD,JPTD,KHVD"
+[1] "########################################"
+[1] "########################################"
+[1] "CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+'data.frame':	18709 obs. of  6 variables:
+ $ gene_id: Factor w/ 19252 levels "ENSG00000000419",..: 2 3 4 5 9 10 44 47 131 168 ...
+ $ CDXD   : int  4791 3203 890 10292 17892 17911 10463 12277 17426 5018 ...
+ $ CHBD   : int  6073 4571 6527 10619 15673 16898 11366 11799 15857 3767 ...
+ $ CHSD   : int  3738 2417 6163 6884 15406 17040 15076 12328 16500 5037 ...
+ $ JPTD   : int  8172 5204 12865 10060 18326 18360 17289 13798 15583 1981 ...
+ $ KHVD   : int  5581 4498 9239 8852 15783 15965 6587 14257 17892 8123 ...
+ - attr(*, "na.action")= 'omit' Named int  144 204 358 361 362 477 478 502 527 551 ...
+  ..- attr(*, "names")= chr  "144" "204" "358" "361" ...
+[1] "########################################"
+[1] "PRINT THE POPULATION NAMES IN ORDER"
+[1] "CDXD,CHBD,CHSD,JPTD,KHVD"
+[1] "########################################"
+[1] "########################################"
+[1] "CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+'data.frame':	18813 obs. of  6 variables:
+ $ gene_id: Factor w/ 19252 levels "ENSG00000000419",..: 2 3 4 5 9 10 44 47 131 168 ...
+ $ CDXD   : int  3830 1456 4187 15265 18513 18169 2060 14394 17779 10798 ...
+ $ CHBD   : int  3850 1454 13905 10693 18199 17919 3555 12079 16041 7229 ...
+ $ CHSD   : int  2717 888 13969 4261 18461 18313 2398 11174 15174 10658 ...
+ $ JPTD   : int  5048 1566 17851 11998 18737 18685 6116 14459 15965 5356 ...
+ $ KHVD   : int  3423 1286 11546 5743 18042 17378 1373 14203 17913 14496 ...
+ - attr(*, "na.action")= 'omit' Named int  144 358 361 362 477 478 502 527 551 552 ...
+  ..- attr(*, "names")= chr  "144" "358" "361" "362" ...
+[1] "########################################"
+[1] "PRINT THE POPULATION NAMES IN ORDER"
+[1] "CDXD,CHBD,CHSD,JPTD,KHVD"
+[1] "########################################"
+[[1]]
+[[1]][[1]]
+NULL
+
+[[1]][[2]]
+NULL
+
+[[1]][[3]]
+NULL
+
+[[1]][[4]]
+NULL
+
+[[1]][[5]]
+NULL
+
+
+> 
+> #stop the cluster 
+> stopCluster(clust)
+> 
+> #you can use a second argument within foreach
+> if(FALSE){ #dummy example
++ 
++ 	#write dummy function
++ 	dummy_function = function(x, y){
++ 		#for each element of y
++ 		for(i in 1:length(y)){
++ 
++ 			#sum it the value of x
++ 			print(x+y[i])
++ 		}
++ 	}
++ 
++ 	#dummy vector of Xs
++ 	dumy_x = c(1,2)
++ 
++ 	#run the function across X using in each case two Y values
++ 	clust=makeCluster(length(dumy_x), outfile="")
++ 	registerDoParallel(clust)
++ 	foreach(i=dumy_x, .packages=c("plyr", "dplyr")) %dopar% {
++ 	    dummy_function(x=i, y=c(1,2))
++ 	} #the result is 2, 3, 3, 4, which makes sense. It has run X=1, and then sum each Y value (1+1 and 1+3), then repeat for X=2.
++ 	stopCluster(clust)
++ }
+> 
+> proc.time()
+   user  system elapsed 
+  0.542   0.068   2.532 

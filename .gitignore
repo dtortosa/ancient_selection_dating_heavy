@@ -1,6 +1,9 @@
 *.tgz
 *.pdf
 *.RData
+ihs_eur_ranks*
+ihs_eas_ranks*
+ihs_all_ranks*
 
 sweep_enrichments/david_pipeline/exdef_folder/ensembl_gene_coords_v99.txt
 sweep_enrichments/david_pipeline/exdef_folder/used_genes.txt

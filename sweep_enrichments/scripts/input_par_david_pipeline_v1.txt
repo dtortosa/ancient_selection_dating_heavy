@@ -1,5 +1,5 @@
 #Sweep_files_prefix: the start of the name of the sweep rank files to test. These files have to provide the ranking of genes according to the selected summary statistic in windows of the indicated sizes. The first column is the ensembl ID, followed by the corresponding gene ranks for all populations included. From the gene with the strongest signal to the lowest in population (column). For example, all_ihsfreqabs_ranks refers to the average iHS in absolute value.
-Sweep_files_prefix all_ihsfreqafr_ranks
+Sweep_files_prefix ihs_all_ranks
 #
 #Sweep_sizes: the list of the different window sizes used to rank the sweeps
 #Sweep_sizes 50kb_100kb_200kb_500kb_1000kb_1kb_2kb_3kb_4kb_5kb
@@ -63,12 +63,12 @@ Gene_coords_file ensembl_gene_coords_v99.txt
 Threshold_list 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
 #
 #Populations_list: list of populations as they are ordered in the sweep files. It is the user’s responsibility to have a sweep file with the corresponding populations as indicated in Populations_list.
-#Populations_list ACB,ASW,BEB,CDX,CEU,CHB,CHS,CLM,ESN,FIN,GBR,GIH,GWD,IBS,ITU,JPT,KHV,LWK,MSL,MXL,PEL,PJL,PUR,STU,TSI,YRI
-Populations_list ESN,GWD,LWK,MSL,YRI
+Populations_list ACBD,ASWD,BEBD,CDXD,CEUD,CHBD,CHSD,CLMD,ESND,FIND,GBRD,GIHD,GWDD,IBSD,ITUD,JPTD,KHVD,LWKD,MSLD,MXLD,PELD,PJLD,PURD,STUD,TSID,YRID
+#Populations_list CDXD,CHBD,CHSD,JPTD,KHVD
 #
 #Groups_list: a list of groups in which the populations from Population_list fall. Group_list has the same number of elements as Population_list. For each population in Population_list, the corresponding element in Group_list is the name of the group that the corresponding population belongs to.
-#Groups_list MIS,MIS,SAS,EAS,EUR,EAS,EAS,AMR,AFR,EUR,EUR,SAS,AFR,EUR,SAS,EAS,EAS,AFR,AFR,AMR,AMR,SAS,AMR,SAS,EUR,AFR
-Groups_list AFR,AFR,AFR,AFR,AFR
+Groups_list MIS,MIS,SAS,EAS,EUR,EAS,EAS,AMR,AFR,EUR,EUR,SAS,AFR,EUR,SAS,EAS,EAS,AFR,AFR,AMR,AMR,SAS,AMR,SAS,EUR,AFR
+#Groups_list EAS,EAS,EAS,EAS,EAS
 #
 #Pop_interest: the population of particular interest to adjust the precision and speed of the script that counts sweeps (see step 7 below). Can be either a single population, or one of the groups defined in Groups_list, or all the populations in the sweep file (then Pop_interest is set to “All”)
 Pop_interest ESN
