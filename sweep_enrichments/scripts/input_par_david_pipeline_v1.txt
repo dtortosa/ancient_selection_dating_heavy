@@ -73,7 +73,7 @@ Groups_list MIS,MIS,SAS,EAS,EUR,EAS,EAS,AMR,AFR,EUR,EUR,SAS,AFR,EUR,SAS,EAS,EAS,
 #Pop_interest: the population of particular interest to adjust the precision and speed of the script that counts sweeps (see step 7 below). Can be either a single population, or one of the groups defined in Groups_list, or all the populations in the sweep file (then Pop_interest is set to “All”)
 Pop_interest ESN
 #
-#Run_FDR: yes or no. Run the FDR or not.
+#Run_FDR: yes or no. Run the FDR or not. This is only run if there is a significant enrichment of excess detected in the bootstrap.
 Run_FDR yes
 #
 #Run_shuffling: yes or no. Run the shuffling of genome for FDR analysis or not, in the case it has already been done (the same shuffled genomes may be reused for a different set of genes of interest, or for re-running the same test, for example if a previous attempt to run the test was interrupted, but the genome shuffling step had completed).
