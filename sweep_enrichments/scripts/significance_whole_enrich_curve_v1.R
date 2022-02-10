@@ -140,11 +140,12 @@ curve_significance = function(statistics, pop_group, window_sizes){
 			#check that works with two paths
 				#paths_to_data = final_indexes[2:3,]$path
 
-		#WE HAVE TO READ THE FILES WITHPUT THE LAST ROW, BECAUSE IT GIVES PROBLEMS
+		#WE HAVE TO READ THE FILES WITHPUT THE LAST ROW, BECAUSE IT GIVES PROBLEMS (only one number)
 
-		read.table(as.character(paths_to_data[1]), sep="\t", header=FALSE, nrow=length(count.fields(paths_to_data[1]))-1)
+		read.table(as.character(paths_to_data[1]), sep="\t", header=FALSE, nrow=length(readLines(paths_to_data[1]))-1)
+			#https://stat.ethz.ch/pipermail/r-help/2008-January/152807.html
 
-		lapply(paths_to_data, read.table, sep=
+		lapply(paths_to_data, read.table, sep=)
 
 
 	}
