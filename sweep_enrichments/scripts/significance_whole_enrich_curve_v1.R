@@ -30,20 +30,27 @@
 ####################### REQUIRED PACKAGES #######################
 #################################################################
 
-require(dplyr) #for full_join
+require(dplyr) #for full_join and bind_row
 require(plyr)
 require(foreach) #for parallel
 require(doParallel) #for parallel
 
 
 
-#####################################
-########### WRITE FUNCTION ##########
-#####################################
+########################################
+########### WRITE FUNCTION #############
+########################################
 
 #for debugging
-#pop_group="all"; statistics=c("ihs"); window_sizes=c("50kb", "1000kb"); pop_p_val=c("EUR")
+#pop_group="all"; statistics=c("ihs"); window_sizes=c("50kb", "1000kb"); pop_p_val=c("EUR", "EAS")
 curve_significance = function(pop_group, statistics, window_sizes, pop_p_val){
+
+	##Function for obtaining the significance of the enrichment of metabolic genes in rank thresholds considering specific summary statistics, window sizes and populations from the pipeline of David
+		#pop_group: The population group considered to run the pipeline. For this group, the enrichment was calculated for different statistics and window sizes and subpopulations.
+		#statistics: The summary statistics you want to consider to calculate the significance of the enrichment
+		#window_sizes: The window sizes you want to consider to calculate the significance of the enrichment
+		#pop_p_val: The subpopulations you want to consider to calculate the significance of the enrichment
+			#If you have analyzed "all" populations, then you can select any possible subset of populations for calculating the p-value.
 
 	#get the paths of all files in the output folder
 	paths_results_raw = list.files("/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder/test_outputs", full=TRUE)
@@ -62,12 +69,18 @@ curve_significance = function(pop_group, statistics, window_sizes, pop_p_val){
 
 	#select only those belonging to the conditions
 	paths_results = paths_results_raw[which(conditions_paths)]
-	
+
 	#extract the name of each final path, i.e., the statistic, window size and genome
 	#we use paths_to_data, which is the input for getting all the outputs, so we have the same order
 	final_files_names_raw = strsplit(as.character(paths_results), split="/")
 	final_files_names = sapply(final_files_names_raw, "[", length(final_files_names_raw[[1]]))
 		#we can use the length of the first path split as reference because all paths should have the same length as split. We are splitting by "/", all the files are in the same folder with the same subfolders
+
+	#check we have selected the correct paths
+	print("########################################################")
+	print(paste(paste(pop_p_val, collapse="|"), ": CHECK WE HAVE SELECTED THE CORRECT PATHS", sep="")); print(length(which(!grepl(pop_group, final_files_names, fixed=TRUE) & !grepl(paste(window_sizes, collapse="|"), final_files_names, fixed=FALSE) & !grepl(paste(statistics, collapse="|"), final_files_names, fixed=FALSE))) == 0)
+	print("########################################################")
+		#we should have no paths without any of the selected populations, window sizes and statistics
 
 
 	##get ids of fake genomes
@@ -82,7 +95,7 @@ curve_significance = function(pop_group, statistics, window_sizes, pop_p_val){
 		#split
 		split_path = strsplit(as.character(path), split="_")[[1]]
 
-		#positions of the indexes
+		#positions of the indexes (two last positions)
 		position_to_take = c(length(split_path)-1, length(split_path))
 		
 		#paste the id
@@ -100,8 +113,7 @@ curve_significance = function(pop_group, statistics, window_sizes, pop_p_val){
 
 	#check we have the paths for all fake genomes
 	print("########################################################")
-	print("CHECK WE HAVE THE PATHS FOR ALL FAKE GENOMES")
-	print(nrow(unique_fake_ids_paths) == length(paths_results_fake))
+	print(paste(paste(pop_p_val, collapse="|"), ": CHECK WE HAVE THE PATHS FOR ALL FAKE GENOMES", sep="")); print(nrow(unique_fake_ids_paths) == length(paths_results_fake))
 	print("########################################################")
 
 	
@@ -112,10 +124,9 @@ curve_significance = function(pop_group, statistics, window_sizes, pop_p_val){
 	#save the IDs with the corresponding paths
 	unique_real_ids_paths = data.frame(ids="real", path=paths_results_real)
 
-	#check we have the paths for all fake genomes
+	#check we have the paths for the real genome
 	print("########################################################")
-	print("CHECK WE HAVE THE PATHS FOR ALL FAKE GENOMES")
-	print(nrow(unique_real_ids_paths) == length(paths_results_real))
+	print(paste(paste(pop_p_val, collapse="|"), ": CHECK WE HAVE THE PATHS FOR THE REAL GENOME", sep="")); print(nrow(unique_real_ids_paths) == length(paths_results_real))
 	print("########################################################")
 
 
@@ -125,6 +136,7 @@ curve_significance = function(pop_group, statistics, window_sizes, pop_p_val){
 
 	#get the unique indexes
 	unique_indexes = unique(final_indexes$ids)
+		#we can have several outputs for the same genome (real or fake), because for each window size and statistic a different file is created.
 
 
 	##calculate the enrichment for each index, i.e., for the real genome and each of the fake genomes
@@ -137,8 +149,6 @@ curve_significance = function(pop_group, statistics, window_sizes, pop_p_val){
 		#select the paths for all files of the corresponding real/fake genome
 		paths_to_data = final_indexes[which(final_indexes$ids == unique_index),]$path
 			#we only have to match by index, but not by pop, statistic or window size as we have already matched by these conditions the paths
-			#check that works with two paths
-				#paths_to_data = final_indexes[2:3,]$path
 
 		#for debugging
 		#paths_to_load=paths_to_data[2]
@@ -186,17 +196,31 @@ curve_significance = function(pop_group, statistics, window_sizes, pop_p_val){
 
 		#check we have the correct number of rows and all the required outputs
 		print("########################################################")
-		print("CHECK WE HAVE THE CORRECT NUMBER OF ROWS AND ALL THE REQUIRED OUTPUTS")
-		print(nrow(all_outputs) == sum(sapply(list_outputs, nrow)))
-		print(identical(unique(all_outputs$id), outputs_names))
+		print(paste(paste(pop_p_val, collapse="|"), " - genome ", unique_index, ": CHECK WE HAVE THE CORRECT NUMBER OF ROWS AND ALL THE REQUIRED OUTPUTS", sep="")); print(nrow(all_outputs) == sum(sapply(list_outputs, nrow))); print(identical(unique(all_outputs$id), outputs_names))
 		print("########################################################")
 
+		
+		##select the interest populations
 		#remove ":" from the population names
-		all_outputs$pop = unlist(strsplit(as.character(all_outputs$pop), split=":"))
+		pop_no_dots = unlist(strsplit(as.character(all_outputs$pop), split=":"))
+		
+		#check we have removed correctly dots from pops names
+		print("########################################################")
+		print(paste(paste(pop_p_val, collapse="|"), " - genome ", unique_index, ": CHECK WE HAVE REMOVED CORRECTLY DOTS FROM POPS NAMES", sep="")); print(identical(as.character(all_outputs$pop), paste(pop_no_dots, ":", sep="")))
+		print("########################################################")
+
+		#save in the table the new pop variable
+		all_outputs$pop = pop_no_dots
 
 		#select the interest populations
-		all_outputs_subset = all_outputs[which(grepl(paste(pop_p_val, collapse="|"), all_outputs$pop)),]
-	
+		all_outputs_subset = all_outputs[which(grepl(paste(pop_p_val, collapse="|"), all_outputs$pop, fixed=FALSE)),]
+
+		#check we have selected the enrichemnt only for the p-value pops
+		print("########################################################")
+		print(paste(paste(pop_p_val, collapse="|"), " - genome ", unique_index, ": CHECK WE HAVE SELECTED THE ENRICHEMNT ONLY FOR THE P-VALUE POPS", sep="")); print(length(which(!grepl(paste(pop_p_val, collapse="|"), all_outputs_subset$pop, fixed=FALSE))) == 0)
+		print("########################################################")
+			#no output should belongs to a non-selected population
+
 		#make an enrichment plot only for the real genome
 		if(unique_index == "real"){
 
@@ -237,7 +261,9 @@ curve_significance = function(pop_group, statistics, window_sizes, pop_p_val){
 
 		#remove the ID column
 		results_enrichment$id = NULL
-	} else {
+	} else { #if not
+
+		#we have a problem, stop
 		stop("WE HAVE A PROBLEM WITH THE GENOME IDs")
 	}
 
@@ -259,8 +285,7 @@ curve_significance = function(pop_group, statistics, window_sizes, pop_p_val){
 
 	#check the number indicated as FDR number is equal to the number of fake genomes we have
 	print("########################################################")
-	print("CHECK THE NUMBER INDICATED AS FDR NUMBER IS EQUAL TO THE NUMBER OF FAKE GENOMES WE HAVE")
-	print(as.character(nrow(subset_fake_genomes)) == fdr_number)
+	print(paste(paste(pop_p_val, collapse="|"), ": CHECK THE NUMBER INDICATED AS FDR NUMBER IS EQUAL TO THE NUMBER OF FAKE GENOMES WE HAVE", sep="")); print(as.character(nrow(subset_fake_genomes)) == fdr_number)
 	print("########################################################")
 		#remember that at the end of this script we have calculated the sum of the difference between interest genes and controls within each fake genome, so we should have one value per fake genome.
 
