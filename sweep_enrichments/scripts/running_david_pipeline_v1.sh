@@ -38,3 +38,9 @@ chmod +x ./*.pl
 
 #run the pipeline using the input parameters file created by me in the script file
 ./exdef_pipeline.pl /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/scripts/input_par_david_pipeline_v1.txt
+
+#come back to the folder with the scripts
+cd /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/scripts
+
+#run the scripts for processing the output of the pipeline
+R CMD BATCH significance_whole_enrich_curve_v1.R

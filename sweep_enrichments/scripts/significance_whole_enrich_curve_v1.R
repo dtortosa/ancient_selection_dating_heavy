@@ -27,55 +27,6 @@
 
 
 #################################################################
-####################### PREVIOUS VERSIONS #######################
-#################################################################
-
-
-
-#################################################################
-####################### REQUIRED PACKAGES #######################
-#################################################################
-
-
-
-
-
-
-#!/usr/bin/env Rscript
-
-#This is done to have the possibility to run this script as an executable: 'chmod +x myscript.R' and then ' ./myscript.R'. If you run the script as 'R CMD BATCH myscript.R', i THINK this is not used, because it is annotated. 
-	#https://www.jonzelner.net/statistics/make/docker/reproducibility/2016/05/31/script-is-a-program/
-
-#In case you run this script as an executable, you can save the output without warnings "./myscript.R > myscript.Rout" or with errors "./myscript.R &> myscript.Rout"
-	#https://askubuntu.com/questions/420981/how-do-i-save-terminal-output-to-a-file
-
-
-
-###########################################################################
-########################### PREPARE RANKS #################################
-###########################################################################
-
-#create tables with the sweep rank files to test. The first column in a sweep file is the Ensembl gene IDs (if you are not using Ensembl human gene annotations, add ENSG to the start of your gene IDs). The following columns corresponding to gene ranks, for all the populations included, from the gene with the strongest sweep signal to the one with the lowest signal in each specific population. For example, the all_ihsfreqabs_ranks_”size” files have 27 columns with 26 corresponding to gene sweep ranks according to iHS in the 26 populations from 1000 Genomes phase 3.
-
-#IMPORTANT: 
-	#Note that this script was wrote and run in 2022 using the version of April 28th 2022 of David's pipeline.
-		#The pipeline of David has been downloaded from 
-			#https://github.com/DavidPierreEnard/Gene_Set_Enrichment_Pipeline
-			#last commit done on Apr 28, 2021
-				#7b755c0c23dd4d7c3f54c4b53e74366e4041ac8f 
-
-	#Manual from David
-		#/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder/exdef_pipeline_manual.pdf
-
-
-
-#################################################################
-####################### PREVIOUS VERSIONS #######################
-#################################################################
-
-
-
-#################################################################
 ####################### REQUIRED PACKAGES #######################
 #################################################################
 
@@ -91,62 +42,266 @@ require(doParallel) #for parallel
 #####################################
 
 #for debugging
-#statistics=c("ihs"); pop_group="all"; window_sizes=c("50kb", "1000kb")
-curve_significance = function(statistics, pop_group, window_sizes){
+#pop_group="all"; statistics=c("ihs"); window_sizes=c("50kb", "1000kb"); pop_p_val=c("EUR")
+curve_significance = function(pop_group, statistics, window_sizes, pop_p_val){
 
-	pattern_to_search = paste(c(statistics, pop_group, window_sizes), collapse="|")
+	#get the paths of all files in the output folder
+	paths_results_raw = list.files("/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder/test_outputs", full=TRUE)
 
-	paths_results = list.files("/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder/test_outputs", pattern=pattern_to_search, full=TRUE)
+	#extract the name of each path, i.e., the statistic, window size and genome
+	#we use paths_to_data, which is the input for getting all the outputs, so we have the same order
+	files_names_raw = strsplit(as.character(paths_results_raw), split="/")
+	files_names = sapply(files_names_raw, "[", length(files_names_raw[[1]]))
+		#we can use the length of the first path split as reference because all paths should have the same length as split. We are splitting by "/", all the files are in the same folder with the same subfolders
 
+	#select paths of those files belonging to the selected population AND window size AND statistic
+	conditions_paths = grepl(pop_group, files_names, fixed=TRUE) & grepl(paste(window_sizes, collapse="|"), files_names, fixed=FALSE) & grepl(paste(statistics, collapse="|"), files_names, fixed=FALSE)
+		#fixed=FALSE because we are using regular expressions.
+		#fixed=TRUE for populations because we are only to use one population, either "all" or a subgroup of populations
+		#we want only those having the selected window sizes ONLY for the selected statistics AND selected population
 
-	paths_results_fake = paths_results[which(grepl("fake", paths_results))]
+	#select only those belonging to the conditions
+	paths_results = paths_results_raw[which(conditions_paths)]
 	
+	#extract the name of each final path, i.e., the statistic, window size and genome
+	#we use paths_to_data, which is the input for getting all the outputs, so we have the same order
+	final_files_names_raw = strsplit(as.character(paths_results), split="/")
+	final_files_names = sapply(final_files_names_raw, "[", length(final_files_names_raw[[1]]))
+		#we can use the length of the first path split as reference because all paths should have the same length as split. We are splitting by "/", all the files are in the same folder with the same subfolders
 
+
+	##get ids of fake genomes
+	#extract the paths of the fake genomes
+	paths_results_fake = paths_results[which(grepl("fake", final_files_names))]
+	
+	#function
 	#for debugging
-	#path=paths_results_fake[2,]
+	#path=paths_results_fake[2]
 	get_ids_fake = function(path){
 
+		#split
 		split_path = strsplit(as.character(path), split="_")[[1]]
 
-		position_to_take = c(length(split_path), length(split_path)-1)
+		#positions of the indexes
+		position_to_take = c(length(split_path)-1, length(split_path))
+		
+		#paste the id
 		id = paste(split_path[position_to_take], collapse="_")
+		
+		#return
 		return(id)
 	}
 
+	#apply the function across all paths to get the IDs of all fake genomes
 	unique_fake_ids = unlist(lapply(paths_results_fake, get_ids_fake))
 
+	#save the IDs with the corresponding paths
 	unique_fake_ids_paths = data.frame(ids=unique_fake_ids, path=paths_results_fake)
 
-	length(unique_fake_ids_paths) == length(unique_fake_ids_paths)
+	#check we have the paths for all fake genomes
+	print("########################################################")
+	print("CHECK WE HAVE THE PATHS FOR ALL FAKE GENOMES")
+	print(nrow(unique_fake_ids_paths) == length(paths_results_fake))
+	print("########################################################")
 
 	
-	paths_results_real = paths_results[which(!grepl("fake", paths_results))]
+	##get ids of real genome
+	#extract the paths for the outputs of the real genome
+	paths_results_real = paths_results[which(!grepl("fake", final_files_names))]
 
+	#save the IDs with the corresponding paths
 	unique_real_ids_paths = data.frame(ids="real", path=paths_results_real)
 
+	#check we have the paths for all fake genomes
+	print("########################################################")
+	print("CHECK WE HAVE THE PATHS FOR ALL FAKE GENOMES")
+	print(nrow(unique_real_ids_paths) == length(paths_results_real))
+	print("########################################################")
 
+
+	##bind all the paths and indexes
+	#bind
 	final_indexes = rbind.data.frame(unique_real_ids_paths, unique_fake_ids_paths)
 
+	#get the unique indexes
 	unique_indexes = unique(final_indexes$ids)
 
 
+	##calculate the enrichment for each index, i.e., for the real genome and each of the fake genomes
+	
+	#write function
 	#for debugging
 	#unique_index=unique_indexes[2]
-	calc_enrichment = function(index){
-
+	calc_enrichment = function(unique_index){
 
 		#select the paths for all files of the corresponding real/fake genome
 		paths_to_data = final_indexes[which(final_indexes$ids == unique_index),]$path
+			#we only have to match by index, but not by pop, statistic or window size as we have already matched by these conditions the paths
 			#check that works with two paths
 				#paths_to_data = final_indexes[2:3,]$path
 
-		#WE HAVE TO READ THE FILES WITHPUT THE LAST ROW, BECAUSE IT GIVES PROBLEMS (only one number)
+		#for debugging
+		#paths_to_load=paths_to_data[2]
+		read_fdr_outputs_func = function(paths_to_load){
 
-		read.table(as.character(paths_to_data[1]), sep="\t", header=FALSE, nrow=length(readLines(paths_to_data[1]))-1)
-			#https://stat.ethz.ch/pipermail/r-help/2008-January/152807.html
+			#convert the path to character to avoid problems with read.table and readLines
+			paths_to_load = as.character(paths_to_load)
 
-		lapply(paths_to_data, read.table, sep=)
+			##read the selected table avoiding the last row, if not, it gives and errors
+			#open the connection to load use readLines
+			con_file = file(paths_to_load)
+			#read the table without the last line
+			table_loaded = read.table(paths_to_load, sep=" ", header=FALSE, nrow=length(readLines(con_file))-1)
+				#for that, we have to read the file with readLines (gives no error) and calculate the number of lines (the path has to be converted to "connection using "file"). Then, you can subtract 1 to get the total number of lines you want to read.
+					#https://stat.ethz.ch/pipermail/r-help/2008-January/152807.html
+					#https://stackoverflow.com/questions/25298840/con-not-a-connection-error-in-r-program
+			#close the connection
+			close(con_file)
+				#https://stackoverflow.com/questions/6304073/warning-closing-unused-connection-n
 
+			#change column names
+			colnames(table_loaded) = c("threshold", "pop", "int_ctrl_ratio", "interest_genes", "control_genes", "unknown_A", "unknown_B", "unknown_C")
 
+			#return the table
+			return(table_loaded)
+		}
+
+		#load all the outputs for the selected index
+		list_outputs = lapply(paths_to_data, read_fdr_outputs_func)
+
+		#extract the name of each final path, i.e., the statistic, window size and genome
+		#we use paths_to_data, which is the input for getting all the outputs, so we have the same order
+		outputs_names_raw = strsplit(as.character(paths_to_data), split="/")
+		outputs_names = sapply(outputs_names_raw, "[", length(outputs_names_raw[[1]]))
+			#we can use the length of the first path split as reference because all paths should have the same length as split. We are splitting by "/", all the files are in the same folder with the same subfolders
+
+		#change the column names
+		names(list_outputs) = outputs_names
+
+		#bind all the tables into a single data.frame
+		all_outputs = bind_rows(list_outputs, .id="id")
+			#When row-binding, columns are matched by name, and any missing columns will be filled with NA.
+			#id. : Data frame identifier. When .id is supplied, a new column of identifiers is created to link each row to its original data frame. The labels are taken from the named arguments to bind_rows(). When a list of data frames is supplied, the labels are taken from the names of the list. If no names are found a numeric sequence is used instead.
+			#https://dplyr.tidyverse.org/reference/bind.html
+
+		#check we have the correct number of rows and all the required outputs
+		print("########################################################")
+		print("CHECK WE HAVE THE CORRECT NUMBER OF ROWS AND ALL THE REQUIRED OUTPUTS")
+		print(nrow(all_outputs) == sum(sapply(list_outputs, nrow)))
+		print(identical(unique(all_outputs$id), outputs_names))
+		print("########################################################")
+
+		#remove ":" from the population names
+		all_outputs$pop = unlist(strsplit(as.character(all_outputs$pop), split=":"))
+
+		#select the interest populations
+		all_outputs_subset = all_outputs[which(grepl(paste(pop_p_val, collapse="|"), all_outputs$pop)),]
+	
+		#make an enrichment plot only for the real genome
+		if(unique_index == "real"){
+
+			#open the pdf
+			pdf(paste("/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/results/figures/", paste(pop_p_val, collapse="_"), "_", paste(statistics, collapse="_"), "_", paste(window_sizes, collapse="_"), "_fold_enrichment.pdf", sep=""))
+
+			#plot enrichment of each threshold
+			plot(x=all_outputs_subset$threshold, y=all_outputs_subset$int_ctrl_ratio, xlim=rev(range(all_outputs_subset$threshold)), xlab="Rank threshold", ylab="Fold enrichment", type="l", lwd=2, main=paste(paste(pop_p_val, collapse="|"), " - ", paste(statistics, collapse="|"), " - ", paste(window_sizes, collapse="|")))
+				#we to use reverse in xlim for plotting first the bigger ranks
+					#https://www.r-graph-gallery.com/77-turn-y-axis-upside-down.html
+
+			#close the plot
+			dev.off()
+		}
+
+		#sum the difference between interest genes and controls across the tops and windows
+		int_ctrl_differ = sum(all_outputs_subset$interest_genes - all_outputs_subset$control_genes)
+			#we are not interested in absolute value. If the controls are higher than interest genes we need the negative value to decrease the overall sum
+
+		#return
+		return(cbind.data.frame(unique_index, int_ctrl_differ))
 	}
+
+	#apply the function
+	results_enrichment_list = lapply(unique_indexes, calc_enrichment)
+
+	#set names
+	names(results_enrichment_list) = unique_indexes
+
+	#bind all the tables into a single data.frame
+	results_enrichment = bind_rows(results_enrichment_list, .id="id")
+		#When row-binding, columns are matched by name, and any missing columns will be filled with NA.
+		#id. : Data frame identifier. When .id is supplied, a new column of identifiers is created to link each row to its original data frame. The labels are taken from the named arguments to bind_rows(). When a list of data frames is supplied, the labels are taken from the names of the list. If no names are found a numeric sequence is used instead.
+		#https://dplyr.tidyverse.org/reference/bind.html
+
+	#check genome IDs
+	if(identical(results_enrichment$id, as.character(results_enrichment$unique_index))){
+
+		#remove the ID column
+		results_enrichment$id = NULL
+	} else {
+		stop("WE HAVE A PROBLEM WITH THE GENOME IDs")
+	}
+
+
+	##check that we have the correct number of fake genomes
+	#select only the fake genomes
+	subset_fake_genomes = results_enrichment[which(results_enrichment$unique_index!="real"),]
+
+	#open a connection to the file with the input parameters for the pipeline
+	check_con=file("/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/scripts/input_par_david_pipeline_v1.txt")
+
+	#read the lines of the file
+	lines_input_par_pipeline = readLines(check_con)
+
+	#extract the row with FDR and avoid the lines with comments (i.e., "#")
+	fdr_number_raw = lines_input_par_pipeline[which(grepl("FDR_number", lines_input_par_pipeline, fixed=TRUE) & !grepl("#", lines_input_par_pipeline, fixed=TRUE))]
+		#fixed=TRUE because we are not using regular expressions
+	fdr_number = strsplit(fdr_number_raw, split="FDR_number ")[[1]][2]
+
+	#check the number indicated as FDR number is equal to the number of fake genomes we have
+	print("########################################################")
+	print("CHECK THE NUMBER INDICATED AS FDR NUMBER IS EQUAL TO THE NUMBER OF FAKE GENOMES WE HAVE")
+	print(as.character(nrow(subset_fake_genomes)) == fdr_number)
+	print("########################################################")
+		#remember that at the end of this script we have calculated the sum of the difference between interest genes and controls within each fake genome, so we should have one value per fake genome.
+
+	#close the connection
+	close(check_con)
+		#https://stackoverflow.com/questions/6304073/warning-closing-unused-connection-n
+
+
+	##calculate a p-value for the enrichment
+	#calculate the number of fake genomes having a value of enrichment equal or higher than that of the real genome
+	random_higher = length(which(subset_fake_genomes$int_ctrl_differ >= results_enrichment[which(results_enrichment$unique_index=="real"),]$int_ctrl_differ))
+		#these are fake genomes where there is a larger enrichment of interest genes in rank thresholds compared to the real genome
+
+	#Calculate p.vale as the probability of a random genome having an enrichment of metabolic genes in rank thresholds equal or higher than the real genome
+	p_value = prop.test(x=random_higher, n=nrow(subset_fake_genomes)) 
+		#https://stats.stackexchange.com/questions/167164/test-of-equal-proportions-with-zero-successes
+
+	#print the FINAL P-VALUE
+	print("########################################################")
+	print(paste("PVALUE of ", paste(pop_p_val, collapse="|"), " - ", paste(statistics, collapse="|"), " - ", paste(window_sizes, collapse="|"), " - ", nrow(subset_fake_genomes), " random_genomes", sep="")); print(p_value)
+	print("########################################################")
 }
+
+
+
+#####################################
+###### PARALLELIZE THE PROCESS ######
+#####################################
+
+#statistics
+pops_to_get_results = list("EUR", "EAS", "SAS", "AMR", "AFR", c("EUR", "EAS"))
+	#we can get the significance not only for a pre-defined group of pops but also for the combination of two groups like EUR and EAS
+
+#set up cluster
+clust <- makeCluster(length(pops_to_get_results), outfile="") #outfile let you to see the output in the terminal "https://blog.revolutionanalytics.com/2015/02/monitoring-progress-of-a-foreach-parallel-job.html"
+registerDoParallel(clust)
+
+#run the function for all populations
+foreach(i=pops_to_get_results, .packages=c("plyr", "dplyr")) %dopar% {
+	curve_significance(pop_group="all", statistics=c("ihs"), window_sizes=c("50kb", "100kb", "200kb", "500kb", "1000kb"), pop_p_val=i)
+}
+
+#stop the cluster 
+stopCluster(clust)
