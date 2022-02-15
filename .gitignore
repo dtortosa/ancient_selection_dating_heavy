@@ -2,6 +2,9 @@
 *.tgz
 *.pdf
 *.RData
+eur_ranks_*
+eas_ranks_*
+all_ranks_*
 ihs_eur_ranks*
 ihs_eas_ranks*
 ihs_all_ranks*

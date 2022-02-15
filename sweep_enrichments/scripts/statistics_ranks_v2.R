@@ -230,7 +230,7 @@ statistics_ranks = function(statistics, pop_group, window_sizes){
 		print("########################################")
 
 		#save the data
-		write.table(final_ranks, paste(path_outside_pipeline, "/", statistics, "_", pop_group, "_ranks_", window_size, sep=""), sep=" ", col.names=FALSE, row.names=FALSE, quote=FALSE) 
+		write.table(final_ranks, paste(path_outside_pipeline, "/", pop_group, "_ranks_", statistics, "_", window_size, sep=""), sep=" ", col.names=FALSE, row.names=FALSE, quote=FALSE) 
 	}
 
 	#apply the function across the window sizes

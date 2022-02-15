@@ -1,5 +1,5 @@
 #Sweep_files_prefix: the start of the name of the sweep rank files to test. These files have to provide the ranking of genes according to the selected summary statistic in windows of the indicated sizes. The first column is the ensembl ID, followed by the corresponding gene ranks for all populations included. From the gene with the strongest signal to the lowest in population (column). For example, all_ihsfreqabs_ranks refers to the average iHS in absolute value.
-Sweep_files_prefix ihs_all_ranks
+Sweep_files_prefix all_ranks
 #
 #Sweep_sizes: the list of the different window sizes used to rank the sweeps
 #Sweep_sizes 50kb_100kb_200kb_500kb_1000kb_1kb_2kb_3kb_4kb_5kb

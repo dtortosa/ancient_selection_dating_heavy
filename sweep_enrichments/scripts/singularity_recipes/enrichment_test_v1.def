@@ -167,8 +167,11 @@ From: ubuntu:16.04 #When using the library bootstrap agent, the From keyword bec
 
 %runscript
 
-	#run the master bash script
-	./opt/scripts/running_david_pipeline_v2.sh
+	#go to the folder with scripts
+	cd /opt/scripts
+
+	#run the master scripts
+	./running_david_pipeline_v2.sh
 
 
 
