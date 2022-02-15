@@ -157,6 +157,7 @@ curve_significance = function(pop_group, statistics, window_sizes, pop_p_val){
 			#convert the path to character to avoid problems with read.table and readLines
 			paths_to_load = as.character(paths_to_load)
 
+
 			##read the selected table avoiding the last row, if not, it gives and errors
 			#open the connection to load use readLines
 			con_file = file(paths_to_load)
@@ -168,6 +169,7 @@ curve_significance = function(pop_group, statistics, window_sizes, pop_p_val){
 			#close the connection
 			close(con_file)
 				#https://stackoverflow.com/questions/6304073/warning-closing-unused-connection-n
+
 
 			#change column names
 			colnames(table_loaded) = c("threshold", "pop", "int_ctrl_ratio", "interest_genes", "control_genes", "unknown_A", "unknown_B", "unknown_C")
@@ -213,22 +215,26 @@ curve_significance = function(pop_group, statistics, window_sizes, pop_p_val){
 		all_outputs$pop = pop_no_dots
 
 		#select the interest populations
-		all_outputs_subset = all_outputs[which(grepl(paste(pop_p_val, collapse="|"), all_outputs$pop, fixed=FALSE)),]
+		all_outputs = all_outputs[which(all_outputs$pop %in% pop_p_val),]
 
 		#check we have selected the enrichemnt only for the p-value pops
 		print("########################################################")
-		print(paste(paste(pop_p_val, collapse="|"), " - genome ", unique_index, ": CHECK WE HAVE SELECTED THE ENRICHEMNT ONLY FOR THE P-VALUE POPS", sep="")); print(length(which(!grepl(paste(pop_p_val, collapse="|"), all_outputs_subset$pop, fixed=FALSE))) == 0)
+		print(paste(paste(pop_p_val, collapse="|"), " - genome ", unique_index, ": CHECK WE HAVE SELECTED THE ENRICHEMNT ONLY FOR THE P-VALUE POPS", sep="")); print(length(which(!all_outputs$pop %in% pop_p_val))==0)
 		print("########################################################")
 			#no output should belongs to a non-selected population
 
-		#make an enrichment plot only for the real genome
-		if(unique_index == "real"){
+		#make an enrichment plot only for the real genome and if we have 200kb windows (intermediate size)
+		outputs_plotting = which(grepl("200kb", all_outputs$id, fixed=TRUE))
+		if(unique_index == "real" & length(outputs_plotting)>0){
+
+			#select outputs for plotting
+			all_outputs_plot = all_outputs[outputs_plotting,]
 
 			#open the pdf
-			pdf(paste("/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/results/figures/", paste(pop_p_val, collapse="_"), "_", paste(statistics, collapse="_"), "_", paste(window_sizes, collapse="_"), "_fold_enrichment.pdf", sep=""))
+			pdf(paste("/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/results/figures/", paste(pop_p_val, collapse="_"), "_", paste(statistics, collapse="_"), "_200kb_fold_enrichment.pdf", sep=""))
 
 			#plot enrichment of each threshold
-			plot(x=all_outputs_subset$threshold, y=all_outputs_subset$int_ctrl_ratio, xlim=rev(range(all_outputs_subset$threshold)), xlab="Rank threshold", ylab="Fold enrichment", type="l", lwd=2, main=paste(paste(pop_p_val, collapse="|"), " - ", paste(statistics, collapse="|"), " - ", paste(window_sizes, collapse="|")))
+			plot(x=all_outputs_plot$threshold, y=all_outputs_plot$int_ctrl_ratio, xlim=rev(range(all_outputs_plot$threshold)), xlab="Rank threshold", ylab="Fold enrichment", type="l", lwd=2, main=paste(paste(pop_p_val, collapse="|"), " - ", paste(statistics, collapse="|"), " - 200kb"))
 				#we to use reverse in xlim for plotting first the bigger ranks
 					#https://www.r-graph-gallery.com/77-turn-y-axis-upside-down.html
 
@@ -237,8 +243,8 @@ curve_significance = function(pop_group, statistics, window_sizes, pop_p_val){
 		}
 
 		#sum the difference between interest genes and controls across the tops and windows
-		int_ctrl_differ = sum(all_outputs_subset$interest_genes - all_outputs_subset$control_genes)
-			#we are not interested in absolute value. If the controls are higher than interest genes we need the negative value to decrease the overall sum
+		int_ctrl_differ = sum(all_outputs$interest_genes - all_outputs$control_genes)
+			#we are not interested in absolute value. If the controls are higher than interest genes we need the negative value to decrease the overall sum.
 
 		#return
 		return(cbind.data.frame(unique_index, int_ctrl_differ))
@@ -295,12 +301,20 @@ curve_significance = function(pop_group, statistics, window_sizes, pop_p_val){
 
 
 	##calculate a p-value for the enrichment
+	#extract the observed enrichment
+	observed_enrichment = results_enrichment[which(results_enrichment$unique_index=="real"),]$int_ctrl_differ
+
 	#calculate the number of fake genomes having a value of enrichment equal or higher than that of the real genome
-	random_higher = length(which(subset_fake_genomes$int_ctrl_differ >= results_enrichment[which(results_enrichment$unique_index=="real"),]$int_ctrl_differ))
+	fake_equal_higher = subset_fake_genomes[which(subset_fake_genomes$int_ctrl_differ >= observed_enrichment),]
 		#these are fake genomes where there is a larger enrichment of interest genes in rank thresholds compared to the real genome
 
-	#Calculate p.vale as the probability of a random genome having an enrichment of metabolic genes in rank thresholds equal or higher than the real genome
-	p_value = prop.test(x=random_higher, n=nrow(subset_fake_genomes)) 
+	#check we have selected correct fake genomes to calculate p-values
+	print("########################################################")
+	print(paste(paste(pop_p_val, collapse="|"), ": CHECK WE HAVE SELECTED CORRECT FAKE GENOMES TO CALCULATE P-VALUES:", sep="")); print(length(which(random_equal_higher$int_ctrl_differ<observed_enrichment))==0)
+	print("########################################################")
+
+	#calculate p.vale as the probability of a random genome having an enrichment of metabolic genes in rank thresholds equal or higher than the real genome
+	p_value = prop.test(x=nrow(fake_equal_higher), n=nrow(subset_fake_genomes)) 
 		#https://stats.stackexchange.com/questions/167164/test-of-equal-proportions-with-zero-successes
 
 	#print the FINAL P-VALUE
