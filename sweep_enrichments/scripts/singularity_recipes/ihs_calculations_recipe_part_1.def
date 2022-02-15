@@ -1,0 +1,209 @@
+#############################
+########## HEADER ###########
+#############################
+#The header should be written at the top of the def file. It tells Singularity about the base operating system that it should use to build the container. It is composed of several keywords.
+
+Bootstrap: library #It determines the bootstrap agent that will be used to create the base operating system you want to use. For example, the library bootstrap agent will pull a container from the Container Library. 
+
+From: ubuntu:16.04 #When using the library bootstrap agent, the From keyword becomes valid. You indicate the container you want from the library. This will be downloaded and build. 
+
+
+
+#############################
+########## SETUP ############
+#############################
+#During the build process, commands in the %setup section are first executed on the host system outside of the container after the base OS has been installed. You can reference the container file system with the $SINGULARITY_ROOTFS environment variable in the %setup section. Be careful with the %setup section! This scriptlet is executed outside of the container on the host system itself, and is executed with elevated privileges. Commands in %setup can alter and potentially damage the host.
+
+#If you need to move it to a place that doesn't exist when the container is fresh, you need to make the path in setup first.
+%setup
+	#And of course use mkdir -p because if you don't and build again, you will get an error that it exists. "p" flags is for "no error if existing, make parent directories as needed"
+	#The first time I got an error "cannot create directory ‘/opt/data’: Not a directory". It seems that there is a file called "data", and when you have a file called like the folder you are trying to create, you get error ("https://stackoverflow.com/questions/14496897/mkdir-p-fails-when-directory-exists"). Therefore I did "rm /opt/data" and everything works.
+	#Note that some files that were created in initial containers remained, like the "test" folder or "eso.txt". I have removed those too.
+ 	mkdir -p /opt/data
+ 	mkdir -p /opt/scripts
+ 	#mkdir -p /opt/results/hapbin_inputs_final #we will take hapbin inputs from the HPC
+
+
+
+#############################
+########## FILES ############
+#############################
+#The %files section allows you to copy files into the container with greater safety than using the %setup section.
+
+#Each LINE is a <source> and <destination> pair. The <source> is either: A valid path on your host system or a valid path in a previous stage of the build, while the <destination> is always a path into the current container. If the <destination> path is omitted it will be assumed to be the same as <source>. 
+
+#Files in the %files section are always copied before the %post section is executed so that they are available during the build and configuration process.
+
+#You should check that you can copy two different files to the same folder.
+
+%files
+    
+    #copy the whole folder with hapbin_inputs
+    #/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/data/hapbin_inputs/ /opt/data/ #we will take hapbin inputs from the HPC
+    
+    #copy the decode 2019 map
+    /home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/data/final_grch37_coords_decode_2019.bed /opt/data/final_grch37_coords_decode_2019.bed
+
+    #copy the file with gene coordinates
+    /media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/postdoc_enard_lab/projects/method_deep/data/search_diego/results/gene_number_cds_coords.txt /opt/data
+
+	#copy the tbfs data to make checks about windows completely overlapped with gaps
+	/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/postdoc_enard_lab/projects/method_deep/data/search_diego/results/tbfs_density_raw_v3.txt /opt/data    
+
+	#copy the continuous windows
+	/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/postdoc_enard_lab/projects/method_deep/data/search_diego/genomic_features_contig_windows/results/chromosome_windows_v1.txt /opt/data
+
+	#copy gaps in continuous windows to check cases with completely overlapping gaps
+	/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/postdoc_enard_lab/projects/method_deep/data/search_diego/genomic_features_contig_windows/results/gap_length_contiguous_windows_v1.txt /opt/data
+
+	#copy the R scripts
+    /home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/scripts/ihs_calculations/ihs_calculations_v2.R /opt/scripts/ihs_calculations_v2.R
+
+    #From the original folder in the host, we copy a R script to a new folder in the container called scripts. NEVER PUT ANYTHING ELSE IN THE LINE WITH SOURCE AND DESTINATION, GIVES ERROR.
+    #https://groups.google.com/a/lbl.gov/forum/#!topic/singularity/4NFDsohnxgg
+
+
+
+#############################
+########## APP ##############
+#############################
+#In some circumstances, it may be redundant to build different containers for each app with nearly equivalent dependencies. Singularity supports installing apps within internal modules based on the concept of Standard Container Integration Format (SCI-F) All the apps are handled by Singularity at this point. More information on Apps here.
+
+#Not needed. 
+
+
+
+#############################
+########## POST #############
+#############################
+#This section is where you can download files from the internet with tools like git and wget, install new software and libraries, write configuration files, create new directories, etc. You can also create environment variables.
+
+%post
+
+	#we use the flag -y for the cases when apt-get asks for installing
+
+	#update the packages
+	apt-get -y update
+
+	#install a language package to solve errors with the selected language
+	apt-get -y install language-pack-en-base
+
+	#install nano, just in case we have to take a look after the image is created
+	apt-get -y install nano
+
+	#install packages for adding new repositories, as ubuntu repos can be outdated for R. See test_R_ubuntu_16.04 for further details.
+	apt-get -y install apt-transport-https software-properties-common
+	apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
+	
+	#add the R repository for the last version (xenial because we are working within ubuntu 16.04)
+	add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu xenial-cran40/'
+	
+	#update packages
+	apt-get -y update
+
+	#install R and r-base-dev, which has all the ubuntu packages needed for R package compilation
+	apt-get -y install r-base r-base-dev
+
+	#install curl packages to avoid problems with R package compilation
+	apt-get -y install libcurl4-gnutls-dev libxml2-dev libssl-dev
+
+	#install R packages
+	Rscript -e 'install.packages("plyr", repos="https://cloud.r-project.org", dep=T)' 
+	Rscript -e 'install.packages("foreach", repos="https://cloud.r-project.org", dep=T)' 
+	Rscript -e 'install.packages("doParallel", repos="https://cloud.r-project.org", dep=T)' 
+	#Rscript -e 'install.packages("BiocManager", repos="https://cloud.r-project.org", dep=T)' 
+	#Rscript -e 'BiocManager::install("GenomicRanges")'
+	#Rscript -e 'install.packages("devtools", repos="https://cloud.r-project.org", dep=T)' 
+	#Rscript -e 'devtools::install_github("jalvesaq/colorout")' 
+	#Rscript -e 'devtools::install_github("DanielRivasMD/SistWrapper")'
+
+	#create the .Rprofile
+	echo '
+		#we avoid loading the previous workspace by removing the rdata file of the last session
+		file.remove(".RData") #if no R data is present, a warning will be produced.
+		
+		#Just in case, we remove any previous object
+		rm(list=ls())
+		
+		#and liberate the space with the garbage collector
+		gc()
+		
+		#load colorout package to have colorful outputs in the R console
+		require(colorout)
+		
+		#load SistWrapper package. In that we can use the function wideScreen to change the number of columns and rows showed in the R terminal
+		require(SistWrapper)
+		
+		#For this script we want to see more than 8 digits in the terminal. 8 is the default, so for example, if you make the following division: (45959538+45965751)/2. You will get 45962644, instead of 45962644.5, which is the correct solution. This is caused becasue 45962644.5 has more than 8 numbers, so the last one it is not shown. This does not mean that the calculation is wrong, the correct calculus is made (you can check it with print(x, digits=8 or 9)), but you don´t see the complete solution in the terminal. Because of this, for this work with long numbers (genetic coordinates) we will set the a higher number of digits that are shown
+		options(digits = 10)' > .Rprofile
+		#https://www.cyberciti.biz/faq/linux-append-text-to-end-of-file/
+
+	#update again and install git and cmake for hapbin installation
+	apt-get -y update
+	apt-get -y install git
+	apt-get -y install cmake
+
+	#go to opt to save hapbin there. If I do not do this, we obtain an error. I do not save in root, because I have no access to root when the image is in the HPC.
+	cd /opt
+
+	#copy the repo of hapbin
+	git clone https://github.com/evotools/hapbin.git
+	
+	#go the the new folder created
+	cd hapbin/build/
+
+	#compile
+	cmake ../src/
+	make
+
+
+#############################
+########## TEST #############
+#############################
+#The %test section runs at the very end of the build process to validate the container using a method of your choice. You can also execute this scriptlet through the container itself, using the test command.
+
+#Not needed for now.
+
+
+
+####################################
+########## ENVIRONMENT #############
+####################################
+#The %environment section allows you to define environment variables that will be set at runtime (not during the building). Note that these variables are not made available at build time by their inclusion in the %environment section. This means that if you need the same variables during the build process, you should also define them in your %post section. Specifically:
+
+#You should use the same conventions that you would use in a .bashrc or .profile file. Consider this example from the def file above:
+
+%environment
+    export LC_ALL=C #The $LC_ALL variable is useful for many programs (often written in Perl) that complain when no locale is set.
+
+
+
+####################################
+########## STARTSCRIPT #############
+####################################
+#Similar to the %runscript section, the contents of the %startscript section are written to a file within the container at build time. This file is executed when the instance start command is issued.
+
+#Not needed for now.
+
+
+
+##################################
+########## RUNSCRIPT #############
+##################################
+#The contents of the %runscript section are written to a file within the container that is executed when the container image is run (either via the singularity run command or by executing the container directly as a command). When the container is invoked, arguments following the container name are passed to the runscript. This means that you can (and should) process arguments within your runscript.
+
+%runscript
+
+	#run a R script for this part. NOT USE "&", each script have to be run after the previous one have been run
+    R CMD BATCH /opt/scripts/ihs_calculations_v2.R 
+
+
+
+###############################
+########## LABELS #############
+###############################
+#The %labels section is used to add metadata to the file /.singularity.d/labels.json within your container. The general format is a name-value pair.
+
+%labels
+    Author dftortosa
+    Version v0.0.1
