@@ -27,6 +27,15 @@
 
 
 #################################################################
+####################### PREVIOUS VERSIONS #######################
+#################################################################
+
+#Respect to V1:
+	#Preparing the scripts for the container
+
+
+
+#################################################################
 ####################### REQUIRED PACKAGES #######################
 #################################################################
 
@@ -34,6 +43,29 @@ require(dplyr) #for full_join and bind_row
 require(plyr)
 require(foreach) #for parallel
 require(doParallel) #for parallel
+
+
+
+##########################################
+########## REMOVE PREVIOUS WORKSPACE #####
+##########################################
+remove(list=ls(all=TRUE))
+
+
+
+##########################################
+########## SET THE WORKING DIRECTORY #####
+##########################################
+
+#we do not need to specify path inside the container, starting with "/" and then opt or root, you get there
+path_inside_container = "/"
+
+#path of the starting folder in the image. This will let us to automatize the script, it will work both in my laptop and the HPC. We do not have to change the path. 
+path_starting_folder = system("pwd", intern=TRUE) #intern: a logical (not 'NA') which indicates whether to capture the output
+
+#set the path to data 
+path_outside_results = paste(path_starting_folder, "/results", sep="")
+path_outside_pipeline = paste(path_starting_folder, "/david_pipeline/exdef_folder", sep="")
 
 
 
@@ -53,7 +85,7 @@ curve_significance = function(pop_group, statistics, window_sizes, pop_p_val){
 			#If you have analyzed "all" populations, then you can select any possible subset of populations for calculating the p-value.
 
 	#get the paths of all files in the output folder
-	paths_results_raw = list.files("/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder/test_outputs", full=TRUE)
+	paths_results_raw = list.files(paste(path_outside_pipeline, "/test_outputs", sep=""), full=TRUE)
 
 	#extract the name of each path, i.e., the statistic, window size and genome
 	#we use paths_to_data, which is the input for getting all the outputs, so we have the same order
@@ -231,7 +263,7 @@ curve_significance = function(pop_group, statistics, window_sizes, pop_p_val){
 			all_outputs_plot = all_outputs[outputs_plotting,]
 
 			#open the pdf
-			pdf(paste("/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/results/figures/", paste(pop_p_val, collapse="_"), "_", paste(statistics, collapse="_"), "_200kb_fold_enrichment.pdf", sep=""))
+			pdf(paste(path_outside_results, "/figures/", paste(pop_p_val, collapse="_"), "_", paste(statistics, collapse="_"), "_200kb_fold_enrichment.pdf", sep=""))
 
 			#plot enrichment of each threshold
 			plot(x=all_outputs_plot$threshold, y=all_outputs_plot$int_ctrl_ratio, xlim=rev(range(all_outputs_plot$threshold)), xlab="Rank threshold", ylab="Fold enrichment", type="l", lwd=2, main=paste(paste(pop_p_val, collapse="|"), " - ", paste(statistics, collapse="|"), " - 200kb"))
@@ -279,7 +311,7 @@ curve_significance = function(pop_group, statistics, window_sizes, pop_p_val){
 	subset_fake_genomes = results_enrichment[which(results_enrichment$unique_index!="real"),]
 
 	#open a connection to the file with the input parameters for the pipeline
-	check_con=file("/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/scripts/input_par_david_pipeline_v1.txt")
+	check_con=file("/opt/scripts/input_par_david_pipeline_v1.txt")
 
 	#read the lines of the file
 	lines_input_par_pipeline = readLines(check_con)

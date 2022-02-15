@@ -38,12 +38,12 @@ From: ubuntu:16.04 #When using the library bootstrap agent, the From keyword bec
 %files
 
 	#copy the scripts
-    /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/scripts/running_david_pipeline_v1.sh /opt/scripts/running_david_pipeline_v1.sh
-    /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/scripts/preparing_valid_gene_dist_files_v1.R /opt/scripts/preparing_valid_gene_dist_files_v1.R
-    /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/scripts/preparing_factors_tables_v1.R /opt/scripts/preparing_factors_tables_v1.R
-    /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/scripts/statistics_ranks_v1.R /opt/scripts/statistics_ranks_v1.R
-    /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/scripts/input_par_david_pipeline_v1.txt /opt/scripts/input_par_david_pipeline_v1.txt
-    /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/scripts/significance_whole_enrich_curve_v1.R /opt/scripts/significance_whole_enrich_curve_v1.R
+    /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/scripts/running_david_pipeline_v2.sh /opt/scripts/running_david_pipeline_v2.sh
+    /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/scripts/preparing_valid_gene_dist_files_v2.R /opt/scripts/preparing_valid_gene_dist_files_v2.R
+    /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/scripts/preparing_factors_tables_v2.R /opt/scripts/preparing_factors_tables_v2.R
+    /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/scripts/statistics_ranks_v2.R /opt/scripts/statistics_ranks_v2.R
+    /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/scripts/input_par_david_pipeline_v2.txt /opt/scripts/input_par_david_pipeline_v2.txt
+    /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/scripts/significance_whole_enrich_curve_v2.R /opt/scripts/significance_whole_enrich_curve_v2.R
 
     #From the original folder in the host, we copy a R script to a new folder in the container called scripts. NEVER PUT ANYTHING ELSE IN THE LINE WITH SOURCE AND DESTINATION, GIVES ERROR.
     #https://groups.google.com/a/lbl.gov/forum/#!topic/singularity/4NFDsohnxgg
@@ -126,7 +126,7 @@ From: ubuntu:16.04 #When using the library bootstrap agent, the From keyword bec
 		#https://www.cyberciti.biz/faq/linux-append-text-to-end-of-file/
 
 	#open the right to use run the bash script file
-	chmod +x /opt/scripts/running_david_pipeline_v1.sh
+	chmod +x /opt/scripts/running_david_pipeline_v2.sh
 
 
 
@@ -168,7 +168,7 @@ From: ubuntu:16.04 #When using the library bootstrap agent, the From keyword bec
 %runscript
 
 	#run the master bash script
-	./opt/scripts/running_david_pipeline_v1.sh
+	./opt/scripts/running_david_pipeline_v2.sh
 
 
 
