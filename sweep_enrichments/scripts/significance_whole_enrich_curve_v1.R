@@ -310,7 +310,7 @@ curve_significance = function(pop_group, statistics, window_sizes, pop_p_val){
 
 	#check we have selected correct fake genomes to calculate p-values
 	print("########################################################")
-	print(paste(paste(pop_p_val, collapse="|"), ": CHECK WE HAVE SELECTED CORRECT FAKE GENOMES TO CALCULATE P-VALUES:", sep="")); print(length(which(random_equal_higher$int_ctrl_differ<observed_enrichment))==0)
+	print(paste(paste(pop_p_val, collapse="|"), ": CHECK WE HAVE SELECTED CORRECT FAKE GENOMES TO CALCULATE P-VALUES:", sep="")); print(length(which(fake_equal_higher$int_ctrl_differ<observed_enrichment))==0)
 	print("########################################################")
 
 	#calculate p.vale as the probability of a random genome having an enrichment of metabolic genes in rank thresholds equal or higher than the real genome

@@ -51,11 +51,12 @@ valid_file=read.table("/home/dftortosa/singularity/dating_climate_adaptation/swe
 	#this file includes all the ensembl gene IDs used in the pipeline, which in our case come from our curated list of gene coordinates.
 
 #make a new folder in data/ to save summary statistics data
-system("mkdir /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics")
+system("mkdir -p /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics")
+	#mkdir -p because if you don't and build again, you will get an error that it exists. "p" flags is for "no error if existing, make parent directories as needed"
 
 
 ##add the summary statistics
-#IMPORTANT: You this script expects a value of the statistic per gene window (as many rows as genes) and window sizes separated in columns.
+#IMPORTANT: this script expects a value of the statistic per gene window (as many rows as genes) and window sizes separated in columns.
 
 #iHS from our calculations and remove raw files and number iHS datapoints
 system("cp -avr /home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/; cd /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows; rm *_raw_v1.txt.gz; rm *_n_ihs_gene_windows_final_v1.txt.gz")
@@ -100,21 +101,25 @@ statistics_ranks = function(statistics, pop_group, window_sizes){
 		pops = c("CDXD", "CHBD", "CHSD", "JPTD", "KHVD")
 	}
 
+	#extract the file names for each path
+	list_files_statistic_names_raw = strsplit(list_files_statistic_paths, split="/")
+	list_files_statistic_names = sapply(list_files_statistic_names_raw, "[", length(list_files_statistic_names_raw[[1]]))
+		#we can use the length of the first path split as reference because all paths should have the same length as split. We are splitting by "/", all the files are in the same folder with the same subfolders
+
 	#select only those paths belonging to the selected populations
-	list_files_statistic_paths_selected = list_files_statistic_paths[which(grepl(paste(pops, collapse="|"), list_files_statistic_paths, fixed=FALSE))]
+	list_files_statistic_paths_selected = list_files_statistic_paths[which(grepl(paste(pops, collapse="|"), list_files_statistic_names, fixed=FALSE))]
 		#we use fixed=FALSE so we can use a regular expression, which is matching for each pop name (separated by "|")
 
 	#check that we have the paths for all selected pops
 	print("########################################")
-	print("CHECK THAT WE HAVE THE PATHS FOR ALL SELECTED POPS")
-	print(length(list_files_statistic_paths_selected) == length(pops))
+	print(paste(statistics, ": CHECK THAT WE HAVE THE PATHS FOR ALL SELECTED POPS", sep="")); print(length(list_files_statistic_paths_selected) == length(pops))
 	print("########################################")
 
 	#load the data for all the selected populations
 	list_files_statistic = lapply(list_files_statistic_paths_selected, read.table, sep="\t", header=TRUE)
 
-	##calculate the ranks per window size
 
+	##calculate the ranks per window size
 	#write function
 	#for debugging
 	#window_size = window_sizes[2]
@@ -168,12 +173,12 @@ statistics_ranks = function(statistics, pop_group, window_sizes){
 
 			#check the calculation of the rank with sort
 			print("########################################")
-			print("CHECK THE CALCULATION OF THE RANK WITH SORT")
-			print(identical(selected_pop_subset_ordered$summary_statistic, sort(selected_pop_subset$summary_statistic, decreasing=TRUE)))
+			print(paste(statistics, " - ", window_size, " - ", pop_name, ": CHECK THE CALCULATION OF THE RANK WITH SORT", sep="")); print(identical(selected_pop_subset_ordered$summary_statistic, sort(selected_pop_subset$summary_statistic, decreasing=TRUE)))
 			print("########################################")
 
 			#merge the new columns used ensembl gene id
 			final_ranks = full_join(final_ranks, selected_pop_subset_ordered[, c("gene_id", pop_name)], by="gene_id")
+				#maintain all rows for both data.frame, adding NAs if there is mismatch
 				#this can be done with full_join, which is similar to use merge with all=TRUE
 					#https://stackoverflow.com/questions/21841146/is-there-an-r-dplyr-method-for-merge-with-all-true
 					#https://stackoverflow.com/questions/28250948/how-to-dplyrinner-join-multi-tbls-or-data-frames-in-r
@@ -189,17 +194,14 @@ statistics_ranks = function(statistics, pop_group, window_sizes){
 
 		#check we have all the pops
 		print("########################################")
-		print("CHECK WE HAVE ALL THE POPS")
-		print(ncol(final_ranks) == length(list_files_statistic_paths_selected) + 1)
+		print(paste(statistics, " - ", window_size, ": CHECK WE HAVE ALL THE POPS", sep="")); print(ncol(final_ranks) == length(list_files_statistic_paths_selected) + 1)
 			#we should a column for each pop plus the ensembl ID column
 		print("########################################")
 
-		#print the population names in order
+		#print the population names in the order of the table
 		print("########################################")
-		print("PRINT THE POPULATION NAMES IN ORDER")
-		print(paste(colnames(final_ranks)[which(!colnames(final_ranks) == "gene_id")], collapse=","))
+		print(paste(statistics, " - ", window_size, ": PRINT THE POPULATION NAMES IN ORDER", sep="")); print(paste(colnames(final_ranks)[which(!colnames(final_ranks) == "gene_id")], collapse=","))
 		print("########################################")
-
 
 		#save the data
 		write.table(final_ranks, paste("/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder/", statistics, "_", pop_group, "_ranks_", window_size, sep=""), sep=" ", col.names=FALSE, row.names=FALSE, quote=FALSE) 
@@ -216,24 +218,24 @@ statistics_ranks = function(statistics, pop_group, window_sizes){
 #####################################
 
 #statistics
-statistics_rank = c("ihs")
+statistics_to_rank = c("ihs")
 
 #set up cluster
-clust <- makeCluster(length(statistics_rank), outfile="") #outfile let you to see the output in the terminal "https://blog.revolutionanalytics.com/2015/02/monitoring-progress-of-a-foreach-parallel-job.html"
+clust <- makeCluster(length(statistics_to_rank), outfile="") #outfile let you to see the output in the terminal "https://blog.revolutionanalytics.com/2015/02/monitoring-progress-of-a-foreach-parallel-job.html"
 registerDoParallel(clust)
 
 #run the function for all populations
-foreach(i=statistics_rank, .packages=c("plyr", "dplyr")) %dopar% {
+foreach(i=statistics_to_rank, .packages=c("plyr", "dplyr")) %dopar% {
     statistics_ranks(statistics=i, pop_group="all", window_sizes=c("50kb", "100kb", "200kb", "500kb", "1000kb"))
 }
 
 #run the function for East Asian populations
-foreach(i=statistics_rank, .packages=c("plyr", "dplyr")) %dopar% {
+foreach(i=statistics_to_rank, .packages=c("plyr", "dplyr")) %dopar% {
     statistics_ranks(statistics=i, pop_group="eas", window_sizes=c("50kb", "100kb", "200kb", "500kb", "1000kb"))
 } 
 
 #run the function for East Asian populations
-foreach(i=statistics_rank, .packages=c("plyr", "dplyr")) %dopar% {
+foreach(i=statistics_to_rank, .packages=c("plyr", "dplyr")) %dopar% {
     statistics_ranks(statistics=i, pop_group="eur", window_sizes=c("50kb", "100kb", "200kb", "500kb", "1000kb"))
 }
 
