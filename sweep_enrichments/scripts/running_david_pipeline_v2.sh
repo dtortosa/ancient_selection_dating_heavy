@@ -20,27 +20,16 @@
 	#r: copy directories recursively
 	#https://www.cyberciti.biz/faq/copy-folder-linux-command-line/
 
-#go to the folder with the scripts
-cd /opt/scripts
-
 #run the scripts for preparing the files needed for the pipeline
-R CMD BATCH preparing_valid_gene_dist_files_v2.R
-R CMD BATCH preparing_factors_tables_v2.R
-R CMD BATCH statistics_ranks_v2.R
-
-#go to the folder with the pipeline
-cd /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder
-	#the originals are located in "/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/original_files"
+R CMD BATCH /opt/scripts/preparing_valid_gene_dist_files_v2.R
+R CMD BATCH /opt/scripts/preparing_factors_tables_v2.R
+R CMD BATCH /opt/scripts/statistics_ranks_v2.R
 
 #open the rights to use all the perl scripts
-chmod +x ./*.pl
-	#you have to add "./" first so the result of the wild card will be pasted to "./". In that way, you get all the perl script names along with "./", which is needed to use chmod and allow for running.
+chmod +x ./david_pipeline/exdef_folder/*.pl
 
 #run the pipeline using the input parameters file created by me in the script file
-./exdef_pipeline.pl /opt/scripts/input_par_david_pipeline_v2.txt
-
-#come back to the folder with the scripts
-cd /opt/scripts
+./david_pipeline/exdef_folder/exdef_pipeline.pl /opt/scripts/input_par_david_pipeline_v2.txt
 
 #run the scripts for processing the output of the pipeline
-R CMD BATCH significance_whole_enrich_curve_v2.R
+R CMD BATCH /opt/scripts/significance_whole_enrich_curve_v2.R

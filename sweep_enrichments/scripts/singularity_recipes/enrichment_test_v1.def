@@ -166,12 +166,9 @@ From: ubuntu:16.04 #When using the library bootstrap agent, the From keyword bec
 #The contents of the %runscript section are written to a file within the container that is executed when the container image is run (either via the singularity run command or by executing the container directly as a command). When the container is invoked, arguments following the container name are passed to the runscript. This means that you can (and should) process arguments within your runscript.
 
 %runscript
-
-	#go to the folder with scripts
-	cd /opt/scripts
-
-	#run the master scripts
-	./running_david_pipeline_v2.sh
+	
+	#run the script
+	./opt/scripts/running_david_pipeline_v2.sh
 
 
 

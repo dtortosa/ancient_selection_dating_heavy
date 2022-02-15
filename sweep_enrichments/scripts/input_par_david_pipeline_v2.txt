@@ -3,10 +3,10 @@ Sweep_files_prefix all_ranks
 #
 #Sweep_sizes: the list of the different window sizes used to rank the sweeps
 #Sweep_sizes 50kb_100kb_200kb_500kb_1000kb_1kb_2kb_3kb_4kb_5kb
-Sweep_sizes 1000kb
+Sweep_sizes 50kb_1000kb
 #
 #Pipeline_dir: path of the directory where all the pipeline is run. Make sure all the elements needed to run the pipeline are in this directory.
-Pipeline_dir /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder/
+Pipeline_dir /david_pipeline/exdef_folder/
 #
 #Valid_genes_file: Creation of file with the genes used for the test. The file contains the Ensembl IDs of the genes that are going to be used by the pipeline. One line in the file = one Ensembl gene ID. Use your own code to generate this file.
 Valid_genes_file valid_file.txt
@@ -71,19 +71,19 @@ Groups_list MIS,MIS,SAS,EAS,EUR,EAS,EAS,AMR,AFR,EUR,EUR,SAS,AFR,EUR,SAS,EAS,EAS,
 #Groups_list EAS,EAS,EAS,EAS,EAS
 #
 #Pop_interest: the population of particular interest to adjust the precision and speed of the script that counts sweeps (see step 7 below). Can be either a single population, or one of the groups defined in Groups_list, or all the populations in the sweep file (then Pop_interest is set to “All”)
-Pop_interest ESN
+Pop_interest All
 #
 #Run_FDR: yes or no. Run the FDR or not. This is only run if there is a significant enrichment of excess detected in the bootstrap.
 Run_FDR yes
 #
 #Run_shuffling: yes or no. Run the shuffling of genome for FDR analysis or not, in the case it has already been done (the same shuffled genomes may be reused for a different set of genes of interest, or for re-running the same test, for example if a previous attempt to run the test was interrupted, but the genome shuffling step had completed).
-Run_shuffling no
+Run_shuffling yes
 #
 #FDR_number: number of times the genome will be shuffled and the bootstrap test re-run on shuffled genomes to estimate a false discovery rate that takes clustering into account. Caution, a large FDR_number will take a LOT of disk space. Due to a quirk of the current version of the pipeline.
-FDR_number 1000
+FDR_number 10
 #
 #Shuffling_segments_number: number of segments in which to cut the genome. The segments are then randomly flipped and their order randomly permuted. This effectively shuffles the sweeps while conserving the clustering of genes within the same sweeps
 Shuffling_segments_number 10
 #
 #Interrupted_FDR_run: yes or no. Specifies if you want to continue running a previously interrupted FDR analysis (yes), or if you want to start a whole new FDR analysis from scratch, in which case previously generated files for FDR present in the test_outputs folder will be removed (no).
-Interrupted_FDR_run yes
+Interrupted_FDR_run no
