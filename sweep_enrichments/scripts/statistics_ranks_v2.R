@@ -30,6 +30,9 @@
 ####################### PREVIOUS VERSIONS #######################
 #################################################################
 
+#Respect to V1:
+	#Preparing the scripts for the container
+
 
 
 #################################################################
@@ -42,16 +45,39 @@ require(doParallel) #for parallel
 
 
 
+##########################################
+########## REMOVE PREVIOUS WORKSPACE #####
+##########################################
+remove(list=ls(all=TRUE))
+
+
+
+##########################################
+########## SET THE WORKING DIRECTORY #####
+##########################################
+
+#we do not need to specify path inside the container, starting with "/" and then opt or root, you get there
+path_inside_container = "/"
+
+#path of the starting folder in the image. This will let us to automatize the script, it will work both in my laptop and the HPC. We do not have to change the path. 
+path_starting_folder = system("pwd", intern=TRUE) #intern: a logical (not 'NA') which indicates whether to capture the output
+
+#set the path to data 
+path_outside_data = paste(path_starting_folder, "/data", sep="")
+path_outside_pipeline = paste(path_starting_folder, "/david_pipeline/exdef_folder", sep="")
+
+
+
 #######################################
 ############ FILES PREPARATION ########
 #######################################
 
 #use the valid_file as source for the gene IDs
-valid_file=read.table("/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder/valid_file.txt", sep="\t", header=FALSE)
+valid_file=read.table(paste(path_outside_pipeline, "/valid_file.txt", sep=""), sep="\t", header=FALSE)
 	#this file includes all the ensembl gene IDs used in the pipeline, which in our case come from our curated list of gene coordinates.
 
 #make a new folder in data/ to save summary statistics data
-system("mkdir -p /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics")
+#system("mkdir -p /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics")
 	#mkdir -p because if you don't and build again, you will get an error that it exists. "p" flags is for "no error if existing, make parent directories as needed"
 
 
@@ -59,7 +85,7 @@ system("mkdir -p /home/dftortosa/singularity/dating_climate_adaptation/sweep_enr
 #IMPORTANT: this script expects a value of the statistic per gene window (as many rows as genes) and window sizes separated in columns.
 
 #iHS from our calculations and remove raw files and number iHS datapoints
-system("cp -avr /home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/; cd /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows; rm *_raw_v1.txt.gz; rm *_n_ihs_gene_windows_final_v1.txt.gz")
+#system("cp -avr /home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/; cd /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows; rm *_raw_v1.txt.gz; rm *_n_ihs_gene_windows_final_v1.txt.gz")
 	#a: preserve the specific attributes (e.g., mode)
 	#v: verbose output
 	#r: copy directories recursively
@@ -80,7 +106,7 @@ statistics_ranks = function(statistics, pop_group, window_sizes){
 	if("ihs" %in% statistics){
 
 		#select the folder with this statistic
-		paths_to_statistics = "/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows"
+		paths_to_statistics = paste(path_outside_data, "/summ_statistics/mean_ihs_gene_windows", sep="")
 
 		#load the files of this statistic across populations
 		list_files_statistic_paths = list.files(paths_to_statistics, pattern="_mean_ihs_gene_windows_final_v1.txt.gz", full=TRUE)
@@ -204,7 +230,7 @@ statistics_ranks = function(statistics, pop_group, window_sizes){
 		print("########################################")
 
 		#save the data
-		write.table(final_ranks, paste("/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder/", statistics, "_", pop_group, "_ranks_", window_size, sep=""), sep=" ", col.names=FALSE, row.names=FALSE, quote=FALSE) 
+		write.table(final_ranks, paste(path_outside_pipeline, "/", statistics, "_", pop_group, "_ranks_", window_size, sep=""), sep=" ", col.names=FALSE, row.names=FALSE, quote=FALSE) 
 	}
 
 	#apply the function across the window sizes
