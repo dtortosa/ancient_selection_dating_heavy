@@ -311,7 +311,7 @@ curve_significance = function(pop_group, statistics, window_sizes, pop_p_val){
 	subset_fake_genomes = results_enrichment[which(results_enrichment$unique_index!="real"),]
 
 	#open a connection to the file with the input parameters for the pipeline
-	check_con=file("/opt/scripts/input_par_david_pipeline_v1.txt")
+	check_con=file("/opt/scripts/input_par_david_pipeline_v2.txt")
 
 	#read the lines of the file
 	lines_input_par_pipeline = readLines(check_con)

@@ -1,0 +1,1518 @@
+
+R version 4.1.2 (2021-11-01) -- "Bird Hippie"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+[1] TRUE
+         used (Mb) gc trigger (Mb) max used (Mb)
+Ncells 126498  6.8     350000 18.7   196817 10.6
+Vcells 244399  1.9    8388608 64.0  1007893  7.7
+Loading required package: colorout
+Warning message:
+In library(package, lib.loc = lib.loc, character.only = TRUE, logical.return = TRUE,  :
+  there is no package called 'colorout'
+Loading required package: SistWrapper
+Warning message:
+In library(package, lib.loc = lib.loc, character.only = TRUE, logical.return = TRUE,  :
+  there is no package called 'SistWrapper'
+> #!/usr/bin/env Rscript
+> 
+> #This is done to have the possibility to run this script as an executable: 'chmod +x myscript.R' and then ' ./myscript.R'. If you run the script as 'R CMD BATCH myscript.R', i THINK this is not used, because it is annotated. 
+> 	#https://www.jonzelner.net/statistics/make/docker/reproducibility/2016/05/31/script-is-a-program/
+> 
+> #In case you run this script as an executable, you can save the output without warnings "./myscript.R > myscript.Rout" or with errors "./myscript.R &> myscript.Rout"
+> 	#https://askubuntu.com/questions/420981/how-do-i-save-terminal-output-to-a-file
+> 
+> 
+> 
+> ###########################################################################
+> ########################### PREPARE RANKS #################################
+> ###########################################################################
+> 
+> #create tables with the sweep rank files to test. The first column in a sweep file is the Ensembl gene IDs (if you are not using Ensembl human gene annotations, add ENSG to the start of your gene IDs). The following columns corresponding to gene ranks, for all the populations included, from the gene with the strongest sweep signal to the one with the lowest signal in each specific population. For example, the all_ihsfreqabs_ranks_”size” files have 27 columns with 26 corresponding to gene sweep ranks according to iHS in the 26 populations from 1000 Genomes phase 3.
+> 
+> #IMPORTANT: 
+> 	#Note that this script was wrote and run in 2022 using the version of April 28th 2022 of David's pipeline.
+> 		#The pipeline of David has been downloaded from 
+> 			#https://github.com/DavidPierreEnard/Gene_Set_Enrichment_Pipeline
+> 			#last commit done on Apr 28, 2021
+> 				#7b755c0c23dd4d7c3f54c4b53e74366e4041ac8f 
+> 
+> 	#Manual from David
+> 		#/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder/exdef_pipeline_manual.pdf
+> 
+> 
+> 
+> #################################################################
+> ####################### PREVIOUS VERSIONS #######################
+> #################################################################
+> 
+> #Respect to V1:
+> 	#Preparing the scripts for the container
+> 
+> 
+> 
+> #################################################################
+> ####################### REQUIRED PACKAGES #######################
+> #################################################################
+> 
+> require(dplyr) #for full_join
+Loading required package: dplyr
+
+Attaching package: 'dplyr'
+
+The following objects are masked from 'package:stats':
+
+    filter, lag
+
+The following objects are masked from 'package:base':
+
+    intersect, setdiff, setequal, union
+
+> require(foreach) #for parallel
+Loading required package: foreach
+> require(doParallel) #for parallel
+Loading required package: doParallel
+Loading required package: iterators
+Loading required package: parallel
+> 
+> 
+> 
+> ##########################################
+> ########## REMOVE PREVIOUS WORKSPACE #####
+> ##########################################
+> remove(list=ls(all=TRUE))
+> 
+> 
+> 
+> ##########################################
+> ########## SET THE WORKING DIRECTORY #####
+> ##########################################
+> 
+> #we do not need to specify path inside the container, starting with "/" and then opt or root, you get there
+> path_inside_container = "/"
+> 
+> #path of the starting folder in the image. This will let us to automatize the script, it will work both in my laptop and the HPC. We do not have to change the path. 
+> path_starting_folder = system("pwd", intern=TRUE) #intern: a logical (not 'NA') which indicates whether to capture the output
+> 
+> #set the path to data 
+> path_outside_data = paste(path_starting_folder, "/data", sep="")
+> path_outside_pipeline = paste(path_starting_folder, "/david_pipeline/exdef_folder", sep="")
+> 
+> 
+> 
+> #######################################
+> ############ FILES PREPARATION ########
+> #######################################
+> 
+> #use the valid_file as source for the gene IDs
+> valid_file=read.table(paste(path_outside_pipeline, "/valid_file.txt", sep=""), sep="\t", header=FALSE)
+> 	#this file includes all the ensembl gene IDs used in the pipeline, which in our case come from our curated list of gene coordinates.
+> 
+> #make a new folder in data/ to save summary statistics data
+> #system("mkdir -p /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics")
+> 	#mkdir -p because if you don't and build again, you will get an error that it exists. "p" flags is for "no error if existing, make parent directories as needed"
+> 
+> 
+> ##add the summary statistics
+> #IMPORTANT: this script expects a value of the statistic per gene window (as many rows as genes) and window sizes separated in columns.
+> 
+> #iHS from our calculations and remove raw files and number iHS datapoints
+> #system("cp -avr /home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/; cd /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/data/summ_statistics/mean_ihs_gene_windows; rm *_raw_v1.txt.gz; rm *_n_ihs_gene_windows_final_v1.txt.gz")
+> 	#a: preserve the specific attributes (e.g., mode)
+> 	#v: verbose output
+> 	#r: copy directories recursively
+> 	#https://www.cyberciti.biz/faq/copy-folder-linux-command-line/
+> 
+> 
+> 
+> #####################################
+> ########### WRITE FUNCTION ##########
+> #####################################
+> 
+> #for debugging
+> #statistics=c("ihs"); pop_group="eas"; window_sizes=c("50kb", "1000kb")
+> statistics_ranks = function(statistics, pop_group, window_sizes){
++ 
++ 	##load the selected statistic
++ 	#if ihs
++ 	if("ihs" %in% statistics){
++ 
++ 		#select the folder with this statistic
++ 		paths_to_statistics = paste(path_outside_data, "/summ_statistics/mean_ihs_gene_windows", sep="")
++ 
++ 		#load the files of this statistic across populations
++ 		list_files_statistic_paths = list.files(paths_to_statistics, pattern="_mean_ihs_gene_windows_final_v1.txt.gz", full=TRUE)
++ 	}
++ 
++ 
++ 	##load the data for the selected population group
++ 	#if all
++ 	if(pop_group == "all"){
++ 		pops = c("ACBD","ASWD","BEBD","CDXD","CEUD","CHBD","CHSD","CLMD","ESND","FIND","GBRD","GIHD","GWDD","IBSD","ITUD","JPTD","KHVD","LWKD","MSLD","MXLD","PELD","PJLD","PURD","STUD","TSID","YRID")
++ 	}
++ 	#if eur
++ 	if(pop_group == "eur"){
++ 		pops = c("CEUD", "FIND", "GBRD", "IBSD", "TSID")
++ 	}
++ 	#if eas
++ 	if(pop_group == "eas"){
++ 		pops = c("CDXD", "CHBD", "CHSD", "JPTD", "KHVD")
++ 	}
++ 
++ 	#extract the file names for each path
++ 	list_files_statistic_names_raw = strsplit(list_files_statistic_paths, split="/")
++ 	list_files_statistic_names = sapply(list_files_statistic_names_raw, "[", length(list_files_statistic_names_raw[[1]]))
++ 		#we can use the length of the first path split as reference because all paths should have the same length as split. We are splitting by "/", all the files are in the same folder with the same subfolders
++ 
++ 	#select only those paths belonging to the selected populations
++ 	list_files_statistic_paths_selected = list_files_statistic_paths[which(grepl(paste(pops, collapse="|"), list_files_statistic_names, fixed=FALSE))]
++ 		#we use fixed=FALSE so we can use a regular expression, which is matching for each pop name (separated by "|")
++ 
++ 	#check that we have the paths for all selected pops
++ 	print("########################################")
++ 	print(paste(statistics, ": CHECK THAT WE HAVE THE PATHS FOR ALL SELECTED POPS", sep="")); print(length(list_files_statistic_paths_selected) == length(pops))
++ 	print("########################################")
++ 
++ 	#load the data for all the selected populations
++ 	list_files_statistic = lapply(list_files_statistic_paths_selected, read.table, sep="\t", header=TRUE)
++ 
++ 
++ 	##calculate the ranks per window size
++ 	#write function
++ 	#for debugging
++ 	#window_size = window_sizes[2]
++ 	ranks_cal_window = function(window_size){
++ 
++ 		#open a data.frame to save the ranks for all populations as different columns. The first column will be gene_id (obtained from valid_file)
++ 		final_ranks = data.frame(gene_id=valid_file$V1)
++ 
++ 		#for each population
++ 		for(i in 1:length(list_files_statistic_paths_selected)){
++ 
++ 			#select the [i] path
++ 			selected_path = list_files_statistic_paths_selected[[i]]
++ 
++ 			##extract the population name
++ 			#split the whole path
++ 			pop_name_raw = strsplit(selected_path, split="/|_")
++ 			#select the element with the population name
++ 			pop_name = pop_name_raw[[1]][which(grepl(paste(pops, collapse="|"), pop_name_raw[[1]]))]
++ 				#we use fixed=FALSE so we can use a regular expression, which is matching for each pop name (separated by "|")
++ 
++ 			#extract the data for the selected population
++ 			selected_pop = list_files_statistic[[i]]
++ 				#remember that list_files_statistic comes from list_files_statistic_paths_selected, so we can use the same index
++ 
++ 			#select the columns of gene id and the selected window size
++ 			selected_pop_subset = selected_pop[, which(grepl(paste("gene_id|", window_size, sep=""), colnames(selected_pop), fixed=FALSE))]
++ 				#we use fixed=FALSE so we can use a regular expression, which is matching for several conditions
++ 
++ 			#change column name of the selected statistic and size
++ 			colnames(selected_pop_subset)[which(grepl(window_size, colnames(selected_pop_subset), fixed=TRUE))] = "summary_statistic"
++ 
++ 
++ 			##make the rank
++ 			#calculate a new order of the rows based on the statistic value on decreasing order
++ 			decreasing_order_statistic = order(selected_pop_subset$summary_statistic, decreasing=TRUE)
++ 				#we select the column with the selected statistic and size
++ 			#reorder
++ 			selected_pop_subset_ordered = selected_pop_subset[decreasing_order_statistic, ]
++ 			
++ 			#make the rank
++ 			selected_pop_subset_ordered$rank = 1:nrow(selected_pop_subset_ordered)
++ 			#set the name of the column rank as the pop name
++ 			colnames(selected_pop_subset_ordered)[which(colnames(selected_pop_subset_ordered) == "rank")] = pop_name
++ 
++ 
++ 			##prepare the final file
++ 			#remove NAs for the statistic
++ 			selected_pop_subset_ordered = selected_pop_subset_ordered[which(!is.na(selected_pop_subset_ordered$summary_statistic)),]
++ 				#select the column with the selected statistic and size
++ 
++ 			#check the calculation of the rank with sort
++ 			print("########################################")
++ 			print(paste(statistics, " - ", window_size, " - ", pop_name, ": CHECK THE CALCULATION OF THE RANK WITH SORT", sep="")); print(identical(selected_pop_subset_ordered$summary_statistic, sort(selected_pop_subset$summary_statistic, decreasing=TRUE)))
++ 			print("########################################")
++ 
++ 			#merge the new columns used ensembl gene id
++ 			final_ranks = full_join(final_ranks, selected_pop_subset_ordered[, c("gene_id", pop_name)], by="gene_id")
++ 				#maintain all rows for both data.frame, adding NAs if there is mismatch
++ 				#this can be done with full_join, which is similar to use merge with all=TRUE
++ 					#https://stackoverflow.com/questions/21841146/is-there-an-r-dplyr-method-for-merge-with-all-true
++ 					#https://stackoverflow.com/questions/28250948/how-to-dplyrinner-join-multi-tbls-or-data-frames-in-r
++ 					#https://www.datasciencemadesimple.com/join-in-r-merge-in-r/
++ 		}
++ 
++ 		#remove NAs, i.e., genes that do not have statistic data for all studied populations
++ 		final_ranks = na.omit(final_ranks)
++ 
++ 		#see the table
++ 		summary(final_ranks)
++ 		str(final_ranks)
++ 
++ 		#check we have all the pops
++ 		print("########################################")
++ 		print(paste(statistics, " - ", window_size, ": CHECK WE HAVE ALL THE POPS", sep="")); print(ncol(final_ranks) == length(list_files_statistic_paths_selected) + 1)
++ 			#we should a column for each pop plus the ensembl ID column
++ 		print("########################################")
++ 
++ 		#print the population names in the order of the table
++ 		print("########################################")
++ 		print(paste(statistics, " - ", window_size, ": PRINT THE POPULATION NAMES IN ORDER", sep="")); print(paste(colnames(final_ranks)[which(!colnames(final_ranks) == "gene_id")], collapse=","))
++ 		print("########################################")
++ 
++ 		#save the data
++ 		write.table(final_ranks, paste(path_outside_pipeline, "/", pop_group, "_ranks_", statistics, "_", window_size, sep=""), sep=" ", col.names=FALSE, row.names=FALSE, quote=FALSE) 
++ 	}
++ 
++ 	#apply the function across the window sizes
++ 	lapply(window_sizes, ranks_cal_window)
++ }
+> 
+> 
+> 
+> #####################################
+> ###### PARALLELIZE THE PROCESS ######
+> #####################################
+> 
+> #statistics
+> statistics_to_rank = c("ihs")
+> 
+> #set up cluster
+> clust <- makeCluster(length(statistics_to_rank), outfile="") #outfile let you to see the output in the terminal "https://blog.revolutionanalytics.com/2015/02/monitoring-progress-of-a-foreach-parallel-job.html"
+[1] FALSE
+Warning message:
+In file.remove(".RData") :
+  cannot remove file '.RData', reason 'No such file or directory'
+         used (Mb) gc trigger (Mb) max used (Mb)
+Ncells 127479  6.9     350000 18.7   198048 10.6
+Vcells 245978  1.9    8388608 64.0  1016671  7.8
+Loading required package: colorout
+Warning message:
+In library(package, lib.loc = lib.loc, character.only = TRUE, logical.return = TRUE,  :
+  there is no package called 'colorout'
+Loading required package: SistWrapper
+Warning message:
+In library(package, lib.loc = lib.loc, character.only = TRUE, logical.return = TRUE,  :
+  there is no package called 'SistWrapper'
+starting worker pid=26898 on localhost:11310 at 12:21:35.827
+> registerDoParallel(clust)
+> 
+> #run the function for all populations
+> foreach(i=statistics_to_rank, .packages=c("plyr", "dplyr")) %dopar% {
++     statistics_ranks(statistics=i, pop_group="all", window_sizes=c("50kb", "100kb", "200kb", "500kb", "1000kb"))
++ }
+
+Attaching package: 'dplyr'
+
+The following objects are masked from 'package:plyr':
+
+    arrange, count, desc, failwith, id, mutate, rename, summarise,
+    summarize
+
+The following objects are masked from 'package:stats':
+
+    filter, lag
+
+The following objects are masked from 'package:base':
+
+    intersect, setdiff, setequal, union
+
+[1] "########################################"
+[1] "ihs: CHECK THAT WE HAVE THE PATHS FOR ALL SELECTED POPS"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - ACBD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - ASWD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - BEBD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - CDXD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - CEUD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - CHBD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - CHSD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - CLMD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - ESND: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - FIND: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - GBRD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - GIHD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - GWDD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - IBSD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - ITUD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - JPTD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - KHVD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - LWKD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - MSLD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - MXLD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - PELD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - PJLD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - PURD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - STUD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - TSID: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - YRID: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+'data.frame':	17862 obs. of  27 variables:
+ $ gene_id: chr  "ENSG00000000457" "ENSG00000000460" "ENSG00000000938" "ENSG00000000971" ...
+ $ ACBD   : int  14302 4215 6317 3810 13684 15977 3889 1933 5041 4024 ...
+ $ ASWD   : int  12845 3312 2698 16206 14185 16178 3863 3672 5067 3192 ...
+ $ BEBD   : int  8208 3389 7713 11231 15937 13074 13376 2020 4863 3454 ...
+ $ CDXD   : int  4158 6600 16261 17884 11511 14149 17674 12526 14899 1333 ...
+ $ CEUD   : int  13346 7449 1140 10776 11412 12627 10843 1182 13477 5214 ...
+ $ CHBD   : int  5331 7592 15816 15578 12963 17317 17629 3736 12633 1256 ...
+ $ CHSD   : int  3833 4044 14627 18012 11296 15216 17589 10033 12351 3068 ...
+ $ CLMD   : int  13175 6949 1282 14659 5907 11332 3786 932 15240 4112 ...
+ $ ESND   : int  11397 5576 5360 10883 14171 16632 15768 3303 6109 3162 ...
+ $ FIND   : int  7797 4259 1065 11866 6438 5332 12885 704 9901 921 ...
+ $ GBRD   : int  5751 6925 1500 15785 12575 12920 9928 3246 8184 1374 ...
+ $ GIHD   : int  7319 3199 1945 16298 14541 13785 17496 2229 5110 2585 ...
+ $ GWDD   : int  13250 4572 7702 14241 13968 15807 3088 3817 4050 5283 ...
+ $ IBSD   : int  7875 4479 2089 12047 12673 11645 7111 1572 11052 3639 ...
+ $ ITUD   : int  6190 3131 4640 11016 13696 4843 15938 2842 7417 3112 ...
+ $ JPTD   : int  3543 5571 8152 15392 10707 16708 14859 2047 16905 1323 ...
+ $ KHVD   : int  3823 7290 12640 17845 9218 9553 7399 5755 14598 1376 ...
+ $ LWKD   : int  13463 8241 3007 14124 15318 16582 3295 1623 3570 5211 ...
+ $ MSLD   : int  9493 5705 6063 12749 15075 17134 3281 3611 8101 7943 ...
+ $ MXLD   : int  9943 14196 1706 7339 2297 4473 5193 687 15121 860 ...
+ $ PELD   : int  9546 4821 5060 12098 8253 9170 7920 288 10745 6498 ...
+ $ PJLD   : int  13783 3486 3962 14465 16085 9554 11709 1556 6412 4290 ...
+ $ PURD   : int  16075 7261 902 10590 15806 12935 16339 1473 11931 7026 ...
+ $ STUD   : int  6018 2270 3474 14879 17184 5042 17729 1283 3756 2268 ...
+ $ TSID   : int  5606 3749 1667 9244 13846 12814 17978 2384 14372 3988 ...
+ $ YRID   : int  14264 4944 5548 10853 14928 14866 9037 2395 5121 8371 ...
+ - attr(*, "na.action")= 'omit' Named int [1:1390] 16 17 82 119 144 204 216 217 258 358 ...
+  ..- attr(*, "names")= chr [1:1390] "16" "17" "82" "119" ...
+[1] "########################################"
+[1] "ihs - 50kb: CHECK WE HAVE ALL THE POPS"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb: PRINT THE POPULATION NAMES IN ORDER"
+[1] "ACBD,ASWD,BEBD,CDXD,CEUD,CHBD,CHSD,CLMD,ESND,FIND,GBRD,GIHD,GWDD,IBSD,ITUD,JPTD,KHVD,LWKD,MSLD,MXLD,PELD,PJLD,PURD,STUD,TSID,YRID"
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - ACBD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - ASWD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - BEBD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - CDXD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - CEUD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - CHBD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - CHSD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - CLMD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - ESND: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - FIND: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - GBRD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - GIHD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - GWDD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - IBSD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - ITUD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - JPTD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - KHVD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - LWKD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - MSLD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - MXLD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - PELD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - PJLD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - PURD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - STUD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - TSID: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - YRID: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+'data.frame':	18193 obs. of  27 variables:
+ $ gene_id: chr  "ENSG00000000457" "ENSG00000000460" "ENSG00000000938" "ENSG00000000971" ...
+ $ ACBD   : int  3910 2449 6293 7050 15076 16551 5327 2615 7687 1234 ...
+ $ ASWD   : int  5330 1685 2790 14579 14920 16818 3663 8261 7916 893 ...
+ $ BEBD   : int  4018 3281 7560 9011 16982 11323 16207 4656 5957 1589 ...
+ $ CDXD   : int  3595 3911 15215 14216 15705 14809 17313 9182 16281 661 ...
+ $ CEUD   : int  9251 7919 1251 8618 12629 10022 16472 1928 12072 2943 ...
+ $ CHBD   : int  4928 6586 17567 15003 16739 17218 15886 4563 10811 875 ...
+ $ CHSD   : int  3559 2445 17284 17298 13377 15960 18025 11076 11210 1462 ...
+ $ CLMD   : int  8139 6771 1398 12404 6220 9271 7919 1253 15455 2189 ...
+ $ ESND   : int  3293 3096 4968 12780 17025 17437 15521 7699 12208 1303 ...
+ $ FIND   : int  5766 4748 1098 11033 5473 4562 17265 1015 11529 639 ...
+ $ GBRD   : int  3329 7690 1551 13727 13809 11282 16327 4182 9112 891 ...
+ $ GIHD   : int  3647 2161 2024 14150 15342 11413 17940 4410 7590 1107 ...
+ $ GWDD   : int  4272 4529 7265 14800 16405 16048 4070 8589 6653 2488 ...
+ $ IBSD   : int  4164 4455 2158 11335 12791 8892 13345 2397 12345 1713 ...
+ $ ITUD   : int  2277 3697 4952 11691 12271 4954 16780 4973 7704 1587 ...
+ $ JPTD   : int  3330 5380 12121 16036 13709 17120 16854 3658 15765 553 ...
+ $ KHVD   : int  4086 5526 16520 15313 10052 11148 8510 11123 15485 1359 ...
+ $ LWKD   : int  3794 2618 3880 16589 15667 17036 4318 2704 4164 1227 ...
+ $ MSLD   : int  3136 2869 5334 14807 17124 17293 3971 6476 15010 1469 ...
+ $ MXLD   : int  7914 14236 999 6381 2146 3600 10401 839 16883 702 ...
+ $ PELD   : int  6961 3221 2823 6713 8339 8696 12249 298 13363 1817 ...
+ $ PJLD   : int  5203 2533 3465 14353 15870 9302 15791 3298 8548 1776 ...
+ $ PURD   : int  6169 6159 785 10913 13070 12790 17848 2784 14046 3659 ...
+ $ STUD   : int  2699 1737 3087 11734 15997 5459 17307 1932 3892 1280 ...
+ $ TSID   : int  2562 3250 1888 7602 14281 10221 18226 4009 11626 1228 ...
+ $ YRID   : int  5978 2816 5469 11033 15097 15421 11613 3896 9695 2421 ...
+ - attr(*, "na.action")= 'omit' Named int [1:1059] 16 17 144 204 258 358 361 362 477 478 ...
+  ..- attr(*, "names")= chr [1:1059] "16" "17" "144" "204" ...
+[1] "########################################"
+[1] "ihs - 100kb: CHECK WE HAVE ALL THE POPS"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb: PRINT THE POPULATION NAMES IN ORDER"
+[1] "ACBD,ASWD,BEBD,CDXD,CEUD,CHBD,CHSD,CLMD,ESND,FIND,GBRD,GIHD,GWDD,IBSD,ITUD,JPTD,KHVD,LWKD,MSLD,MXLD,PELD,PJLD,PURD,STUD,TSID,YRID"
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - ACBD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - ASWD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - BEBD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - CDXD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - CEUD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - CHBD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - CHSD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - CLMD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - ESND: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - FIND: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - GBRD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - GIHD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - GWDD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - IBSD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - ITUD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - JPTD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - KHVD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - LWKD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - MSLD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - MXLD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - PELD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - PJLD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - PURD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - STUD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - TSID: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - YRID: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+'data.frame':	18448 obs. of  27 variables:
+ $ gene_id: chr  "ENSG00000000457" "ENSG00000000460" "ENSG00000000938" "ENSG00000000971" ...
+ $ ACBD   : int  3458 1740 9929 5876 17667 18192 2991 3527 10637 2126 ...
+ $ ASWD   : int  3588 1812 5063 7657 17023 18123 2545 8798 12280 1389 ...
+ $ BEBD   : int  6833 4841 13354 6519 16654 14795 12668 8831 8341 1238 ...
+ $ CDXD   : int  5617 4007 3085 4215 17276 17418 17353 8744 17233 995 ...
+ $ CEUD   : int  11024 6727 2546 4905 12255 11790 15406 5209 14159 2140 ...
+ $ CHBD   : int  7131 7834 17436 7246 16699 16973 17481 7515 14134 1010 ...
+ $ CHSD   : int  4295 3156 15801 3609 17402 16661 18293 10837 14816 1417 ...
+ $ CLMD   : int  8974 6912 1630 7696 9571 7266 15053 1847 17065 2771 ...
+ $ ESND   : int  4505 2307 7576 10440 18151 18191 14077 5657 15281 2382 ...
+ $ FIND   : int  5375 4304 3470 7608 6852 6311 16575 2026 17535 767 ...
+ $ GBRD   : int  3928 4540 2159 10247 9981 12232 14594 5204 13948 1452 ...
+ $ GIHD   : int  3877 2012 3204 12284 15564 11836 12655 6652 8250 1300 ...
+ $ GWDD   : int  7799 3469 8728 7591 17588 18120 2406 9721 8196 3631 ...
+ $ IBSD   : int  4332 3790 5876 9550 8850 10295 11947 6196 17613 1932 ...
+ $ ITUD   : int  3216 3392 4605 11127 11785 6867 12722 6015 10549 1647 ...
+ $ JPTD   : int  4697 5689 17974 7084 17208 17416 16541 8969 12009 498 ...
+ $ KHVD   : int  6596 6934 17907 4458 13397 14087 13049 16801 16699 1523 ...
+ $ LWKD   : int  3127 2151 5609 5993 16977 18235 2363 4161 4641 2076 ...
+ $ MSLD   : int  4457 2206 8647 7459 18042 18182 3544 6622 11921 2534 ...
+ $ MXLD   : int  9741 11600 1182 5513 3266 3876 15022 978 16512 957 ...
+ $ PELD   : int  6506 2599 2361 3407 8722 7910 13544 746 13398 3156 ...
+ $ PJLD   : int  5387 2442 2623 12361 15079 9193 11137 4503 10324 1544 ...
+ $ PURD   : int  6154 4283 1113 8414 13320 9936 14449 6938 16642 1921 ...
+ $ STUD   : int  3827 1953 2549 7069 9490 7904 13471 3155 6687 1023 ...
+ $ TSID   : int  3017 2534 4529 5397 5723 9205 17168 9777 15075 1237 ...
+ $ YRID   : int  7855 2414 8484 7012 17788 17929 8266 5614 8157 3897 ...
+ - attr(*, "na.action")= 'omit' Named int [1:804] 16 144 204 358 361 362 477 478 502 527 ...
+  ..- attr(*, "names")= chr [1:804] "16" "144" "204" "358" ...
+[1] "########################################"
+[1] "ihs - 200kb: CHECK WE HAVE ALL THE POPS"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb: PRINT THE POPULATION NAMES IN ORDER"
+[1] "ACBD,ASWD,BEBD,CDXD,CEUD,CHBD,CHSD,CLMD,ESND,FIND,GBRD,GIHD,GWDD,IBSD,ITUD,JPTD,KHVD,LWKD,MSLD,MXLD,PELD,PJLD,PURD,STUD,TSID,YRID"
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - ACBD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - ASWD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - BEBD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - CDXD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - CEUD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - CHBD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - CHSD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - CLMD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - ESND: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - FIND: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - GBRD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - GIHD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - GWDD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - IBSD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - ITUD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - JPTD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - KHVD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - LWKD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - MSLD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - MXLD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - PELD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - PJLD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - PURD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - STUD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - TSID: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - YRID: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+'data.frame':	18682 obs. of  27 variables:
+ $ gene_id: chr  "ENSG00000000457" "ENSG00000000460" "ENSG00000000938" "ENSG00000000971" ...
+ $ ACBD   : int  2179 4389 1233 5743 18691 18701 1431 11519 14843 2371 ...
+ $ ASWD   : int  1691 4187 913 7465 18441 18418 1543 16408 16383 2458 ...
+ $ BEBD   : int  2288 5889 1963 9661 18273 18447 17009 14433 15962 2681 ...
+ $ CDXD   : int  4791 3203 890 10292 17892 17911 10463 12277 17426 5018 ...
+ $ CEUD   : int  15169 13259 936 5791 16487 16057 5005 5243 17845 3762 ...
+ $ CHBD   : int  6073 4571 6527 10619 15673 16898 11366 11799 15857 3767 ...
+ $ CHSD   : int  3738 2417 6163 6884 15406 17040 15076 12328 16500 5037 ...
+ $ CLMD   : int  12290 13346 1904 10238 12169 12757 2660 7159 17840 6385 ...
+ $ ESND   : int  1967 5250 1628 6622 18712 18682 2684 14224 16181 4010 ...
+ $ FIND   : int  8511 7835 4913 6997 14432 14081 12320 6370 17955 3179 ...
+ $ GBRD   : int  7128 6560 2805 9410 13757 14096 13559 4982 17575 2887 ...
+ $ GIHD   : int  923 2598 3951 14198 15626 15438 8730 10327 10130 3225 ...
+ $ GWDD   : int  2834 5899 1083 7212 18476 18602 1405 15202 14174 2809 ...
+ $ IBSD   : int  7526 8251 1565 13204 12354 12119 3409 6706 18627 3709 ...
+ $ ITUD   : int  1344 4345 5308 11946 14285 13743 4742 11281 15382 2986 ...
+ $ JPTD   : int  8172 5204 12865 10060 18326 18360 17289 13798 15583 1981 ...
+ $ KHVD   : int  5581 4498 9239 8852 15783 15965 6587 14257 17892 8123 ...
+ $ LWKD   : int  1593 4336 1317 5584 18661 18678 1367 11088 9064 3507 ...
+ $ MSLD   : int  2124 4360 909 7838 18635 18610 1514 15887 14311 1196 ...
+ $ MXLD   : int  12814 11260 1637 5571 6870 7499 14280 3337 16103 3414 ...
+ $ PELD   : int  3287 4288 5582 4306 7153 8942 11116 2974 14156 8911 ...
+ $ PJLD   : int  1082 3182 3894 9040 13836 13924 9500 7015 14304 2129 ...
+ $ PURD   : int  7143 9570 676 9589 11282 11199 4321 9846 18190 3259 ...
+ $ STUD   : int  1119 2693 2047 9144 12945 12439 13939 7743 12189 2985 ...
+ $ TSID   : int  3261 5289 1698 8579 8898 8616 2497 8876 17207 2851 ...
+ $ YRID   : int  2407 5864 884 5098 18708 18699 2309 12711 12180 1973 ...
+ - attr(*, "na.action")= 'omit' Named int [1:570] 144 204 358 361 362 477 478 502 527 551 ...
+  ..- attr(*, "names")= chr [1:570] "144" "204" "358" "361" ...
+[1] "########################################"
+[1] "ihs - 500kb: CHECK WE HAVE ALL THE POPS"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb: PRINT THE POPULATION NAMES IN ORDER"
+[1] "ACBD,ASWD,BEBD,CDXD,CEUD,CHBD,CHSD,CLMD,ESND,FIND,GBRD,GIHD,GWDD,IBSD,ITUD,JPTD,KHVD,LWKD,MSLD,MXLD,PELD,PJLD,PURD,STUD,TSID,YRID"
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - ACBD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - ASWD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - BEBD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - CDXD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - CEUD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - CHBD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - CHSD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - CLMD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - ESND: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - FIND: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - GBRD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - GIHD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - GWDD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - IBSD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - ITUD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - JPTD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - KHVD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - LWKD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - MSLD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - MXLD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - PELD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - PJLD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - PURD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - STUD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - TSID: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - YRID: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+'data.frame':	18804 obs. of  27 variables:
+ $ gene_id: chr  "ENSG00000000457" "ENSG00000000460" "ENSG00000000938" "ENSG00000000971" ...
+ $ ACBD   : int  6216 2089 1244 3680 18718 18787 681 13013 9715 3284 ...
+ $ ASWD   : int  4890 1521 1105 5936 18330 18615 624 16143 10815 3090 ...
+ $ BEBD   : int  3591 1212 4442 10388 18693 18619 3439 16710 12546 6724 ...
+ $ CDXD   : int  3830 1456 4187 15265 18513 18169 2060 14394 17779 10798 ...
+ $ CEUD   : int  13029 5275 1663 7676 16055 14279 1179 9647 18424 8674 ...
+ $ CHBD   : int  3850 1454 13905 10693 18199 17919 3555 12079 16041 7229 ...
+ $ CHSD   : int  2717 888 13969 4261 18461 18313 2398 11174 15174 10658 ...
+ $ CLMD   : int  11399 1742 3359 7620 16721 16617 1442 14062 16666 8886 ...
+ $ ESND   : int  4743 1378 2134 4526 18797 18798 996 13908 7207 4652 ...
+ $ FIND   : int  7874 1117 14789 5673 12941 13184 3491 10280 17766 7670 ...
+ $ GBRD   : int  6148 1818 6730 10212 13426 11033 1365 5899 18041 7819 ...
+ $ GIHD   : int  1219 389 7682 10063 17345 16983 3204 15884 9540 8887 ...
+ $ GWDD   : int  6942 1783 1165 6517 18443 18612 573 13171 7651 3378 ...
+ $ IBSD   : int  8862 2744 3668 9043 13817 13039 1005 6852 18772 7294 ...
+ $ ITUD   : int  2345 462 6585 11427 17590 17342 2480 13226 10736 10380 ...
+ $ JPTD   : int  5048 1566 17851 11998 18737 18685 6116 14459 15965 5356 ...
+ $ KHVD   : int  3423 1286 11546 5743 18042 17378 1373 14203 17913 14496 ...
+ $ LWKD   : int  5192 1725 1274 4999 18295 18723 581 12804 6475 3742 ...
+ $ MSLD   : int  4393 1250 1382 6591 18746 18769 974 15084 7532 2082 ...
+ $ MXLD   : int  7118 743 5132 6504 11564 11811 5552 8604 15663 5893 ...
+ $ PELD   : int  2835 396 12984 4325 11905 11676 4018 7121 10317 11198 ...
+ $ PJLD   : int  1742 550 5762 9479 17022 16512 3503 11996 15064 5538 ...
+ $ PURD   : int  10077 3252 1450 9077 15161 15167 591 7524 18233 6376 ...
+ $ STUD   : int  2169 555 6590 7840 16741 16122 3987 12253 9236 8445 ...
+ $ TSID   : int  4908 1881 4266 8706 12941 12066 1057 8222 18425 6721 ...
+ $ YRID   : int  6335 1970 1336 5150 18807 18813 972 11807 7021 3014 ...
+ - attr(*, "na.action")= 'omit' Named int [1:448] 144 358 361 362 477 478 502 527 551 552 ...
+  ..- attr(*, "names")= chr [1:448] "144" "358" "361" "362" ...
+[1] "########################################"
+[1] "ihs - 1000kb: CHECK WE HAVE ALL THE POPS"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb: PRINT THE POPULATION NAMES IN ORDER"
+[1] "ACBD,ASWD,BEBD,CDXD,CEUD,CHBD,CHSD,CLMD,ESND,FIND,GBRD,GIHD,GWDD,IBSD,ITUD,JPTD,KHVD,LWKD,MSLD,MXLD,PELD,PJLD,PURD,STUD,TSID,YRID"
+[1] "########################################"
+[[1]]
+[[1]][[1]]
+NULL
+
+[[1]][[2]]
+NULL
+
+[[1]][[3]]
+NULL
+
+[[1]][[4]]
+NULL
+
+[[1]][[5]]
+NULL
+
+
+> 
+> #run the function for East Asian populations
+> foreach(i=statistics_to_rank, .packages=c("plyr", "dplyr")) %dopar% {
++     statistics_ranks(statistics=i, pop_group="eas", window_sizes=c("50kb", "100kb", "200kb", "500kb", "1000kb"))
++ } 
+[1] "########################################"
+[1] "ihs: CHECK THAT WE HAVE THE PATHS FOR ALL SELECTED POPS"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - CDXD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - CHBD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - CHSD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - JPTD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - KHVD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+'data.frame':	17996 obs. of  6 variables:
+ $ gene_id: chr  "ENSG00000000457" "ENSG00000000460" "ENSG00000000938" "ENSG00000000971" ...
+ $ CDXD   : int  4158 6600 16261 17884 11511 14149 17674 12526 14899 1333 ...
+ $ CHBD   : int  5331 7592 15816 15578 12963 17317 17629 3736 12633 1256 ...
+ $ CHSD   : int  3833 4044 14627 18012 11296 15216 17589 10033 12351 3068 ...
+ $ JPTD   : int  3543 5571 8152 15392 10707 16708 14859 2047 16905 1323 ...
+ $ KHVD   : int  3823 7290 12640 17845 9218 9553 7399 5755 14598 1376 ...
+ - attr(*, "na.action")= 'omit' Named int [1:1256] 16 17 82 119 144 204 358 361 362 477 ...
+  ..- attr(*, "names")= chr [1:1256] "16" "17" "82" "119" ...
+[1] "########################################"
+[1] "ihs - 50kb: CHECK WE HAVE ALL THE POPS"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb: PRINT THE POPULATION NAMES IN ORDER"
+[1] "CDXD,CHBD,CHSD,JPTD,KHVD"
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - CDXD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - CHBD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - CHSD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - JPTD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - KHVD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+'data.frame':	18251 obs. of  6 variables:
+ $ gene_id: chr  "ENSG00000000457" "ENSG00000000460" "ENSG00000000938" "ENSG00000000971" ...
+ $ CDXD   : int  3595 3911 15215 14216 15705 14809 17313 9182 16281 661 ...
+ $ CHBD   : int  4928 6586 17567 15003 16739 17218 15886 4563 10811 875 ...
+ $ CHSD   : int  3559 2445 17284 17298 13377 15960 18025 11076 11210 1462 ...
+ $ JPTD   : int  3330 5380 12121 16036 13709 17120 16854 3658 15765 553 ...
+ $ KHVD   : int  4086 5526 16520 15313 10052 11148 8510 11123 15485 1359 ...
+ - attr(*, "na.action")= 'omit' Named int [1:1001] 16 17 144 204 358 361 362 477 478 502 ...
+  ..- attr(*, "names")= chr [1:1001] "16" "17" "144" "204" ...
+[1] "########################################"
+[1] "ihs - 100kb: CHECK WE HAVE ALL THE POPS"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb: PRINT THE POPULATION NAMES IN ORDER"
+[1] "CDXD,CHBD,CHSD,JPTD,KHVD"
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - CDXD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - CHBD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - CHSD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - JPTD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - KHVD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+'data.frame':	18480 obs. of  6 variables:
+ $ gene_id: chr  "ENSG00000000457" "ENSG00000000460" "ENSG00000000938" "ENSG00000000971" ...
+ $ CDXD   : int  5617 4007 3085 4215 17276 17418 17353 8744 17233 995 ...
+ $ CHBD   : int  7131 7834 17436 7246 16699 16973 17481 7515 14134 1010 ...
+ $ CHSD   : int  4295 3156 15801 3609 17402 16661 18293 10837 14816 1417 ...
+ $ JPTD   : int  4697 5689 17974 7084 17208 17416 16541 8969 12009 498 ...
+ $ KHVD   : int  6596 6934 17907 4458 13397 14087 13049 16801 16699 1523 ...
+ - attr(*, "na.action")= 'omit' Named int [1:772] 16 144 204 358 361 362 477 478 502 527 ...
+  ..- attr(*, "names")= chr [1:772] "16" "144" "204" "358" ...
+[1] "########################################"
+[1] "ihs - 200kb: CHECK WE HAVE ALL THE POPS"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb: PRINT THE POPULATION NAMES IN ORDER"
+[1] "CDXD,CHBD,CHSD,JPTD,KHVD"
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - CDXD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - CHBD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - CHSD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - JPTD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - KHVD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+'data.frame':	18709 obs. of  6 variables:
+ $ gene_id: chr  "ENSG00000000457" "ENSG00000000460" "ENSG00000000938" "ENSG00000000971" ...
+ $ CDXD   : int  4791 3203 890 10292 17892 17911 10463 12277 17426 5018 ...
+ $ CHBD   : int  6073 4571 6527 10619 15673 16898 11366 11799 15857 3767 ...
+ $ CHSD   : int  3738 2417 6163 6884 15406 17040 15076 12328 16500 5037 ...
+ $ JPTD   : int  8172 5204 12865 10060 18326 18360 17289 13798 15583 1981 ...
+ $ KHVD   : int  5581 4498 9239 8852 15783 15965 6587 14257 17892 8123 ...
+ - attr(*, "na.action")= 'omit' Named int [1:543] 144 204 358 361 362 477 478 502 527 551 ...
+  ..- attr(*, "names")= chr [1:543] "144" "204" "358" "361" ...
+[1] "########################################"
+[1] "ihs - 500kb: CHECK WE HAVE ALL THE POPS"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb: PRINT THE POPULATION NAMES IN ORDER"
+[1] "CDXD,CHBD,CHSD,JPTD,KHVD"
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - CDXD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - CHBD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - CHSD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - JPTD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - KHVD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+'data.frame':	18813 obs. of  6 variables:
+ $ gene_id: chr  "ENSG00000000457" "ENSG00000000460" "ENSG00000000938" "ENSG00000000971" ...
+ $ CDXD   : int  3830 1456 4187 15265 18513 18169 2060 14394 17779 10798 ...
+ $ CHBD   : int  3850 1454 13905 10693 18199 17919 3555 12079 16041 7229 ...
+ $ CHSD   : int  2717 888 13969 4261 18461 18313 2398 11174 15174 10658 ...
+ $ JPTD   : int  5048 1566 17851 11998 18737 18685 6116 14459 15965 5356 ...
+ $ KHVD   : int  3423 1286 11546 5743 18042 17378 1373 14203 17913 14496 ...
+ - attr(*, "na.action")= 'omit' Named int [1:439] 144 358 361 362 477 478 502 527 551 552 ...
+  ..- attr(*, "names")= chr [1:439] "144" "358" "361" "362" ...
+[1] "########################################"
+[1] "ihs - 1000kb: CHECK WE HAVE ALL THE POPS"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb: PRINT THE POPULATION NAMES IN ORDER"
+[1] "CDXD,CHBD,CHSD,JPTD,KHVD"
+[1] "########################################"
+[[1]]
+[[1]][[1]]
+NULL
+
+[[1]][[2]]
+NULL
+
+[[1]][[3]]
+NULL
+
+[[1]][[4]]
+NULL
+
+[[1]][[5]]
+NULL
+
+
+> 
+> #run the function for East Asian populations
+> foreach(i=statistics_to_rank, .packages=c("plyr", "dplyr")) %dopar% {
++     statistics_ranks(statistics=i, pop_group="eur", window_sizes=c("50kb", "100kb", "200kb", "500kb", "1000kb"))
++ }
+[1] "########################################"
+[1] "ihs: CHECK THAT WE HAVE THE PATHS FOR ALL SELECTED POPS"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - CEUD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - FIND: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - GBRD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - IBSD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - TSID: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+'data.frame':	18000 obs. of  6 variables:
+ $ gene_id: chr  "ENSG00000000457" "ENSG00000000460" "ENSG00000000938" "ENSG00000000971" ...
+ $ CEUD   : int  13346 7449 1140 10776 11412 12627 10843 1182 13477 5214 ...
+ $ FIND   : int  7797 4259 1065 11866 6438 5332 12885 704 9901 921 ...
+ $ GBRD   : int  5751 6925 1500 15785 12575 12920 9928 3246 8184 1374 ...
+ $ IBSD   : int  7875 4479 2089 12047 12673 11645 7111 1572 11052 3639 ...
+ $ TSID   : int  5606 3749 1667 9244 13846 12814 17978 2384 14372 3988 ...
+ - attr(*, "na.action")= 'omit' Named int [1:1252] 16 17 82 119 144 204 258 358 361 362 ...
+  ..- attr(*, "names")= chr [1:1252] "16" "17" "82" "119" ...
+[1] "########################################"
+[1] "ihs - 50kb: CHECK WE HAVE ALL THE POPS"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb: PRINT THE POPULATION NAMES IN ORDER"
+[1] "CEUD,FIND,GBRD,IBSD,TSID"
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - CEUD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - FIND: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - GBRD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - IBSD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - TSID: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+'data.frame':	18261 obs. of  6 variables:
+ $ gene_id: chr  "ENSG00000000457" "ENSG00000000460" "ENSG00000000938" "ENSG00000000971" ...
+ $ CEUD   : int  9251 7919 1251 8618 12629 10022 16472 1928 12072 2943 ...
+ $ FIND   : int  5766 4748 1098 11033 5473 4562 17265 1015 11529 639 ...
+ $ GBRD   : int  3329 7690 1551 13727 13809 11282 16327 4182 9112 891 ...
+ $ IBSD   : int  4164 4455 2158 11335 12791 8892 13345 2397 12345 1713 ...
+ $ TSID   : int  2562 3250 1888 7602 14281 10221 18226 4009 11626 1228 ...
+ - attr(*, "na.action")= 'omit' Named int [1:991] 16 17 144 204 358 361 362 477 478 502 ...
+  ..- attr(*, "names")= chr [1:991] "16" "17" "144" "204" ...
+[1] "########################################"
+[1] "ihs - 100kb: CHECK WE HAVE ALL THE POPS"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb: PRINT THE POPULATION NAMES IN ORDER"
+[1] "CEUD,FIND,GBRD,IBSD,TSID"
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - CEUD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - FIND: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - GBRD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - IBSD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - TSID: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+'data.frame':	18491 obs. of  6 variables:
+ $ gene_id: chr  "ENSG00000000457" "ENSG00000000460" "ENSG00000000938" "ENSG00000000971" ...
+ $ CEUD   : int  11024 6727 2546 4905 12255 11790 15406 5209 14159 2140 ...
+ $ FIND   : int  5375 4304 3470 7608 6852 6311 16575 2026 17535 767 ...
+ $ GBRD   : int  3928 4540 2159 10247 9981 12232 14594 5204 13948 1452 ...
+ $ IBSD   : int  4332 3790 5876 9550 8850 10295 11947 6196 17613 1932 ...
+ $ TSID   : int  3017 2534 4529 5397 5723 9205 17168 9777 15075 1237 ...
+ - attr(*, "na.action")= 'omit' Named int [1:761] 16 144 204 358 361 362 477 478 502 527 ...
+  ..- attr(*, "names")= chr [1:761] "16" "144" "204" "358" ...
+[1] "########################################"
+[1] "ihs - 200kb: CHECK WE HAVE ALL THE POPS"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb: PRINT THE POPULATION NAMES IN ORDER"
+[1] "CEUD,FIND,GBRD,IBSD,TSID"
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - CEUD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - FIND: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - GBRD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - IBSD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - TSID: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+'data.frame':	18710 obs. of  6 variables:
+ $ gene_id: chr  "ENSG00000000457" "ENSG00000000460" "ENSG00000000938" "ENSG00000000971" ...
+ $ CEUD   : int  15169 13259 936 5791 16487 16057 5005 5243 17845 3762 ...
+ $ FIND   : int  8511 7835 4913 6997 14432 14081 12320 6370 17955 3179 ...
+ $ GBRD   : int  7128 6560 2805 9410 13757 14096 13559 4982 17575 2887 ...
+ $ IBSD   : int  7526 8251 1565 13204 12354 12119 3409 6706 18627 3709 ...
+ $ TSID   : int  3261 5289 1698 8579 8898 8616 2497 8876 17207 2851 ...
+ - attr(*, "na.action")= 'omit' Named int [1:542] 144 204 358 361 362 477 478 502 527 551 ...
+  ..- attr(*, "names")= chr [1:542] "144" "204" "358" "361" ...
+[1] "########################################"
+[1] "ihs - 500kb: CHECK WE HAVE ALL THE POPS"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb: PRINT THE POPULATION NAMES IN ORDER"
+[1] "CEUD,FIND,GBRD,IBSD,TSID"
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - CEUD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - FIND: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - GBRD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - IBSD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - TSID: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+'data.frame':	18809 obs. of  6 variables:
+ $ gene_id: chr  "ENSG00000000457" "ENSG00000000460" "ENSG00000000938" "ENSG00000000971" ...
+ $ CEUD   : int  13029 5275 1663 7676 16055 14279 1179 9647 18424 8674 ...
+ $ FIND   : int  7874 1117 14789 5673 12941 13184 3491 10280 17766 7670 ...
+ $ GBRD   : int  6148 1818 6730 10212 13426 11033 1365 5899 18041 7819 ...
+ $ IBSD   : int  8862 2744 3668 9043 13817 13039 1005 6852 18772 7294 ...
+ $ TSID   : int  4908 1881 4266 8706 12941 12066 1057 8222 18425 6721 ...
+ - attr(*, "na.action")= 'omit' Named int [1:443] 144 358 361 362 477 478 502 527 551 552 ...
+  ..- attr(*, "names")= chr [1:443] "144" "358" "361" "362" ...
+[1] "########################################"
+[1] "ihs - 1000kb: CHECK WE HAVE ALL THE POPS"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb: PRINT THE POPULATION NAMES IN ORDER"
+[1] "CEUD,FIND,GBRD,IBSD,TSID"
+[1] "########################################"
+[[1]]
+[[1]][[1]]
+NULL
+
+[[1]][[2]]
+NULL
+
+[[1]][[3]]
+NULL
+
+[[1]][[4]]
+NULL
+
+[[1]][[5]]
+NULL
+
+
+> 
+> #stop the cluster 
+> stopCluster(clust)
+> 
+> #you can use a second argument within foreach
+> if(FALSE){ #dummy example
++ 
++ 	#write dummy function
++ 	dummy_function = function(x, y){
++ 		#for each element of y
++ 		for(i in 1:length(y)){
++ 
++ 			#sum it the value of x
++ 			print(x+y[i])
++ 		}
++ 	}
++ 
++ 	#dummy vector of Xs
++ 	dumy_x = c(1,2)
++ 
++ 	#run the function across X using in each case two Y values
++ 	clust=makeCluster(length(dumy_x), outfile="")
++ 	registerDoParallel(clust)
++ 	foreach(i=dumy_x, .packages=c("plyr", "dplyr")) %dopar% {
++ 	    dummy_function(x=i, y=c(1,2))
++ 	} #the result is 2, 3, 3, 4, which makes sense. It has run X=1, and then sum each Y value (1+1 and 1+3), then repeat for X=2.
++ 	stopCluster(clust)
++ }
+> 
+> proc.time()
+   user  system elapsed 
+  0.564   0.104   8.352 

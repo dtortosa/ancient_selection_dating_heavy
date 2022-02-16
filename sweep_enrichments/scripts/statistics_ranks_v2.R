@@ -182,7 +182,8 @@ statistics_ranks = function(statistics, pop_group, window_sizes){
 			##make the rank
 			#calculate a new order of the rows based on the statistic value on decreasing order
 			decreasing_order_statistic = order(selected_pop_subset$summary_statistic, decreasing=TRUE)
-				#we select the column with the selected statistic and size
+				#"order" leave the cases with NA at the bottom by default
+
 			#reorder
 			selected_pop_subset_ordered = selected_pop_subset[decreasing_order_statistic, ]
 			
@@ -195,7 +196,12 @@ statistics_ranks = function(statistics, pop_group, window_sizes){
 			##prepare the final file
 			#remove NAs for the statistic
 			selected_pop_subset_ordered = selected_pop_subset_ordered[which(!is.na(selected_pop_subset_ordered$summary_statistic)),]
-				#select the column with the selected statistic and size
+				#as the NA cases are at the bottom, their removal does not affect the ranks, so the column of the rank in selected_pop_subset_ordered should be equal to 1:nrow(selected_pop_subset_ordered)
+
+			#check that NAs have not affect the rank calculation
+			print("########################################")
+			print(paste(statistics, " - ", window_size, " - ", pop_name, ": CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION", sep="")); print(identical(selected_pop_subset_ordered[,which(colnames(selected_pop_subset_ordered) == pop_name)], 1:nrow(selected_pop_subset_ordered)))
+			print("########################################")
 
 			#check the calculation of the rank with sort
 			print("########################################")

@@ -1,0 +1,793 @@
+
+R version 4.1.2 (2021-11-01) -- "Bird Hippie"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+[1] FALSE
+Warning message:
+In file.remove(".RData") :
+  cannot remove file '.RData', reason 'No such file or directory'
+         used (Mb) gc trigger (Mb) max used (Mb)
+Ncells 127490  6.9     350000 18.7   198149 10.6
+Vcells 245981  1.9    8388608 64.0  1016693  7.8
+Loading required package: colorout
+Warning message:
+In library(package, lib.loc = lib.loc, character.only = TRUE, logical.return = TRUE,  :
+  there is no package called 'colorout'
+Loading required package: SistWrapper
+Warning message:
+In library(package, lib.loc = lib.loc, character.only = TRUE, logical.return = TRUE,  :
+  there is no package called 'SistWrapper'
+> #!/usr/bin/env Rscript
+> 
+> #This is done to have the possibility to run this script as an executable: 'chmod +x myscript.R' and then ' ./myscript.R'. If you run the script as 'R CMD BATCH myscript.R', i THINK this is not used, because it is annotated. 
+> 	#https://www.jonzelner.net/statistics/make/docker/reproducibility/2016/05/31/script-is-a-program/
+> 
+> #In case you run this script as an executable, you can save the output without warnings "./myscript.R > myscript.Rout" or with errors "./myscript.R &> myscript.Rout"
+> 	#https://askubuntu.com/questions/420981/how-do-i-save-terminal-output-to-a-file
+> 
+> 
+> 
+> ####################################################################################################
+> ########################### PREPARE VALID, GENE LIST AND DISTANCIE #################################
+> ####################################################################################################
+> 
+> #IMPORTANT: 
+> 	#Note that this script was wrote and run in 2022 using the version of April 28th 2022 of David's pipeline.
+> 		#The pipeline of David has been downloaded from 
+> 			#https://github.com/DavidPierreEnard/Gene_Set_Enrichment_Pipeline
+> 			#last commit done on Apr 28, 2021
+> 				#7b755c0c23dd4d7c3f54c4b53e74366e4041ac8f 
+> 
+> 	#Manual from David
+> 		#/home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/david_pipeline/exdef_folder/exdef_pipeline_manual.pdf
+> 
+> 
+> 
+> #################################################################
+> ####################### PREVIOUS VERSIONS #######################
+> #################################################################
+> 
+> #Respect to V1:
+> 	#Preparing the scripts for the container
+> 
+> 
+> 
+> #################################################################
+> ####################### REQUIRED PACKAGES #######################
+> #################################################################
+> 
+> require(plyr) #for apply functions across lists and data.frames.
+Loading required package: plyr
+> 
+> 
+> 
+> ##########################################
+> ########## REMOVE PREVIOUS WORKSPACE #####
+> ##########################################
+> remove(list=ls(all=TRUE))
+> 
+> 
+> 
+> ##########################################
+> ########## SET THE WORKING DIRECTORY #####
+> ##########################################
+> 
+> #we do not need to specify path inside the container, starting with "/" and then opt or root, you get there
+> path_inside_container = "/"
+> 
+> #path of the starting folder in the image. This will let us to automatize the script, it will work both in my laptop and the HPC. We do not have to change the path. 
+> path_starting_folder = system("pwd", intern=TRUE) #intern: a logical (not 'NA') which indicates whether to capture the output
+> 
+> #set the path to data 
+> path_outside_data = paste(path_starting_folder, "/data", sep="")
+> path_outside_pipeline = paste(path_starting_folder, "/david_pipeline/exdef_folder", sep="")
+> 
+> 
+> 
+> ###############################
+> ######## GENE COORD ###########
+> ###############################
+> 
+> #we are going to use our curated list of gene coordinates for obtaining many of the files we need for the pipeline to run.
+> 
+> #load our curate list of ensembl genes (hg19)
+> gene_coords = read.table(paste(path_outside_data, "/gene_number_cds_coords.txt", sep=""), sep="\t", header=TRUE)
+> str(gene_coords) 
+'data.frame':	643588 obs. of  60 variables:
+ $ chromosome_name              : int  1 1 1 1 1 1 1 1 1 1 ...
+ $ hgnc_symbol                  : chr  "SCYL3" "SCYL3" "SCYL3" "SCYL3" ...
+ $ gene_id                      : chr  "ENSG00000000457" "ENSG00000000457" "ENSG00000000457" "ENSG00000000457" ...
+ $ test_rows_initial_datasets_1 : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ test_rows_initial_datasets_2 : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ test_gene_id                 : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ gene_biotype                 : chr  "protein_coding" "protein_coding" "protein_coding" "protein_coding" ...
+ $ transcript_id                : chr  "ENST00000367771" "ENST00000367771" "ENST00000367771" "ENST00000367771" ...
+ $ transcript_biotype           : chr  "protein_coding" "protein_coding" "protein_coding" "protein_coding" ...
+ $ exon_id                      : chr  "ENSE00003656990" "ENSE00003589316" "ENSE00003505435" "ENSE00003631661" ...
+ $ test_gene_transcripts_biotype: logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ gene_start                   : int  169818772 169818772 169818772 169818772 169818772 169818772 169818772 169818772 169818772 169818772 ...
+ $ gene_end                     : int  169863408 169863408 169863408 169863408 169863408 169863408 169863408 169863408 169863408 169863408 ...
+ $ gene_length                  : int  44637 44637 44637 44637 44637 44637 44637 44637 44637 44637 ...
+ $ middle_point                 : num  1.7e+08 1.7e+08 1.7e+08 1.7e+08 1.7e+08 ...
+ $ test_gene_length_center      : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ windows_check_1              : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ windows_check_2              : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ windows_check_3              : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ windows_check_4              : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ windows_check_5              : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ lower_end_window_50kb        : int  169816090 169816090 169816090 169816090 169816090 169816090 169816090 169816090 169816090 169816090 ...
+ $ upper_end_window_50kb        : int  169866089 169866089 169866089 169866089 169866089 169866089 169866089 169866089 169866089 169866089 ...
+ $ lower_end_window_100kb       : int  169791090 169791090 169791090 169791090 169791090 169791090 169791090 169791090 169791090 169791090 ...
+ $ upper_end_window_100kb       : int  169891089 169891089 169891089 169891089 169891089 169891089 169891089 169891089 169891089 169891089 ...
+ $ lower_end_window_200kb       : int  169741090 169741090 169741090 169741090 169741090 169741090 169741090 169741090 169741090 169741090 ...
+ $ upper_end_window_200kb       : int  169941089 169941089 169941089 169941089 169941089 169941089 169941089 169941089 169941089 169941089 ...
+ $ lower_end_window_500kb       : int  169591090 169591090 169591090 169591090 169591090 169591090 169591090 169591090 169591090 169591090 ...
+ $ upper_end_window_500kb       : int  170091089 170091089 170091089 170091089 170091089 170091089 170091089 170091089 170091089 170091089 ...
+ $ lower_end_window_1000kb      : int  169341090 169341090 169341090 169341090 169341090 169341090 169341090 169341090 169341090 169341090 ...
+ $ upper_end_window_1000kb      : int  170341089 170341089 170341089 170341089 170341089 170341089 170341089 170341089 170341089 170341089 ...
+ $ n_genes_50kb                 : int  2 2 2 2 2 2 2 2 2 2 ...
+ $ n_genes_100kb                : int  3 3 3 3 3 3 3 3 3 3 ...
+ $ n_genes_200kb                : int  4 4 4 4 4 4 4 4 4 4 ...
+ $ n_genes_500kb                : int  7 7 7 7 7 7 7 7 7 7 ...
+ $ n_genes_1000kb               : int  12 12 12 12 12 12 12 12 12 12 ...
+ $ check_n_genes_0              : chr  "TRUE" "TRUE" "TRUE" "TRUE" ...
+ $ check_n_genes_1              : chr  "TRUE" "TRUE" "TRUE" "TRUE" ...
+ $ check_n_genes_2              : chr  "TRUE" "TRUE" "TRUE" "TRUE" ...
+ $ check_n_genes_3              : chr  "TRUE" "TRUE" "TRUE" "TRUE" ...
+ $ check_n_genes_4              : chr  "TRUE" "TRUE" "TRUE" "TRUE" ...
+ $ check_coding_density_1       : chr  "TRUE" "TRUE" "TRUE" "TRUE" ...
+ $ check_coding_density_2       : chr  "TRUE" "TRUE" "TRUE" "TRUE" ...
+ $ check_coding_density_4       : chr  NA NA NA NA ...
+ $ check_coding_density_5       : chr  "TRUE" "TRUE" "TRUE" "TRUE" ...
+ $ check_coding_density_6       : logi  FALSE FALSE FALSE FALSE FALSE FALSE ...
+ $ check_coding_density_7       : chr  "TRUE" "TRUE" "TRUE" "TRUE" ...
+ $ test_all_ranges_included     : chr  "TRUE" "TRUE" "TRUE" "TRUE" ...
+ $ test_iranges                 : chr  "TRUE" "TRUE" "TRUE" "TRUE" ...
+ $ test_start_end               : chr  "TRUE" "TRUE" "TRUE" "TRUE" ...
+ $ test_ranges_overlap          : chr  "TRUE" "TRUE" "TRUE" "TRUE" ...
+ $ test_ranges_overlap_2        : chr  "TRUE" "TRUE" "TRUE" "TRUE" ...
+ $ coding_density_50kb          : num  0.0569 0.0569 0.0569 0.0569 0.0569 ...
+ $ coding_density_100kb         : num  0.0414 0.0414 0.0414 0.0414 0.0414 ...
+ $ coding_density_200kb         : num  0.0325 0.0325 0.0325 0.0325 0.0325 ...
+ $ coding_density_500kb         : num  0.0231 0.0231 0.0231 0.0231 0.0231 ...
+ $ coding_density_1000kb        : num  0.0259 0.0259 0.0259 0.0259 0.0259 ...
+ $ test_position_gene_exons     : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ test_chr_name                : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ test_na_cds                  : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+> head(gene_coords) #this dataset include our curated list of genes with symbol and ensembl ID. It is well curated and has not repeated ensemble IDs.
+  chromosome_name hgnc_symbol         gene_id test_rows_initial_datasets_1
+1               1       SCYL3 ENSG00000000457                         TRUE
+2               1       SCYL3 ENSG00000000457                         TRUE
+3               1       SCYL3 ENSG00000000457                         TRUE
+4               1       SCYL3 ENSG00000000457                         TRUE
+5               1       SCYL3 ENSG00000000457                         TRUE
+6               1       SCYL3 ENSG00000000457                         TRUE
+  test_rows_initial_datasets_2 test_gene_id   gene_biotype   transcript_id
+1                         TRUE         TRUE protein_coding ENST00000367771
+2                         TRUE         TRUE protein_coding ENST00000367771
+3                         TRUE         TRUE protein_coding ENST00000367771
+4                         TRUE         TRUE protein_coding ENST00000367771
+5                         TRUE         TRUE protein_coding ENST00000367771
+6                         TRUE         TRUE protein_coding ENST00000367771
+  transcript_biotype         exon_id test_gene_transcripts_biotype gene_start
+1     protein_coding ENSE00003656990                          TRUE  169818772
+2     protein_coding ENSE00003589316                          TRUE  169818772
+3     protein_coding ENSE00003505435                          TRUE  169818772
+4     protein_coding ENSE00003631661                          TRUE  169818772
+5     protein_coding ENSE00003592502                          TRUE  169818772
+6     protein_coding ENSE00000814448                          TRUE  169818772
+   gene_end gene_length middle_point test_gene_length_center windows_check_1
+1 169863408       44637    169841090                    TRUE            TRUE
+2 169863408       44637    169841090                    TRUE            TRUE
+3 169863408       44637    169841090                    TRUE            TRUE
+4 169863408       44637    169841090                    TRUE            TRUE
+5 169863408       44637    169841090                    TRUE            TRUE
+6 169863408       44637    169841090                    TRUE            TRUE
+  windows_check_2 windows_check_3 windows_check_4 windows_check_5
+1            TRUE            TRUE            TRUE            TRUE
+2            TRUE            TRUE            TRUE            TRUE
+3            TRUE            TRUE            TRUE            TRUE
+4            TRUE            TRUE            TRUE            TRUE
+5            TRUE            TRUE            TRUE            TRUE
+6            TRUE            TRUE            TRUE            TRUE
+  lower_end_window_50kb upper_end_window_50kb lower_end_window_100kb
+1             169816090             169866089              169791090
+2             169816090             169866089              169791090
+3             169816090             169866089              169791090
+4             169816090             169866089              169791090
+5             169816090             169866089              169791090
+6             169816090             169866089              169791090
+  upper_end_window_100kb lower_end_window_200kb upper_end_window_200kb
+1              169891089              169741090              169941089
+2              169891089              169741090              169941089
+3              169891089              169741090              169941089
+4              169891089              169741090              169941089
+5              169891089              169741090              169941089
+6              169891089              169741090              169941089
+  lower_end_window_500kb upper_end_window_500kb lower_end_window_1000kb
+1              169591090              170091089               169341090
+2              169591090              170091089               169341090
+3              169591090              170091089               169341090
+4              169591090              170091089               169341090
+5              169591090              170091089               169341090
+6              169591090              170091089               169341090
+  upper_end_window_1000kb n_genes_50kb n_genes_100kb n_genes_200kb
+1               170341089            2             3             4
+2               170341089            2             3             4
+3               170341089            2             3             4
+4               170341089            2             3             4
+5               170341089            2             3             4
+6               170341089            2             3             4
+  n_genes_500kb n_genes_1000kb check_n_genes_0 check_n_genes_1 check_n_genes_2
+1             7             12            TRUE            TRUE            TRUE
+2             7             12            TRUE            TRUE            TRUE
+3             7             12            TRUE            TRUE            TRUE
+4             7             12            TRUE            TRUE            TRUE
+5             7             12            TRUE            TRUE            TRUE
+6             7             12            TRUE            TRUE            TRUE
+  check_n_genes_3 check_n_genes_4 check_coding_density_1 check_coding_density_2
+1            TRUE            TRUE                   TRUE                   TRUE
+2            TRUE            TRUE                   TRUE                   TRUE
+3            TRUE            TRUE                   TRUE                   TRUE
+4            TRUE            TRUE                   TRUE                   TRUE
+5            TRUE            TRUE                   TRUE                   TRUE
+6            TRUE            TRUE                   TRUE                   TRUE
+  check_coding_density_4 check_coding_density_5 check_coding_density_6
+1                   <NA>                   TRUE                  FALSE
+2                   <NA>                   TRUE                  FALSE
+3                   <NA>                   TRUE                  FALSE
+4                   <NA>                   TRUE                  FALSE
+5                   <NA>                   TRUE                  FALSE
+6                   <NA>                   TRUE                  FALSE
+  check_coding_density_7 test_all_ranges_included test_iranges test_start_end
+1                   TRUE                     TRUE         TRUE           TRUE
+2                   TRUE                     TRUE         TRUE           TRUE
+3                   TRUE                     TRUE         TRUE           TRUE
+4                   TRUE                     TRUE         TRUE           TRUE
+5                   TRUE                     TRUE         TRUE           TRUE
+6                   TRUE                     TRUE         TRUE           TRUE
+  test_ranges_overlap test_ranges_overlap_2 coding_density_50kb
+1                TRUE                  TRUE             0.05694
+2                TRUE                  TRUE             0.05694
+3                TRUE                  TRUE             0.05694
+4                TRUE                  TRUE             0.05694
+5                TRUE                  TRUE             0.05694
+6                TRUE                  TRUE             0.05694
+  coding_density_100kb coding_density_200kb coding_density_500kb
+1              0.04139             0.032525             0.023134
+2              0.04139             0.032525             0.023134
+3              0.04139             0.032525             0.023134
+4              0.04139             0.032525             0.023134
+5              0.04139             0.032525             0.023134
+6              0.04139             0.032525             0.023134
+  coding_density_1000kb test_position_gene_exons test_chr_name test_na_cds
+1              0.025861                     TRUE          TRUE        TRUE
+2              0.025861                     TRUE          TRUE        TRUE
+3              0.025861                     TRUE          TRUE        TRUE
+4              0.025861                     TRUE          TRUE        TRUE
+5              0.025861                     TRUE          TRUE        TRUE
+6              0.025861                     TRUE          TRUE        TRUE
+> 
+> #remove duplicated
+> gene_coords_no_duplicated = gene_coords[which(!duplicated(gene_coords$gene_id)),]
+> 	#remember that in gene_coords we have several rows (i.e., exons) for the same gene, so the gene IDs are repeated.
+> str(gene_coords_no_duplicated) 
+'data.frame':	19252 obs. of  60 variables:
+ $ chromosome_name              : int  1 1 1 1 1 1 1 1 1 1 ...
+ $ hgnc_symbol                  : chr  "SCYL3" "C1orf112" "FGR" "CFH" ...
+ $ gene_id                      : chr  "ENSG00000000457" "ENSG00000000460" "ENSG00000000938" "ENSG00000000971" ...
+ $ test_rows_initial_datasets_1 : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ test_rows_initial_datasets_2 : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ test_gene_id                 : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ gene_biotype                 : chr  "protein_coding" "protein_coding" "protein_coding" "protein_coding" ...
+ $ transcript_id                : chr  "ENST00000367771" "ENST00000359326" "ENST00000374005" "ENST00000367429" ...
+ $ transcript_biotype           : chr  "protein_coding" "protein_coding" "protein_coding" "protein_coding" ...
+ $ exon_id                      : chr  "ENSE00003656990" "ENSE00003596167" "ENSE00001462133" "ENSE00001444484" ...
+ $ test_gene_transcripts_biotype: logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ gene_start                   : int  169818772 169631245 27938575 196621008 24683489 24742284 33473585 23345941 55245385 113066140 ...
+ $ gene_end                     : int  169863408 169823221 27961788 196716634 24743424 24799466 33546597 23410182 55266940 113163447 ...
+ $ gene_length                  : int  44637 191977 23214 95627 59936 57183 73013 64242 21556 97308 ...
+ $ middle_point                 : num  1.70e+08 1.70e+08 2.80e+07 1.97e+08 2.47e+07 ...
+ $ test_gene_length_center      : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ windows_check_1              : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ windows_check_2              : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ windows_check_3              : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ windows_check_4              : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ windows_check_5              : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ lower_end_window_50kb        : int  169816090 169702233 27925182 196643821 24688457 24745875 33485091 23353062 55231163 113089794 ...
+ $ upper_end_window_50kb        : int  169866089 169752232 27975181 196693820 24738456 24795874 33535090 23403061 55281162 113139793 ...
+ $ lower_end_window_100kb       : int  169791090 169677233 27900182 196618821 24663457 24720875 33460091 23328062 55206163 113064794 ...
+ $ upper_end_window_100kb       : int  169891089 169777232 28000181 196718820 24763456 24820874 33560090 23428061 55306162 113164793 ...
+ $ lower_end_window_200kb       : int  169741090 169627233 27850182 196568821 24613457 24670875 33410091 23278062 55156163 113014794 ...
+ $ upper_end_window_200kb       : int  169941089 169827232 28050181 196768820 24813456 24870874 33610090 23478061 55356162 113214793 ...
+ $ lower_end_window_500kb       : int  169591090 169477233 27700182 196418821 24463457 24520875 33260091 23128062 55006163 112864794 ...
+ $ upper_end_window_500kb       : int  170091089 169977232 28200181 196918820 24963456 25020874 33760090 23628061 55506162 113364793 ...
+ $ lower_end_window_1000kb      : int  169341090 169227233 27450182 196168821 24213457 24270875 33010091 22878062 54756163 112614794 ...
+ $ upper_end_window_1000kb      : int  170341089 170227232 28450181 197168820 25213456 25270874 34010090 23878061 55756162 113614793 ...
+ $ n_genes_50kb                 : int  2 2 2 1 2 1 1 1 2 1 ...
+ $ n_genes_100kb                : int  3 4 3 1 3 2 2 3 4 3 ...
+ $ n_genes_200kb                : int  4 5 3 3 3 4 4 4 6 3 ...
+ $ n_genes_500kb                : int  7 8 12 6 8 6 11 6 11 9 ...
+ $ n_genes_1000kb               : int  12 13 21 10 13 14 20 16 13 10 ...
+ $ check_n_genes_0              : chr  "TRUE" "TRUE" "TRUE" "TRUE" ...
+ $ check_n_genes_1              : chr  "TRUE" "TRUE" "TRUE/NA" "TRUE" ...
+ $ check_n_genes_2              : chr  "TRUE" "TRUE" "TRUE" "TRUE" ...
+ $ check_n_genes_3              : chr  "TRUE" "TRUE" "TRUE" "TRUE" ...
+ $ check_n_genes_4              : chr  "TRUE" "TRUE" "TRUE" "TRUE" ...
+ $ check_coding_density_1       : chr  "TRUE" "TRUE" "TRUE" "TRUE" ...
+ $ check_coding_density_2       : chr  "TRUE" "TRUE" "TRUE" "TRUE" ...
+ $ check_coding_density_4       : chr  NA NA NA "TRUE/NA" ...
+ $ check_coding_density_5       : chr  "TRUE" "TRUE" "TRUE" "TRUE" ...
+ $ check_coding_density_6       : logi  FALSE FALSE FALSE FALSE FALSE FALSE ...
+ $ check_coding_density_7       : chr  "TRUE" "TRUE" "TRUE" "TRUE" ...
+ $ test_all_ranges_included     : chr  "TRUE" "TRUE" "TRUE" "TRUE" ...
+ $ test_iranges                 : chr  "TRUE" "TRUE" "TRUE" "TRUE" ...
+ $ test_start_end               : chr  "TRUE" "TRUE" "TRUE" "TRUE" ...
+ $ test_ranges_overlap          : chr  "TRUE" "TRUE" "TRUE" "TRUE" ...
+ $ test_ranges_overlap_2        : chr  "TRUE" "TRUE/NA" "TRUE" "TRUE" ...
+ $ coding_density_50kb          : num  0.05694 0.00074 0.0318 0.0272 0.02054 ...
+ $ coding_density_100kb         : num  0.0414 0.0434 0.0201 0.0371 0.0259 ...
+ $ coding_density_200kb         : num  0.0325 0.0389 0.0341 0.0244 0.0229 ...
+ $ coding_density_500kb         : num  0.0231 0.039 0.0273 0.0169 0.0153 ...
+ $ coding_density_1000kb        : num  0.0259 0.0266 0.0306 0.028 0.0186 ...
+ $ test_position_gene_exons     : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ test_chr_name                : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ test_na_cds                  : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+> head(gene_coords_no_duplicated)
+    chromosome_name hgnc_symbol         gene_id test_rows_initial_datasets_1
+1                 1       SCYL3 ENSG00000000457                         TRUE
+50                1    C1orf112 ENSG00000000460                         TRUE
+114               1         FGR ENSG00000000938                         TRUE
+175               1         CFH ENSG00000000971                         TRUE
+216               1       STPG1 ENSG00000001460                         TRUE
+253               1      NIPAL3 ENSG00000001461                         TRUE
+    test_rows_initial_datasets_2 test_gene_id   gene_biotype   transcript_id
+1                           TRUE         TRUE protein_coding ENST00000367771
+50                          TRUE         TRUE protein_coding ENST00000359326
+114                         TRUE         TRUE protein_coding ENST00000374005
+175                         TRUE         TRUE protein_coding ENST00000367429
+216                         TRUE         TRUE protein_coding ENST00000374409
+253                         TRUE         TRUE protein_coding ENST00000374399
+    transcript_biotype         exon_id test_gene_transcripts_biotype gene_start
+1       protein_coding ENSE00003656990                          TRUE  169818772
+50      protein_coding ENSE00003596167                          TRUE  169631245
+114     protein_coding ENSE00001462133                          TRUE   27938575
+175     protein_coding ENSE00001444484                          TRUE  196621008
+216     protein_coding ENSE00003638281                          TRUE   24683489
+253     protein_coding ENSE00003585417                          TRUE   24742284
+     gene_end gene_length middle_point test_gene_length_center windows_check_1
+1   169863408       44637  169841090.0                    TRUE            TRUE
+50  169823221      191977  169727233.0                    TRUE            TRUE
+114  27961788       23214   27950181.5                    TRUE            TRUE
+175 196716634       95627  196668821.0                    TRUE            TRUE
+216  24743424       59936   24713456.5                    TRUE            TRUE
+253  24799466       57183   24770875.0                    TRUE            TRUE
+    windows_check_2 windows_check_3 windows_check_4 windows_check_5
+1              TRUE            TRUE            TRUE            TRUE
+50             TRUE            TRUE            TRUE            TRUE
+114            TRUE            TRUE            TRUE            TRUE
+175            TRUE            TRUE            TRUE            TRUE
+216            TRUE            TRUE            TRUE            TRUE
+253            TRUE            TRUE            TRUE            TRUE
+    lower_end_window_50kb upper_end_window_50kb lower_end_window_100kb
+1               169816090             169866089              169791090
+50              169702233             169752232              169677233
+114              27925182              27975181               27900182
+175             196643821             196693820              196618821
+216              24688457              24738456               24663457
+253              24745875              24795874               24720875
+    upper_end_window_100kb lower_end_window_200kb upper_end_window_200kb
+1                169891089              169741090              169941089
+50               169777232              169627233              169827232
+114               28000181               27850182               28050181
+175              196718820              196568821              196768820
+216               24763456               24613457               24813456
+253               24820874               24670875               24870874
+    lower_end_window_500kb upper_end_window_500kb lower_end_window_1000kb
+1                169591090              170091089               169341090
+50               169477233              169977232               169227233
+114               27700182               28200181                27450182
+175              196418821              196918820               196168821
+216               24463457               24963456                24213457
+253               24520875               25020874                24270875
+    upper_end_window_1000kb n_genes_50kb n_genes_100kb n_genes_200kb
+1                 170341089            2             3             4
+50                170227232            2             4             5
+114                28450181            2             3             3
+175               197168820            1             1             3
+216                25213456            2             3             3
+253                25270874            1             2             4
+    n_genes_500kb n_genes_1000kb check_n_genes_0 check_n_genes_1
+1               7             12            TRUE            TRUE
+50              8             13            TRUE            TRUE
+114            12             21            TRUE         TRUE/NA
+175             6             10            TRUE            TRUE
+216             8             13            TRUE            TRUE
+253             6             14            TRUE            TRUE
+    check_n_genes_2 check_n_genes_3 check_n_genes_4 check_coding_density_1
+1              TRUE            TRUE            TRUE                   TRUE
+50             TRUE            TRUE            TRUE                   TRUE
+114            TRUE            TRUE            TRUE                   TRUE
+175            TRUE            TRUE            TRUE                   TRUE
+216            TRUE            TRUE            TRUE                   TRUE
+253            TRUE            TRUE            TRUE                   TRUE
+    check_coding_density_2 check_coding_density_4 check_coding_density_5
+1                     TRUE                   <NA>                   TRUE
+50                    TRUE                   <NA>                   TRUE
+114                   TRUE                   <NA>                   TRUE
+175                   TRUE                TRUE/NA                   TRUE
+216                   TRUE                   <NA>                   TRUE
+253                   TRUE                   <NA>                   TRUE
+    check_coding_density_6 check_coding_density_7 test_all_ranges_included
+1                    FALSE                   TRUE                     TRUE
+50                   FALSE                   TRUE                     TRUE
+114                  FALSE                   TRUE                     TRUE
+175                  FALSE                   TRUE                     TRUE
+216                  FALSE                   TRUE                     TRUE
+253                  FALSE                   TRUE                     TRUE
+    test_iranges test_start_end test_ranges_overlap test_ranges_overlap_2
+1           TRUE           TRUE                TRUE                  TRUE
+50          TRUE           TRUE                TRUE               TRUE/NA
+114         TRUE           TRUE                TRUE                  TRUE
+175         TRUE           TRUE                TRUE                  TRUE
+216         TRUE           TRUE                TRUE                  TRUE
+253         TRUE           TRUE                TRUE                  TRUE
+    coding_density_50kb coding_density_100kb coding_density_200kb
+1               0.05694              0.04139             0.032525
+50              0.00074              0.04339             0.038940
+114             0.03180              0.02007             0.034095
+175             0.02720              0.03710             0.024420
+216             0.02054              0.02585             0.022935
+253             0.02902              0.01521             0.019310
+    coding_density_500kb coding_density_1000kb test_position_gene_exons
+1               0.023134              0.025861                     TRUE
+50              0.038970              0.026643                     TRUE
+114             0.027268              0.030569                     TRUE
+175             0.016906              0.027977                     TRUE
+216             0.015344              0.018607                     TRUE
+253             0.016834              0.019858                     TRUE
+    test_chr_name test_na_cds
+1            TRUE        TRUE
+50           TRUE        TRUE
+114          TRUE        TRUE
+175          TRUE        TRUE
+216          TRUE        TRUE
+253          TRUE        TRUE
+> 
+> #check there are no duplicated ids in the gene coord file processed
+> print("##########################################################################")
+[1] "##########################################################################"
+> print("CHECK THERE ARE NO DUPLICATED IDS IN THE GENE COORD FILE PROCESSED")
+[1] "CHECK THERE ARE NO DUPLICATED IDS IN THE GENE COORD FILE PROCESSED"
+> print(length(which(duplicated(gene_coords_no_duplicated$gene_id))) == 0)
+[1] TRUE
+> print("##########################################################################")
+[1] "##########################################################################"
+> 
+> 
+> 
+> ###############################
+> ######## VALID FILE ###########
+> ###############################
+> 
+> #valid_file: Creation of file with the genes used for the test. The file contains the Ensembl IDs of the genes that are going to be used by the pipeline. One line in the file = one Ensembl gene ID. Use your own code to generate this file. In the provided folder the example file is valid_file.txt.
+> 
+> #we are going to use our list of genes with coordinates to get the list of gene ids used in the bootstrap. Some of these genes have no confounding factors data, but this is ok. The valid_file example of David also has IDs that are not present in factors_table and iHS ranks, and vice versa.
+> 
+> #extract the unique ensemble IDs
+> valid_file = gene_coords_no_duplicated$gene_id
+> 
+> #save
+> write.table(valid_file, paste(path_outside_pipeline, "/valid_file.txt", sep=""), sep=" ", col.names=FALSE, row.names=FALSE, quote=FALSE)
+> 	#without quotes and separated by space to follow the exact same format than David used.
+> 
+> 
+> 
+> ##############################
+> ######## HGNC FILE ###########
+> ##############################
+> 
+> #HGNC_file: file with HGNC names for Ensembl genes to be able to exclude HLA (extreme outliers that can bias results) and histone genes (notorious for abundant gene conversion). Replace this file with your own file if needed. This file has two columns: "Ensembl Gene ID" and "HGNC symbol".
+> 
+> #we are going to use our curated list of genes coordinates to get the gene id plus hgnc symbol. Our valid_files, i.e., the list of ensembl IDs considered in the pipeline, comes from here, so it makes sense to use it.
+> 
+> #from our curated list of genes select only the columns used by david
+> ensembl_hgnc_file = gene_coords_no_duplicated[, c("gene_id", "hgnc_symbol")]
+> 
+> #check the number of ensembl IDs without gene symbol
+> print("##########################################################################")
+[1] "##########################################################################"
+> print("CHECK THE NUMBER OF ENSEMBL IDS WITHOUT GENE SYMBOL")
+[1] "CHECK THE NUMBER OF ENSEMBL IDS WITHOUT GENE SYMBOL"
+> print(length(which(ensembl_hgnc_file$hgnc_symbol == "")))
+[1] 947
+> print("##########################################################################")
+[1] "##########################################################################"
+> 	#From 19252 genes, 947 have no hgnc gene symbol. This is ok, because the example file of David has 1488 genes without gene symbol from 22080 genes: (1488/22080)*100=6.74, while (947/19252)*100=4.91. Therefore, we do not have a greater proportion of genes without gene symbol in our list.
+> 
+> #match names in the file of David
+> colnames(ensembl_hgnc_file)[which(colnames(ensembl_hgnc_file) == "gene_id")] = "Ensembl Gene ID"
+> colnames(ensembl_hgnc_file)[which(colnames(ensembl_hgnc_file) == "hgnc_symbol")] = "HGNC symbol"
+> 
+> #see the table
+> str(ensembl_hgnc_file)
+'data.frame':	19252 obs. of  2 variables:
+ $ Ensembl Gene ID: chr  "ENSG00000000457" "ENSG00000000460" "ENSG00000000938" "ENSG00000000971" ...
+ $ HGNC symbol    : chr  "SCYL3" "C1orf112" "FGR" "CFH" ...
+> head(ensembl_hgnc_file)
+    Ensembl Gene ID HGNC symbol
+1   ENSG00000000457       SCYL3
+50  ENSG00000000460    C1orf112
+114 ENSG00000000938         FGR
+175 ENSG00000000971         CFH
+216 ENSG00000001460       STPG1
+253 ENSG00000001461      NIPAL3
+> 
+> #save
+> write.table(ensembl_hgnc_file, paste(path_outside_pipeline, "/ensembl_hgnc_file.txt", sep=""), sep="\t", col.names=TRUE, row.names=FALSE, quote=FALSE)
+> 	#without quotes and separated by tab to follow the exact same format than David used.
+> 
+> 
+> 
+> ###############################
+> ######## COORD FILE ###########
+> ###############################
+> 
+> #create also a file with ensemble coordinates.
+> 
+> #from our curated list of genes select only the columns used by david
+> ensemble_gene_coords_v99 = gene_coords_no_duplicated[, c("gene_id", "chromosome_name", "gene_start", "gene_end")]
+> 	#we are not using the strand
+> 		#it is needed to include the strand? the variables about gene start and end I used referred only to the forward strand (see gene_coordinates_v10.r; line 1677)
+> 		#CHECK
+> 
+> #match names in the file of David
+> colnames(ensemble_gene_coords_v99)[which(colnames(ensemble_gene_coords_v99) == "gene_id")] = "Ensembl Gene ID"
+> colnames(ensemble_gene_coords_v99)[which(colnames(ensemble_gene_coords_v99) == "chromosome_name")] = "Chromosome Name"
+> colnames(ensemble_gene_coords_v99)[which(colnames(ensemble_gene_coords_v99) == "gene_start")] = "Gene Start (bp)"
+> colnames(ensemble_gene_coords_v99)[which(colnames(ensemble_gene_coords_v99) == "gene_end")] = "Gene End (bp)"
+> 
+> #see the table
+> str(ensemble_gene_coords_v99)
+'data.frame':	19252 obs. of  4 variables:
+ $ Ensembl Gene ID: chr  "ENSG00000000457" "ENSG00000000460" "ENSG00000000938" "ENSG00000000971" ...
+ $ Chromosome Name: int  1 1 1 1 1 1 1 1 1 1 ...
+ $ Gene Start (bp): int  169818772 169631245 27938575 196621008 24683489 24742284 33473585 23345941 55245385 113066140 ...
+ $ Gene End (bp)  : int  169863408 169823221 27961788 196716634 24743424 24799466 33546597 23410182 55266940 113163447 ...
+> head(ensemble_gene_coords_v99)
+    Ensembl Gene ID Chromosome Name Gene Start (bp) Gene End (bp)
+1   ENSG00000000457               1       169818772     169863408
+50  ENSG00000000460               1       169631245     169823221
+114 ENSG00000000938               1        27938575      27961788
+175 ENSG00000000971               1       196621008     196716634
+216 ENSG00000001460               1        24683489      24743424
+253 ENSG00000001461               1        24742284      24799466
+> 
+> #save
+> write.table(ensemble_gene_coords_v99, paste(path_outside_pipeline, "/ensembl_gene_coords_v99.txt", sep=""), sep="\t", col.names=TRUE, row.names=FALSE, quote=FALSE)
+> 	#without quotes and separated by tab to follow the exact same format than David used.
+> 
+> 
+> 
+> ##################################
+> ######## GENE SET FILE ###########
+> ##################################
+> 
+> #create the file that defines the gene set of interest. Genes of interest (VIPs, disease genes, etc.) in the first column are flagged with “yes” in the second column. The other genes are flagged with “no” in the second column. Only the genes also present in the file of used genes (Step 1) will be used by the pipeline. In the folder the example file is genes_set_file.txt.
+> 
+> #load the list of metabolic genes
+> metabolic_gene_list = read.table(paste(path_outside_data, "/metabolic_gene_list.txt.gz", sep=""), sep="\t", header=TRUE)
+> str(metabolic_gene_list)
+'data.frame':	1038 obs. of  2 variables:
+ $ gene_symbol : chr  "ABHD6" "ACADL" "ACHE" "ACOT11" ...
+ $ ensembl_gene: chr  "ENSG00000163686" "ENSG00000115361" "ENSG00000087085" "ENSG00000162390" ...
+> head(metabolic_gene_list)
+  gene_symbol    ensembl_gene
+1       ABHD6 ENSG00000163686
+2       ACADL ENSG00000115361
+3        ACHE ENSG00000087085
+4      ACOT11 ENSG00000162390
+5      ACOT13 ENSG00000112304
+6       ACSL1 ENSG00000151726
+> 
+> #create a data.frame with the IDs used for valid file and then add a second column for indicating whether or not a gene belongs to our list
+> genes_set_file = data.frame(gene_id=valid_file, metabolic_gene="no")
+> 
+> #add "yes" as another level for metabolic_genes variable
+> levels(genes_set_file$metabolic_gene) = c("no", "yes")
+> 
+> #those genes with an ID included in the metabolic list are considered as metabolic genes
+> genes_set_file[which(genes_set_file$gene_id %in% metabolic_gene_list$ensembl_gene),]$metabolic_gene = "yes"
+> 
+> #check that genes with "no" for metabolic_gene are not present in the list of metabolic genes
+> print("##########################################################################")
+[1] "##########################################################################"
+> print("CHECK THAT GENES WITH 'NO' FOR METABOLIC_GENE ARE NOT PRESENT IN THE LIST OF METABOLIC GENES")
+[1] "CHECK THAT GENES WITH 'NO' FOR METABOLIC_GENE ARE NOT PRESENT IN THE LIST OF METABOLIC GENES"
+> length(which(genes_set_file[which(genes_set_file$metabolic_gene == "no"),]$gene_id %in% metabolic_gene_list$ensembl_gene)) == 0
+[1] TRUE
+> print("##########################################################################")
+[1] "##########################################################################"
+> 
+> #check that genes with "yes" for metabolic_gene are those present in the list of metabolic genes
+> print("##########################################################################")
+[1] "##########################################################################"
+> print("CHECK THAT GENES WITH 'NO' FOR METABOLIC_GENE ARE NOT PRESENT IN THE LIST OF METABOLIC GENES")
+[1] "CHECK THAT GENES WITH 'NO' FOR METABOLIC_GENE ARE NOT PRESENT IN THE LIST OF METABOLIC GENES"
+> length(which(!genes_set_file[which(genes_set_file$metabolic_gene == "yes"),]$gene_id %in% metabolic_gene_list$ensembl_gene)) == 0
+[1] TRUE
+> print("##########################################################################")
+[1] "##########################################################################"
+> 
+> #check we have all metabolic genes
+> print("##########################################################################")
+[1] "##########################################################################"
+> print("CHECK WE HAVE ALL METABOLIC GENES")
+[1] "CHECK WE HAVE ALL METABOLIC GENES"
+> length(which(genes_set_file$metabolic_gene == "yes")) == nrow(metabolic_gene_list)
+[1] TRUE
+> print("##########################################################################")
+[1] "##########################################################################"
+> 
+> #see the table
+> str(genes_set_file)
+'data.frame':	19252 obs. of  2 variables:
+ $ gene_id       : chr  "ENSG00000000457" "ENSG00000000460" "ENSG00000000938" "ENSG00000000971" ...
+ $ metabolic_gene: chr  "no" "no" "no" "no" ...
+  ..- attr(*, "levels")= chr [1:2] "no" "yes"
+> head(genes_set_file)
+          gene_id metabolic_gene
+1 ENSG00000000457             no
+2 ENSG00000000460             no
+3 ENSG00000000938             no
+4 ENSG00000000971             no
+5 ENSG00000001460             no
+6 ENSG00000001461             no
+> summary(genes_set_file)
+   gene_id          metabolic_gene    
+ Length:19252       Length:19252      
+ Class :character   Class :character  
+ Mode  :character   Mode  :character  
+> 
+> #save
+> write.table(genes_set_file, paste(path_outside_pipeline, "/genes_set_file.txt", sep=""), row.names=FALSE, col.names=FALSE, sep=" ", quote = FALSE)
+> 	#separated with space, avoid column and row names, and remove quotes from the gene IDs to match the format used by David in his pipeline.
+> 
+> 
+> 
+> ##################################
+> ######## GENE DIST FILE ##########
+> ##################################
+> 
+> #Step 3: compute a file with the distance of every gene from the closest gene of interest (using gene genomic centers as reference points). If a gene is a gene of interest, then the distance is zero. This is done to be able to choose control genes far enough from the genes of interest. The example file is distance_file.txt
+> 
+> 
+> ##write a function to do so
+> #for debugging
+> #selected_gene=genes_set_file[1,] #non-metabolic gene
+> #selected_gene=genes_set_file[94,] #metabolic gene
+> dist_close_met = function(selected_gene){
++ 
++ 	#if the selected gene is NOT a metabolic gene
++ 	if(selected_gene$metabolic_gene == "no"){
++ 
++ 		#select the genomic center of the selected gene, we use our curated list of gene coordinates
++ 		selected_gene_center = gene_coords_no_duplicated[which(gene_coords_no_duplicated$gene_id == selected_gene$gene_id),]$middle_point
++ 
++ 		#select the genomic center of the metabolic genes, we use our curated list of gene coordinates
++ 		metabolic_genes_center = gene_coords_no_duplicated[which(gene_coords_no_duplicated$gene_id %in%  genes_set_file[which(genes_set_file$metabolic_gene=="yes"),]$gene_id),]$middle_point
++ 
++ 		#check we have all metabolic genes and just one position for the selected gene
++ 		check_1 = length(metabolic_genes_center) == nrow(metabolic_gene_list) & length(selected_gene_center) == 1
++ 
++ 		#calculate the distance en absolute value between the center of the selected gene and the rest of genes
++ 		distances = abs(selected_gene_center - metabolic_genes_center)
++ 			#we are not interested in the sense of the difference, but just the distance. We do not care if a metabolic gene is before or after a control gene, but the number of bases between them.
++ 
++ 		#select the min distance between the selected gene and the metabolic genes
++ 		min_dist_met_genes = min(distances)
++ 	}
++ 
++ 	#if the selected gene is a metabolic gene
++ 	if(selected_gene$metabolic_gene == "yes"){
++ 
++ 		#check_1
++ 		check_1=NA
++ 
++ 		#then the distance is zero
++ 		min_dist_met_genes=0
++ 	}
++ 
++ 	#bind the results
++ 	final_results = data.frame(selected_gene, min_dist_met_genes=min_dist_met_genes, check_1=check_1)
++ 
++ 	#return the results
++ 	return(final_results)
++ }
+> 
+> #apply the function
+> distance_file = ddply(.data=genes_set_file, .variables="gene_id", .fun=dist_close_met, .inform=TRUE, .parallel=FALSE, .paropts=NULL)
+> 	#".inform=TRUE" generates and shows the errors. This increases the computation time, BUT is very useful to detect problems in your analyses.
+> 	#".parallel" to paralelize with foreach. 
+> 	#".paropts" is used to indicate additional arguments in for each, specially interesting for using the .export and .packages arguments to supply them so that all cluster nodes have the correct environment set up for computing. 
+> 		#ADD PACKAGES USED INSIDE THE FUNCTION
+> 
+> #check we have calculated the distance for all genes
+> print("###################################################")
+[1] "###################################################"
+> print("CHECK WE HAVE CALCULATED THE DISTANCE FOR ALL GENES")
+[1] "CHECK WE HAVE CALCULATED THE DISTANCE FOR ALL GENES"
+> nrow(distance_file) == nrow(genes_set_file)
+[1] TRUE
+> print("###################################################")
+[1] "###################################################"
+> 
+> #check we have all genes from valid file
+> print("###################################################")
+[1] "###################################################"
+> print("CHECK WE HAVE ALL GENES FROM VALID FILE")
+[1] "CHECK WE HAVE ALL GENES FROM VALID FILE"
+> !FALSE %in% c(valid_file %in% distance_file$gene_id)
+[1] TRUE
+> !FALSE %in% c(distance_file$gene_id %in% valid_file)
+[1] TRUE
+> print("###################################################")
+[1] "###################################################"
+> 
+> #check metabolic genes have zero distance and na for check_1
+> print("###################################################")
+[1] "###################################################"
+> print("CHECK METABOLIC GENES HAVE ZERO DISTANCE AND NA FOR CHECK_1")
+[1] "CHECK METABOLIC GENES HAVE ZERO DISTANCE AND NA FOR CHECK_1"
+> !FALSE %in% c(distance_file[which(distance_file$metabolic_gene=="yes"),]$min_dist_met_genes == 0)
+[1] TRUE
+> !FALSE %in% c(is.na(distance_file[which(distance_file$metabolic_gene=="yes"),]$check_1))
+[1] TRUE
+> print("###################################################")
+[1] "###################################################"
+> 
+> #check metabolic genes have zero distance and na for check_1
+> print("###################################################")
+[1] "###################################################"
+> print("CHECK NON-METABOLIC GENES HAVE DISTANCE AND NO NA FOR CHECK_1")
+[1] "CHECK NON-METABOLIC GENES HAVE DISTANCE AND NO NA FOR CHECK_1"
+> !FALSE %in% c(distance_file[which(distance_file$metabolic_gene=="no"),]$min_dist_met_genes != 0)
+[1] TRUE
+> !c(FALSE, NA) %in% c(distance_file[which(distance_file$metabolic_gene=="no"),]$check_1)
+[1] TRUE TRUE
+> print("###################################################")
+[1] "###################################################"
+> 
+> #see the table
+> summary(distance_file)
+   gene_id          metabolic_gene     min_dist_met_genes   check_1       
+ Length:19252       Length:19252       Min.   :      0.00   Mode:logical  
+ Class :character   Class :character   1st Qu.:  17785.38   TRUE:18214    
+ Mode  :character   Mode  :character   Median :  51347.75   NA's:1038     
+                                       Mean   : 115231.80                 
+                                       3rd Qu.: 122110.62                 
+                                       Max.   :2869351.00                 
+> 
+> #select only the gene_id and the distance columns
+> distance_file = distance_file[,which(colnames(distance_file) %in% c("gene_id", "min_dist_met_genes"))]
+> 
+> #save
+> write.table(distance_file, paste(path_outside_pipeline, "/distance_file.txt", sep=""), row.names=FALSE, col.names=FALSE, sep="\t", quote = FALSE)
+> 	#separated with tabs, avoid column and row names, and remove quotes from the gene IDs to match the format used by David in his pipeline.
+> 
+> proc.time()
+   user  system elapsed 
+ 57.620   0.472  58.071 

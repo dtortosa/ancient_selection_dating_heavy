@@ -25,11 +25,19 @@ R CMD BATCH /opt/scripts/preparing_valid_gene_dist_files_v2.R
 R CMD BATCH /opt/scripts/preparing_factors_tables_v2.R
 R CMD BATCH /opt/scripts/statistics_ranks_v2.R
 
+#go to the folder with the pipeline
+cd david_pipeline/exdef_folder
+	#this step is MANDATORY in order to run the pipeline
+
 #open the rights to use all the perl scripts
-chmod +x ./david_pipeline/exdef_folder/*.pl
+chmod +x *.pl
 
 #run the pipeline using the input parameters file created by me in the script file
-./david_pipeline/exdef_folder/exdef_pipeline.pl /opt/scripts/input_par_david_pipeline_v2.txt
+./exdef_pipeline.pl /opt/scripts/input_par_david_pipeline_v2.txt
+
+#comeback to the original folder (two levels above the current folder)
+cd ../..
+	#https://askubuntu.com/questions/25813/commandline-shortcut-for-current-directory-similar-to-for-home-directory
 
 #run the scripts for processing the output of the pipeline
 R CMD BATCH /opt/scripts/significance_whole_enrich_curve_v2.R
