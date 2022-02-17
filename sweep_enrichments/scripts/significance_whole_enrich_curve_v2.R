@@ -353,6 +353,9 @@ curve_significance = function(pop_group, statistics, window_sizes, pop_p_val){
 	print("########################################################")
 	print(paste("PVALUE of ", paste(pop_p_val, collapse="|"), " - ", paste(statistics, collapse="|"), " - ", paste(window_sizes, collapse="|"), " - ", nrow(subset_fake_genomes), " random_genomes", sep="")); print(p_value)
 	print("########################################################")
+
+	#save results enrichment
+	write.table(results_enrichment, gzfile(paste(path_outside_results, "/results_enrichment/results_enrichment_", paste(statistics, collapse="|"), "_", nrow(subset_fake_genomes), "_random_genomes_", paste(pop_p_val, collapse="_"), ".txt.gz", sep="")), sep="\t", col.names=TRUE, row.names=FALSE)
 }
 
 

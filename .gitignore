@@ -1,5 +1,6 @@
 *.sif
 *.tgz
+*.gz
 *.pdf
 *.RData
 eur_ranks_*
