@@ -19,15 +19,15 @@
 ### OPTIONAL. Select the cores bought by David.
 #SBATCH --qos=user_qos_denard
 ### REQUIRED. Set the number of cores that will be used for this job.
-#SBATCH --ntasks=25
+#SBATCH --ntasks=50
 ### OPTIONAL. You can set the number of cores per task. This can be useful for scripts in which inside the parallelized process there are other subprocesses, like the iHS calculation with hapbin per population. 
 #SBATCH --cpus-per-task=1
 ### REQUIRED. Set the memory required for this job.
-#SBATCH --mem=30gb
+#SBATCH --mem=120gb
 ### REQUIRED. Set the gb per core. YOU HAVE TO SELECT --mem or --mem-per-cpu but NOT BOTH.
 ### SBATCH --mem-per-cpu=12gb
 ### REQUIRED. Specify the time required for this job, hhh:mm:ss
-#SBATCH --time=20:00:00
+#SBATCH --time=96:00:00
  
  
 # --------------------------------------------------------------
@@ -36,6 +36,6 @@
 ### Load required modules/libraries if needed. Recommendation from Puma is use "module --ignore-cache load "singularity"" instead of "module load singularity". It is also possible your cache file is out-of-date.
 module load singularity
 ### change to your script’s directory
-cd /xdisk/denard/dftortosa/climate_adaptation_met_genes/
+cd /xdisk/denard/dftortosa/climate_adaptation_met_genes/sweep_enrichments/
 ### Run your work
 singularity run ubuntu_16_04_enrichment_test_v1.sif
