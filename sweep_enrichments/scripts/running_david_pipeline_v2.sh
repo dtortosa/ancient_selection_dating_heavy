@@ -1,3 +1,14 @@
+#!/bin/bash 
+	#to run this script: chmod +x script.sh; ./script.sh
+	#!/bin/sh does not work with my terminal en msi of David.
+	#if you are using "$" to paste the path of the executable, you do not need to use "./" for running the executable.
+	#you can save the output and the errors
+		#./running_david_pipeline_v2.sh > running_david_pipeline_v2.out #only output
+		#./running_david_pipeline_v2.sh 2> error.out #only error
+		#./running_david_pipeline_v2.sh > running_david_pipeline_v2.out 2> error.out #both in different files
+		#./running_david_pipeline_v2.sh > running_david_pipeline_v2.out 2>&1 #both in the same file
+		#https://www.cyberciti.biz/faq/linux-redirect-error-output-to-file/
+
 #Note that this script was wrote and run in 2022 using the version of April 28th 2022 of David's pipeline.
 	#The pipeline of David has been downloaded from 
 		#https://github.com/DavidPierreEnard/Gene_Set_Enrichment_Pipeline

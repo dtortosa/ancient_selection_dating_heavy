@@ -728,4 +728,4 @@ List of 4
 > 
 > proc.time()
    user  system elapsed 
-  1.998   0.109   2.106 
+  1.901   0.152   2.060 

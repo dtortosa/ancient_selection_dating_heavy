@@ -15,13 +15,10 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
-[1] FALSE
-Warning message:
-In file.remove(".RData") :
-  cannot remove file '.RData', reason 'No such file or directory'
+[1] TRUE
          used (Mb) gc trigger (Mb) max used (Mb)
-Ncells 127490  6.9     350000 18.7   198149 10.6
-Vcells 245981  1.9    8388608 64.0  1016693  7.8
+Ncells 126498  6.8     350000 18.7   196817 10.6
+Vcells 244399  1.9    8388608 64.0  1007893  7.7
 Loading required package: colorout
 Warning message:
 In library(package, lib.loc = lib.loc, character.only = TRUE, logical.return = TRUE,  :
@@ -790,4 +787,4 @@ Loading required package: plyr
 > 
 > proc.time()
    user  system elapsed 
- 57.620   0.472  58.071 
+ 55.687   0.517  56.171 

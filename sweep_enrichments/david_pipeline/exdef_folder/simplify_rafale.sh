@@ -1,18 +1,2002 @@
 ./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_1.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_1 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
 
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_10.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_10 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_100.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_100 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_101.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_101 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_102.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_102 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_103.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_103 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_104.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_104 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_105.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_105 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_106.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_106 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_107.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_107 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_108.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_108 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_109.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_109 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_11.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_11 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_110.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_110 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_111.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_111 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_112.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_112 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_113.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_113 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_114.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_114 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_115.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_115 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_116.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_116 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_117.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_117 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_118.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_118 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_119.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_119 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_12.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_12 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_120.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_120 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_121.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_121 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_122.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_122 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_123.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_123 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_124.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_124 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_125.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_125 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_13.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_13 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_14.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_14 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_15.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_15 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_16.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_16 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_17.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_17 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_18.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_18 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_19.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_19 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_2.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_2 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_20.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_20 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_21.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_21 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_22.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_22 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_23.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_23 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_24.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_24 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_25.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_25 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_26.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_26 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_27.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_27 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_28.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_28 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_29.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_29 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_3.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_3 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_30.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_30 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_31.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_31 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_32.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_32 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_33.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_33 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_34.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_34 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_35.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_35 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_36.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_36 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_37.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_37 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_38.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_38 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_39.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_39 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_4.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_4 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_40.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_40 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_41.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_41 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_42.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_42 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_43.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_43 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_44.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_44 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_45.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_45 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_46.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_46 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_47.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_47 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_48.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_48 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_49.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_49 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_5.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_5 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_50.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_50 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_51.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_51 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_52.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_52 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_53.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_53 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_54.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_54 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_55.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_55 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_56.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_56 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_57.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_57 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_58.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_58 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_59.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_59 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_6.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_6 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_60.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_60 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_61.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_61 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_62.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_62 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_63.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_63 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_64.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_64 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_65.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_65 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_66.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_66 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_67.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_67 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_68.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_68 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_69.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_69 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_7.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_7 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_70.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_70 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_71.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_71 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_72.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_72 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_73.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_73 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_74.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_74 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_75.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_75 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_76.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_76 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_77.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_77 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_78.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_78 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_79.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_79 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_8.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_8 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_80.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_80 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_81.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_81 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_82.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_82 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_83.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_83 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_84.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_84 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_85.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_85 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_86.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_86 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_87.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_87 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_88.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_88 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_89.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_89 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_9.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_9 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_90.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_90 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_91.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_91 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_92.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_92 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_93.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_93 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_94.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_94 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_95.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_95 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_96.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_96 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_97.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_97 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_98.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_98 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_1_99.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_1_99 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
 ./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_1.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_1 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
 
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_10.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_10 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_100.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_100 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_101.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_101 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_102.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_102 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_103.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_103 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_104.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_104 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_105.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_105 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_106.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_106 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_107.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_107 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_108.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_108 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_109.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_109 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_11.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_11 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_110.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_110 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_111.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_111 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_112.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_112 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_113.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_113 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_114.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_114 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_115.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_115 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_116.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_116 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_117.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_117 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_118.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_118 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_119.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_119 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_12.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_12 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_120.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_120 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_121.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_121 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_122.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_122 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_123.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_123 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_124.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_124 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_125.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_125 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_13.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_13 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_14.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_14 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_15.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_15 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_16.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_16 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_17.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_17 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_18.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_18 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_19.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_19 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_2.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_2 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_20.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_20 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_21.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_21 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_22.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_22 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_23.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_23 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_24.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_24 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_25.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_25 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_26.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_26 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_27.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_27 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_28.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_28 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_29.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_29 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_3.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_3 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_30.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_30 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_31.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_31 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_32.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_32 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_33.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_33 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_34.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_34 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_35.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_35 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_36.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_36 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_37.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_37 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_38.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_38 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_39.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_39 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_4.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_4 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_40.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_40 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_41.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_41 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_42.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_42 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_43.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_43 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_44.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_44 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_45.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_45 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_46.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_46 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_47.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_47 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_48.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_48 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_49.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_49 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_5.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_5 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_50.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_50 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_51.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_51 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_52.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_52 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_53.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_53 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_54.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_54 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_55.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_55 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_56.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_56 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_57.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_57 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_58.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_58 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_59.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_59 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_6.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_6 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_60.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_60 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_61.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_61 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_62.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_62 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_63.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_63 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_64.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_64 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_65.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_65 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_66.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_66 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_67.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_67 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_68.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_68 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_69.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_69 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_7.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_7 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_70.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_70 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_71.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_71 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_72.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_72 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_73.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_73 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_74.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_74 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_75.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_75 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_76.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_76 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_77.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_77 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_78.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_78 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_79.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_79 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_8.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_8 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_80.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_80 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_81.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_81 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_82.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_82 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_83.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_83 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_84.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_84 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_85.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_85 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_86.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_86 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_87.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_87 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_88.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_88 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_89.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_89 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_9.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_9 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_90.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_90 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_91.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_91 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_92.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_92 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_93.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_93 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_94.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_94 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_95.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_95 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_96.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_96 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_97.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_97 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_98.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_98 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_2_99.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_2_99 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
 ./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_1.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_1 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
 
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_10.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_10 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_100.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_100 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_101.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_101 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_102.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_102 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_103.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_103 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_104.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_104 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_105.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_105 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_106.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_106 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_107.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_107 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_108.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_108 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_109.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_109 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_11.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_11 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_110.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_110 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_111.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_111 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_112.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_112 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_113.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_113 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_114.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_114 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_115.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_115 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_116.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_116 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_117.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_117 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_118.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_118 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_119.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_119 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_12.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_12 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_120.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_120 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_121.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_121 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_122.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_122 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_123.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_123 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_124.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_124 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_125.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_125 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_13.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_13 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_14.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_14 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_15.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_15 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_16.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_16 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_17.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_17 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_18.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_18 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_19.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_19 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_2.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_2 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_20.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_20 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_21.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_21 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_22.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_22 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_23.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_23 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_24.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_24 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_25.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_25 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_26.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_26 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_27.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_27 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_28.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_28 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_29.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_29 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_3.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_3 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_30.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_30 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_31.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_31 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_32.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_32 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_33.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_33 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_34.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_34 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_35.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_35 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_36.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_36 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_37.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_37 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_38.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_38 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_39.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_39 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_4.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_4 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_40.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_40 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_41.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_41 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_42.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_42 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_43.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_43 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_44.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_44 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_45.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_45 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_46.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_46 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_47.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_47 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_48.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_48 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_49.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_49 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_5.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_5 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_50.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_50 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_51.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_51 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_52.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_52 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_53.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_53 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_54.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_54 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_55.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_55 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_56.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_56 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_57.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_57 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_58.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_58 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_59.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_59 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_6.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_6 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_60.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_60 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_61.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_61 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_62.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_62 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_63.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_63 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_64.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_64 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_65.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_65 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_66.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_66 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_67.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_67 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_68.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_68 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_69.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_69 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_7.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_7 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_70.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_70 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_71.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_71 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_72.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_72 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_73.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_73 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_74.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_74 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_75.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_75 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_76.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_76 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_77.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_77 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_78.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_78 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_79.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_79 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_8.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_8 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_80.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_80 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_81.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_81 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_82.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_82 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_83.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_83 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_84.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_84 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_85.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_85 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_86.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_86 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_87.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_87 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_88.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_88 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_89.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_89 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_9.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_9 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_90.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_90 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_91.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_91 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_92.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_92 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_93.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_93 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_94.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_94 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_95.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_95 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_96.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_96 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_97.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_97 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_98.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_98 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_3_99.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_3_99 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
 ./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_1.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_1 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
 
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_10.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_10 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_100.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_100 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_101.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_101 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_102.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_102 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_103.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_103 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_104.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_104 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_105.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_105 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_106.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_106 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_107.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_107 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_108.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_108 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_109.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_109 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_11.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_11 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_110.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_110 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_111.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_111 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_112.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_112 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_113.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_113 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_114.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_114 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_115.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_115 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_116.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_116 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_117.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_117 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_118.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_118 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_119.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_119 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_12.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_12 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_120.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_120 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_121.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_121 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_122.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_122 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_123.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_123 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_124.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_124 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_125.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_125 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_13.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_13 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_14.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_14 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_15.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_15 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_16.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_16 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_17.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_17 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_18.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_18 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_19.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_19 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_2.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_2 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_20.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_20 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_21.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_21 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_22.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_22 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_23.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_23 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_24.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_24 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_25.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_25 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_26.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_26 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_27.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_27 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_28.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_28 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_29.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_29 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_3.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_3 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_30.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_30 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_31.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_31 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_32.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_32 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_33.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_33 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_34.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_34 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_35.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_35 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_36.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_36 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_37.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_37 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_38.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_38 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_39.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_39 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_4.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_4 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_40.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_40 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_41.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_41 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_42.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_42 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_43.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_43 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_44.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_44 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_45.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_45 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_46.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_46 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_47.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_47 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_48.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_48 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_49.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_49 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_5.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_5 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_50.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_50 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_51.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_51 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_52.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_52 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_53.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_53 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_54.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_54 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_55.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_55 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_56.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_56 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_57.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_57 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_58.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_58 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_59.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_59 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_6.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_6 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_60.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_60 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_61.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_61 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_62.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_62 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_63.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_63 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_64.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_64 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_65.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_65 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_66.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_66 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_67.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_67 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_68.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_68 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_69.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_69 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_7.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_7 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_70.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_70 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_71.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_71 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_72.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_72 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_73.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_73 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_74.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_74 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_75.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_75 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_76.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_76 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_77.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_77 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_78.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_78 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_79.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_79 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_8.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_8 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_80.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_80 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_81.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_81 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_82.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_82 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_83.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_83 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_84.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_84 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_85.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_85 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_86.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_86 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_87.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_87 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_88.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_88 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_89.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_89 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_9.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_9 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_90.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_90 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_91.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_91 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_92.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_92 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_93.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_93 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_94.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_94 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_95.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_95 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_96.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_96 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_97.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_97 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_98.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_98 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_4_99.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_4_99 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
 ./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_1.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_1 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
 
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_10.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_10 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_100.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_100 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_101.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_101 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_102.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_102 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_103.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_103 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_104.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_104 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_105.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_105 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_106.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_106 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_107.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_107 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_108.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_108 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_109.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_109 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_11.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_11 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_110.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_110 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_111.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_111 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_112.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_112 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_113.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_113 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_114.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_114 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_115.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_115 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_116.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_116 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_117.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_117 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_118.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_118 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_119.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_119 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_12.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_12 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_120.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_120 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_121.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_121 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_122.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_122 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_123.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_123 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_124.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_124 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_125.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_125 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_13.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_13 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_14.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_14 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_15.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_15 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_16.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_16 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_17.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_17 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_18.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_18 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_19.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_19 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_2.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_2 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_20.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_20 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_21.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_21 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_22.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_22 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_23.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_23 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_24.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_24 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_25.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_25 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_26.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_26 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_27.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_27 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_28.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_28 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_29.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_29 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_3.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_3 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_30.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_30 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_31.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_31 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_32.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_32 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_33.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_33 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_34.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_34 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_35.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_35 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_36.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_36 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_37.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_37 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_38.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_38 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_39.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_39 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_4.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_4 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_40.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_40 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_41.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_41 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_42.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_42 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_43.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_43 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_44.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_44 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_45.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_45 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_46.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_46 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_47.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_47 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_48.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_48 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_49.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_49 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_5.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_5 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_50.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_50 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_51.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_51 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_52.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_52 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_53.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_53 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_54.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_54 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_55.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_55 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_56.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_56 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_57.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_57 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_58.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_58 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_59.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_59 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_6.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_6 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_60.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_60 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_61.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_61 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_62.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_62 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_63.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_63 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_64.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_64 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_65.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_65 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_66.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_66 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_67.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_67 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_68.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_68 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_69.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_69 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_7.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_7 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_70.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_70 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_71.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_71 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_72.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_72 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_73.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_73 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_74.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_74 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_75.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_75 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_76.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_76 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_77.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_77 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_78.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_78 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_79.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_79 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_8.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_8 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_80.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_80 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_81.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_81 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_82.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_82 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_83.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_83 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_84.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_84 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_85.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_85 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_86.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_86 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_87.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_87 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_88.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_88 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_89.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_89 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_9.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_9 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_90.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_90 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_91.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_91 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_92.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_92 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_93.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_93 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_94.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_94 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_95.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_95 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_96.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_96 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_97.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_97 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_98.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_98 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_5_99.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_5_99 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
 ./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_1.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_1 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
 
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_10.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_10 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_100.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_100 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_101.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_101 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_102.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_102 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_103.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_103 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_104.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_104 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_105.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_105 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_106.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_106 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_107.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_107 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_108.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_108 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_109.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_109 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_11.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_11 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_110.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_110 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_111.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_111 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_112.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_112 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_113.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_113 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_114.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_114 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_115.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_115 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_116.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_116 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_117.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_117 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_118.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_118 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_119.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_119 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_12.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_12 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_120.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_120 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_121.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_121 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_122.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_122 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_123.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_123 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_124.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_124 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_125.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_125 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_13.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_13 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_14.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_14 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_15.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_15 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_16.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_16 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_17.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_17 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_18.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_18 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_19.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_19 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_2.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_2 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_20.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_20 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_21.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_21 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_22.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_22 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_23.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_23 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_24.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_24 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_25.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_25 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_26.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_26 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_27.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_27 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_28.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_28 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_29.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_29 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_3.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_3 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_30.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_30 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_31.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_31 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_32.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_32 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_33.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_33 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_34.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_34 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_35.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_35 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_36.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_36 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_37.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_37 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_38.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_38 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_39.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_39 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_4.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_4 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_40.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_40 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_41.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_41 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_42.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_42 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_43.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_43 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_44.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_44 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_45.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_45 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_46.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_46 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_47.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_47 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_48.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_48 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_49.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_49 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_5.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_5 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_50.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_50 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_51.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_51 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_52.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_52 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_53.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_53 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_54.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_54 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_55.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_55 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_56.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_56 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_57.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_57 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_58.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_58 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_59.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_59 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_6.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_6 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_60.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_60 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_61.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_61 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_62.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_62 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_63.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_63 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_64.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_64 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_65.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_65 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_66.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_66 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_67.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_67 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_68.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_68 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_69.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_69 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_7.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_7 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_70.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_70 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_71.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_71 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_72.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_72 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_73.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_73 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_74.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_74 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_75.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_75 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_76.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_76 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_77.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_77 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_78.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_78 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_79.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_79 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_8.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_8 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_80.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_80 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_81.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_81 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_82.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_82 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_83.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_83 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_84.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_84 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_85.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_85 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_86.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_86 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_87.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_87 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_88.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_88 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_89.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_89 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_9.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_9 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_90.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_90 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_91.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_91 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_92.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_92 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_93.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_93 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_94.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_94 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_95.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_95 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_96.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_96 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_97.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_97 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_98.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_98 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_6_99.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_6_99 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
 ./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_1.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_1 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
 
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_10.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_10 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_100.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_100 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_101.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_101 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_102.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_102 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_103.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_103 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_104.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_104 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_105.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_105 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_106.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_106 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_107.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_107 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_108.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_108 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_109.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_109 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_11.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_11 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_110.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_110 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_111.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_111 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_112.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_112 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_113.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_113 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_114.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_114 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_115.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_115 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_116.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_116 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_117.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_117 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_118.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_118 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_119.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_119 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_12.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_12 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_120.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_120 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_121.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_121 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_122.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_122 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_123.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_123 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_124.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_124 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_125.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_125 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_13.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_13 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_14.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_14 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_15.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_15 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_16.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_16 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_17.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_17 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_18.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_18 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_19.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_19 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_2.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_2 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_20.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_20 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_21.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_21 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_22.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_22 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_23.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_23 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_24.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_24 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_25.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_25 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_26.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_26 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_27.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_27 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_28.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_28 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_29.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_29 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_3.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_3 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_30.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_30 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_31.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_31 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_32.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_32 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_33.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_33 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_34.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_34 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_35.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_35 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_36.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_36 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_37.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_37 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_38.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_38 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_39.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_39 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_4.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_4 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_40.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_40 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_41.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_41 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_42.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_42 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_43.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_43 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_44.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_44 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_45.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_45 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_46.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_46 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_47.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_47 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_48.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_48 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_49.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_49 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_5.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_5 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_50.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_50 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_51.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_51 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_52.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_52 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_53.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_53 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_54.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_54 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_55.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_55 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_56.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_56 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_57.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_57 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_58.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_58 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_59.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_59 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_6.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_6 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_60.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_60 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_61.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_61 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_62.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_62 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_63.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_63 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_64.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_64 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_65.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_65 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_66.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_66 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_67.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_67 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_68.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_68 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_69.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_69 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_7.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_7 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_70.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_70 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_71.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_71 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_72.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_72 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_73.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_73 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_74.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_74 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_75.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_75 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_76.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_76 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_77.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_77 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_78.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_78 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_79.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_79 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_8.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_8 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_80.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_80 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_81.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_81 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_82.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_82 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_83.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_83 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_84.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_84 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_85.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_85 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_86.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_86 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_87.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_87 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_88.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_88 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_89.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_89 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_9.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_9 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_90.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_90 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_91.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_91 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_92.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_92 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_93.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_93 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_94.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_94 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_95.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_95 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_96.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_96 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_97.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_97 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_98.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_98 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_7_99.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_7_99 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
 ./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_1.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_1 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
 
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_10.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_10 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_100.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_100 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_101.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_101 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_102.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_102 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_103.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_103 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_104.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_104 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_105.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_105 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_106.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_106 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_107.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_107 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_108.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_108 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_109.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_109 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_11.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_11 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_110.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_110 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_111.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_111 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_112.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_112 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_113.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_113 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_114.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_114 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_115.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_115 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_116.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_116 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_117.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_117 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_118.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_118 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_119.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_119 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_12.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_12 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_120.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_120 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_121.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_121 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_122.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_122 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_123.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_123 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_124.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_124 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_125.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_125 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_13.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_13 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_14.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_14 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_15.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_15 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_16.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_16 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_17.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_17 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_18.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_18 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_19.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_19 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_2.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_2 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_20.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_20 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_21.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_21 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_22.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_22 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_23.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_23 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_24.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_24 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_25.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_25 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_26.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_26 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_27.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_27 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_28.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_28 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_29.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_29 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_3.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_3 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_30.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_30 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_31.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_31 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_32.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_32 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_33.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_33 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_34.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_34 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_35.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_35 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_36.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_36 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_37.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_37 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_38.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_38 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_39.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_39 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_4.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_4 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_40.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_40 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_41.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_41 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_42.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_42 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_43.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_43 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_44.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_44 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_45.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_45 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_46.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_46 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_47.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_47 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_48.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_48 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_49.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_49 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_5.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_5 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_50.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_50 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_51.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_51 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_52.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_52 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_53.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_53 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_54.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_54 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_55.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_55 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_56.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_56 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_57.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_57 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_58.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_58 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_59.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_59 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_6.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_6 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_60.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_60 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_61.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_61 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_62.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_62 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_63.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_63 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_64.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_64 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_65.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_65 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_66.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_66 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_67.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_67 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_68.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_68 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_69.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_69 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_7.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_7 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_70.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_70 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_71.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_71 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_72.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_72 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_73.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_73 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_74.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_74 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_75.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_75 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_76.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_76 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_77.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_77 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_78.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_78 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_79.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_79 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_8.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_8 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_80.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_80 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_81.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_81 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_82.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_82 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_83.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_83 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_84.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_84 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_85.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_85 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_86.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_86 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_87.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_87 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_88.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_88 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_89.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_89 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_9.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_9 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_90.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_90 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_91.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_91 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_92.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_92 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_93.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_93 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_94.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_94 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_95.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_95 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_96.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_96 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_97.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_97 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_98.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_98 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
+
+./simplify_zipped_sweeps.pl ./shuffled_sweep_files/fakeall_ranks_ihs_1000kb_8_99.gz ./shuffled_sweep_files_simplified/fakeall_ranks_ihs_1000kb_8_99 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10
+ sleep 0.5
 ./simplify_zipped_sweeps.pl ./shuffled_sweep_files/hello.txt ./shuffled_sweep_files_simplified/hello. 2000,1500,1000,900,800,700,600,500,450,400,350,300,250,200,150,100,90,80,70,60,50,40,30,25,20,15,10 & 
 

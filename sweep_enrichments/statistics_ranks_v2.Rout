@@ -227,7 +227,8 @@ Loading required package: parallel
 + 			##make the rank
 + 			#calculate a new order of the rows based on the statistic value on decreasing order
 + 			decreasing_order_statistic = order(selected_pop_subset$summary_statistic, decreasing=TRUE)
-+ 				#we select the column with the selected statistic and size
++ 				#"order" leave the cases with NA at the bottom by default
++ 
 + 			#reorder
 + 			selected_pop_subset_ordered = selected_pop_subset[decreasing_order_statistic, ]
 + 			
@@ -240,7 +241,12 @@ Loading required package: parallel
 + 			##prepare the final file
 + 			#remove NAs for the statistic
 + 			selected_pop_subset_ordered = selected_pop_subset_ordered[which(!is.na(selected_pop_subset_ordered$summary_statistic)),]
-+ 				#select the column with the selected statistic and size
++ 				#as the NA cases are at the bottom, their removal does not affect the ranks, so the column of the rank in selected_pop_subset_ordered should be equal to 1:nrow(selected_pop_subset_ordered)
++ 
++ 			#check that NAs have not affect the rank calculation
++ 			print("########################################")
++ 			print(paste(statistics, " - ", window_size, " - ", pop_name, ": CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION", sep="")); print(identical(selected_pop_subset_ordered[,which(colnames(selected_pop_subset_ordered) == pop_name)], 1:nrow(selected_pop_subset_ordered)))
++ 			print("########################################")
 + 
 + 			#check the calculation of the rank with sort
 + 			print("########################################")
@@ -308,7 +314,7 @@ Loading required package: SistWrapper
 Warning message:
 In library(package, lib.loc = lib.loc, character.only = TRUE, logical.return = TRUE,  :
   there is no package called 'SistWrapper'
-starting worker pid=26898 on localhost:11310 at 12:21:35.827
+starting worker pid=21848 on localhost:11003 at 15:34:30.765
 > registerDoParallel(clust)
 > 
 > #run the function for all populations
@@ -336,7 +342,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 50kb - ACBD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 50kb - ACBD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - ASWD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -344,7 +358,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 50kb - BEBD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 50kb - BEBD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - CDXD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -352,7 +374,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 50kb - CEUD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 50kb - CEUD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - CHBD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -360,7 +390,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 50kb - CHSD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 50kb - CHSD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - CLMD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -368,7 +406,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 50kb - ESND: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 50kb - ESND: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - FIND: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -376,7 +422,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 50kb - GBRD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 50kb - GBRD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - GIHD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -384,7 +438,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 50kb - GWDD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 50kb - GWDD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - IBSD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -392,7 +454,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 50kb - ITUD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 50kb - ITUD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - JPTD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -400,7 +470,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 50kb - KHVD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 50kb - KHVD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - LWKD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -408,7 +486,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 50kb - MSLD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 50kb - MSLD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - MXLD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -416,7 +502,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 50kb - PELD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 50kb - PELD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - PJLD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -424,7 +518,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 50kb - PURD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 50kb - PURD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - STUD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -432,7 +534,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 50kb - TSID: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 50kb - TSID: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - YRID: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -478,7 +588,15 @@ The following objects are masked from 'package:base':
 [1] "ACBD,ASWD,BEBD,CDXD,CEUD,CHBD,CHSD,CLMD,ESND,FIND,GBRD,GIHD,GWDD,IBSD,ITUD,JPTD,KHVD,LWKD,MSLD,MXLD,PELD,PJLD,PURD,STUD,TSID,YRID"
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 100kb - ACBD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 100kb - ACBD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - ASWD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -486,7 +604,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 100kb - BEBD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 100kb - BEBD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - CDXD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -494,7 +620,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 100kb - CEUD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 100kb - CEUD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - CHBD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -502,7 +636,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 100kb - CHSD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 100kb - CHSD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - CLMD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -510,7 +652,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 100kb - ESND: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 100kb - ESND: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - FIND: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -518,7 +668,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 100kb - GBRD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 100kb - GBRD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - GIHD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -526,7 +684,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 100kb - GWDD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 100kb - GWDD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - IBSD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -534,7 +700,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 100kb - ITUD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 100kb - ITUD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - JPTD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -542,7 +716,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 100kb - KHVD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 100kb - KHVD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - LWKD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -550,7 +732,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 100kb - MSLD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 100kb - MSLD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - MXLD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -558,7 +748,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 100kb - PELD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 100kb - PELD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - PJLD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -566,7 +764,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 100kb - PURD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 100kb - PURD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - STUD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -574,7 +780,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 100kb - TSID: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 100kb - TSID: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - YRID: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -620,7 +834,15 @@ The following objects are masked from 'package:base':
 [1] "ACBD,ASWD,BEBD,CDXD,CEUD,CHBD,CHSD,CLMD,ESND,FIND,GBRD,GIHD,GWDD,IBSD,ITUD,JPTD,KHVD,LWKD,MSLD,MXLD,PELD,PJLD,PURD,STUD,TSID,YRID"
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 200kb - ACBD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 200kb - ACBD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - ASWD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -628,7 +850,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 200kb - BEBD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 200kb - BEBD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - CDXD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -636,7 +866,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 200kb - CEUD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 200kb - CEUD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - CHBD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -644,7 +882,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 200kb - CHSD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 200kb - CHSD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - CLMD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -652,7 +898,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 200kb - ESND: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 200kb - ESND: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - FIND: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -660,7 +914,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 200kb - GBRD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 200kb - GBRD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - GIHD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -668,7 +930,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 200kb - GWDD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 200kb - GWDD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - IBSD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -676,7 +946,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 200kb - ITUD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 200kb - ITUD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - JPTD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -684,7 +962,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 200kb - KHVD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 200kb - KHVD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - LWKD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -692,7 +978,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 200kb - MSLD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 200kb - MSLD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - MXLD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -700,7 +994,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 200kb - PELD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 200kb - PELD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - PJLD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -708,7 +1010,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 200kb - PURD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 200kb - PURD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - STUD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -716,7 +1026,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 200kb - TSID: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 200kb - TSID: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - YRID: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -762,7 +1080,15 @@ The following objects are masked from 'package:base':
 [1] "ACBD,ASWD,BEBD,CDXD,CEUD,CHBD,CHSD,CLMD,ESND,FIND,GBRD,GIHD,GWDD,IBSD,ITUD,JPTD,KHVD,LWKD,MSLD,MXLD,PELD,PJLD,PURD,STUD,TSID,YRID"
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 500kb - ACBD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 500kb - ACBD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - ASWD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -770,7 +1096,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 500kb - BEBD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 500kb - BEBD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - CDXD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -778,7 +1112,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 500kb - CEUD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 500kb - CEUD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - CHBD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -786,7 +1128,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 500kb - CHSD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 500kb - CHSD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - CLMD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -794,7 +1144,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 500kb - ESND: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 500kb - ESND: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - FIND: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -802,7 +1160,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 500kb - GBRD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 500kb - GBRD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - GIHD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -810,7 +1176,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 500kb - GWDD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 500kb - GWDD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - IBSD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -818,7 +1192,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 500kb - ITUD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 500kb - ITUD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - JPTD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -826,7 +1208,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 500kb - KHVD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 500kb - KHVD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - LWKD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -834,7 +1224,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 500kb - MSLD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 500kb - MSLD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - MXLD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -842,7 +1240,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 500kb - PELD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 500kb - PELD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - PJLD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -850,7 +1256,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 500kb - PURD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 500kb - PURD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - STUD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -858,7 +1272,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 500kb - TSID: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 500kb - TSID: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - YRID: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -904,7 +1326,15 @@ The following objects are masked from 'package:base':
 [1] "ACBD,ASWD,BEBD,CDXD,CEUD,CHBD,CHSD,CLMD,ESND,FIND,GBRD,GIHD,GWDD,IBSD,ITUD,JPTD,KHVD,LWKD,MSLD,MXLD,PELD,PJLD,PURD,STUD,TSID,YRID"
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 1000kb - ACBD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 1000kb - ACBD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - ASWD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -912,7 +1342,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 1000kb - BEBD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 1000kb - BEBD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - CDXD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -920,7 +1358,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 1000kb - CEUD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 1000kb - CEUD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - CHBD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -928,7 +1374,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 1000kb - CHSD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 1000kb - CHSD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - CLMD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -936,7 +1390,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 1000kb - ESND: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 1000kb - ESND: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - FIND: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -944,7 +1406,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 1000kb - GBRD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 1000kb - GBRD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - GIHD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -952,7 +1422,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 1000kb - GWDD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 1000kb - GWDD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - IBSD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -960,7 +1438,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 1000kb - ITUD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 1000kb - ITUD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - JPTD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -968,7 +1454,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 1000kb - KHVD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 1000kb - KHVD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - LWKD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -976,7 +1470,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 1000kb - MSLD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 1000kb - MSLD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - MXLD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -984,7 +1486,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 1000kb - PELD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 1000kb - PELD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - PJLD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -992,7 +1502,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 1000kb - PURD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 1000kb - PURD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - STUD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -1000,7 +1518,15 @@ The following objects are masked from 'package:base':
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 1000kb - TSID: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 1000kb - TSID: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - YRID: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -1072,7 +1598,15 @@ NULL
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 50kb - CDXD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 50kb - CDXD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - CHBD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -1080,11 +1614,23 @@ NULL
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 50kb - CHSD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 50kb - CHSD: CHECK THE CALCULATION OF THE RANK WITH SORT"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 50kb - JPTD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 50kb - JPTD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - KHVD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -1109,7 +1655,15 @@ NULL
 [1] "CDXD,CHBD,CHSD,JPTD,KHVD"
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 100kb - CDXD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 100kb - CDXD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - CHBD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -1117,11 +1671,23 @@ NULL
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 100kb - CHSD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 100kb - CHSD: CHECK THE CALCULATION OF THE RANK WITH SORT"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 100kb - JPTD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 100kb - JPTD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - KHVD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -1146,7 +1712,15 @@ NULL
 [1] "CDXD,CHBD,CHSD,JPTD,KHVD"
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 200kb - CDXD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 200kb - CDXD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - CHBD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -1154,11 +1728,23 @@ NULL
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 200kb - CHSD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 200kb - CHSD: CHECK THE CALCULATION OF THE RANK WITH SORT"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 200kb - JPTD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 200kb - JPTD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - KHVD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -1183,7 +1769,15 @@ NULL
 [1] "CDXD,CHBD,CHSD,JPTD,KHVD"
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 500kb - CDXD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 500kb - CDXD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - CHBD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -1191,11 +1785,23 @@ NULL
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 500kb - CHSD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 500kb - CHSD: CHECK THE CALCULATION OF THE RANK WITH SORT"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 500kb - JPTD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 500kb - JPTD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - KHVD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -1220,7 +1826,15 @@ NULL
 [1] "CDXD,CHBD,CHSD,JPTD,KHVD"
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 1000kb - CDXD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 1000kb - CDXD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - CHBD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -1228,11 +1842,23 @@ NULL
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 1000kb - CHSD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 1000kb - CHSD: CHECK THE CALCULATION OF THE RANK WITH SORT"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 1000kb - JPTD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 1000kb - JPTD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - KHVD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -1283,7 +1909,15 @@ NULL
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 50kb - CEUD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 50kb - CEUD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - FIND: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -1291,11 +1925,23 @@ NULL
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 50kb - GBRD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 50kb - GBRD: CHECK THE CALCULATION OF THE RANK WITH SORT"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 50kb - IBSD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 50kb - IBSD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 50kb - TSID: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -1320,7 +1966,15 @@ NULL
 [1] "CEUD,FIND,GBRD,IBSD,TSID"
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 100kb - CEUD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 100kb - CEUD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - FIND: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -1328,11 +1982,23 @@ NULL
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 100kb - GBRD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 100kb - GBRD: CHECK THE CALCULATION OF THE RANK WITH SORT"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 100kb - IBSD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 100kb - IBSD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 100kb - TSID: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -1357,7 +2023,15 @@ NULL
 [1] "CEUD,FIND,GBRD,IBSD,TSID"
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 200kb - CEUD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 200kb - CEUD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - FIND: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -1365,11 +2039,23 @@ NULL
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 200kb - GBRD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 200kb - GBRD: CHECK THE CALCULATION OF THE RANK WITH SORT"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 200kb - IBSD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 200kb - IBSD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 200kb - TSID: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -1394,7 +2080,15 @@ NULL
 [1] "CEUD,FIND,GBRD,IBSD,TSID"
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 500kb - CEUD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 500kb - CEUD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - FIND: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -1402,11 +2096,23 @@ NULL
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 500kb - GBRD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 500kb - GBRD: CHECK THE CALCULATION OF THE RANK WITH SORT"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 500kb - IBSD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 500kb - IBSD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 500kb - TSID: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -1431,7 +2137,15 @@ NULL
 [1] "CEUD,FIND,GBRD,IBSD,TSID"
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 1000kb - CEUD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 1000kb - CEUD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - FIND: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -1439,11 +2153,23 @@ NULL
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 1000kb - GBRD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 1000kb - GBRD: CHECK THE CALCULATION OF THE RANK WITH SORT"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
+[1] "ihs - 1000kb - IBSD: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
 [1] "ihs - 1000kb - IBSD: CHECK THE CALCULATION OF THE RANK WITH SORT"
+[1] TRUE
+[1] "########################################"
+[1] "########################################"
+[1] "ihs - 1000kb - TSID: CHECK THAT NAs HAVE NOT AFFECT THE RANK CALCULATION"
 [1] TRUE
 [1] "########################################"
 [1] "########################################"
@@ -1515,4 +2241,4 @@ NULL
 > 
 > proc.time()
    user  system elapsed 
-  0.564   0.104   8.352 
+  0.565   0.099   8.185 

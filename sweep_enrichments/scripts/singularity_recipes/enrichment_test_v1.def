@@ -168,7 +168,10 @@ From: ubuntu:16.04 #When using the library bootstrap agent, the From keyword bec
 %runscript
 	
 	#run the script
-	./opt/scripts/running_david_pipeline_v2.sh
+	/opt/scripts/running_david_pipeline_v2.sh > running_david_pipeline_v2.out 2>&1
+
+	#we save in this way the error and the output in the same file
+		#https://www.cyberciti.biz/faq/linux-redirect-error-output-to-file/
 
 
 
