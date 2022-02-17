@@ -3,7 +3,7 @@ Sweep_files_prefix all_ranks_ihs
 #
 #Sweep_sizes: the list of the different window sizes used to rank the sweeps
 #Sweep_sizes 50kb_100kb_200kb_500kb_1000kb_1kb_2kb_3kb_4kb_5kb
-Sweep_sizes 1000kb
+Sweep_sizes 50kb_100kb_200kb_500kb_1000kb
 #
 #Pipeline_dir: path of the directory where all the pipeline is run. Make sure all the elements needed to run the pipeline are in this directory. We are going to run the pipeline from the folder where it is present, so we can set Pipeline_dir as the current directory (./)
 Pipeline_dir ./
@@ -30,7 +30,7 @@ Run_bootstrap yes
 Min_distance 300000
 #
 #Iterations_number: number of control gene sets to create per bootstrap test run (this is only the number in one run). Has to be a multiple of 100.
-Iterations_number 100
+Iterations_number 1000
 #
 #Flip: if there are more genes of interest than controls, flips the test to gain power and specificity if set to yes.
 Flip no
@@ -39,10 +39,10 @@ Flip no
 Max_rep 10
 #
 #Runs_number: total number of times to run the bootstrap test. In each run, multiple control sets are created, as many as indicated in Iterations_number. If Runs_number is higher than 1, the whole bootstrap is started several times at the same time.  Typically, use Iterations_number*Runs_number = 10,000, but not more unless you have very large storage and computing power.
-Runs_number 1
+Runs_number 10
 #
 #Simult_runs: maximum number of runs running simultaneously. It depends on the total number of cores you have available.
-Simult_runs 25
+Simult_runs 50
 #
 #Tolerance_range: the range of departure from the average of confounding factors allowed during the matching of control genes to the gene set of interest in the bootstrap test. I typically use a range of 0.05, meaning that the average of confounding factors in the control sets has to be around the average in the gene set of interest, + or – 5%.
 Tolerance_range 0.5
@@ -80,10 +80,10 @@ Run_FDR yes
 Run_shuffling yes
 #
 #FDR_number: number of times the genome will be shuffled and the bootstrap test re-run on shuffled genomes to estimate a false discovery rate that takes clustering into account. Caution, a large FDR_number will take a LOT of disk space. Due to a quirk of the current version of the pipeline, FDR_number has to be a multiple of 8.
-FDR_number 1000
+FDR_number 10000
 #
 #Shuffling_segments_number: number of segments in which to cut the genome. The segments are then randomly flipped and their order randomly permuted. This effectively shuffles the sweeps while conserving the clustering of genes within the same sweeps
-Shuffling_segments_number 10
+Shuffling_segments_number 100
 #
 #Interrupted_FDR_run: yes or no. Specifies if you want to continue running a previously interrupted FDR analysis (yes), or if you want to start a whole new FDR analysis from scratch, in which case previously generated files for FDR present in the test_outputs folder will be removed (no).
 Interrupted_FDR_run no
