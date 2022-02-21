@@ -89,6 +89,7 @@ From: ubuntu:16.04 #When using the library bootstrap agent, the From keyword bec
 
 	#install R and r-base-dev, which has all the ubuntu packages needed for R package compilation
 	apt-get -y install r-base r-base-dev
+		#IMPORTANT, THIS IS THE LAST VERSION OF R, WHICH WHAS R version 4.1.2 (2021-11-01). If compile again in the future, the R version will change!
 
 	#install curl packages to avoid problems with R package compilation
 	apt-get -y install libcurl4-gnutls-dev libxml2-dev libssl-dev

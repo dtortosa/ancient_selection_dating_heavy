@@ -27,7 +27,7 @@
 ### REQUIRED. Set the gb per core. YOU HAVE TO SELECT --mem or --mem-per-cpu but NOT BOTH.
 ### SBATCH --mem-per-cpu=12gb
 ### REQUIRED. Specify the time required for this job, hhh:mm:ss
-#SBATCH --time=96:00:00
+#SBATCH --time=72:00:00
  
  
 # --------------------------------------------------------------

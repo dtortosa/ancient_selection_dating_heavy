@@ -314,7 +314,7 @@ Loading required package: SistWrapper
 Warning message:
 In library(package, lib.loc = lib.loc, character.only = TRUE, logical.return = TRUE,  :
   there is no package called 'SistWrapper'
-starting worker pid=21848 on localhost:11003 at 15:34:30.765
+starting worker pid=4493 on localhost:11834 at 11:31:45.275
 > registerDoParallel(clust)
 > 
 > #run the function for all populations
@@ -2241,4 +2241,4 @@ NULL
 > 
 > proc.time()
    user  system elapsed 
-  0.565   0.099   8.185 
+  0.540   0.111   8.182 

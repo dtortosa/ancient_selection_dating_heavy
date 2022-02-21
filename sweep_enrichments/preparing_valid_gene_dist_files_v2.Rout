@@ -787,4 +787,4 @@ Loading required package: plyr
 > 
 > proc.time()
    user  system elapsed 
- 55.687   0.517  56.171 
+ 54.393   0.508  54.845 
