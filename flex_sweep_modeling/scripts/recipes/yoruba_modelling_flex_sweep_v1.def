@@ -36,20 +36,9 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
 #You should check that you can copy two different files to the same folder.
 
 %files
-       
-    #copy the folders with the iHS per gene and continuous windows
-    #/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows /opt/data
-    #/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_continuous_windows /opt/data
-    	#This will be obtained from a data folder outside the container, in that way we have not to load all the data to the HPC each time we build the container
-
-    #copy the predictors for gene and continuous windows
-    #/home/dftortosa/singularity/ihs_deep_learning/modelling_yifei/data/predictors_gene_windows /opt/data
-	#/home/dftortosa/singularity/ihs_deep_learning/modelling_yifei/data/predictors_continuous_windows /opt/data
-		#This will be obtained from a data folder outside the container, in that way we have not to load all the data to the HPC each time we build the container
 
 	#copy the python scripts
-    /home/dftortosa/singularity/ihs_deep_learning/modelling_yifei/scripts/modelling_yifei_part_1_v4.py /opt/scripts/modelling_yifei_part_1_v4.py
-    /home/dftortosa/singularity/ihs_deep_learning/modelling_yifei/scripts/modelling_yifei_part_1_low_recomb_v2.py /opt/scripts/modelling_yifei_part_1_low_recomb_v2.py
+    /home/dftortosa/singularity/ambizione_prelim_analyses/ihs_modeling_fine/scripts/modelling_ihs_snp_level_v1.py /opt/scripts/modelling_ihs_snp_level_v1.py
 
     #From the original folder in the host, we copy a R script to a new folder in the container called scripts. NEVER PUT ANYTHING ELSE IN THE LINE WITH SOURCE AND DESTINATION, GIVES ERROR.
     #https://groups.google.com/a/lbl.gov/forum/#!topic/singularity/4NFDsohnxgg
@@ -103,8 +92,10 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
 	curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 	apt -y install python3.8-distutils #this is needed because of an error: https://github.com/pypa/get-pip/issues/43
 	python3.8 get-pip.py
-	
+
 	#python3.8 -m pip install future #the "-m" flag search for the last version of the package.
+	python3.8 -m pip install eli5
+	python3.8 -m pip install tensorflow
 	python3.8 -m pip install numpy
 	python3.8 -m pip install scipy
 	python3.8 -m pip install sklearn
@@ -162,8 +153,8 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
 %runscript
 
 	#run scripts. NOT USE "&", each script have to be run after the previous one have been run
-    python3.8 /opt/scripts/modelling_yifei_part_1_v4.py > modelling_yifei_part_1_v4.out #you can run this script and save the output using ">". You will obtain a file with the results you want to save, using the print function for that.
-    python3.8 /opt/scripts/modelling_yifei_part_1_low_recomb_v2.py > modelling_yifei_part_1_low_recomb_v2.out #you can run this script and save the output using ">". You will obtain a file with the results you want to save, using the print function for that.
+    python3.8 /opt/scripts/modelling_yifei_part_4_v1.py > modelling_yifei_part_4_v1.out 
+		#you can run this script and save the output using ">". You will obtain a file with the results you want to save, using the print function for that.
 
 
 
@@ -174,14 +165,14 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
 
 #Command to build, enter interactively or run
 	#now apply the definition file final_test_def for creating a container
-		#sudo singularity build /home/dftortosa/singularity/ihs_deep_learning/modelling_yifei/ubuntu_16_04_modelling_yifei_part_1.sif /home/dftortosa/singularity/ihs_deep_learning/modelling_yifei/scripts/recipes/modelling_yifei_recipe_part_1.def
-			#In the definition file is indicate that we will take an Ubuntu 16.04 container from the Singularity library. We do not need anything else. We do not need a previous image in the host system! The definition file has the instructions to get the required container from the library.
+		#sudo singularity build /home/dftortosa/singularity/ambizione_prelim_analyses/ihs_modeling_fine/ubuntu_20_04_ihs_modeling_fine.sif /home/dftortosa/singularity/ambizione_prelim_analyses/ihs_modeling_fine/scripts/recipes/ihs_modeling_fine_v1.def
+			#In the definition file is indicate that we will take an Ubuntu 20.04 container from the Singularity library. We do not need anything else. We do not need a previous image in the host system! The definition file has the instructions to get the required container from the library.
 	#you can run this image interactively with shell. For that you have to be in a specific folder in order to have the scripts workingnter in the container
-		#cd /home/dftortosa/singularity/ihs_deep_learning/modelling_yifei
-		#sudo singularity shell /home/dftortosa/singularity/ihs_deep_learning/modelling_yifei/ubuntu_16_04_modelling_yifei_part_1.sif
+		#cd /home/dftortosa/singularity/ambizione_prelim_analyses/ihs_modeling_fine
+		#sudo singularity shell /home/dftortosa/singularity/ambizione_prelim_analyses/ihs_modeling_fine/ubuntu_20_04_ihs_modeling_fine.sif
 	#to run the container. For that you have to be in a specific folder in order to have the scripts workingnter in the container
-		#cd /home/dftortosa/singularity/ihs_deep_learning/modelling_yifei
-		#sudo singularity run /home/dftortosa/singularity/ihs_deep_learning/modelling_yifei/ubuntu_16_04_modelling_yifei_part_1.sif
+		#cd /home/dftortosa/singularity/ambizione_prelim_analyses/ihs_modeling_fine
+		#sudo singularity run /home/dftortosa/singularity/ambizione_prelim_analyses/ihs_modeling_fine/ubuntu_20_04_ihs_modeling_fine.sif
 
 %labels
     Author dftortosa
