@@ -80,7 +80,7 @@ Run_FDR yes
 Run_shuffling yes
 #
 #FDR_number: number of times the genome will be shuffled and the bootstrap test re-run on shuffled genomes to estimate a false discovery rate that takes clustering into account. Caution, a large FDR_number will take a LOT of disk space. Due to a quirk of the current version of the pipeline, FDR_number has to be a multiple of 8.
-FDR_number 800
+FDR_number 8000
 #
 #Shuffling_segments_number: number of segments in which to cut the genome. The segments are then randomly flipped and their order randomly permuted. This effectively shuffles the sweeps while conserving the clustering of genes within the same sweeps
 Shuffling_segments_number 100

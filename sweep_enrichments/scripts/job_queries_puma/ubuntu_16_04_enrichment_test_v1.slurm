@@ -23,11 +23,11 @@
 ### OPTIONAL. You can set the number of cores per task. This can be useful for scripts in which inside the parallelized process there are other subprocesses, like the iHS calculation with hapbin per population. 
 #SBATCH --cpus-per-task=1
 ### REQUIRED. Set the memory required for this job.
-#SBATCH --mem=120gb
+#SBATCH --mem=150gb
 ### REQUIRED. Set the gb per core. YOU HAVE TO SELECT --mem or --mem-per-cpu but NOT BOTH.
 ### SBATCH --mem-per-cpu=12gb
 ### REQUIRED. Specify the time required for this job, hhh:mm:ss
-#SBATCH --time=72:00:00
+#SBATCH --time=144:00:00
  
  
 # --------------------------------------------------------------

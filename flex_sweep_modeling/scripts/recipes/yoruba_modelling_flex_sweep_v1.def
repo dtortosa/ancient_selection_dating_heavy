@@ -19,8 +19,8 @@ From: ubuntu:16.04 #When using the library bootstrap agent, the From keyword bec
 	#And of course use mkdir -p because if you don't and build again, you will get an error that it exists. "p" flags is for "no error if existing, make parent directories as needed"
 	#The first time I got an error "cannot create directory ‘/opt/data’: Not a directory". It seems that there is a file called "data", and when you have a file called like the folder you are trying to create, you get error ("https://stackoverflow.com/questions/14496897/mkdir-p-fails-when-directory-exists"). Therefore I did "rm /opt/data" and everything works.
 	#Note that some files that were created in initial containers remained, like the "test" folder or "eso.txt". I have removed those too.
+ 	#mkdir -p /opt/data
  	mkdir -p /opt/scripts
- 	mkdir -p /opt/results/figures
 
 
 
@@ -36,14 +36,20 @@ From: ubuntu:16.04 #When using the library bootstrap agent, the From keyword bec
 #You should check that you can copy two different files to the same folder.
 
 %files
+       
+    #copy the folders with the iHS per gene and continuous windows
+    #/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows /opt/data
+    #/home/dftortosa/singularity/ihs_deep_learning/ihs_calculation/results/mean_ihs_continuous_windows /opt/data
+    	#This will be obtained from a data folder outside the container, in that way we have not to load all the data to the HPC each time we build the container
 
-	#copy the scripts
-    /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/scripts/running_david_pipeline_v2.sh /opt/scripts/running_david_pipeline_v2.sh
-    /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/scripts/preparing_valid_gene_dist_files_v2.R /opt/scripts/preparing_valid_gene_dist_files_v2.R
-    /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/scripts/preparing_factors_tables_v2.R /opt/scripts/preparing_factors_tables_v2.R
-    /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/scripts/statistics_ranks_v2.R /opt/scripts/statistics_ranks_v2.R
-    /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/scripts/input_par_david_pipeline_v2.txt /opt/scripts/input_par_david_pipeline_v2.txt
-    /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/scripts/significance_whole_enrich_curve_v2.R /opt/scripts/significance_whole_enrich_curve_v2.R
+    #copy the predictors for gene and continuous windows
+    #/home/dftortosa/singularity/ihs_deep_learning/modelling_yifei/data/predictors_gene_windows /opt/data
+	#/home/dftortosa/singularity/ihs_deep_learning/modelling_yifei/data/predictors_continuous_windows /opt/data
+		#This will be obtained from a data folder outside the container, in that way we have not to load all the data to the HPC each time we build the container
+
+	#copy the python scripts
+    /home/dftortosa/singularity/ihs_deep_learning/modelling_yifei/scripts/modelling_yifei_part_1_v4.py /opt/scripts/modelling_yifei_part_1_v4.py
+    /home/dftortosa/singularity/ihs_deep_learning/modelling_yifei/scripts/modelling_yifei_part_1_low_recomb_v2.py /opt/scripts/modelling_yifei_part_1_low_recomb_v2.py
 
     #From the original folder in the host, we copy a R script to a new folder in the container called scripts. NEVER PUT ANYTHING ELSE IN THE LINE WITH SOURCE AND DESTINATION, GIVES ERROR.
     #https://groups.google.com/a/lbl.gov/forum/#!topic/singularity/4NFDsohnxgg
@@ -69,68 +75,54 @@ From: ubuntu:16.04 #When using the library bootstrap agent, the From keyword bec
 	#we use the flag -y for the cases when apt-get asks for installing
 
 	#update the packages
-	apt-get -y update
+	apt -y update
 
 	#install a language package to solve errors with the selected language
-	apt-get -y install language-pack-en-base
+	apt -y install language-pack-en-base
 
 	#install nano, just in case we have to take a look after the image is created
-	apt-get -y install nano
+	apt -y install nano
 
-	#install packages for adding new repositories, as ubuntu repos can be outdated for R. See test_R_ubuntu_16.04 for further details.
-	apt-get -y install apt-transport-https software-properties-common
-	apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
+	#update repos to install python
+	apt -y install software-properties-common #APT automates the retrieval, configuration and installation of software packages. Type these two commands in your terminal and hit enter each time. https://medium.com/analytics-vidhya/installing-python-3-8-3-66701d3db134
+
+	#Create PPA (Personal Package Archive)
+	add-apt-repository -y ppa:deadsnakes/ppa #PPA (Personal Package Archive) are used to add a software to your Ubuntu. They cut down on time taken to install the software from the original source. PPA is an easy way to update a program via someone, in this case I am using deadsnakes PPA. Type the following command and hit enter.
+
+	#update again after you have updated the repository
+	apt -y update
+
+	#Install python
+	apt -y install python3.8
+
+	#also install curl, needed for install python packages
+	apt -y install curl
+
+	#install python packages
+	#first, install pip into python3 (pip can be also installed in the linux system, but we will use it inside python): "https://pip.pypa.io/en/stable/installing/"
+	curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+	apt -y install python3.8-distutils #this is needed because of an error: https://github.com/pypa/get-pip/issues/43
+	python3.8 get-pip.py
 	
-	#add the R repository for the last version (xenial because we are working within ubuntu 16.04)
-	add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu xenial-cran40/'
+	#python3.8 -m pip install future #the "-m" flag search for the last version of the package.
+	python3.8 -m pip install numpy
+	python3.8 -m pip install scipy
+	python3.8 -m pip install sklearn
+	python3.8 -m pip install matplotlib
+	python3.8 -m pip install pandas
+	python3.8 -m pip install ipython
+	#python3.8 -m pip install bpython #this intepreter gives me problems with the indents. iPython works better
+		#Check its webpage to have alternatives: 
+			#https://github.com/bpython/bpython
+			#https://github.com/prompt-toolkit/ptpython
+
+		#I got a warning: ERROR: After October 2020 you may experience errors when installing or updating packages. This is because pip will change the way that it resolves dependency conflicts. We recommend you use --use-feature=2020-resolver to test your packages with the new resolver before it becomes the default.
+
+	#we have to upgrade pandas to avoid errors in python3.8
+	pip3.8 install --upgrade pandas
 	
-	#update packages
-	apt-get -y update
 
-	#install R and r-base-dev, which has all the ubuntu packages needed for R package compilation
-	apt-get -y install r-base r-base-dev
-		#IMPORTANT, THIS IS THE LAST VERSION OF R, WHICH WHAS R version 4.1.2 (2021-11-01). If compile again in the future, the R version will change!
-		#you can change the version modifying cran40 by cran35 or other version.
-
-	#install curl packages to avoid problems with R package compilation
-	apt-get -y install libcurl4-gnutls-dev libxml2-dev libssl-dev
-
-	#install R packages
-	Rscript -e 'install.packages("plyr", repos="https://cloud.r-project.org", dep=T)' 
-	Rscript -e 'install.packages("foreach", repos="https://cloud.r-project.org", dep=T)' 
-	Rscript -e 'install.packages("doParallel", repos="https://cloud.r-project.org", dep=T)' 
-	Rscript -e 'install.packages("dplyr", repos="https://cloud.r-project.org", dep=T)' 
-	#Rscript -e 'install.packages("BiocManager", repos="https://cloud.r-project.org", dep=T)' 
-	#Rscript -e 'BiocManager::install("GenomicRanges")'
-	#Rscript -e 'install.packages("devtools", repos="https://cloud.r-project.org", dep=T)' 
-	#Rscript -e 'devtools::install_github("jalvesaq/colorout")' 
-	#Rscript -e 'devtools::install_github("DanielRivasMD/SistWrapper")'
-
-	#create the .Rprofile
-	echo '
-		#we avoid loading the previous workspace by removing the rdata file of the last session
-		file.remove(".RData") #if no R data is present, a warning will be produced.
-		
-		#Just in case, we remove any previous object
-		rm(list=ls())
-		
-		#and liberate the space with the garbage collector
-		gc()
-		
-		#load colorout package to have colorful outputs in the R console
-		require(colorout)
-		
-		#load SistWrapper package. In that we can use the function wideScreen to change the number of columns and rows showed in the R terminal
-		require(SistWrapper)
-		
-		#For this script we want to see more than 8 digits in the terminal. 8 is the default, so for example, if you make the following division: (45959538+45965751)/2. You will get 45962644, instead of 45962644.5, which is the correct solution. This is caused becasue 45962644.5 has more than 8 numbers, so the last one it is not shown. This does not mean that the calculation is wrong, the correct calculus is made (you can check it with print(x, digits=8 or 9)), but you don´t see the complete solution in the terminal. Because of this, for this work with long numbers (genetic coordinates) we will set the a higher number of digits that are shown
-		options(digits = 10)' > .Rprofile
-		#https://www.cyberciti.biz/faq/linux-append-text-to-end-of-file/
-
-	#open the right to use run the bash script file
-	chmod +x /opt/scripts/running_david_pipeline_v2.sh
-
-
+	
 
 #############################
 ########## TEST #############
@@ -168,12 +160,10 @@ From: ubuntu:16.04 #When using the library bootstrap agent, the From keyword bec
 #The contents of the %runscript section are written to a file within the container that is executed when the container image is run (either via the singularity run command or by executing the container directly as a command). When the container is invoked, arguments following the container name are passed to the runscript. This means that you can (and should) process arguments within your runscript.
 
 %runscript
-	
-	#run the script
-	/opt/scripts/running_david_pipeline_v2.sh > running_david_pipeline_v2.out 2>&1
 
-	#we save in this way the error and the output in the same file
-		#https://www.cyberciti.biz/faq/linux-redirect-error-output-to-file/
+	#run scripts. NOT USE "&", each script have to be run after the previous one have been run
+    python3.8 /opt/scripts/modelling_yifei_part_1_v4.py > modelling_yifei_part_1_v4.out #you can run this script and save the output using ">". You will obtain a file with the results you want to save, using the print function for that.
+    python3.8 /opt/scripts/modelling_yifei_part_1_low_recomb_v2.py > modelling_yifei_part_1_low_recomb_v2.out #you can run this script and save the output using ">". You will obtain a file with the results you want to save, using the print function for that.
 
 
 
@@ -184,14 +174,14 @@ From: ubuntu:16.04 #When using the library bootstrap agent, the From keyword bec
 
 #Command to build, enter interactively or run
 	#now apply the definition file final_test_def for creating a container
-		#sudo singularity build /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/final_containers/ubuntu_16_04_enrichment_test_v1.sif /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/scripts/singularity_recipes/enrichment_test_v1.def
+		#sudo singularity build /home/dftortosa/singularity/ihs_deep_learning/modelling_yifei/ubuntu_16_04_modelling_yifei_part_1.sif /home/dftortosa/singularity/ihs_deep_learning/modelling_yifei/scripts/recipes/modelling_yifei_recipe_part_1.def
 			#In the definition file is indicate that we will take an Ubuntu 16.04 container from the Singularity library. We do not need anything else. We do not need a previous image in the host system! The definition file has the instructions to get the required container from the library.
 	#you can run this image interactively with shell. For that you have to be in a specific folder in order to have the scripts workingnter in the container
-		#cd /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments
-		#sudo singularity shell /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/final_containers/ubuntu_16_04_enrichment_test_v1.sif
+		#cd /home/dftortosa/singularity/ihs_deep_learning/modelling_yifei
+		#sudo singularity shell /home/dftortosa/singularity/ihs_deep_learning/modelling_yifei/ubuntu_16_04_modelling_yifei_part_1.sif
 	#to run the container. For that you have to be in a specific folder in order to have the scripts workingnter in the container
-		#cd /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments
-		#sudo singularity run /home/dftortosa/singularity/dating_climate_adaptation/sweep_enrichments/final_containers/ubuntu_16_04_enrichment_test_v1.sif
+		#cd /home/dftortosa/singularity/ihs_deep_learning/modelling_yifei
+		#sudo singularity run /home/dftortosa/singularity/ihs_deep_learning/modelling_yifei/ubuntu_16_04_modelling_yifei_part_1.sif
 
 %labels
     Author dftortosa
