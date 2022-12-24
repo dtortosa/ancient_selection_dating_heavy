@@ -254,6 +254,16 @@ from sklearn.model_selection import KFold
 
 shuffle_split = KFold(n_splits=10, shuffle=True, random_state=23)
 
+#set also the number of jobs as only 2
+#we will use 100GB per core
+number_jobs = 2
+    #Using as many jobs as folds, we get
+    #"The exit codes of the workers are {SIGABRT(-6)}"
+    #A lot of people is having the same problem even RAM seems to be ok. Some solve it by decreasing n_jobs and others by increase RAM usage.    
+    #"Turns out allocating all CPUs can be unstable, specially when there are other independent programs running that can suddenly have an uncontrolled spike in memory usage."
+    #it seems a problem of memory usage with scikit
+        #https://github.com/scikit-learn-contrib/skope-rules/issues/18
+
 
 # #### Note about p-values
 
@@ -578,7 +588,7 @@ print(np.mean(cross_val_score(estimator=full_dnn_regressor,
                         y=y_train, 
                         cv=shuffle_split, 
                         scoring="r2",
-                        n_jobs=shuffle_split.n_splits/2)))
+                        n_jobs=number_jobs)))
 
 
 ##skip example gridsearc
@@ -1466,9 +1476,7 @@ def objective(trial):
                                  y=y_train, 
                                  scoring="r2",
                                  cv=shuffle_split,
-                                 n_jobs=shuffle_split.n_splits/2).mean() 
-        #as number of jobs half of the folds, so we avoid CPU problems
-        #The exit codes of the workers are {SIGABRT(-6)}
+                                 n_jobs=number_jobs).mean() 
     
     #return the R2 score obtained from cross_val_score
     return score
