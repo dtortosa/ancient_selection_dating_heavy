@@ -37,8 +37,9 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
 
 %files
 
-	#copy the python scripts
-    /home/dftortosa/singularity/ambizione_prelim_analyses/ihs_modeling_fine/scripts/modelling_ihs_snp_level_v1.py /opt/scripts/modelling_ihs_snp_level_v1.py
+	#copy scripts
+    /home/dftortosa/singularity/dating_climate_adaptation/flex_sweep_modeling/scripts/flex_sweep_continuous_modeling_yoruba.py /opt/scripts/flex_sweep_continuous_modeling_yoruba.py
+    /home/dftortosa/singularity/dating_climate_adaptation/flex_sweep_modeling/scripts/bash_optuna_processes.sh /opt/scripts/bash_optuna_processes.sh
 
     #From the original folder in the host, we copy a R script to a new folder in the container called scripts. NEVER PUT ANYTHING ELSE IN THE LINE WITH SOURCE AND DESTINATION, GIVES ERROR.
     #https://groups.google.com/a/lbl.gov/forum/#!topic/singularity/4NFDsohnxgg
@@ -82,7 +83,7 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
 	apt -y update
 
 	#Install python
-	apt -y install python3.8
+	apt -y install python3.9
 
 	#also install curl, needed for install python packages
 	apt -y install curl
@@ -90,19 +91,21 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
 	#install python packages
 	#first, install pip into python3 (pip can be also installed in the linux system, but we will use it inside python): "https://pip.pypa.io/en/stable/installing/"
 	curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-	apt -y install python3.8-distutils #this is needed because of an error: https://github.com/pypa/get-pip/issues/43
-	python3.8 get-pip.py
+	apt -y install python3.9-distutils #this is needed because of an error: https://github.com/pypa/get-pip/issues/43
+	python3.9 get-pip.py
 
-	#python3.8 -m pip install future #the "-m" flag search for the last version of the package.
-	python3.8 -m pip install eli5
-	python3.8 -m pip install tensorflow
-	python3.8 -m pip install numpy
-	python3.8 -m pip install scipy
-	python3.8 -m pip install sklearn
-	python3.8 -m pip install matplotlib
-	python3.8 -m pip install pandas
-	python3.8 -m pip install ipython
-	#python3.8 -m pip install bpython #this intepreter gives me problems with the indents. iPython works better
+	#python3.9 -m pip install future #the "-m" flag search for the last version of the package.
+	python3.9 -m pip install sklearn
+	python3.9 -m pip install eli5
+	python3.9 -m pip install tensorflow
+	python3.9 -m pip install scikeras
+	python3.9 -m pip install optuna
+	python3.9 -m pip install numpy
+	python3.9 -m pip install scipy
+	python3.9 -m pip install matplotlib
+	python3.9 -m pip install pandas
+	python3.9 -m pip install ipython
+	#python3.9 -m pip install bpython #this intepreter gives me problems with the indents. iPython works better
 		#Check its webpage to have alternatives: 
 			#https://github.com/bpython/bpython
 			#https://github.com/prompt-toolkit/ptpython
@@ -110,9 +113,10 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
 		#I got a warning: ERROR: After October 2020 you may experience errors when installing or updating packages. This is because pip will change the way that it resolves dependency conflicts. We recommend you use --use-feature=2020-resolver to test your packages with the new resolver before it becomes the default.
 
 	#we have to upgrade pandas to avoid errors in python3.8
-	pip3.8 install --upgrade pandas
+	#pip3.9 install --upgrade pandas
 	
-
+	#give rights to run the bash script
+	chmod +x opt/scripts/bash_optuna_processes.sh
 	
 
 #############################
@@ -153,8 +157,9 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
 %runscript
 
 	#run scripts. NOT USE "&", each script have to be run after the previous one have been run
-    python3.8 /opt/scripts/modelling_yifei_part_4_v1.py > modelling_yifei_part_4_v1.out 
-		#you can run this script and save the output using ">". You will obtain a file with the results you want to save, using the print function for that.
+	/./opt/scripts/bash_optuna_processes.sh > bash_optuna_processes.out 2>&1
+		#to get output and errors in the same file
+		#see bash script for details
 
 
 
@@ -165,14 +170,14 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
 
 #Command to build, enter interactively or run
 	#now apply the definition file final_test_def for creating a container
-		#sudo singularity build /home/dftortosa/singularity/ambizione_prelim_analyses/ihs_modeling_fine/ubuntu_20_04_ihs_modeling_fine.sif /home/dftortosa/singularity/ambizione_prelim_analyses/ihs_modeling_fine/scripts/recipes/ihs_modeling_fine_v1.def
+		#sudo singularity build /home/dftortosa/singularity/dating_climate_adaptation/flex_sweep_modeling/ubuntu_18_04_yoruba_modelling_flex_sweep.sif /home/dftortosa/singularity/dating_climate_adaptation/flex_sweep_modeling/scripts/recipes/yoruba_modelling_flex_sweep_v1.def
 			#In the definition file is indicate that we will take an Ubuntu 20.04 container from the Singularity library. We do not need anything else. We do not need a previous image in the host system! The definition file has the instructions to get the required container from the library.
 	#you can run this image interactively with shell. For that you have to be in a specific folder in order to have the scripts workingnter in the container
-		#cd /home/dftortosa/singularity/ambizione_prelim_analyses/ihs_modeling_fine
-		#sudo singularity shell /home/dftortosa/singularity/ambizione_prelim_analyses/ihs_modeling_fine/ubuntu_20_04_ihs_modeling_fine.sif
+		#cd /home/dftortosa/singularity/dating_climate_adaptation/flex_sweep_modeling
+		#sudo singularity shell /home/dftortosa/singularity/dating_climate_adaptation/flex_sweep_modeling/ubuntu_18_04_yoruba_modelling_flex_sweep.sif
 	#to run the container. For that you have to be in a specific folder in order to have the scripts workingnter in the container
-		#cd /home/dftortosa/singularity/ambizione_prelim_analyses/ihs_modeling_fine
-		#sudo singularity run /home/dftortosa/singularity/ambizione_prelim_analyses/ihs_modeling_fine/ubuntu_20_04_ihs_modeling_fine.sif
+		#cd /home/dftortosa/singularity/dating_climate_adaptation/flex_sweep_modeling
+		#sudo singularity run /home/dftortosa/singularity/dating_climate_adaptation/flex_sweep_modeling/ubuntu_18_04_yoruba_modelling_flex_sweep.sif
 
 %labels
     Author dftortosa

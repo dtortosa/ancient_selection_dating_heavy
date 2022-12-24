@@ -1,0 +1,122 @@
+2022-12-23 20:31:34.361318: I tensorflow/core/platform/cpu_feature_guard.cc:193] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 FMA
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2022-12-23 20:31:34.862835: W tensorflow/compiler/xla/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcudart.so.11.0'; dlerror: libcudart.so.11.0: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /.singularity.d/libs
+2022-12-23 20:31:34.862871: I tensorflow/compiler/xla/stream_executor/cuda/cudart_stub.cc:29] Ignore above cudart dlerror if you do not have a GPU set up on your machine.
+2022-12-23 20:31:36.328662: W tensorflow/compiler/xla/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libnvinfer.so.7'; dlerror: libnvinfer.so.7: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /.singularity.d/libs
+2022-12-23 20:31:36.331518: W tensorflow/compiler/xla/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libnvinfer_plugin.so.7'; dlerror: libnvinfer_plugin.so.7: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /.singularity.d/libs
+2022-12-23 20:31:36.331537: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Cannot dlopen some TensorRT libraries. If you would like to use Nvidia GPU with TensorRT, please make sure the missing libraries mentioned above are installed properly.
+2022-12-23 20:31:37.229965: W tensorflow/compiler/xla/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcuda.so.1'; dlerror: libcuda.so.1: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /.singularity.d/libs
+2022-12-23 20:31:37.230015: W tensorflow/compiler/xla/stream_executor/cuda/cuda_driver.cc:265] failed call to cuInit: UNKNOWN ERROR (303)
+2022-12-23 20:31:37.236882: I tensorflow/compiler/xla/stream_executor/cuda/cuda_diagnostics.cc:156] kernel driver does not appear to be running on this host (dftortosa-GS65-Stealth-8SF): /proc/driver/nvidia/version does not exist
+2022-12-23 20:31:37.238022: I tensorflow/core/platform/cpu_feature_guard.cc:193] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 FMA
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+(10415, 18) (10415,)
+(4464, 18) (4464,)
+Model: "sequential"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ dense (Dense)               (None, 10)                190       
+                                                                 
+ dropout (Dropout)           (None, 10)                0         
+                                                                 
+ dense_1 (Dense)             (None, 10)                110       
+                                                                 
+ dropout_1 (Dropout)         (None, 10)                0         
+                                                                 
+ dense_2 (Dense)             (None, 1)                 11        
+                                                                 
+=================================================================
+Total params: 311
+Trainable params: 311
+Non-trainable params: 0
+_________________________________________________________________
+2022-12-23 20:31:43.977941: I tensorflow/core/platform/cpu_feature_guard.cc:193] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 FMA
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2022-12-23 20:31:43.978479: I tensorflow/core/platform/cpu_feature_guard.cc:193] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 FMA
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2022-12-23 20:31:44.073362: W tensorflow/compiler/xla/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcudart.so.11.0'; dlerror: libcudart.so.11.0: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /.singularity.d/libs
+2022-12-23 20:31:44.073361: W tensorflow/compiler/xla/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcudart.so.11.0'; dlerror: libcudart.so.11.0: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /.singularity.d/libs
+2022-12-23 20:31:44.073420: I tensorflow/compiler/xla/stream_executor/cuda/cudart_stub.cc:29] Ignore above cudart dlerror if you do not have a GPU set up on your machine.
+2022-12-23 20:31:44.073423: I tensorflow/compiler/xla/stream_executor/cuda/cudart_stub.cc:29] Ignore above cudart dlerror if you do not have a GPU set up on your machine.
+2022-12-23 20:31:44.587785: W tensorflow/compiler/xla/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libnvinfer.so.7'; dlerror: libnvinfer.so.7: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /.singularity.d/libs
+2022-12-23 20:31:44.587917: W tensorflow/compiler/xla/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libnvinfer_plugin.so.7'; dlerror: libnvinfer_plugin.so.7: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /.singularity.d/libs
+2022-12-23 20:31:44.587957: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Cannot dlopen some TensorRT libraries. If you would like to use Nvidia GPU with TensorRT, please make sure the missing libraries mentioned above are installed properly.
+2022-12-23 20:31:44.588556: W tensorflow/compiler/xla/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libnvinfer.so.7'; dlerror: libnvinfer.so.7: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /.singularity.d/libs
+2022-12-23 20:31:44.588616: W tensorflow/compiler/xla/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libnvinfer_plugin.so.7'; dlerror: libnvinfer_plugin.so.7: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /.singularity.d/libs
+2022-12-23 20:31:44.588628: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Cannot dlopen some TensorRT libraries. If you would like to use Nvidia GPU with TensorRT, please make sure the missing libraries mentioned above are installed properly.
+2022-12-23 20:31:45.256027: W tensorflow/compiler/xla/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcuda.so.1'; dlerror: libcuda.so.1: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /.singularity.d/libs
+2022-12-23 20:31:45.256027: W tensorflow/compiler/xla/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcuda.so.1'; dlerror: libcuda.so.1: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /.singularity.d/libs
+2022-12-23 20:31:45.256089: W tensorflow/compiler/xla/stream_executor/cuda/cuda_driver.cc:265] failed call to cuInit: UNKNOWN ERROR (303)
+2022-12-23 20:31:45.256092: W tensorflow/compiler/xla/stream_executor/cuda/cuda_driver.cc:265] failed call to cuInit: UNKNOWN ERROR (303)
+2022-12-23 20:31:45.256115: I tensorflow/compiler/xla/stream_executor/cuda/cuda_diagnostics.cc:156] kernel driver does not appear to be running on this host (dftortosa-GS65-Stealth-8SF): /proc/driver/nvidia/version does not exist
+2022-12-23 20:31:45.256115: I tensorflow/compiler/xla/stream_executor/cuda/cuda_diagnostics.cc:156] kernel driver does not appear to be running on this host (dftortosa-GS65-Stealth-8SF): /proc/driver/nvidia/version does not exist
+2022-12-23 20:31:45.256288: I tensorflow/core/platform/cpu_feature_guard.cc:193] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 FMA
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2022-12-23 20:31:45.256299: I tensorflow/core/platform/cpu_feature_guard.cc:193] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 FMA
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+[32m[I 2022-12-23 20:31:47,759][0m Using an existing study with name 'yoruba_avg_1000kb_flex_sweep_optimization' instead of creating a new one.[0m
+2022-12-23 20:32:05.006118: I tensorflow/core/platform/cpu_feature_guard.cc:193] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 FMA
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2022-12-23 20:32:05.341404: W tensorflow/compiler/xla/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcudart.so.11.0'; dlerror: libcudart.so.11.0: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /.singularity.d/libs
+2022-12-23 20:32:05.341530: I tensorflow/compiler/xla/stream_executor/cuda/cudart_stub.cc:29] Ignore above cudart dlerror if you do not have a GPU set up on your machine.
+2022-12-23 20:32:07.167766: W tensorflow/compiler/xla/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libnvinfer.so.7'; dlerror: libnvinfer.so.7: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /.singularity.d/libs
+2022-12-23 20:32:07.168113: W tensorflow/compiler/xla/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libnvinfer_plugin.so.7'; dlerror: libnvinfer_plugin.so.7: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /.singularity.d/libs
+2022-12-23 20:32:07.168335: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Cannot dlopen some TensorRT libraries. If you would like to use Nvidia GPU with TensorRT, please make sure the missing libraries mentioned above are installed properly.
+2022-12-23 20:32:08.879373: W tensorflow/compiler/xla/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcuda.so.1'; dlerror: libcuda.so.1: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /.singularity.d/libs
+2022-12-23 20:32:08.879502: W tensorflow/compiler/xla/stream_executor/cuda/cuda_driver.cc:265] failed call to cuInit: UNKNOWN ERROR (303)
+2022-12-23 20:32:08.879570: I tensorflow/compiler/xla/stream_executor/cuda/cuda_diagnostics.cc:156] kernel driver does not appear to be running on this host (dftortosa-GS65-Stealth-8SF): /proc/driver/nvidia/version does not exist
+2022-12-23 20:32:08.879922: I tensorflow/core/platform/cpu_feature_guard.cc:193] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 FMA
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+(10415, 18) (10415,)
+(4464, 18) (4464,)
+Model: "sequential"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ dense (Dense)               (None, 10)                190       
+                                                                 
+ dropout (Dropout)           (None, 10)                0         
+                                                                 
+ dense_1 (Dense)             (None, 10)                110       
+                                                                 
+ dropout_1 (Dropout)         (None, 10)                0         
+                                                                 
+ dense_2 (Dense)             (None, 1)                 11        
+                                                                 
+=================================================================
+Total params: 311
+Trainable params: 311
+Non-trainable params: 0
+_________________________________________________________________
+2022-12-23 20:32:33.635692: I tensorflow/core/platform/cpu_feature_guard.cc:193] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 FMA
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2022-12-23 20:32:33.818038: I tensorflow/core/platform/cpu_feature_guard.cc:193] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 FMA
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2022-12-23 20:32:33.974606: W tensorflow/compiler/xla/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcudart.so.11.0'; dlerror: libcudart.so.11.0: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /.singularity.d/libs
+2022-12-23 20:32:33.974897: I tensorflow/compiler/xla/stream_executor/cuda/cudart_stub.cc:29] Ignore above cudart dlerror if you do not have a GPU set up on your machine.
+2022-12-23 20:32:34.167075: W tensorflow/compiler/xla/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcudart.so.11.0'; dlerror: libcudart.so.11.0: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /.singularity.d/libs
+2022-12-23 20:32:34.167330: I tensorflow/compiler/xla/stream_executor/cuda/cudart_stub.cc:29] Ignore above cudart dlerror if you do not have a GPU set up on your machine.
+2022-12-23 20:32:35.684543: W tensorflow/compiler/xla/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libnvinfer.so.7'; dlerror: libnvinfer.so.7: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /.singularity.d/libs
+2022-12-23 20:32:35.684946: W tensorflow/compiler/xla/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libnvinfer_plugin.so.7'; dlerror: libnvinfer_plugin.so.7: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /.singularity.d/libs
+2022-12-23 20:32:35.685006: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Cannot dlopen some TensorRT libraries. If you would like to use Nvidia GPU with TensorRT, please make sure the missing libraries mentioned above are installed properly.
+2022-12-23 20:32:35.878043: W tensorflow/compiler/xla/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libnvinfer.so.7'; dlerror: libnvinfer.so.7: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /.singularity.d/libs
+2022-12-23 20:32:35.878704: W tensorflow/compiler/xla/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libnvinfer_plugin.so.7'; dlerror: libnvinfer_plugin.so.7: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /.singularity.d/libs
+2022-12-23 20:32:35.878827: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Cannot dlopen some TensorRT libraries. If you would like to use Nvidia GPU with TensorRT, please make sure the missing libraries mentioned above are installed properly.
+2022-12-23 20:32:37.912684: W tensorflow/compiler/xla/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcuda.so.1'; dlerror: libcuda.so.1: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /.singularity.d/libs
+2022-12-23 20:32:37.912878: W tensorflow/compiler/xla/stream_executor/cuda/cuda_driver.cc:265] failed call to cuInit: UNKNOWN ERROR (303)
+2022-12-23 20:32:37.912980: I tensorflow/compiler/xla/stream_executor/cuda/cuda_diagnostics.cc:156] kernel driver does not appear to be running on this host (dftortosa-GS65-Stealth-8SF): /proc/driver/nvidia/version does not exist
+2022-12-23 20:32:37.913582: I tensorflow/core/platform/cpu_feature_guard.cc:193] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 FMA
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2022-12-23 20:32:38.161519: W tensorflow/compiler/xla/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcuda.so.1'; dlerror: libcuda.so.1: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /.singularity.d/libs
+2022-12-23 20:32:38.161590: W tensorflow/compiler/xla/stream_executor/cuda/cuda_driver.cc:265] failed call to cuInit: UNKNOWN ERROR (303)
+2022-12-23 20:32:38.161625: I tensorflow/compiler/xla/stream_executor/cuda/cuda_diagnostics.cc:156] kernel driver does not appear to be running on this host (dftortosa-GS65-Stealth-8SF): /proc/driver/nvidia/version does not exist
+2022-12-23 20:32:38.162005: I tensorflow/core/platform/cpu_feature_guard.cc:193] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 FMA
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+[32m[I 2022-12-23 20:32:46,581][0m Using an existing study with name 'yoruba_avg_1000kb_flex_sweep_optimization' instead of creating a new one.[0m
+[32m[I 2022-12-23 20:41:54,440][0m Trial 3 finished with value: 0.004706631624051993 and parameters: {'regressor__regressor__batch_size': 100, 'regressor__regressor__epochs': 230, 'regressor__regressor__optimizer': 'Adamax', 'regressor__regressor__optimizer__learning_rate': 0.00022799843114684949, 'regressor__regressor__model__init_mode': 'orthogonal', 'regressor__regressor__model__activation': 'LeakyReLU', 'regressor__regressor__model__dropout_rate': 0.7342455955676404, 'regressor__regressor__model__weight_constraint': 6.983249547497326, 'regressor__regressor__model__regu_L1': 2.363770261507064e-05, 'regressor__regressor__model__regu_L2': 2.8424646180269246e-07, 'regressor__regressor__model__n_layers': 7, 'regressor__regressor__model__n_units': 481, 'regressor__regressor__loss': 'mae'}. Best is trial 0 with value: 0.004706631624051993.[0m
+[32m[I 2022-12-23 20:42:52,477][0m Trial 5 finished with value: -0.34178872180828 and parameters: {'regressor__regressor__batch_size': 180, 'regressor__regressor__epochs': 30, 'regressor__regressor__optimizer': 'Adamax', 'regressor__regressor__optimizer__learning_rate': 0.025982148164672488, 'regressor__regressor__model__init_mode': 'identity', 'regressor__regressor__model__activation': 'sigmoid', 'regressor__regressor__model__dropout_rate': 0.15698749147437457, 'regressor__regressor__model__weight_constraint': 5.696758540549575, 'regressor__regressor__model__regu_L1': 0.0004169970048196903, 'regressor__regressor__model__regu_L2': 3.7958384816348276e-07, 'regressor__regressor__model__n_layers': 13, 'regressor__regressor__model__n_units': 281, 'regressor__regressor__loss': 'mean_absolute_error'}. Best is trial 0 with value: 0.004706631624051993.[0m
+-1.234710441166964e-05
+[32m[I 2022-12-23 20:47:59,768][0m Trial 4 finished with value: -5.681001259622516 and parameters: {'regressor__regressor__batch_size': 180, 'regressor__regressor__epochs': 590, 'regressor__regressor__optimizer': 'Nadam', 'regressor__regressor__optimizer__learning_rate': 0.00047605112878198395, 'regressor__regressor__model__init_mode': 'glorot_normal', 'regressor__regressor__model__activation': 'relu', 'regressor__regressor__model__dropout_rate': 0.6788770384100964, 'regressor__regressor__model__weight_constraint': 2.0030864516830835, 'regressor__regressor__model__regu_L1': 0.0040481477184113775, 'regressor__regressor__model__regu_L2': 1.3832448973236408e-06, 'regressor__regressor__model__n_layers': 9, 'regressor__regressor__model__n_units': 421, 'regressor__regressor__loss': 'cosine_similarity'}. Best is trial 0 with value: 0.004706631624051993.[0m
+[32m[I 2022-12-23 21:03:19,865][0m Trial 6 finished with value: -1477.7631591665254 and parameters: {'regressor__regressor__batch_size': 80, 'regressor__regressor__epochs': 550, 'regressor__regressor__optimizer': 'Adam', 'regressor__regressor__optimizer__learning_rate': 0.004891421149569249, 'regressor__regressor__model__init_mode': 'he_normal', 'regressor__regressor__model__activation': 'elu', 'regressor__regressor__model__dropout_rate': 0.4396989884583781, 'regressor__regressor__model__weight_constraint': 5.548857785641641, 'regressor__regressor__model__regu_L1': 9.595609395315386e-05, 'regressor__regressor__model__regu_L2': 1.0350063346016796e-05, 'regressor__regressor__model__n_layers': 13, 'regressor__regressor__model__n_units': 301, 'regressor__regressor__loss': 'cosine_similarity'}. Best is trial 0 with value: 0.004706631624051993.[0m
+-1.212932771821329e-05
