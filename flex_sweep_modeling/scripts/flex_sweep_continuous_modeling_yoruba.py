@@ -4,20 +4,6 @@
 # # Modeling flex-sweep probability in Yoruba, massive optuna optimization
 
 # Production script obtained from notebook that models the probability sweeps detected by Flex-sweep in Yoruba using multiple genomic factors. 
-# 
-# Note that this notebook can be converted to python script by using ```jupyter nbconvert --to script [YOUR_NOTEBOOK].ipynb```. See this [link](https://stackoverflow.com/questions/17077494/how-do-i-convert-a-ipython-notebook-into-a-python-file-via-commandline) for further details.
-
-
-# Set the working directory:
-
-# In[1]:
-
-'''
-import os
-
-os.chdir("/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating/")
-os.getcwd()
-'''
 
 
 # ## Set the window size
@@ -42,18 +28,6 @@ import pandas as pd
 final_data_yoruba = pd.read_csv("data/flex_sweep_average_prob.txt.gz", 
                                 compression="gzip")
 final_data_yoruba
-
-
-# In case you want to apply filters by recombination or disease variants
-
-# In[4]:
-
-
-#final_data_yoruba = final_data_yoruba.loc[
-#    (final_data_yoruba["recombination_final_"+gene_window_size] >
-#     np.quantile(final_data_yoruba["recombination_final_"+gene_window_size], 1/2)) & 
-#    (final_data_yoruba["n_dis_"+gene_window_size]<
-#     np.quantile(final_data_yoruba["n_dis_"+gene_window_size], 1/2)), :]
 
 
 # ## Load input data
@@ -116,9 +90,10 @@ import numpy as np
 modeling_data_array[:, 0] = np.log(modeling_data_array[:, 0])
 
 
-# It is should be ok to apply the log before splitting the dataset. There is a problem if you use a transformation that requires learn someting from the rest of the data. For example, if you scale the whole dataset, you are using the mean and sd of the whole dataset, influencing data that will be used for test. In other words, there is room for a data leak. In this case, however, log(1.5) is always 0.4, independetly of the rest of the data, so I think no data leak is possible. You could do a pipeline with log but it is a little bit more compliated (see [link](https://stats.stackexchange.com/questions/402470/how-can-i-use-scaling-and-log-transforming-together)), so we leave it for now.
+# It is should be ok to apply the log before splitting the dataset. There is a problem if you use a transformation that requires learn something from the rest of the data. For example, if you scale the whole dataset, you are using the mean and sd of the whole dataset, influencing data that will be used for test. In other words, there is room for a data leak. In this case, however, log(1.5) is always 0.4, independently of the rest of the data, so I think no data leak is possible. You could do a pipeline with log but it is a little bit more complicated (see [link](https://stats.stackexchange.com/questions/402470/how-can-i-use-scaling-and-log-transforming-together)), so we leave it for now.
 # 
 # From all these follow that if you use other transformations like preprocessing.PowerTransformer or QuantileTransformer ([link](https://yashowardhanshinde.medium.com/what-is-skewness-in-data-how-to-fix-skewed-data-in-python-a792e98c0fa6)), it is possible to have data leaks, so be careful.
+
 
 # ## Split the data
 
@@ -146,7 +121,7 @@ f'Do we have the correct number of predictors? {X.shape[1] + 1 == modeling_data.
 
 # Held out part of the dataset. This part will not be used for parameter optimization, but for the final validation after the final model has been optimized. In this way, we avoid potential overfittin in the evaluation sets ([see link](https://scikit-learn.org/stable/modules/cross_validation.html#cross-validation)). If you use train in a set of the data and then evaluate in other, you can see if the model trained is not overfitting to the training data and flexible enough to predict the evaluation data. The problem is that in parameter optimization, we select the best parameters based on the evaluation metrics in the evaluation sets, thus we could get a model that fit too much the evaluation dataset, loosing generalization and thus making the evaluation metrics no longer metrics of generalization. To avoid this, we leave out a set of the data for final evaluation. This set will be NOT used in parameter optimization. Once we have selected the best parameters to train a model in the training dataset and predict well in the evaluation dataset, we use these parameter to create a final model, fit to the whole training data and then predict in the final evaluation dataset, which was not used for anything before. If the model works well, it means it is generalizable and it is not overfitting the data, so, in our case, we can say that it is explaining the variance in selection that it is really explained by the genomic factors and the rest would be variance that could be explained by selective pressures. If there is overfitting, the model fit too much the data, there is not non-explained variance.
 
-# In the future, we may want to use the final model to obtain a probability of selection considering genomic factors and then use it to select genes with the same expected probability of selection (according to these factors) than our genes of interest. The idea is that the interest genes should have the same probability of selection based on genomic features (predicted probability), but if they are target of a selective pressure, their observed probability of selection should be higher. If predicted and observed are exactly the same, there is no room for enrichment of selection in interest genes after controling for confounding factors, and this would be an methodological artifact due to a model that just fit the observed data without any generalization. This can be a problem with algorithms like RF or in deep learning.
+# In the future, we may want to use the final model to obtain a probability of selection considering genomic factors and then use it to select genes with the same expected probability of selection (according to these factors) than our genes of interest. The idea is that the interest genes should have the same probability of selection based on genomic features (predicted probability), but if they are target of a selective pressure, their observed probability of selection should be higher. If predicted and observed are exactly the same, there is no room for enrichment of selection in interest genes after controling for confounding factors, and this would be an methodological artifact due to a model that just fit the observed data without any generalization. This can be a problem with algorithms like RF or in deep learning. In other words, more overfitting, less power to detect the impact of selective pressures.
 
 # It is usually recommended a 80-20 ratio for training-test when the dataset is large, but for small datasets is better 70-30 ([link](https://www.researchgate.net/post/Is-there-an-ideal-ratio-between-a-training-set-and-validation-set-Which-trade-off-would-you-suggest)). 
 # 
@@ -179,46 +154,7 @@ print(X_train.shape, y_train.shape)
 print(X_test.shape, y_test.shape)
 
 
-# ## Scaling
-
-# We could apply the preprocessing to the initial dataset and then split into training and test but this is problematic. As previously explained, the scaling is done using the mean and sd of the sample, so if you do it in the whole dataset, the part will be used for test will be also influenced but training data. If you included your test data in the scaling, that means that your new data is treated differently from the training set, which defeats the purpose of the training set. In practice, this is unlikely to have a large impact, as computing mean and standard deviation is relatively stable on well-behaved datasets. However, I recommend to adhere to best practices, and split off the test set before doing any processing ([more info](https://amueller.github.io/aml/01-ml-workflow/03-preprocessing.html)).
-
-# In other words, when you fit the standard scaler on the whole dataset, information from the test set is used to normalize the training set. This is a common case of "data leakage", which means that information from the test set is used while training the model. This often results in overestimates of the model's performance ([link](https://stackoverflow.com/questions/63037248/is-it-correct-to-use-a-single-standardscaler-before-splitting-data?noredirect=1&lq=1)).
-
-# standard.scaler() is similar to preprocessing.scale(). In both cases, scaling means standardizing by removing the mean and scaling to unit variance. The standard score of a sample x is calculated as: z = (x - u) / s, where u is the mean of the training samples or zero if with_mean=False, and s is the standard deviation of the training samples or one if with_std=False.
-
-# Instead of using preprocessing.scale, we will use preprocessing.StandardScaler(), which is a transformer. You can open an instance of this transformer, call the method fit to learn the mean and sd from the data and then apply the trasfomation
-
-# In[15]:
-
-'''
-from sklearn import preprocessing
-
-dummy_sample = np.array([1,1,2,2])
-
-scaler = preprocessing.StandardScaler()
-scaler.fit(dummy_sample.reshape(-1,1))
-scaler.transform(dummy_sample.reshape(-1,1))
-'''
-
-# We get the exactly the same if we use preprocessing.scale
-
-# In[16]:
-
-'''
-preprocessing.scale(dummy_sample)
-'''
-
-# The great adventage of StandardScaler() is that we can call an instance and use it within a pipeline that will be feed into a gridsearch. Internally, gridsearch scale the training dataset using the training mean-sd, fit the data and then predict in evaluation dataset but after scaling that evaluation dataset with the mean sd of the training set. In the next iteration (next training-eval set) the processes is repeated ([link](https://stackoverflow.com/questions/51459406/how-to-apply-standardscaler-in-pipeline-in-scikit-learn-sklearn)).
-
-
-# ## Run multiple models
-
-# Comparison of mulitple models recommended for regression problems with less than 100K observations ([scikit learn flowchart](https://scikit-learn.org/stable/tutorial/machine_learning_map/index.html)). In each case, fit the model, predict, see the prediction over the observed data and calculated R2 with cross validation.
-# 
-# For cross validation, we will use ShuffleSplit in order to create random splits for training and test sets. These splits will be used in cross_val_score to calculate the R2 in each test set.
-
-# #### Fix random seeds for reproducibility
+# ## Fix random seeds for reproducibility
 
 # In[17]:
 
@@ -231,7 +167,7 @@ np.random.seed(np_seed)
 tf_set_seed(tf_seed)
 
 
-# #### Create create random splits for training and test sets.
+# ## Create create random splits for training and test sets.
 # 
 # We are going to make 10 splits. Therefore, we will obtain the average score of 10 CV splits, increasing the probability to catch models that are overfitting. If we exposed the model to model different datasets, there are more possibilities to detect if the model has problems to generalize. 1/10 of 14000 is 1400 which I think it is ok.
 # 
@@ -265,140 +201,7 @@ number_jobs = 2
         #https://github.com/scikit-learn-contrib/skope-rules/issues/18
 
 
-# #### Note about p-values
-
-# Scikit learn does not give p-values, we have to study the impact of predictors using permutation plots. In case you need p-values, you can get them for linear models using statsmodel ([link](https://www.statsmodels.org/stable/index.html), [link](https://stackoverflow.com/questions/41045752/using-statsmodel-estimations-with-scikit-learn-cross-validation-is-it-possible)).
-# 
-# You could also run a bootstrap analysis with the final model adding noise to a given predictor and obtaining a distribution of r2, checking if the actual R2 is above of these cases (see stackoverflow posts about this).
-
-
-## skipping ridge example
-
-'''
-# ### Prepare function to run each model
-
-# #### Example with Ridge
-
-# We indicate the model name using the exact name of the function and the required parameters as a string
-
-# In[19]:
-
-
-model_name = "Ridge"
-
-
-# In[20]:
-
-
-parameters = "alpha=0.5"
-
-
-# Call the model with the corresponding parameters
-
-# In[21]:
-
-
-from sklearn.linear_model import Ridge
-
-model = eval("".join([model_name, "(", parameters, ")"]))
-model
-
-
-# Create a pipe that includes the tranformer to do the scaling so it is fit (get mean and SD) to the training sets and not evaluation/validation sets. When using grid search ([link](https://stackoverflow.com/questions/51459406/how-to-apply-standardscaler-in-pipeline-in-scikit-learn-sklearn)) and cross_val_score ([link](https://stackoverflow.com/questions/44446501/how-to-standardize-data-with-sklearns-cross-val-score)), it uses the mean and SD of the training set of a given iteration and apply the transformation to the test set, then in the next iteration does the same but with the new training and test set.
-
-# We need to first create a pipeline ([link](https://stackoverflow.com/questions/33091376/what-is-exactly-sklearn-pipeline-pipeline)) including scaling of predictors and the regressor. Then add it to the transformer of the response using TransformedTargetRegressor. We cannot just use StandardScaling on the response ([link](https://stackoverflow.com/questions/67824676/how-to-scale-both-x-and-y-data-in-sklearn-pipeline)).
-
-# In[22]:
-
-
-from sklearn.pipeline import Pipeline
-from sklearn.compose import TransformedTargetRegressor
-
-estim = TransformedTargetRegressor(regressor=Pipeline([('scale', 
-                                                            preprocessing.StandardScaler()), 
-                                                       ('regressor', model)]), 
-                                       transformer=preprocessing.StandardScaler())
-estim
-
-
-# See the keys, you can see how you need to write two times regressor to reach alpha parameter of Ridge ("regressor__regressor__alpha"). Ridge is a regressor of the pipeline, but the pipeline is in turn a regressor of TransformedTargetRegressor.
-
-# Fit and predict the model using the input data
-
-# In[23]:
-
-
-estim.fit(X_train, y_train)
-prediction = estim.predict(X)
-
-
-# See R2 in the whole dataset and in CV-subsets
-
-# In[24]:
-
-
-from sklearn.metrics import r2_score
-from sklearn.model_selection import cross_val_score
-
-print("R2 in the whole dataset:")
-print(r2_score(y, prediction))
-
-print("R2 across CV folds:")
-print(np.mean(cross_val_score(estimator=estim, 
-                        X=X_train, 
-                        y=y_train, 
-                        cv=shuffle_split, 
-                        scoring="r2",
-                        n_jobs=shuffle_split.n_splits)))
-
-
-# Plot the observed sweep probability and the prediction in the whole dataset
-
-# In[25]:
-
-
-import matplotlib.pyplot as plt
-
-plt.hist(y, bins=50, color="green", alpha=0.4, label="Observed sweep probability")
-plt.hist(prediction, bins=50, color="blue", alpha=0.4, label="Prediction")
-plt.annotate("R2 whole dataset: " + str(np.round(r2_score(y, prediction), 4)), 
-             xy=(0.05, 0.7),
-             xycoords='axes fraction')
-plt.legend(loc='upper left')
-
-
-# See the coefficients/feature importance
-
-# Access to the regressor
-
-# In[26]:
-
-
-estim.regressor_.named_steps["regressor"].coef_
-
-
-# In[27]:
-
-
-#if the model is not VotingRegressor
-if model_name not in ["VotingRegressor", "SVR", "KerasRegressor"]:
-
-    #get the list of attributes of the regressor
-    list_attributes = dir(estim.regressor_.named_steps["regressor"])    
-    
-    #select the attribute of interest (coefficient or feature importance)
-    attribute_interest = [element for element in list_attributes if element in ["feature_importances_", "coef_"]][0]
-    
-    #get the attribute and the name of the predictor
-    attribute_interest_pd = pd.DataFrame({
-        "Predictors": modeling_data.columns[1:], 
-        "Coefficient/feature importance": eval("".join(["estim.regressor_.named_steps['regressor'].", attribute_interest]))})
-    print("Predictor importance in the training dataset")
-    print(attribute_interest_pd)
-'''
-
-
-# #### Example with Deep Learning
+# ## Preparing Deep Learning
 
 # We are going to use scikeras, a wrapper for using keras on scipy ([link](https://www.adriangb.com/scikeras/stable/notebooks/Basic_Usage.html#7.-Usage-with-sklearn-GridSearchCV)). You can use it to run keras neural networks in pipelines and then use gridsearch to perform parameter optimization ([link](https://www.adriangb.com/scikeras/stable/notebooks/Basic_Usage.html#7.-Usage-with-sklearn-GridSearchCV)). As we will see below, we can optimize any parameter of the network. Not only the loss function or the learning rate, but also the number of layers and units, the dropout rate... just by using loops and ifelse within the function to create the model. Therefore, we can select the best combination of hyperparamenters to maximize predictive prower in the different evaluation datasets. Of course, as we can use pipelines, we can apply the scaling in response and predictors separately in each training-evaluation set.
 
@@ -567,14 +370,6 @@ loss_pipe
 
 # We can see how there is only one loss, meaning that the loss is calculated in the data used as input (X_train), considering it as a whole, not partioning. The splitting in evaluation and training will be done later with gridsearch.
 
-# In[37]:
-
-'''
-import matplotlib.pyplot as plt
-
-plt.plot(loss_pipe["loss"])
-'''
-
 
 # Scikeras can work within cross_val_score, splitting the data in training and evaluation several times.
 
@@ -591,308 +386,13 @@ print(np.mean(cross_val_score(estimator=full_dnn_regressor,
                         n_jobs=number_jobs)))
 
 
-##skip example gridsearc
-'''
-
-# We can also use it as input in gridsearch ([link](https://www.adriangb.com/scikeras/stable/notebooks/Basic_Usage.html#7.-Usage-with-sklearn-GridSearchCV)).
-
-# We first set the parameters to be optimized. We need to indicate the different steps to reach the keras regressor. First, we have a reponse transformer in which the pipe is the regressor, then the regressor in the pipe is the keras regressor. There, we have arguments that are part of keras regressor natively (e.g., loss) and also arguments we use in the get_reg function (e.g., size of the hidden layer), which is the input of the keras regressor and last level.
-
-# In[39]:
-
-
-params = {
-    "regressor__regressor__model__n_layers": [2, 3],
-    "regressor__regressor__model__n_units": [10, 20],
-    "regressor__regressor__model__activation": ["relu", "tanh"],
-    "regressor__regressor__loss": ["mse", "mae"]
-} 
-
-
-# Define the gridsearch
-
-# In[40]:
-
-
-from sklearn.model_selection import GridSearchCV
-
-gs = GridSearchCV(estimator=full_dnn_regressor, 
-                  param_grid=params, 
-                  refit=True, #to fit a model with the best combination of parameters
-                  cv=shuffle_split, 
-                  scoring='r2', 
-                  n_jobs=shuffle_split.n_splits, 
-                  verbose=0)
-
-
-# Perform the gridsearch
-
-# In[41]:
-
-
-gs.fit(X_train, y_train)
-
-
-# There is a warning about memory leak when using more than 1 core, but the results are the same using 1 or several cores (n_jobs argument), so no problem.
-
-# See the best score and params
-
-# In[42]:
-
-
-print(gs.best_score_, gs.best_params_)
-
-
-# Get the estimator (keras regressor network) with the best parameters fitted to the whole data used as input
-
-# In[43]:
-
-
-gs.best_estimator_
-
-
-# In[44]:
-
-
-gs.best_estimator_.regressor_.named_steps["regressor"]
-
-
-# See the loss of the best keras regressor
-
-# In[45]:
-
-
-plt.plot(gs.best_estimator_.regressor_.named_steps["regressor"].history_["loss"])
-
-
-# In[46]:
-
-
-params_best_dnn = gs.best_estimator_.regressor_.named_steps["regressor"].get_params()
-    #get a dict with the parameters of a fitted model
-    #https://stackoverflow.com/questions/54572468/python-sklearn-get-list-of-available-hyper-parameters-for-model
-
-
-# See the architecture of the best keras regressor
-
-# In[47]:
-
-
-gs.best_estimator_.regressor_.named_steps["regressor"].model_.summary()
-
-
-# Apply to the whole data
-
-# In[48]:
-
-
-prediction_deep = gs.best_estimator_.predict(X)
-
-
-# In[49]:
-
-
-print("R2 in the whole dataset:")
-print(r2_score(y, prediction_deep))
-
-
-# In[50]:
-
-
-import matplotlib.pyplot as plt
-
-plt.hist(y, bins=50, color="green", alpha=0.4, label="Observed sweep probability")
-plt.hist(prediction_deep, bins=50, color="blue", alpha=0.4, label="Prediction")
-plt.annotate("R2 whole dataset: " + str(np.round(r2_score(y, prediction_deep), 4)), 
-             xy=(0.05, 0.7),
-             xycoords='axes fraction')
-plt.legend(loc='upper left')
-
-
-# Save the model. You can use pickle or the keras method.
-# 
-# Pickle is not recommended if you want a high performance saving or share your data with others, becuase pickle is unsafe and tend to save everything ([link](https://www.adriangb.com/scikeras/stable/notebooks/Basic_Usage.html#4.-Saving-and-loading-a-model)). However, we not only have a kreas regressor, but also the whole pipeline, so we need to use pickle.
-
-# In[51]:
-
-
-import joblib
-
-joblib.dump(gs.best_estimator_, 'results/dump_objects/initial_deep_learning_gridsearch.pkl')
-    #https://stackoverflow.com/questions/34143829/sklearn-how-to-save-a-model-created-from-a-pipeline-and-gridsearchcv-using-jobli
-#joblib.load("results/dump_objects/initial_deep_learning_gridsearch.pkl")
-    #to load the pipeline you need all the required modules loaded
-'''
-
-
-#skip the function and plots of multiple models
-'''
-
-
-# #### Create the function
-
-# In[52]:
-
-
-import matplotlib.pyplot as plt
-from sklearn.metrics import r2_score
-from sklearn.model_selection import cross_val_score
-
-from sklearn.linear_model import Lasso
-from sklearn.linear_model import ElasticNet
-from sklearn.linear_model import Ridge
-from sklearn.svm import SVR
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.ensemble import ExtraTreesRegressor
-from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.ensemble import VotingRegressor
-
-def model_comparison(model_name, parameters):
-    
-    #open an instance of the selected model with the selected parameters
-    model = eval("".join([model_name, "(", parameters, ")"]))
-        
-    #make estimator
-    estim = TransformedTargetRegressor(regressor=Pipeline([('scale', 
-                                                            preprocessing.StandardScaler()), 
-                                                           ('regressor',
-                                                            model)]), 
-                                       transformer=preprocessing.StandardScaler())
-    
-    #fit in the training dataset
-    estim.fit(X_train, y_train)
-    
-    #predict in the whole dataset
-    prediction = estim.predict(X)    
-
-    #plot
-    plt.hist(y, bins=50, color="green", alpha=0.4, label="Observed sweep probability")
-    plt.hist(prediction, bins=50, color="blue", alpha=0.4, label="Prediction")
-    plt.annotate("R2 whole dataset: " + str(np.round(r2_score(y, prediction), 4)), 
-                 xy=(0.05, 0.7),
-                 xycoords='axes fraction')
-    plt.legend(loc='upper left')
-        
-    #print R2 in test set
-    print("R2 in the whole dataset:")
-    print(r2_score(y, prediction))
-
-    #print R2 in CV splits
-    print("R2 across CV folds:")
-    print(np.mean(cross_val_score(estimator=estim, 
-                            X=X_train, 
-                            y=y_train, 
-                            cv=shuffle_split, 
-                            scoring="r2",
-                            n_jobs=shuffle_split.n_splits)))
-    
-    #if the model is not VotingRegressor
-    if model_name not in ["VotingRegressor", "SVR", "KerasRegressor"]:
-    
-        #list attributes
-        list_attributes = dir(estim.regressor_.named_steps["regressor"])
-        
-        #select the attribute of interest (coefficient or feature importance)
-        attribute_interest = [element for element in list_attributes if element in ["feature_importances_", "coef_"]][0]
-
-        #get the attribute and the name of the predictor
-        attribute_interest_pd = pd.DataFrame({
-            "Predictors": modeling_data.columns[1:], 
-            "Coefficient/feature importance": eval("".join(["estim.regressor_.named_steps['regressor'].", attribute_interest]))})
-        print("Predictor importance in the training dataset")
-        print(attribute_interest_pd)
-
-
-# ### Apply the function
-
-# Apply the function to several models
-
-# In[53]:
-
-
-model_comparison(model_name="Lasso", parameters="")
-
-
-# In[54]:
-
-
-model_comparison(model_name="ElasticNet", parameters="")
-
-
-# In[55]:
-
-
-model_comparison(model_name="Ridge", parameters="")
-
-
-# In[56]:
-
-
-model_comparison(model_name="SVR", parameters="kernel='rbf'")
-
-
-# In[57]:
-
-
-get_ipython().run_cell_magic('time', '', 'model_comparison(model_name="RandomForestRegressor", parameters="random_state=1")\n')
-
-
-# In[58]:
-
-
-get_ipython().run_cell_magic('time', '', 'model_comparison(model_name="ExtraTreesRegressor", parameters="random_state=1")\n')
-
-
-# In[59]:
-
-
-model_comparison(model_name="GradientBoostingRegressor", parameters="random_state=1")
-
-
-# In[60]:
-
-
-model_comparison(model_name="VotingRegressor", 
-                 parameters="estimators=[('gb', GradientBoostingRegressor()), ('et', ExtraTreesRegressor()), ('rdg', Ridge())]")
-
-
-# In[61]:
-
-
-initial_keras_params = """model=get_reg, 
-    optimizer="adam",
-    optimizer__learning_rate=0.001,
-    loss="mean_absolute_error",
-    model__n_layers=1,
-    model__n_units=5,
-    model__activation="relu",
-    model__init_mode="uniform",
-    model__dropout_rate=0,
-    model__weight_constraint=0,
-    model__regu_L1=0,
-    model__regu_L2=0,
-    batch_size=200,
-    epochs=50,
-    verbose=0
-"""
-
-model_comparison(model_name="KerasRegressor", parameters=initial_keras_params)
-
-
-# Random forest and extra trees show the best R2, but with clear signs of overfitting. We are going to make an attemp with neural netoworks. Although they do not show the best performance with, we have to bearin mind that there is no default architecture, and we just used one inner layer or increase the epochs. If we do small changes like just adding more layers and units, the performance improves a lot. In addition, the structure of the data suggest it can work, as we have multiple predictors with complex relationships. 
-# 
-# If deep learning does not work, we can just go to RF, and try to reduce overffiting. RF partial plots show a nice decrease of selection as we go far away from thermogenic genes and vips.
-
-'''
-
-
 # ### Hyperparameter tunning
 
 # #### Select hyperparameters to be optimized
 
 # Set a list of parameters to be optimized. I am following this [tutorial](https://machinelearningmastery.com/grid-search-hyperparameters-deep-learning-models-python-keras/) about DL optimization. They perform the grid search for each parameter separately, and then agregate, but as they say, some parameters can interact (i.e., some specific combinations can be better), thus we will do the search considering all of them but within a bayesian framework, so we do not exhaustively look evey hyperparameter combination.
 
-# ##### Batch vs. Epoch ([link](https://machinelearningmastery.com/difference-between-a-batch-and-an-epoch/)):
+# ## Batch vs. Epoch ([link](https://machinelearningmastery.com/difference-between-a-batch-and-an-epoch/)):
 # 
 # 
 # - Stochastic Gradient descent: 
@@ -973,7 +473,8 @@ epoch_sizes = [10, 50, 100, 200, 400, 610]
 # 
 # If we see the best models are around the limits, we can do a finer search around these values.
 
-# ##### Optimization method 
+
+# ## Optimization method 
 # 
 # There is a lot of literature and discussion about the selection of the optimization. Adam seems to be an approach that combine the strengths of other methods (i.e., Adagrad and RMSProp; [link](https://towardsdatascience.com/a-visual-explanation-of-gradient-descent-methods-momentum-adagrad-rmsprop-adam-f898b102325c); [link](https://datascience.stackexchange.com/questions/10523/guidelines-for-selecting-an-optimizer-for-training-neural-networks)). There is controversy about it with some results showing poor performance, but then other results show good performance (similar to Stochastic gradient descent + momentum) when doing a well parameter optimization ([link](https://www.fast.ai/posts/2018-07-02-adam-weight-decay.html), [link](http://ruder.io/optimizing-gradient-descent/index.html#adam)).
 #  
@@ -1019,7 +520,7 @@ optimizers = ["SGD",
               "Ftrl"]
 
 
-# ##### Adam parameters ([link](https://machinelearningmastery.com/adam-optimization-algorithm-for-deep-learning/))
+# ## Adam parameters ([link](https://machinelearningmastery.com/adam-optimization-algorithm-for-deep-learning/))
 # 
 # - alpha. Also referred to as the learning rate or step size. The proportion that weights are updated (e.g. 0.001). Larger values (e.g. 0.3) results in faster initial learning before the rate is updated. Smaller values (e.g. 1.0E-5) slow learning right down during training
 # - beta1. The exponential decay rate for the first moment estimates (e.g. 0.9).
@@ -1058,7 +559,7 @@ alphas = [0.00001, 0.0001, 0.001, 0.01, 0.1, 0.2, 0.3]
 # 
 # Given we are going to use the narrower (but still wide) range of 10^−6 to 0.3. If we see that the best models are close to the limits, we can run a more detailed search around these values.
 
-# ##### Weight initiallization ([link](https://machinelearningmastery.com/weight-initialization-for-deep-learning-neural-networks/))
+# ## Weight initiallization ([link](https://machinelearningmastery.com/weight-initialization-for-deep-learning-neural-networks/))
 # 
 # The optimization algorithm requires a starting point in the space of possible weight values from which to begin the optimization process. Weight initialization is a procedure to set the weights of a neural network to small random values that define the starting point for the optimization (learning or training) of the neural network model.
 # 
@@ -1087,7 +588,7 @@ init_mode = ["uniform",
              "variance_scaling"]
 
 
-# ##### Activation function ([link](https://machinelearningmastery.com/grid-search-hyperparameters-deep-learning-models-python-keras/))
+# ## Activation function ([link](https://machinelearningmastery.com/grid-search-hyperparameters-deep-learning-models-python-keras/))
 # 
 # The activation function controls the non-linearity of individual neurons and when to fire ([link](https://machinelearningmastery.com/grid-search-hyperparameters-deep-learning-models-python-keras/)). 
 # 
@@ -1110,7 +611,7 @@ activations = ['softmax',
                'linear']
 
 
-# ##### Dropout rate ([link](https://machinelearningmastery.com/dropout-for-regularizing-deep-neural-networks/))
+# ## Dropout rate ([link](https://machinelearningmastery.com/dropout-for-regularizing-deep-neural-networks/))
 # 
 # We are going to add dropout so some neurons are shutdown. In this way, we will try to get more generalization. 
 # 
@@ -1156,7 +657,8 @@ weight_constraints = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]
 # 
 # We are going to apply the same dropout rate for all inner layers. Once we have an optimized architecture, we can try to improve it by setting the dropout only in specific layers.
 
-# ##### Early Stop
+
+# ## Early Stop
 # 
 # The idea behind early stop is to stop the fitting process if a given metric does not improve after several steps. 
 # 
@@ -1172,7 +674,8 @@ weight_constraints = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]
 # 
 # In summary, we are not going to use early stopping to avoid overfitting. We stick to the selection of the best number of epochs according the validation set.
 
-# #### Regularization
+
+# ## Regularization
 # 
 # Overfitting is caused by the model having too much flexibility, and the main source of flexibility in a neural network is the weights in the neurons. Specifically, non-zero weights indicate some relationship between the input and the output. Regularization penalizes this flexibility by penalizing non-zero weights. Thus, the network will only have a weight be non-zero if the benefit to the loss function is greater than the penalty applied for the weight.
 # 
@@ -1235,7 +738,8 @@ regu_L2_values=[1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7] #use log
 # 
 # **Decision:** We are not going to use batch normalization for now.
 
-# ##### Number of inner layers and neurons ([link](https://machinelearningmastery.com/grid-search-hyperparameters-deep-learning-models-python-keras/))
+
+# ## Number of inner layers and neurons ([link](https://machinelearningmastery.com/grid-search-hyperparameters-deep-learning-models-python-keras/))
 # 
 # The number of neurons in a layer is an important parameter to tune. Generally the number of neurons in a layer controls the representational capacity of the network, at least at that point in the topology.
 # 
@@ -1258,7 +762,8 @@ n_units = np.arange(1, 500, 20)
 # 
 # Similarly, in the second search we can try to change a bit the number of units between layers.
 
-# #### Losses ([link](https://machinelearningmastery.com/how-to-choose-loss-functions-when-training-deep-learning-neural-networks/))
+
+# ## Losses ([link](https://machinelearningmastery.com/how-to-choose-loss-functions-when-training-deep-learning-neural-networks/))
 # 
 # Inside the network, the difference between observed and predicted will be calculated using the loss function, and this information will be used to make the next step while considering the learning rate, etc... 
 # 
@@ -1305,7 +810,7 @@ losses = ["mse",
             #strongly affected by the occasional wildly incorrect prediction.
 
 
-# #### Scorer for tuning
+# ## Scorer for tuning
 # 
 # We are going to select ONLY ONE scorer in order to perform the hyperparameter tuning.
 # 
@@ -1323,7 +828,8 @@ losses = ["mse",
 # 
 # We are going to use this metric for now.
 
-# #### Bayesian optimization ([link](https://towardsdatascience.com/hyperparameter-optimization-with-scikit-learn-scikit-opt-and-keras-f13367f3e796))
+
+# ## Bayesian optimization ([link](https://towardsdatascience.com/hyperparameter-optimization-with-scikit-learn-scikit-opt-and-keras-f13367f3e796))
 # 
 # Grid search is ok if you are looking a small parameter space, because you just can test all the possible combinations of the few hyperparameters you are using. If you need a little more parameter space you can use random grid search, which randomly select combinations of parameters (not all of them) and can reach a good combination after some time exploring, altough it is unlikely to get the best. Using randomized search is not too hard, and it works well for many fairly simple problems.
 # 
@@ -1342,7 +848,8 @@ losses = ["mse",
 # 
 # I was initially using scikit-optimize, but it gave errors for some hyperparameter combinations and does not show the progress, i.e., the score of the current combination and what is the currelty best.
 
-# #### Bayesian optimization with Optuna
+
+# ## Bayesian optimization with Optuna
 
 # We are going to hide Info messages fromtensorflow, but of course, we want warnings and errors ([link](https://stackoverflow.com/questions/35911252/disable-tensorflow-debugging-information/42121886#42121886)).
 # 
@@ -1477,7 +984,12 @@ def objective(trial):
                                  scoring="r2",
                                  cv=shuffle_split,
                                  n_jobs=number_jobs).mean() 
-    
+        #This gives nan if any of the folds gives nan. We want this because
+        #if an average R2 score is calculated with only 6 folds (the rest were nan)
+        #this is is not comparable with an R2 calculated with 10 folds
+        #this is not a fair comparison. So we remove any combination that gives
+        #nan for any fold.
+
     #return the R2 score obtained from cross_val_score
     return score
 
@@ -1544,61 +1056,6 @@ def main_optuna(optuna_seed, n_trials):
                    show_progress_bar=False)
 
     #we do not do anything else because even if the current process is finished, others could be still working and the best model is still not present. Of course, it would be printed at the end of that final process, but we would have several best models in the output. Better to do it in a separate script when the whole study is finished.
-
-
-    '''
-    #get the pruned and complete trials
-    pruned_trials = [t for t in study.trials if t.state == optuna.trial.TrialState.PRUNED]
-    complete_trials = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE]
-
-    #print the numbers
-    print("Study statistics: ")
-    print("  Number of finished trials: ", len(study.trials))
-    print("  Number of pruned trials: ", len(pruned_trials))
-    print("  Number of complete trials: ", len(complete_trials))
-
-    #see the best trial
-    trial = study.best_trial
-    f"Best trial is trial number {trial.number}"
-    
-    #see its parameters
-    print("Best Score: ", trial.value)
-    print("Best Params: ")
-    for key, value in trial.params.items():
-        print("  {}: {}".format(key, value))
-
-    #make plots about the parameters
-    #optuna.visualization.plot_contour(study)
-    #optuna.visualization.plot_param_importances(study)
-
-    # Create a kerasregressor instance with default parameters but including a get_reg function and verbose=0 (not info printed across epochs) and include it in a pipeline.
-    best_estimator = TransformedTargetRegressor(regressor=Pipeline([('scale', 
-                                                                preprocessing.StandardScaler()),     
-                                                               ('regressor',
-                                                                KerasRegressor(model=get_reg,
-                                                                               verbose=0))]), 
-                                           transformer=preprocessing.StandardScaler())
-    best_estimator
-
-    # Add now the best parameters of the keras regressor
-    best_estimator.set_params(**study.best_trial.params)
-
-    # Fit to train data    
-    best_estimator.fit(X_train, y_train)
-    
-    # Calculate R2 in the training set    
-    f"R2 in the training set {r2_score(y_train, best_estimator.predict(X_train))}"
-    
-    # Now predict in the final validation dataset. I have checked that predicting on validation does not influence the fit of the model, but if you fit the model to test, then the fit of the model changes and hence any prediction it makes
-    
-    # We are going to calculate the R2. Given this set has not been used for ANYTHING during training and evaluation (not even scaling), we can safely say that the R2 obtained is a generalization measure of our model.
-    f"R2 in the test set {r2_score(y_test, best_estimator.predict(X_test))}"
-    
-    # Save the model:    
-    joblib.dump(best_estimator, "results/optuna_optimization/optimized_model_train_dataset_avg_sweep_prob_optuna_"+str(optuna_seed)+".pkl")
-       #https://stackoverflow.com/questions/51424312/how-to-save-gridsearchcv-object
-    #joblib.load("results/dump_objects/optimized_model_train_dataset_optuna_avg_sweep_prob.pkl")
-    '''
 
 # Note that if you have an error with a hyperparameter suggestion, like indicating the wrong name of an optimizer, you will keep getting the error even if you change unless you remove the original database. I guess that this is caused because the new process uses information from the database, so it can still read the wrong optimizer name, which was saved during the process with the wrong name.
 
