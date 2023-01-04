@@ -461,15 +461,17 @@ print(np.mean(cross_val_score(estimator=full_dnn_regressor,
 # In[62]:
 
 
-batch_sizes = [10, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220]
-epoch_sizes = [10, 50, 100, 200, 400, 610]
+batch_sizes = [1, 10, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220]
+epoch_sizes = [10, 50, 100, 200, 400, 600, 810]
 
 
 # **Note**:
 # 
-# We are only using mini-batches, i.e., batch size>1 and < sample size. Using the whole sample size could make a lot of use of memory and I think batch size=1 could have problems to converge. I have used still a wider range than people use for minibatches. 
+# We are only using mini-batches, i.e., batch size>1 and < sample size. Using the whole sample size could make a lot of use of memory and I think batch size=1 could have problems to converge. I have used still a wider range than people use for minibatches.
+#Modification for the second run: The best trials have a batch size between 10-20, so we are in the lower limit of this parameter. I am going to extend the space reaching Stochastic Gradient Descent, i.e., batch size=1. Note that the previous space was 10 to 220, but best models appears very close to 10. Maybe, we do not have so much data, so there is no so high redundancy. I am also using smaller steps to have more resolution
 # 
 # The epoch sizes usually go from 1 to 1000, I am not using the whole range to reduce computation time.
+#In the second run I am extending the upper limit because best trials were not far from that
 # 
 # If we see the best models are around the limits, we can do a finer search around these values.
 
@@ -551,13 +553,14 @@ optimizers = ["SGD",
 # In[64]:
 
 
-alphas = [0.00001, 0.0001, 0.001, 0.01, 0.1, 0.2, 0.3]
+alphas = [0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1, 0.2, 0.3]
 
 
 # I have seen that people using optuna (bayesian) sample learning rate values
 # considering the algorithm scale, I think to prioritize small values. Our reference tutorial goes in the same line with grid searchs typically consisting in picking numbers between 10^−5 and 0.3 on a logaritmic scale ([link](https://machinelearningmastery.com/learning-rate-for-deep-learning-neural-networks/)). The wider range would be 1 - 10^−6: "Typical values for a neural network with standardized inputs (or inputs mapped to the (0,1) interval) are less than 1 and greater than 10^−6". 
 # 
-# Given we are going to use the narrower (but still wide) range of 10^−6 to 0.3. If we see that the best models are close to the limits, we can run a more detailed search around these values.
+# Given we are going to use the narrower (but still wide) range of 10^−5 to 0.3. If we see that the best models are close to the limits, we can run a more detailed search around these values.
+#The best trials are not veeery close but still close to the lower limit, so we are extending the lower limit in the second run (1e-6).
 
 # ## Weight initiallization ([link](https://machinelearningmastery.com/weight-initialization-for-deep-learning-neural-networks/))
 # 
@@ -702,13 +705,15 @@ weight_constraints = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]
 # In[68]:
 
 
-regu_L1_values=[1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7] #use log
-regu_L2_values=[1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7] #use log
+regu_L1_values=[1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8] #use log
+regu_L2_values=[1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8] #use log
 
 
 # **Note**
 # 
 # In the second search, we can make a finer search around the values of the best models.
+#We have extended the lower limit for the second search because the best trials were close
+#to that limit
 
 # #### Batch normalization
 # 
@@ -753,7 +758,11 @@ regu_L2_values=[1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7] #use log
 
 
 n_layers = np.arange(1, 21, 3)
-n_units = np.arange(1, 500, 20)
+n_units = np.arange(1, 700, 20)
+    #For the second run, we are extending the maximum number of nodes
+    #the best number until now is between 300-400, but some trials
+    #are also high close to 500, so maybe the optimum
+    #is bigger.
 
 
 # **Note**
@@ -890,12 +899,15 @@ def objective(trial):
     batch_sizesT =  trial.suggest_int('regressor__regressor__batch_size', 
                                       low=np.min(batch_sizes), 
                                       high=np.max(batch_sizes), 
-                                      step=10) 
+                                      step=2) 
         #Step: A step of discretization. 
         #Note that high is modified if the range is not divisible by step. 
         #So I understand that 1,10,5 means that only 1,5 and 10 will be sampled
         #you should select a step size that is relevant for the parameter
         #e.g., a batch of 1 or 4 will be very similar, so we use a step of 10
+        #in the case of batch, we are making smaller steps in the second run
+        #because it seems, the best trails are around 10-20, we need 
+        #more resolution there (see above).
         #Log: You can also apply log, according to the manual
         #this makes more likely to sample smaller values
         #this maybe useful for learning rate
