@@ -7,6 +7,16 @@
 	#https://askubuntu.com/questions/420981/how-do-i-save-terminal-output-to-a-file
 
 
+##
+#
+#
+#ERROR!!! THE DISTANCE TO METABOLIC GENES WAS CALCULATED WITHOUT USING THE CHROMOSOME!!1
+#
+##
+###
+
+
+
 
 ####################################################################################################
 ########################### PREPARE VALID, GENE LIST AND DISTANCIE #################################
@@ -220,6 +230,14 @@ write.table(genes_set_file, paste(path_outside_pipeline, "/genes_set_file.txt", 
 ##################################
 
 #Step 3: compute a file with the distance of every gene from the closest gene of interest (using gene genomic centers as reference points). If a gene is a gene of interest, then the distance is zero. This is done to be able to choose control genes far enough from the genes of interest. The example file is distance_file.txt
+
+##
+#
+#
+#ERROR!!! THE DISTANCE TO METABOLIC GENES WAS CALCULATED WITHOUT USING THE CHROMOSOME!!1
+#
+##
+###
 
 
 ##write a function to do so

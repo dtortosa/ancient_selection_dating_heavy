@@ -25,7 +25,7 @@ gene_window_size = "1000kb"
 
 import pandas as pd
 
-final_data_yoruba = pd.read_csv("data/flex_sweep_average_prob.txt.gz", 
+final_data_yoruba = pd.read_csv("data/flex_sweep_closest_window_center.txt.gz", 
                                 compression="gzip")
 final_data_yoruba
 
@@ -36,9 +36,8 @@ final_data_yoruba
 
 # In[5]:
 
-
-response_name = "average_sweep_prob_" + gene_window_size
-response_name
+response_name = "prob(sweep)"
+#response_name = "average_sweep_prob_" + gene_window_size
 
 
 # Extract prob(sweep) and the all the predictors
@@ -48,9 +47,8 @@ response_name
 
 columns_to_exclude = ["gene_id", 
                      "predicted_class", 
-                     "prob(sweep)",
-                     "number_vips_"+gene_window_size,
-                     "number_thermogenic_"+gene_window_size]
+                     "thermogenic_distance",
+                     "vip_distance"]
 
 
 # In[105]:
@@ -67,7 +65,6 @@ modeling_data
 
 first_column = modeling_data.pop(response_name)
 modeling_data.insert(0, response_name, first_column)
-modeling_data
     #https://www.geeksforgeeks.org/how-to-move-a-column-to-first-position-in-pandas-dataframe/
 
 
@@ -77,7 +74,6 @@ modeling_data
 
 
 modeling_data_array = modeling_data.values
-modeling_data_array
 
 
 # Apply log transformation to the target variable.
@@ -87,8 +83,8 @@ modeling_data_array
 
 import numpy as np
 
-modeling_data_array[:, 0] = np.log(modeling_data_array[:, 0])
-
+#modeling_data_array[:, 0] = np.log(modeling_data_array[:, 0])
+    #Not needed anymore, deep nets are flexible enough
 
 # It is should be ok to apply the log before splitting the dataset. There is a problem if you use a transformation that requires learn something from the rest of the data. For example, if you scale the whole dataset, you are using the mean and sd of the whole dataset, influencing data that will be used for test. In other words, there is room for a data leak. In this case, however, log(1.5) is always 0.4, independently of the rest of the data, so I think no data leak is possible. You could do a pipeline with log but it is a little bit more complicated (see [link](https://stats.stackexchange.com/questions/402470/how-can-i-use-scaling-and-log-transforming-together)), so we leave it for now.
 # 
@@ -131,6 +127,7 @@ f'Do we have the correct number of predictors? {X.shape[1] + 1 == modeling_data.
 
 # In[13]:
 
+#YOU COULD DO THIS BEFORE, WITH THE PANDAS DFS, SO YOU CAN HAVE ACCESS TO COLUMN NAMES WHEN DOING INSEPCTION
 
 from sklearn.model_selection import train_test_split
 
@@ -329,9 +326,11 @@ from sklearn.pipeline import Pipeline
 from sklearn.compose import TransformedTargetRegressor
 from sklearn import preprocessing
 
-full_dnn_regressor = TransformedTargetRegressor(regressor=Pipeline([('scale', preprocessing.StandardScaler()), 
-                                                                    ('regressor', dnn_regressor)]),  
-                                                transformer=preprocessing.StandardScaler())
+full_dnn_regressor = TransformedTargetRegressor(
+    regressor=Pipeline([
+        ('scale', preprocessing.StandardScaler()),
+        ('regressor', dnn_regressor)]),
+    transformer=preprocessing.StandardScaler())
 full_dnn_regressor
 
 
@@ -365,7 +364,6 @@ r2_score(y_train, full_dnn_regressor.predict(X_train))
 
 
 loss_pipe = full_dnn_regressor.regressor_.named_steps["regressor"].history_
-loss_pipe
 
 
 # We can see how there is only one loss, meaning that the loss is calculated in the data used as input (X_train), considering it as a whole, not partioning. The splitting in evaluation and training will be done later with gridsearch.
@@ -378,12 +376,12 @@ loss_pipe
 
 from sklearn.model_selection import cross_val_score
 
-print(np.mean(cross_val_score(estimator=full_dnn_regressor, 
-                        X=X_train, 
-                        y=y_train, 
-                        cv=shuffle_split, 
-                        scoring="r2",
-                        n_jobs=number_jobs)))
+#print(np.mean(cross_val_score(estimator=full_dnn_regressor, 
+#                        X=X_train, 
+#                        y=y_train, 
+#                        cv=shuffle_split, 
+#                        scoring="r2",
+#                        n_jobs=number_jobs)))
 
 
 # ### Hyperparameter tunning
@@ -461,7 +459,7 @@ print(np.mean(cross_val_score(estimator=full_dnn_regressor,
 # In[62]:
 
 
-batch_sizes = [1, 10, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220]
+batch_sizes = [5, 10, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220]
 epoch_sizes = [10, 50, 100, 200, 400, 600, 810]
 
 
@@ -983,19 +981,19 @@ def objective(trial):
         verbose=0) 
 
     #include the model in the pipeline
-    final_estimator = TransformedTargetRegressor(regressor=Pipeline([('scale', 
-                                                                      preprocessing.StandardScaler()), 
-                                                                     ('regressor',
-                                                                      keras_regressor)]), 
-                                                 transformer=preprocessing.StandardScaler())
+    final_estimator = TransformedTargetRegressor(
+        regressor=Pipeline([
+            ('scale', preprocessing.StandardScaler()),
+            ('regressor',keras_regressor)]),
+        transformer=preprocessing.StandardScaler())
     
     #cross validation
     score = cross_val_score(estimator=final_estimator, 
-                                 X=X_train, 
-                                 y=y_train, 
-                                 scoring="r2",
-                                 cv=shuffle_split,
-                                 n_jobs=number_jobs).mean() 
+        X=X_train, 
+        y=y_train, 
+        scoring="r2",
+        cv=shuffle_split,
+        n_jobs=number_jobs).mean() 
         #This gives nan if any of the folds gives nan. We want this because
         #if an average R2 score is calculated with only 6 folds (the rest were nan)
         #this is is not comparable with an R2 calculated with 10 folds
@@ -1054,11 +1052,11 @@ def main_optuna(optuna_seed, n_trials):
     """first argument is optuna seed, while second is the number of optuna trial"""
     
     # create a study
-    study = optuna.create_study(study_name = "yoruba_avg_1000kb_flex_sweep_optimization", 
-                                    direction="maximize",
-                                    storage='sqlite:///results/optuna_optimization/yoruba_avg_1000kb_flex_sweep_optimization.db', 
-                                    sampler=optuna.samplers.TPESampler(seed=optuna_seed),
-                                    load_if_exists=True)
+    study = optuna.create_study(study_name = "yoruba_flex_sweep_closest_window_center_optimization", 
+        direction="maximize",
+        storage='sqlite:///results/optuna_optimization/yoruba_flex_sweep_closest_window_center_optimization.db', 
+        sampler=optuna.samplers.TPESampler(seed=optuna_seed),
+        load_if_exists=True)
 
     # Run the search. We are not using prunning becuase I have not found a way to get metrics while the cross-validation is performed in scikit-learn. So we need to finish a trial to get a score and decide if it is good or not.
     study.optimize(func=objective, 
