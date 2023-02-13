@@ -57,6 +57,9 @@ def master_processor(selected_chromosome):
 #https://github.com/brentp/cyvcf2
 from cyvcf2 import VCF
 
+##POR AQUIII
+
+
 for index, variant in enumerate(VCF("data/1KGP_vcf_files/1kGP_high_coverage_Illumina."+selected_chromosome+".filtered.SNV_INDEL_SV_phased_panel.vcf.gz")): # or VCF('some.bcf')
     if(index == 0):
         print(len(variant)) # e.g. REF='A', ALT=['C', 'T']
@@ -71,6 +74,8 @@ for index, variant in enumerate(VCF("data/1KGP_vcf_files/1kGP_high_coverage_Illu
     vcf_reader = vcf.Reader(open("data/1KGP_vcf_files/1kGP_high_coverage_Illumina."+selected_chromosome+".filtered.SNV_INDEL_SV_phased_panel.vcf.gz", 'r'))
     for record in vcf_reader:
         print record
+
+
 
 
     #create temporary folder to save
@@ -135,9 +140,6 @@ for zipinfo in zipinfos:
 #https://www.biostars.org/p/101444/
 
 
-Yo también estoy aplicando la máscara de accesibilidad que la descargué desde aquí:
-
-http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/working/20160622_genome_mask_GRCh38/
 
 
-https://www.biorxiv.org/content/biorxiv/early/2023/01/23/2023.01.23.525248.full.pdf
+
