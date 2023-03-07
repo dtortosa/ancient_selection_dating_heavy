@@ -5,9 +5,13 @@
 	- we could gain populations at higher latitudes in eurasia, which could be useful for the climate adaptation paper. 
 	- although I do not know if we would need new simulations for these pops...
 	- do you think it is worth it?
+		- For the future could be interesting, but FIRST we need to know if flex sweep works well with 1000GP and its number of indidividuals
+		- Then, in the future, we can check whether Flexsweep works with smaller population sizes, as the HGDP has less samples in many populations.
 
 - calculate map file using genetic distance from decode hg38 original
 	- check the original map is hg38
+		- it says it is hg38 in the origina file, aau1043_DataS3.gz
+	- check if the data is 1 or 0 based
 
 - Ask jesus 
 	- about what accesibility masks is he using: L, Z and Q? also H?

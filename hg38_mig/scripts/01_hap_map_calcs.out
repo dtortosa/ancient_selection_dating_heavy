@@ -1,0 +1,4 @@
+  File "/home/dftortosa/singularity/dating_climate_adaptation/hg38_mig/./scripts/01_hap_map_calcs.py", line 58
+    from cyvcf2 import VCF
+    ^
+IndentationError: expected an indented block

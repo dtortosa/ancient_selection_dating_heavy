@@ -20,7 +20,7 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
 	#The first time I got an error "cannot create directory ‘/opt/data’: Not a directory". It seems that there is a file called "data", and when you have a file called like the folder you are trying to create, you get error ("https://stackoverflow.com/questions/14496897/mkdir-p-fails-when-directory-exists"). Therefore I did "rm /opt/data" and everything works.
 	#Note that some files that were created in initial containers remained, like the "test" folder or "eso.txt". I have removed those too.
  	#mkdir -p /opt/data
- 	mkdir -p /opt/scripts
+ 	#mkdir -p /opt/scripts
 
 
 
@@ -38,8 +38,7 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
 %files
 
 	#copy scripts
-    /home/dftortosa/singularity/dating_climate_adaptation/flex_sweep_modeling/scripts/flex_sweep_continuous_modeling_yoruba.py /opt/scripts/flex_sweep_continuous_modeling_yoruba.py
-    /home/dftortosa/singularity/dating_climate_adaptation/flex_sweep_modeling/scripts/bash_optuna_processes.sh /opt/scripts/bash_optuna_processes.sh
+    #/home/dftortosa/singularity/dating_climate_adaptation/flex_sweep_modeling/scripts/flex_sweep_continuous_modeling_yoruba.py /opt/scripts/flex_sweep_continuous_modeling_yoruba.py
 
     #From the original folder in the host, we copy a R script to a new folder in the container called scripts. NEVER PUT ANYTHING ELSE IN THE LINE WITH SOURCE AND DESTINATION, GIVES ERROR.
     #https://groups.google.com/a/lbl.gov/forum/#!topic/singularity/4NFDsohnxgg
@@ -120,9 +119,10 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
 	#we have to upgrade pandas to avoid errors in python3.8
 	#pip3.9 install --upgrade pandas
 	
-	#give rights to run the bash script
-	#chmod +x opt/scripts/bash_optuna_processes.sh
-	
+	#give rights to run script
+	chmod +x ./scripts/01_hap_map_calcs.py
+
+
 
 #############################
 ########## TEST #############
@@ -162,7 +162,7 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
 %runscript
 
 	#run scripts. NOT USE "&", each script have to be run after the previous one have been run
-	#/./opt/scripts/bash_optuna_processes.sh > bash_optuna_processes.out 2>&1
+	./scripts/01_hap_map_calcs.py > ./scripts/01_hap_map_calcs.out 2>&1
 		#to get output and errors in the same file
 		#see bash script for details
 
