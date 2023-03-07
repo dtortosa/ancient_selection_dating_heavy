@@ -44,12 +44,42 @@
 #!pwd
     #https://jakevdp.github.io/PythonDataScienceHandbook/01.05-ipython-and-shell-commands.html
 
-#selected_chromosome="chr21"
+
+###############
+# folder prep #
+###############
+
+#create folders to save the results
+import os
+os.system("mkdir -p ./results/clean_vcf")
+os.system("mkdir -p ./results/hap_map_files")
+    #-p: no error if the folder already exists, make parent directories as needed
+
+
+
+################################################################
+#### function to clean vcf files and create hap - map files ####
+################################################################
+
+#selected_chromosome="22"
 def master_processor(selected_chromosome):
+
+    #
+    
+
+    "vcf-subset -e -c list_of_Punjabi_persons.txt 1000_genomes_chr3.vcf > PJL_chr3.vcf"
+        #https://www.biostars.org/p/241810/
+
+
+    for index, variant in enumerate(VCF("data/vcf_files_hg38/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz")): # or VCF('some.bcf')
+        if(index == 0):
+            print(variant) # e.g. REF='A', ALT=['C', 'T']
+
 
 
 ##YOU CAN USEE SPARK IN A SINGLE DF!!! THE FILE WILL NOT BE FULLY LOADED IN MEMORY
 
+##clean vcf, then impute to create the hap file as in the slim simulations
 
 #they say this package is faster than the original becuase uses cython (like C but in python)
 #https://stackoverflow.com/questions/72574865/how-to-read-a-vcf-gz-file-in-python
@@ -60,6 +90,8 @@ from cyvcf2 import VCF
 ##POR AQUIII
 
 #ASK JESUS ABOUT THE MASKS
+
+
 
 for index, variant in enumerate(VCF("data/1KGP_vcf_files/1kGP_high_coverage_Illumina."+selected_chromosome+".filtered.SNV_INDEL_SV_phased_panel.vcf.gz")): # or VCF('some.bcf')
     if(index == 0):

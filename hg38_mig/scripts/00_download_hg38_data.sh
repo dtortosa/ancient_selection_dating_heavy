@@ -85,7 +85,8 @@ for i in $(seq 1 $n_chrom); do
 	fi
 
 	#download the vcf file
-	wget "${path_hg38_data}${vcf_file}" --directory-prefix=./
+	wget -nv "${path_hg38_data}${vcf_file}" --directory-prefix=./
+		#-nv: turn off verboseness, without being quiet, so you get only a bit of output
 		#https://linuxize.com/post/bash-concatenate-strings/
 done
 	#there are other options for looping over a sequence that are better for memory

@@ -81,32 +81,55 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
 	#update again after you have updated the repository
 	apt -y update
 
+	#install faster compressor
+	apt -y install pigz
+
+	#install wget to download spark
+	apt -y install wget
+
+	#install java for pyspark
+	#https://stackoverflow.com/questions/38747713/running-spark-on-linux-java-home-not-set-error
+	apt -y install openjdk-8-jdk
+
+	#install apache spark, pyspark will connect to spark
+		#https://stackoverflow.com/questions/33887227/how-to-upgrade-spark-to-newer-version/33914992#33914992
+	#download apache spark in usr/local/bin
+	wget -P /usr/local/bin https://dlcdn.apache.org/spark/spark-3.3.2/spark-3.3.2-bin-hadoop3.tgz
+		#https://www.apache.org/dyn/closer.lua/spark/spark-3.3.2/spark-3.3.2-bin-hadoop3.tgz
+	#unzip
+	tar -zxf /usr/local/bin/spark-3.3.2-bin-hadoop3.tgz -C /usr/local/bin
+	#set the path of spark as environmental variable in our bash profile, so it is always present
+	#echo "#spark setup" >> ~/.bashrc
+	#echo "export SPARK_HOME=/usr/local/bin/spark-3.3.2-bin-hadoop3" >> ~/.bashrc
+		#https://stackoverflow.com/questions/46613651/how-to-setup-spark-home-variable
+		#we do this better in env, because singualirty uses its own bashrc file
+
 	#Install python
 	apt -y install python3.9
 
 	#also install curl, needed for install python packages
 	apt -y install curl
 
-	#install python packages using pip
+	#install python packages
 	#first, install pip into python3 (pip can be also installed in the linux system, but we will use it inside python): "https://pip.pypa.io/en/stable/installing/"
 	curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 	apt -y install python3.9-distutils #this is needed because of an error: https://github.com/pypa/get-pip/issues/43
 	python3.9 get-pip.py
 
-	#IIIIIMPORTANT!! DOWNGRADING HERE BECAUSE pyvcf fails with setuptools version 58
-	python3.9 -m pip install setuptools~=57.5.0 #https://stackoverflow.com/questions/72414481/error-in-anyjson-setup-command-use-2to3-is-invalid
-	python3.9 -m pip install pyvcf #the "-m" flag search for the last version of the package.
+	#python3.9 -m pip install future #the "-m" flag search for the last version of the package.
 	python3.9 -m pip install cyvcf2
-	python3.9 -m pip install GenomicRanges
-	python3.9 -m pip install future 
-	python3.9 -m pip install sklearn
-	python3.9 -m pip install eli5
-	python3.9 -m pip install tensorflow
-	python3.9 -m pip install scikeras
-	python3.9 -m pip install optuna
+	python3.9 -m pip install pyspark
+	python3.9 -m pip install PyArrow #for pandas group by functions in pyspark
+	python3.9 -m pip install openpyxl
+	python3.9 -m pip install natsort
+	#python3.9 -m pip install scikit-learn
+	#python3.9 -m pip install eli5
+	#python3.9 -m pip install tensorflow
+	#python3.9 -m pip install scikeras
+	#python3.9 -m pip install optuna
 	python3.9 -m pip install numpy
-	python3.9 -m pip install scipy
-	python3.9 -m pip install matplotlib
+	#python3.9 -m pip install scipy
+	#python3.9 -m pip install matplotlib
 	python3.9 -m pip install pandas
 	python3.9 -m pip install ipython
 	#python3.9 -m pip install bpython #this intepreter gives me problems with the indents. iPython works better
@@ -117,10 +140,9 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
 		#I got a warning: ERROR: After October 2020 you may experience errors when installing or updating packages. This is because pip will change the way that it resolves dependency conflicts. We recommend you use --use-feature=2020-resolver to test your packages with the new resolver before it becomes the default.
 
 	#we have to upgrade pandas to avoid errors in python3.8
-	#pip3.9 install --upgrade pandas
-	
+	#pip3.9 install --upgrade pandas	
 	#give rights to run script
-	chmod +x ./scripts/01_hap_map_calcs.py
+	#chmod +x ./scripts/01_hap_map_calcs.py
 
 
 
@@ -175,14 +197,14 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
 
 #Command to build, enter interactively or run
 	#now apply the definition file final_test_def for creating a container
-		#sudo singularity build /home/dftortosa/singularity/dating_climate_adaptation/hg38_mig/ubuntu_18_04_hg38_mig.sif /home/dftortosa/singularity/dating_climate_adaptation/hg38_mig/scripts/recipes/hg38_migration.def
+		#sudo singularity build /home/dftortosa/singularity/dating_climate_adaptation/hg38_mig/01_ubuntu_18_04_hg38_mig_hap_map.sif /home/dftortosa/singularity/dating_climate_adaptation/hg38_mig/scripts/recipes/01_ubuntu_18_04_hg38_mig_hap_map.def
 			#In the definition file is indicate that we will take an Ubuntu 20.04 container from the Singularity library. We do not need anything else. We do not need a previous image in the host system! The definition file has the instructions to get the required container from the library.
 	#you can run this image interactively with shell. For that you have to be in a specific folder in order to have the scripts workingnter in the container
 		#cd /home/dftortosa/singularity/dating_climate_adaptation/hg38_mig
-		#sudo singularity shell /home/dftortosa/singularity/dating_climate_adaptation/hg38_mig/ubuntu_18_04_hg38_mig.sif
+		#sudo singularity shell /home/dftortosa/singularity/dating_climate_adaptation/hg38_mig/01_ubuntu_18_04_hg38_mig_hap_map.sif
 	#to run the container. For that you have to be in a specific folder in order to have the scripts workingnter in the container
 		#cd /home/dftortosa/singularity/dating_climate_adaptation/hg38_mig
-		#sudo singularity run /home/dftortosa/singularity/dating_climate_adaptation/hg38_mig/ubuntu_18_04_hg38_mig.sif
+		#sudo singularity run /home/dftortosa/singularity/dating_climate_adaptation/hg38_mig/01_ubuntu_18_04_hg38_mig_hap_map.sif
 
 %labels
     Author dftortosa
