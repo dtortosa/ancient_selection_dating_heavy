@@ -59,6 +59,7 @@ from cyvcf2 import VCF
 
 ##POR AQUIII
 
+#ASK JESUS ABOUT THE MASKS
 
 for index, variant in enumerate(VCF("data/1KGP_vcf_files/1kGP_high_coverage_Illumina."+selected_chromosome+".filtered.SNV_INDEL_SV_phased_panel.vcf.gz")): # or VCF('some.bcf')
     if(index == 0):

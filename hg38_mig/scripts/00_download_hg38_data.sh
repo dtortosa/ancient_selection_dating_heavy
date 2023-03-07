@@ -37,7 +37,7 @@
 ######
 
 #save the working directory
-path_working_dir="/home/dftortosa/singularity/dating_climate_adaptation/hg38_mig"
+path_working_dir="./data/vcf_files_hg38/"
 
 #set the working directory
 cd $path_working_dir
@@ -48,31 +48,64 @@ cd $path_working_dir
 #### Download data ####
 #######################
 
+
+
+###########################
+# loop across chromosomes #
+###########################
+
 #define the URL where download the data
 path_hg38_data="http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/"
 
+#set the total number of chromosomes you want
+n_chrom=22
+
 #make a loop to download the data of each chromosome
 #i=22
-for i in $(seq 1 22); do
+for i in $(seq 1 $n_chrom); do
 
 	#show the chromosome
 	echo "#############################"
 	echo "Downloading chromosome ${i}"
 	echo "#############################"
+	
+	#set the file name
+	vcf_file="1kGP_high_coverage_Illumina.chr${i}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz"
+
+	#see the path
 	echo "see the path:"
-	echo "${path_hg38_data}1kGP_high_coverage_Illumina.chr${i}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz"
+	echo "${path_hg38_data}${vcf_file}"
+
+	#if the file we are trying to download exists
+		#https://linuxize.com/post/bash-check-if-file-exists/
+	if [[ -f "$vcf_file" ]]; then
+
+		#remove it
+		rm "./${vcf_file}"
+	fi
 
 	#download the vcf file
-	wget "${path_hg38_data}1kGP_high_coverage_Illumina.chr${i}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz" --directory-prefix=./data/vcf_files_hg38/
+	wget "${path_hg38_data}${vcf_file}" --directory-prefix=./
 		#https://linuxize.com/post/bash-concatenate-strings/
 done
 	#there are other options for looping over a sequence that are better for memory
 		#https://stackoverflow.com/questions/169511/how-do-i-iterate-over-a-range-of-numbers-defined-by-variables-in-bash
 
 
-#CHECK WE HAVE THE CORRECT FILES
-	#IF THE FILE ALREAYD EXIST YOU GET THE SAME NAME WITH .1
 
+###############################
+# check we have all the files #
+###############################
 
+#list files with the name for vcf across all chromosomes and count them
+n_files=$(ls "1kGP_high_coverage_Illumina.chr"*".filtered.SNV_INDEL_SV_phased_panel.vcf.gz" | wc -l)
 
-#ASK JESUS ABOUT THE MASKS
+#check
+echo "#############################"
+echo "DO WE HAVE VCF FILES FOR ALL CHROMOSOMES?"
+echo "#############################"
+if [[ $n_files -eq $n_chrom ]]; then
+	echo "TRUE, WE HAVE ${n_files} FILES"
+else
+	echo "FALSE, WE HAVE ${n_files} FILES"
+fi
