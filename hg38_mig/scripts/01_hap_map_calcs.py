@@ -18,7 +18,7 @@
 
 #We are going to migrate to hg38 as the new release of 1KGP matches this genome reference version. This script is going to take the VCF files for SNPs in the hg38 high coverage data from 1000GP and obtain hap and map files that will be used as input by flex sweep.
 
-#The general repo page for this release (http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage) and general readme (http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/README_111822.pdf). 
+#The general repo page for this release (http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage) and general readme (http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/README_111822.pdf). The specific README for the specific dataset we are using (1kGP_high_coverage_Illumina.chr*.filtered.SNV_INDEL_SV_phased_panel.vcf.gz).
 
 #It says that "20220422_3202_phased_SNV_INDEL_SV" is "the most up-to-date version of the phased panel based on the high-coverage 1kGP WGS data which includes SNV, INDEL, and SV calls across 3,202 samples"
 
@@ -66,9 +66,16 @@ def master_processor(selected_chromosome):
 
     #
     
+    #SOLVE PROBLEM TIME ZONE CONTAINER, AND RUN IT TO HAVE VCFTOOLS
+        #DO NOT ADD ENV VARIABLE noninteractive
+
+    #get list of samples per pop  to make the subset
 
     "vcf-subset -e -c list_of_Punjabi_persons.txt 1000_genomes_chr3.vcf > PJL_chr3.vcf"
         #https://www.biostars.org/p/241810/
+        #https://manpages.ubuntu.com/manpages/bionic/man1/vcf-subset.1.html
+        #if vcftools is too slow, you can use bcftools
+            #https://www.biostars.org/p/184950/
 
 
     for index, variant in enumerate(VCF("data/vcf_files_hg38/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz")): # or VCF('some.bcf')

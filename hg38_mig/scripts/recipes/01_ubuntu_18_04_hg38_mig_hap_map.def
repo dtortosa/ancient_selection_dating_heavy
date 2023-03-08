@@ -81,6 +81,10 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
 	#update again after you have updated the repository
 	apt -y update
 
+	#vcftools installation
+	apt -y install vcftools
+		#https://www.biostars.org/p/50107/
+
 	#install faster compressor
 	apt -y install pigz
 
