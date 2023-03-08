@@ -81,10 +81,6 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
 	#update again after you have updated the repository
 	apt -y update
 
-	#vcftools installation
-	apt -y install vcftools
-		#https://www.biostars.org/p/50107/
-
 	#install faster compressor
 	apt -y install pigz
 
@@ -143,8 +139,47 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
 
 		#I got a warning: ERROR: After October 2020 you may experience errors when installing or updating packages. This is because pip will change the way that it resolves dependency conflicts. We recommend you use --use-feature=2020-resolver to test your packages with the new resolver before it becomes the default.
 
-	#we have to upgrade pandas to avoid errors in python3.8
-	#pip3.9 install --upgrade pandas	
+	##bcftools installation
+	#this tools seems to be currently maintained, while vcftools does not have any release since 2018 (https://davetang.github.io/learning_vcf_file/#:~:text=A%20BCF%20file%20is%20the,be%20used%20instead%20of%20VCFtools.).
+		#http://www.htslib.org/download/
+	
+	#required packages to download repo and compile
+	apt -y install build-essential
+	apt -y install cmake
+	apt -y install libcurl4-openssl-dev
+		#https://stackoverflow.com/questions/11471690/curl-h-no-such-file-or-directory
+	apt -y install libz-dev
+		#https://stackoverflow.com/questions/36374267/how-to-fix-fatal-error-zlib-h-no-such-file-or-directory
+	apt -y install liblzma-dev
+	    #https://stackoverflow.com/questions/22738077/backports-lzma-lzmamodule-c11518-fatal-error-lzma-h-no-such-file-or-direct
+	apt -y install libbz2-dev
+	    #https://github.com/samtools/samtools/issues/692	
+	
+	#go to opt to save there
+	cd /opt
+
+	#download the last version in March 2023
+	wget https://github.com/samtools/bcftools/releases/download/1.17/bcftools-1.17.tar.bz2
+
+	#decompress
+	tar -xf bcftools-1.17.tar.bz2
+		#https://linuxize.com/post/how-to-extract-unzip-tar-bz2-file/
+	
+	#go to the new folder
+	cd bcftools-1.17
+	
+	#indicate where to install the executable program
+	./configure --prefix=/usr/bin
+		#if not /usr/bin, add the path to bashrc in laptop or %environment in the singularity
+		#export PATH=/where/to/install/bin:$PATH
+
+	#compile
+	make
+	make install
+		
+	#go out of this directory to the directories outside the container
+	cd
+
 	#give rights to run script
 	#chmod +x ./scripts/01_hap_map_calcs.py
 
@@ -168,6 +203,10 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
 
 %environment
     export LC_ALL=C #The $LC_ALL variable is useful for many programs (often written in Perl) that complain when no locale is set.
+	
+	export TZ=UTC #set the time to UTC. First, UTC avoid problems if you are working with people/clusters at different time zones. In addition, seeting the time avoids problems with some packages trying to change it (https://stackoverflow.com/questions/25646420/why-should-i-use-utc; http://yellerapp.com/posts/2015-01-12-the-worst-server-setup-you-can-make.html).
+
+	export BCFTOOLS_PLUGINS=/path/to/bcftools/plugins #In order to use the BCFtools plugins, this environment variable must be set and point to the correct location (https://www.biostars.org/p/9473775/), env variables are set in %environment for singularity containers
 
 
 
