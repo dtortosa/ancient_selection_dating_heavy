@@ -65,38 +65,45 @@ os.system("mkdir -p ./results/hap_map_files")
 # pops prep #
 #############
 
-
+#load pedigree of the latest version of the phased data that has sample IDs, sex and parents but no pop names
 import pandas as pd
-
 samples_pedigree = pd.read_csv("data/pedigrees/1kGP.3202_samples.pedigree_info.txt", 
     sep=" ", 
     header=0, 
     low_memory=False)
 
+#load also a pedigree present in the main directory of the high coverage data. This has sample and pop IDs, but parents and sex are different with respect to the pedigree of the new sample
 samples_pedigree_pop = pd.read_csv("data/pedigrees/20130606_g1k_3202_samples_ped_population.txt", 
     sep=" ", 
     header=0, 
     low_memory=False)
 
+#check
+print("\n#######################################\n#######################################")
+print("check that sample IDs in the pedigree of latest data are all included in the ped_sample_pop file of the general high coverage dataset")
+print("#######################################\n#######################################")
+print(all(samples_pedigree["sampleID"].isin(samples_pedigree_pop["SampleID"])))
 
-#check that sample IDs in the pedigree of latest data are all included in the ped_sample_pop file of the general high coverage dataset
-all(samples_pedigree["sampleID"].isin(samples_pedigree_pop["SampleID"]))
+#check
+print("\n#######################################\n#######################################")
+print("explicitly test whether the columns of the two datasets are the same")
+print("#######################################\n#######################################")
+print("sample ID: " + str(samples_pedigree["sampleID"].equals(samples_pedigree_pop["SampleID"])))
+print("father ID: " + str(samples_pedigree["fatherID"].equals(samples_pedigree_pop["FatherID"])))
+print("mother ID: " + str(samples_pedigree["motherID"].equals(samples_pedigree_pop["MotherID"])))
+print("sex ID: " + str(samples_pedigree["sex"].equals(samples_pedigree_pop["Sex"])))
+    #differneces in parents and sex, so we have to use the ped of the latest version
 
-
-print(samples_pedigree["sampleID"].equals(samples_pedigree_pop["SampleID"]))
-print(samples_pedigree["fatherID"].equals(samples_pedigree_pop["FatherID"]))
-print(samples_pedigree["motherID"].equals(samples_pedigree_pop["MotherID"]))
-print(samples_pedigree["sex"].equals(samples_pedigree_pop["Sex"]))
-#differneces in parents and sex, so we have to use the ped of the latest version
-
-
+#merge both datasets using the sample ID
 ped_merged = samples_pedigree.merge(
     samples_pedigree_pop[["SampleID", "Population", "Superpopulation"]],
     left_on="sampleID", #use the column with IDs in sample_map
     right_on="SampleID", #use the column with IDs in pheno_data
-    suffixes=["_sample_ped", "sample_ped_pop"], #set the suffix for repeated columns
+    suffixes=["_sample_ped", "_sample_ped_pop"], #set the suffix for repeated columns
     how="inner") #only IDs included in both datasets
 
+#checks
+ped_merged.shape[0] == 3202
 
 ped_merged["sampleID"].equals(ped_merged["SampleID"])
 

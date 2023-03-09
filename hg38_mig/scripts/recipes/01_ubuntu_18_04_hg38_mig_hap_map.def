@@ -169,9 +169,9 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
 	cd bcftools-1.17
 	
 	#indicate where to install the executable program
-	./configure --prefix=/usr/bin
+	./configure --prefix=/opt/bcftools-1.17/
 		#if not /usr/bin, add the path to bashrc in laptop or %environment in the singularity
-		#export PATH=/where/to/install/bin:$PATH
+		#export PATH=/opt/bcftools-1.17:$PATH
 
 	#compile
 	make
@@ -206,7 +206,9 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
 	
 	export TZ=UTC #set the time to UTC. First, UTC avoid problems if you are working with people/clusters at different time zones. In addition, seeting the time avoids problems with some packages trying to change it (https://stackoverflow.com/questions/25646420/why-should-i-use-utc; http://yellerapp.com/posts/2015-01-12-the-worst-server-setup-you-can-make.html).
 
-	export BCFTOOLS_PLUGINS=/path/to/bcftools/plugins #In order to use the BCFtools plugins, this environment variable must be set and point to the correct location (https://www.biostars.org/p/9473775/), env variables are set in %environment for singularity containers
+	export PATH=/opt/bcftools-1.17:$PATH #so you can call bcftools from any place
+
+	export BCFTOOLS_PLUGINS=/opt/bcftools-1.17/plugins #In order to use the BCFtools plugins, this environment variable must be set and point to the correct location (https://www.biostars.org/p/9473775/), env variables are set in %environment for singularity containers
 
 
 
