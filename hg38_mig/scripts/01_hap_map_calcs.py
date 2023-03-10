@@ -103,21 +103,47 @@ ped_merged = samples_pedigree.merge(
     how="inner") #only IDs included in both datasets
 
 #checks
-ped_merged.shape[0] == 3202
+print("\n#######################################\n#######################################")
+print("the number of rows in the merged dataset using inner, i.e., shared rows, is equals to 3202?")
+print("#######################################\n#######################################")
+print(ped_merged.shape[0] == 3202)
+print("\n#######################################\n#######################################")
+print("the sampleID columns of both datasets are identical in the merged dataset?")
+print("#######################################\n#######################################")
+print(ped_merged["sampleID"].equals(ped_merged["SampleID"]))
 
-ped_merged["sampleID"].equals(ped_merged["SampleID"])
-
+#remove the SampleID column from one of the merged datasets
 ped_merged = ped_merged.drop("SampleID", axis=1)
 
+#change some column names
 ped_merged = ped_merged.rename(columns={"Population": "population", "Superpopulation": "superpopulation"})
 
-ped_merged
+#look
+print("\n#######################################\n#######################################")
+print("final pedigree data")
+print("#######################################\n#######################################")
+print(ped_merged)
+
+#extract the distinct population names
+pop_names = ped_merged["population"].unique()
+
+#check
+print("\n#######################################\n#######################################")
+print("see distinct population names and check they are 26")
+print("#######################################\n#######################################")
+print(pop_names)
+print(len(pop_names) == 26)
 
 
-ped_merged.loc[ped_merged["population"] == "IBS", :]
 
+#################
+# bcftools prep #
+#################
 
 #see version of bcftools
+print("\n#######################################\n#######################################")
+print("see bcftools version")
+print("#######################################\n#######################################")
 print(os.system("bcftools -v"))
 
 
@@ -126,31 +152,162 @@ print(os.system("bcftools -v"))
 #### function to clean vcf files and create hap - map files ####
 ################################################################
 
-#selected_chromosome="22"
+#selected_chromosome="1"
 def master_processor(selected_chromosome):
 
+    selected_pop = "IBS"
 
-    ped_merged.loc[ped_merged["population"] == "IBS", :]
+    subset_pop = ped_merged.loc[ped_merged["population"] == selected_pop, :]
 
-    #extract info from columns
-    #https://davetang.github.io/learning_vcf_file/#extracting-info-from-columns
+    #check we only have the selected pop
+    all(subset_pop["population"] == selected_pop)
 
-    #subset by sample
-    #https://davetang.github.io/learning_vcf_file/#subset-samples-from-a-multi-sample-vcf-file
+    selected_samples = subset_pop["sampleID"]
 
-    #filter by variant type, i.e., remove indels, structurla variations...
-    #https://davetang.github.io/learning_vcf_file/#filtering-variant-types
+    #file format
+    print("\n#######################################\n#######################################")
+    print("see VCF file version")
+    print("#######################################\n#######################################")
+    os.system("bcftools head data/vcf_files_hg38/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | grep -i '^##fileformat'")
+        #use bcftools to see the header and then select the row starting with ##fileformat to see the version.
+
+        #https://www.htslib.org/howtos/headers.html
+
+
+    #https://samtools.github.io/bcftools/howtos/query.html
+
+    #The Variant Call Format Specification v4.2 which is the one used in the 1000GP high coverage
+        #https://samtools.github.io/hts-specs/VCFv4.2.pdf
 
 
 
-    #get list of samples per pop  to make the subset
+    #comentar jesus los filsotrs usados
 
-    "vcf-subset -e -c list_of_Punjabi_persons.txt 1000_genomes_chr3.vcf > PJL_chr3.vcf"
-        #https://www.biostars.org/p/241810/
-        #https://manpages.ubuntu.com/manpages/bionic/man1/vcf-subset.1.html
-        #if vcftools is too slow, you can use bcftools
-            #https://www.biostars.org/p/184950/
+    os.system("bcftools head data/vcf_files_hg38/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz")
+        #https://www.htslib.org/howtos/headers.html
 
+
+
+    #see samples and count them
+    os.system(
+        "bcftools query -l data/vcf_files_hg38/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz")
+    os.system("bcftools query -l data/vcf_files_hg38/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | wc -l")
+
+    #show the type, chromosome, position and alleles for the first three snps
+    os.system("bcftools query -f '%TYPE %CHROM %POS %REF %ALT %INFO/AF\n' data/vcf_files_hg38/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | head -5")
+        #AF: Allele frequency for each ALT allele in the same order as listed. This is estimated from primary data, not called genotypes, so it will be the same value independently from the samples called (see below).
+
+    #now show only snps
+    os.system("bcftools filter -i 'TYPE=\"snp\"' data/vcf_files_hg38/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | bcftools query -f '%TYPE %CHROM %POS %REF %ALT %INFO/AF\n' |  head -5")
+        #https://davetang.github.io/learning_vcf_file/#filtering-variant-types
+
+    #see snps of only three samples
+    os.system("bcftools filter -i 'TYPE=\"snp\"' data/vcf_files_hg38/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | bcftools query -s HG00699,NA20908,HG02054 -f '%TYPE %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | head -5")
+        #same frequencies after subseting, supporting that AF is calculated from the primary data before subseting
+
+    os.system("bcftools filter -i 'TYPE=\"snp\"' data/vcf_files_hg38/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | bcftools query -s " + ",".join(selected_samples) + " -f '%TYPE %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | head -5")
+
+    os.system("bcftools filter -i 'TYPE=\"snp\"' data/vcf_files_hg38/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | bcftools view -H -s " + ",".join(selected_samples) + " | head -10")
+        #-H to avoid header,
+
+    os.system("bcftools filter -i 'TYPE=\"snp\"' data/vcf_files_hg38/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | bcftools view -H -s " + ",".join(selected_samples) + " -o data/eso.bcf.gz")
+        #https://www.htslib.org/workflow/filter.html
+
+    #CHECKS??
+
+
+
+    os.system(
+        "bcftools convert data/vcf_files_hg38/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz \
+        --include 'TYPE=\"snp\"' \
+        --samples " + ",".join(selected_samples) + " \
+        --hapsample ./results/hap_map_files/" + selected_pop)
+        #convert 
+            #those variants that are SNPs
+            #for those samples of the selected pop
+            #to hap format saving in results and using the name of the pop
+        #to hap file (IMPUTE2 format)
+            #https://www.htslib.org/doc/bcftools.html#convert
+
+        
+
+        #CHECK THIS IS THE CORRECT FORMAT FOR FLEXSEEP
+            #look at the files and compare with your hap files for iHS
+
+        #CHECK CONVERT FUNCTION
+            #https://www.htslib.org/doc/bcftools.html#convert
+
+        #https://www.biostars.org/p/270381/
+    
+
+
+    os.system(
+        "n_no_snps=$(bcftools query \
+            --include 'TYPE=\"snp\"' \
+            --samples " + ",".join(selected_samples) + " \
+            --format '%TYPE\n' \
+            data/vcf_files_hg38/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+        grep -v 'SNP' | \
+        wc -l) ; \
+        if [ $n_no_snps -eq 0 ]; then \
+            echo 'TRUE'; \
+        else \
+            echo 'FALSE'; \
+        fi")
+        #make a query that
+            #includes only snps and the selected samples
+            #returns the variant type, which should be only snp
+        #from the list of variant types
+            #select those that do not include SNP (-v flag)
+            #https://stackoverflow.com/questions/29489050/unix-command-to-get-lines-not-containing-certain-text
+        #the total number of these lines should be zero
+
+
+    os.system(
+        "bcftools query \
+            --format '%FORMAT\n' \
+            data/vcf_files_hg38/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz")
+
+    import subprocess
+    n_unique_snps = int(subprocess.Popen(
+        args= \
+            "bcftools query \
+                --include 'TYPE=\"snp\"' \
+                --samples " + ",".join(selected_samples) + " \
+                --format '%ID\n' \
+            data/vcf_files_hg38/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+            uniq | \
+            wc -l", 
+        shell=True, #If true, the command will be executed through the shell.
+        stdout=subprocess.PIPE).stdout.read())
+
+
+    hap_file = pd.read_csv(
+        "results/hap_map_files/" + selected_pop + ".hap.gz", 
+        sep=" ", 
+        header=None, 
+        low_memory=False)
+
+    hap_file.shape[0] == n_unique_snps
+
+
+
+    #checks
+    #count the number of columns in hap to checl number samples, 2 genotype columns per sample plus initial columns
+    #check that the samples in .samples files are exactly those selected
+
+    #filter by type of var only snp in the orignal vcf file, and count the number of cases, which should be the same number of snps than in the hap file
+    #think more checks lika that 
+
+
+    #ON FILTERING SNPS WITH BCFTOOLS
+        #https://www.htslib.org/workflow/filter.html
+
+    #BCFTOOLS CHEATSHEET
+        #https://gist.github.com/elowy01/93922762e131d7abd3c7e8e166a74a0b#file-bcftools-cheat-sheet
+
+
+    #filter by accesibility mask?
 
 
     for index, variant in enumerate(VCF("data/vcf_files_hg38/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz")): # or VCF('some.bcf')
