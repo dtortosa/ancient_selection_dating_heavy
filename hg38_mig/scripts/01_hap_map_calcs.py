@@ -49,9 +49,13 @@
     #https://jakevdp.github.io/PythonDataScienceHandbook/01.05-ipython-and-shell-commands.html
 
 
+
 ###############
 # folder prep #
 ###############
+
+#save name of path including input vcf files
+input_vcfs_path = "data/vcf_files_hg38"
 
 #create folders to save the results
 import os
@@ -152,65 +156,83 @@ print(os.system("bcftools -v"))
 #### function to clean vcf files and create hap - map files ####
 ################################################################
 
-#selected_chromosome="1"
-def master_processor(selected_chromosome):
+#selected_chromosome="22"; selected_pop = "IBS"
+def master_processor(selected_chromosome, selected_pop):
 
-    selected_pop = "IBS"
 
+
+    #######################
+    # extract samples IDs #
+    #######################
+
+    #select the sample IDs for the selected population
     subset_pop = ped_merged.loc[ped_merged["population"] == selected_pop, :]
 
-    #check we only have the selected pop
-    all(subset_pop["population"] == selected_pop)
+    #reset index
+    subset_pop = subset_pop.reset_index(
+        drop=True)
+        #drop=True to avoid adding the index as a column
 
+    #check
+    print("\n#######################################\n#######################################")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": check we only have the selected pop")
+    print("#######################################\n#######################################")
+    print(all(subset_pop["population"] == selected_pop))
+
+    #select the sample IDs
     selected_samples = subset_pop["sampleID"]
 
-    #file format
+    #save as txt to use it later
+    selected_samples.to_csv(
+        "results/hap_map_files/samples_to_bcftools_" + selected_pop + ".txt", 
+        sep="\t", 
+        header=None, 
+        index=False)
+
+
+
+    ######################
+    # work with VCF file #
+    ######################
+
+    #see file format
     print("\n#######################################\n#######################################")
-    print("see VCF file version")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": see VCF file version")
     print("#######################################\n#######################################")
     os.system("bcftools head data/vcf_files_hg38/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | grep -i '^##fileformat'")
-        #use bcftools to see the header and then select the row starting with ##fileformat to see the version.
+            #use bcftools to see the header and then select the row starting with ##fileformat to see the version.
+            #https://www.htslib.org/howtos/headers.html
 
-        #https://www.htslib.org/howtos/headers.html
-
-
-    #https://samtools.github.io/bcftools/howtos/query.html
-
-    #The Variant Call Format Specification v4.2 which is the one used in the 1000GP high coverage
+    #The Variant Call Format Specification v4.2 is the one used in the 1000GP high coverage
         #https://samtools.github.io/hts-specs/VCFv4.2.pdf
 
-
-
-    #comentar jesus los filsotrs usados
-
-    os.system("bcftools head data/vcf_files_hg38/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz")
-        #https://www.htslib.org/howtos/headers.html
-
-
+    ##POR AQUI
+        #revisa los comandos basicos y luego comenta las lineas
 
     #see samples and count them
-    os.system(
-        "bcftools query -l data/vcf_files_hg38/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz")
-    os.system("bcftools query -l data/vcf_files_hg38/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | wc -l")
+    os.system("bcftools query -l " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz")
+    os.system("bcftools query -l " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | wc -l")
+        #https://samtools.github.io/bcftools/howtos/query.html
 
     #show the type, chromosome, position and alleles for the first three snps
-    os.system("bcftools query -f '%TYPE %CHROM %POS %REF %ALT %INFO/AF\n' data/vcf_files_hg38/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | head -5")
+    os.system("bcftools query -f '%TYPE %CHROM %POS %REF %ALT %INFO/AF\n' " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | head -5")
         #AF: Allele frequency for each ALT allele in the same order as listed. This is estimated from primary data, not called genotypes, so it will be the same value independently from the samples called (see below).
+        #https://samtools.github.io/bcftools/howtos/query.html
 
     #now show only snps
-    os.system("bcftools filter -i 'TYPE=\"snp\"' data/vcf_files_hg38/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | bcftools query -f '%TYPE %CHROM %POS %REF %ALT %INFO/AF\n' |  head -5")
+    os.system("bcftools filter -i 'TYPE=\"snp\"' " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | bcftools query -f '%TYPE %CHROM %POS %REF %ALT %INFO/AF\n' |  head -5")
         #https://davetang.github.io/learning_vcf_file/#filtering-variant-types
 
     #see snps of only three samples
-    os.system("bcftools filter -i 'TYPE=\"snp\"' data/vcf_files_hg38/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | bcftools query -s HG00699,NA20908,HG02054 -f '%TYPE %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | head -5")
+    os.system("bcftools filter -i 'TYPE=\"snp\"' " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | bcftools query -s HG00699,NA20908,HG02054 -f '%TYPE %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | head -5")
         #same frequencies after subseting, supporting that AF is calculated from the primary data before subseting
 
-    os.system("bcftools filter -i 'TYPE=\"snp\"' data/vcf_files_hg38/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | bcftools query -s " + ",".join(selected_samples) + " -f '%TYPE %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | head -5")
+    os.system("bcftools filter -i 'TYPE=\"snp\"' " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | bcftools query -s " + ",".join(selected_samples) + " -f '%TYPE %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | head -5")
 
-    os.system("bcftools filter -i 'TYPE=\"snp\"' data/vcf_files_hg38/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | bcftools view -H -s " + ",".join(selected_samples) + " | head -10")
+    os.system("bcftools filter -i 'TYPE=\"snp\"' " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | bcftools view -H -s " + ",".join(selected_samples) + " | head -10")
         #-H to avoid header,
 
-    os.system("bcftools filter -i 'TYPE=\"snp\"' data/vcf_files_hg38/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | bcftools view -H -s " + ",".join(selected_samples) + " -o data/eso.bcf.gz")
+    os.system("bcftools filter -i 'TYPE=\"snp\"' " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | bcftools view -H -s " + ",".join(selected_samples) + " -o data/eso.bcf.gz")
         #https://www.htslib.org/workflow/filter.html
 
     #CHECKS??
@@ -218,7 +240,7 @@ def master_processor(selected_chromosome):
 
 
     os.system(
-        "bcftools convert data/vcf_files_hg38/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz \
+        "bcftools convert " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz \
         --include 'TYPE=\"snp\"' \
         --samples " + ",".join(selected_samples) + " \
         --hapsample ./results/hap_map_files/" + selected_pop)
@@ -240,15 +262,16 @@ def master_processor(selected_chromosome):
         #https://www.biostars.org/p/270381/
     
 
-
+    #check we are only selecting SNPs
     os.system(
-        "n_no_snps=$(bcftools query \
-            --include 'TYPE=\"snp\"' \
-            --samples " + ",".join(selected_samples) + " \
-            --format '%TYPE\n' \
-            data/vcf_files_hg38/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-        grep -v 'SNP' | \
-        wc -l) ; \
+        "n_no_snps=$( \
+            bcftools query \
+                --include 'TYPE=\"snp\"' \
+                --samples " + ",".join(selected_samples) + " \
+                --format '%TYPE\n' \
+                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+            grep -v 'SNP' | \
+            wc -l) ; \
         if [ $n_no_snps -eq 0 ]; then \
             echo 'TRUE'; \
         else \
@@ -263,41 +286,105 @@ def master_processor(selected_chromosome):
         #the total number of these lines should be zero
 
 
+    #check that generated hap file has the correct number of SNPs, i.e., rows
     os.system(
-        "bcftools query \
-            --format '%FORMAT\n' \
-            data/vcf_files_hg38/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz")
-
-    import subprocess
-    n_unique_snps = int(subprocess.Popen(
-        args= \
-            "bcftools query \
-                --include 'TYPE=\"snp\"' \
-                --samples " + ",".join(selected_samples) + " \
-                --format '%ID\n' \
-            data/vcf_files_hg38/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+        'n_unique_snps=$( \
+            bcftools query \
+                --include "TYPE=\'snp\'" \
+                --samples ' + ','.join(selected_samples) + ' \
+                --format "%ID\n" \
+                ' + input_vcfs_path + '/1kGP_high_coverage_Illumina.chr' + selected_chromosome + '.filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
             uniq | \
-            wc -l", 
-        shell=True, #If true, the command will be executed through the shell.
-        stdout=subprocess.PIPE).stdout.read())
+            wc -l); \
+        echo "We have" "${n_unique_snps}" "unique SNPs in the query of VCF file"; \
+        n_lines_hap=$( \
+            gunzip \
+                -c \
+                results/hap_map_files/' + selected_pop + '.hap.gz | \
+            wc -l); \
+        echo "We have" "${n_lines_hap}" "lines in the hap file"; \
+        echo "Both numbers are the same?"; \
+        if [ $n_unique_snps -eq $n_lines_hap ]; then \
+            echo "TRUE"; \
+        else \
+            echo "FALSE"; \
+        fi')
+        #calculate the number of unique snps
+            #querying variants 
+                #with type=snp
+                #for selected samples
+                #get the ID of the variants
+            #select unique cases
+            #count them
+        #calculate the number of lines in the previously generate hap file
+            #gunzip with "c" flag to simply write the output stream to stdout. This will leave the compressed file untouched. In other words, you do not create a file, but just show the content of the compressed file into the terminal. We will pipe that to wc
+                #https://superuser.com/questions/135329/count-lines-in-a-compressed-file
+            #count lines of the file
+        #check that both numbers are the same
 
+    #do we have the correct number of samples in the hap file?
+    os.system(
+        'nfields_hap=$( \
+            gunzip \
+                -c results/hap_map_files/' + selected_pop + '.hap.gz | \
+            awk -F " "  "{print NF}" | \
+            sort | \
+            uniq); \
+        nfields_hap_nlines=$( \
+            echo -n "$nfields_hap" | \
+            grep -c "^"); \
+        if [ "${nfields_hap_nlines}" -eq 1 ]; then \
+            nsamples_hap=$((($nfields_hap - 5)/2)); \
+            nsamples_bcftools=$( \
+                cat results/hap_map_files/samples_to_bcftools_' + selected_pop + '.txt | \
+                grep -c "^"); \
+            if [ "${nsamples_hap}" -eq "${nsamples_bcftools}" ]; then \
+                echo "TRUE"; \
+            else \
+                echo "FALSE"; \
+            fi\
+        fi')
+        #calculate the number of fields/columns in the hap file
+            #decompress the hap file and send the output to stdout (flag c of gunzip)
+            #use the interpreter of awk language (awk), indicating the delimiter of the columns (-F) and asking to print the number of field. You could also ask for column 1 typing $1... NF will give the number of columns or fields.
+                #https://www.unix.com/shell-programming-and-scripting/110272-no-columns-csv-file.html
+                #https://askubuntu.com/questions/342842/what-does-this-command-mean-awk-f-print-4
+            #you get the number of fields per row, so you have to sort the output and obtain the uniq cases.
+            #save into nfields_hap
+        #calculate how many number of unique number of columns we have. 
+            #We should have the same number of columns in all rows. Therefore, just 1 line.
+            #echo the nfields_hap with -n flag, so you do not output the trailing newline, i.e., there is no last empty line at the end. I guess people use this to avoid counting that last line. If you do echo '' | grep -c '^', without -n, you still get 1, when it should be zero.
+                #https://unix.stackexchange.com/questions/579651/what-does-n-flags-stands-for-after-echo
+            #get the number of lines that start with any character ("^") using grep -c "^". Remember that ^eso would look for any line starting with "eso"
+                #https://stackoverflow.com/questions/6314679/in-bash-how-do-i-count-the-number-of-lines-in-a-variable
+                #https://stackoverflow.com/questions/13054227/what-does-grep-mean-in-unix
+        #if the number of unique number of columns is 1, we are fine so continue
+            #take nfields_hap, substract 5 because the first 5 columns of the hap file are not genotypes and then divide by 2. Remember that after the alleles names, we have 2 genotype columns per sample, so the number of columns/2 is the number of samples.
+                #https://phoenixnap.com/kb/bash-math
+            #calculate the number of samples from the .txt file generated.
+                #load the file with cat and count the number of lines that start with any character
+            #check that the number of samples according to the hap file and the txt are the same.
 
-    hap_file = pd.read_csv(
-        "results/hap_map_files/" + selected_pop + ".hap.gz", 
-        sep=" ", 
-        header=None, 
+    sample_list_from_hap = pd.read_csv(
+        './results/hap_map_files/IBS.samples',
+        header=0, 
+        sep=' ', 
         low_memory=False)
 
-    hap_file.shape[0] == n_unique_snps
+    sample_list_from_hap_clean = sample_list_from_hap.loc[(sample_list_from_hap["ID_1"] != '0') | (sample_list_from_hap["ID_2"] != '0'), :]
+
+    sample_list_from_hap_clean = sample_list_from_hap_clean.reset_index()
+
+    sample_list_from_hap_clean["ID_1"].equals(selected_samples)
+    sample_list_from_hap_clean["ID_2"].equals(selected_samples)
 
 
 
-    #checks
-    #count the number of columns in hap to checl number samples, 2 genotype columns per sample plus initial columns
-    #check that the samples in .samples files are exactly those selected
+    #ask jesus about the filters he applied besides the ones applied by 1000 genomes project according to readme file.
 
-    #filter by type of var only snp in the orignal vcf file, and count the number of cases, which should be the same number of snps than in the hap file
-    #think more checks lika that 
+
+    #check for duplicates in snp ID and position
+        #https://www.biostars.org/p/274824/
 
 
     #ON FILTERING SNPS WITH BCFTOOLS
@@ -315,6 +402,7 @@ def master_processor(selected_chromosome):
             print(variant) # e.g. REF='A', ALT=['C', 'T']
 
 
+#run in paralle across combinations of chromosomes and populations
 
 ##YOU CAN USEE SPARK IN A SINGLE DF!!! THE FILE WILL NOT BE FULLY LOADED IN MEMORY
 
