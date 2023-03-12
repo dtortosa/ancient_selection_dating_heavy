@@ -59,7 +59,6 @@ input_vcfs_path = "data/vcf_files_hg38"
 
 #create folders to save the results
 import os
-os.system("mkdir -p ./results/clean_vcf")
 os.system("mkdir -p ./results/hap_map_files")
     #-p: no error if the folder already exists, make parent directories as needed
 
@@ -293,6 +292,26 @@ def master_processor(selected_chromosome, selected_pop):
             #make a query making a subset of individuals and then ask in each SNP for the type, chrom... and genotypes. As we are only selecting three samples, we will only see three genotypes
             #show only first 5 snps
 
+        #check
+        print("\n#######################################\n#######################################")
+        print("chr " + selected_chromosome + ": the chromosome name in the vcf file is correct?")
+        print("#######################################\n#######################################")
+        os.system(
+            'chr_vcf=$( \
+                bcftools query \
+                    ' + input_vcfs_path + '/1kGP_high_coverage_Illumina.chr' + selected_chromosome + '.filtered.SNV_INDEL_SV_phased_panel.vcf.gz \
+                    --format "%CHROM\n" | \
+                head -1); \
+            if [ $chr_vcf = "chr' + selected_chromosome + '" ]; then \
+                echo "TRUE"; \
+            else \
+                echo "FALSE"; \
+            fi')
+            #with bcftools, query for the chromosome of each variant but get only the first line
+            #if the chromosome number is equal to selected_chromosome, perfect
+            #equality for strings using 1 bracket is "="
+                #https://stackoverflow.com/questions/18102454/why-am-i-getting-an-unexpected-operator-error-in-bash-string-equality-test
+
 
 
     #######################
@@ -346,64 +365,123 @@ def master_processor(selected_chromosome, selected_pop):
                 #format the query asking for variant type, ID, chromosome, genotype of each variant
             #show only the first 5 snps
 
-    #POR AQUIII
-
-    #
+    #see complete data for some of the selected samples
     print("\n#######################################\n#######################################")
     print("chr " + selected_chromosome + " - " + selected_pop + ": see complete data for some of the selected samples")
     print("#######################################\n#######################################")
-    os.system("bcftools filter -i 'TYPE=\"snp\"' " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | bcftools view -H -s " + ",".join(selected_samples) + " | head -10")
-        #-H to avoid header,
-
-
-
-
-    os.system("bcftools filter -i 'TYPE=\"snp\"' " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | bcftools view -H -s " + ",".join(selected_samples) + " -o data/eso.bcf.gz")
-        #https://www.htslib.org/workflow/filter.html
-
-
-    #THIS SHOULD GO IN THE GENERAL SECTION THAT IT IS ONLY RUN ONE TIME
-    #check that the chromosome name in the vcf file is correct
     os.system(
-        'chr_vcf=$(bcftools query \
-            ' + input_vcfs_path + '/1kGP_high_coverage_Illumina.chr' + selected_chromosome + '.filtered.SNV_INDEL_SV_phased_panel.vcf.gz \
-            --format "%CHROM\n" | \
-            head -1); \
-        if [ $chr_vcf = "chr' + selected_chromosome + '" ]; then \
-            echo "TRUE"; \
-        else \
-            echo "FALSE"; \
-        fi')
-        #with bcftools, query for the chromosome of each variant but get only the first line
-        #if the chromosome number is equal to selected_chromosome, perfect
-        #equality for strings using 1 bracket is "="
-            #https://stackoverflow.com/questions/18102454/why-am-i-getting-an-unexpected-operator-error-in-bash-string-equality-test
+        "bcftools view \
+            -i 'TYPE=\"snp\"' \
+            -s " + ",".join(selected_samples) + " \
+            -H \
+        " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+        head -3")
+        #view complete row, i.e., all INFO fields, genotypes...
+            #for each variant with type=SNP
+            #for the selected samples
+            #and avoid header (-H)
+        #show only 10 first
 
-    #more CHECKS??
+    #in case you want to save the filtered dataset, but it is slow the file is very big, so it is not worth it, we can directly go to hap
+    #os.system(
+    #    "bcftools view \
+    #        " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz \
+    #        -i 'TYPE=\"snp\"' \
+    #        -H \
+    #        -s " + ",".join(selected_samples) + " \
+    #        -o data/" + selected_pop + ".bcf.gz")
 
-    #convert VCF file to hap file
+    #convert VCF file to hap file    
+    print("\n#######################################\n#######################################")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": convert to hap file")
+    print("#######################################\n#######################################")
     os.system(
-        "bcftools convert " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz \
-        --include 'TYPE=\"snp\"' \
-        --samples " + ",".join(selected_samples) + " \
-        --hapsample ./results/hap_map_files/" + selected_pop)
+        "bcftools convert \
+            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz \
+            --include 'TYPE=\"snp\"' \
+            --samples " + ",".join(selected_samples) + " \
+            --hapsample ./results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw")
         #convert 
             #those variants that are SNPs
             #for those samples of the selected pop
-            #to hap format saving in results and using the name of the pop
-        #to hap file (IMPUTE2 format)
-            #https://www.htslib.org/doc/bcftools.html#convert
+            #to hap format saving in results and using the name of the chromosome and the pop
+            #--vcf-ids 
+                #when this option is given, the second column is set to match the ID column of the VCF.
+                #Without the option, the format follows https://www.cog-genomics.org/plink/2.0/formats#haps with ids (the second column) of the form "CHR:POS_REF_ALT[_END]"
+                #https://www.htslib.org/doc/bcftools.html#convert
+        #IMPUTE2 hap format
+            #https://www.cog-genomics.org/plink/2.0/formats#haps
+            #we are going to use the reference panel haplotype file format for IMPUTE2. 
+            #This is a text file with no header line, and either 2N+5 or 2N fields where N is the number of samples. In other words, you can have 5 initial columns with data about the variants, or just the happlotype columns. In the former case, the first five columns are:
+                #Chromosome code
+                #Variant ID
+                    #This is in the format CHROM:POS_REF_ALT to prevent strand swaps.
+                #Base-pair coordinate (POS)
+                #REF allele
+                #ALT allele
+            #This is followed by a pair of 0/1-valued haplotype columns for the first sample, then a pair of haplotype columns for the second sample, etc. (For male samples on chrX, the second column may contain dummy '-' entries; otherwise, missing genotype calls are not permitted.)
+            #Previous hap format used by us
+                #hap IMPUTE format is the one required by hapbin
+                    #https://github.com/evotools/hapbin#input-file-formats
+                #The format I used for hap files used as input to hapbin was the second option, i.e., ONLY THE HAPLOTYPE COLUMNS.
+                    #/xdisk/denard/dftortosa/genomic_determinants_recent_selection/hapbin_inputs/
+                #In addition, hap files in yoruba folder of flexsweep are just our hap files for iHS, i.e., ONLY THE HAPLOTYPE COLUMNS.
+                    #/xdisk/denard/lauterbur/yoruba/hapmap_YRI_hg19_decode2019/
 
-        
-
-        #CHECK THIS IS THE CORRECT FORMAT FOR FLEXSEEP
-            #look at the files and compare with your hap files for iHS
-
-        #CHECK CONVERT FUNCTION
-            #https://www.htslib.org/doc/bcftools.html#convert
-
-        #https://www.biostars.org/p/270381/
+    #see first variants
+    print("\n#######################################\n#######################################")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": see first variants of the hap file")
+    print("#######################################\n#######################################")
+    os.system(
+        "gunzip -c results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
+        head -2")
     
+    #clean
+    print("\n#######################################\n#######################################")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": remove first columns of hap file to leave only haplotype columns")
+    print("#######################################\n#######################################")
+    os.system(
+        "gunzip -c results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
+        cut \
+            --complement \
+            --delimiter ' ' \
+            --fields 1-5 \
+        > results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap; \
+        gzip -f results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap")
+            #extract the content of compressed hap file
+            #remove the first 5 columns
+                #--complement keeps the columns other than the ones specified in -f
+                #--delimiter specifies the delimiter; in this case, a space
+                #--fields specifies the columns to cut (rather than the columns to keep, since --complement is being used);
+                    #https://unix.stackexchange.com/questions/222121/how-to-remove-a-column-or-multiple-columns-from-file-using-shell-command
+            #save the result as a hap file
+            #compress that file
+                #-f option : Sometimes a file cannot be compressed. Perhaps you are trying to compress a file called “myfile1” but there is already a file called “myfile1.gz”. In this instance, the “gzip” command won’t ordinarily work. To force the “gzip” command to do its stuff simply use -f option
+                #https://www.geeksforgeeks.org/gzip-command-linux/
+
+
+        os.system(
+            "gunzip -c results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | grep -v '0\\|1' | wc -l")
+
+        #avoid lines that match and use two conditions
+
+        #https://stackoverflow.com/questions/3548453/negative-matching-using-grep-match-lines-that-do-not-contain-foo
+        #https://www.thegeekstuff.com/2011/10/grep-or-and-not-operators/
+
+        #but we could have other characters in the lines with 0 or 1?
+
+
+        #CHCK THIS!!!
+            #5013617 records written, 745443 skipped: 0/0/745443 no-ALT/non-biallelic/filtered
+
+
+        #think checks for the removal of the 5 columns? you are doing checks below about the number of rows and columns
+
+        #CHECK THAT HTE HAP FILE ONLY CONTAINS 0 AND 1 WITH GREP?
+
+        #error borken pipes?
+
+
 
     #check we are only selecting SNPs
     os.system(
@@ -443,7 +521,7 @@ def master_processor(selected_chromosome, selected_pop):
         n_lines_hap=$( \
             gunzip \
                 -c \
-                results/hap_map_files/' + selected_pop + '.hap.gz | \
+                results/hap_map_files/chr' + selected_chromosome + '_' + selected_pop + '_IMPUTE2.hap.gz | \
             wc -l); \
         echo "We have" "${n_lines_hap}" "lines in the hap file"; \
         echo "Both numbers are the same?"; \
@@ -469,7 +547,7 @@ def master_processor(selected_chromosome, selected_pop):
     os.system(
         'nfields_hap=$( \
             gunzip \
-                -c results/hap_map_files/' + selected_pop + '.hap.gz | \
+                -c results/hap_map_files/chr' + selected_chromosome + '_' + selected_pop + '_IMPUTE2.hap.gz | \
             awk -F " "  "{print NF}" | \
             sort | \
             uniq); \
@@ -477,7 +555,7 @@ def master_processor(selected_chromosome, selected_pop):
             echo -n "$nfields_hap" | \
             grep -c "^"); \
         if [ "${nfields_hap_nlines}" -eq 1 ]; then \
-            nsamples_hap=$((($nfields_hap - 5)/2)); \
+            nsamples_hap=$(($nfields_hap/2)); \
             nsamples_bcftools=$( \
                 cat results/hap_map_files/samples_to_bcftools_' + selected_pop + '.txt | \
                 grep -c "^"); \
@@ -502,11 +580,13 @@ def master_processor(selected_chromosome, selected_pop):
                 #https://stackoverflow.com/questions/6314679/in-bash-how-do-i-count-the-number-of-lines-in-a-variable
                 #https://stackoverflow.com/questions/13054227/what-does-grep-mean-in-unix
         #if the number of unique number of columns is 1, we are fine so continue
-            #take nfields_hap, substract 5 because the first 5 columns of the hap file are not genotypes and then divide by 2. Remember that after the alleles names, we have 2 genotype columns per sample, so the number of columns/2 is the number of samples.
+            #take nfields_hap, divide by 2. Remember that we remove the initial 5 columns, so we only have haplo columns. In these columns, we have 2 genotype columns per sample, so the number of columns/2 is the number of samples.
                 #https://phoenixnap.com/kb/bash-math
             #calculate the number of samples from the .txt file generated.
                 #load the file with cat and count the number of lines that start with any character
             #check that the number of samples according to the hap file and the txt are the same.
+
+
 
     sample_list_from_hap = pd.read_csv(
         './results/hap_map_files/IBS.samples',
@@ -522,10 +602,14 @@ def master_processor(selected_chromosome, selected_pop):
     sample_list_from_hap_clean["ID_2"].equals(selected_samples)
 
 
-    #check chromosome number correspond with the name of the file
 
     #check for duplicates in snp ID and position
         #https://www.biostars.org/p/274824/
+
+
+    #more CHECKS??
+        #https://www.biostars.org/p/270381/
+
 
     #ask jesus about the filters he applied besides the ones applied by 1000 genomes project according to readme file.
 
