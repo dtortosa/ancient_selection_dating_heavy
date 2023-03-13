@@ -204,6 +204,8 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
 %environment
     export LC_ALL=C #The $LC_ALL variable is useful for many programs (often written in Perl) that complain when no locale is set.
 	
+    export SHELL=/bin/bash #set bash as default shell to avoid using sh
+
 	export TZ=UTC #set the time to UTC. First, UTC avoid problems if you are working with people/clusters at different time zones. In addition, seeting the time avoids problems with some packages trying to change it (https://stackoverflow.com/questions/25646420/why-should-i-use-utc; http://yellerapp.com/posts/2015-01-12-the-worst-server-setup-you-can-make.html).
 
 	export PATH=/opt/bcftools-1.17:$PATH #so you can call bcftools from any place

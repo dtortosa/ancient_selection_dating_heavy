@@ -35,6 +35,49 @@
 ##################
 
 
+########################################
+# define function to run bash commands #
+########################################
+
+#create a wrapper for Popen in order to define a set of arguments and avoid typing them each time
+from subprocess import run, PIPE
+def popen_bash(command):
+
+    #run the command
+    p = run(
+        command, 
+        shell=True,
+        executable="/bin/bash", 
+        stdout=PIPE).stdout
+    #we have to use popen in order to ensure we use bash, os.system does not allow that
+        #shell=True to execute the command through the shell
+            #THIS IS DANGEROUS IF UNTRUSTED DATA
+        #executable="/bin/bash" to ensure the use of bash instead of sh
+        #https://docs.python.org/3/library/subprocess.html#subprocess.Popen
+        #https://unix.stackexchange.com/questions/418616/python-how-to-print-value-that-comes-from-os-system
+        #https://stackoverflow.com/questions/2502833/store-output-of-subprocess-popen-call-in-a-string
+
+    #decode the output to UTF-8 to avoid strange characters and print
+    print(p.decode("utf-8"))
+
+
+
+#CHECCK SUBPROCESS RUN, WHICH SEEMS TO BE THE PREFERED OPTION.
+    #https://docs.python.org/3/library/subprocess.html#subprocess.run
+
+
+#test it
+print("\n#######################################\n#######################################")
+print("see working directory")
+print("#######################################\n#######################################")
+popen_bash("pwd")
+print("\n#######################################\n#######################################")
+print("list files/folders there")
+print("#######################################\n#######################################")
+popen_bash("ls")
+
+
+
 ######
 # wd #
 ######
@@ -58,8 +101,9 @@
 input_vcfs_path = "data/vcf_files_hg38"
 
 #create folders to save the results
-import os
-os.system("mkdir -p ./results/hap_map_files")
+popen_bash(
+    "mkdir \
+        -p ./results/hap_map_files")
     #-p: no error if the folder already exists, make parent directories as needed
 
 
@@ -147,7 +191,7 @@ print(len(pop_names) == 26)
 print("\n#######################################\n#######################################")
 print("see bcftools version")
 print("#######################################\n#######################################")
-print(os.system("bcftools -v"))
+popen_bash("bcftools -v")
 
 
 
@@ -171,7 +215,7 @@ def master_processor(selected_chromosome, selected_pop):
         print("\n#######################################\n#######################################")
         print("chr " + selected_chromosome + ": see VCF file version")
         print("#######################################\n#######################################")
-        os.system("bcftools head " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | grep -i '^##fileformat'")
+        popen_bash("bcftools head " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | grep -i '^##fileformat'")
                 #use bcftools to see the header and then select the row starting with ##fileformat to see the version.
                 #https://www.htslib.org/howtos/headers.html
 
@@ -223,7 +267,7 @@ def master_processor(selected_chromosome, selected_pop):
         print("\n#######################################\n#######################################")
         print("chr " + selected_chromosome + ": see first 10 samples")
         print("#######################################\n#######################################")
-        os.system(
+        popen_bash(
             "bcftools query \
                 -l \
                 " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
@@ -234,7 +278,7 @@ def master_processor(selected_chromosome, selected_pop):
         print("\n#######################################\n#######################################")
         print("chr " + selected_chromosome + ": do we have the correct number of total samples?")
         print("#######################################\n#######################################")
-        os.system(
+        popen_bash(
             "n_samples=$( \
                 bcftools query \
                     -l \
@@ -252,7 +296,7 @@ def master_processor(selected_chromosome, selected_pop):
         print("\n#######################################\n#######################################")
         print("chr " + selected_chromosome + ": show the variant type, ID, chromosome, position, alleles and frequency for the first snps")
         print("#######################################\n#######################################")
-        os.system(
+        popen_bash(
             "bcftools query \
                 -f '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF\n' \
                 " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
@@ -265,7 +309,7 @@ def master_processor(selected_chromosome, selected_pop):
         print("\n#######################################\n#######################################")
         print("chr " + selected_chromosome + ": show now only SNPs")
         print("#######################################\n#######################################")
-        os.system(
+        popen_bash(
             "bcftools filter \
                 -i 'TYPE=\"snp\"' \
                 " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
@@ -279,7 +323,7 @@ def master_processor(selected_chromosome, selected_pop):
         print("\n#######################################\n#######################################")
         print("chr " + selected_chromosome + ": see genotypes of these snps for a few samples: ")
         print("#######################################\n#######################################")
-        os.system(" \
+        popen_bash(" \
             bcftools filter \
                 -i 'TYPE=\"snp\"' \
                 " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
@@ -296,7 +340,7 @@ def master_processor(selected_chromosome, selected_pop):
         print("\n#######################################\n#######################################")
         print("chr " + selected_chromosome + ": the chromosome name in the vcf file is correct?")
         print("#######################################\n#######################################")
-        os.system(
+        popen_bash(
             'chr_vcf=$( \
                 bcftools query \
                     ' + input_vcfs_path + '/1kGP_high_coverage_Illumina.chr' + selected_chromosome + '.filtered.SNV_INDEL_SV_phased_panel.vcf.gz \
@@ -369,7 +413,7 @@ def master_processor(selected_chromosome, selected_pop):
     print("\n#######################################\n#######################################")
     print("chr " + selected_chromosome + " - " + selected_pop + ": see complete data for some of the selected samples")
     print("#######################################\n#######################################")
-    os.system(
+    popen_bash(
         "bcftools view \
             -i 'TYPE=\"snp\"' \
             -s " + ",".join(selected_samples) + " \
@@ -395,7 +439,7 @@ def master_processor(selected_chromosome, selected_pop):
     print("\n#######################################\n#######################################")
     print("chr " + selected_chromosome + " - " + selected_pop + ": convert to hap file")
     print("#######################################\n#######################################")
-    os.system(
+    popen_bash(
         "bcftools convert \
             " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz \
             --include 'TYPE=\"snp\"' \
@@ -432,7 +476,7 @@ def master_processor(selected_chromosome, selected_pop):
     print("\n#######################################\n#######################################")
     print("chr " + selected_chromosome + " - " + selected_pop + ": see first variants of the hap file")
     print("#######################################\n#######################################")
-    os.system(
+    popen_bash(
         "gunzip -c results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
         head -2")
     
@@ -460,19 +504,41 @@ def master_processor(selected_chromosome, selected_pop):
                 #https://www.geeksforgeeks.org/gzip-command-linux/
 
 
+        fields_selected_samples = "".join(["$" + str(i) + "," if i != selected_samples.shape[0]*2+5 else "$" + str(i) for i in range(6, selected_samples.shape[0]*2+6, 1)])
+
         os.system(
-            "gunzip -c results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | grep -v '0\\|1' | wc -l")
+            "hap_raw=$( \
+                gunzip \
+                    -c results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
+                awk -F ' ' '{print " + fields_selected_samples + "}'); \
+            hap_clean=$( \
+                gunzip \
+                    -c results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap.gz); \
+            if [ $hap_raw = $hap_clean ]; then \
+                echo 'TRUE'; \
+            else \
+                echo 'FALSE'; \
+            fi")
 
-        #avoid lines that match and use two conditions
 
-        #https://stackoverflow.com/questions/3548453/negative-matching-using-grep-match-lines-that-do-not-contain-foo
-        #https://www.thegeekstuff.com/2011/10/grep-or-and-not-operators/
+        os.system(
+            "echo $SHELL")
 
-        #but we could have other characters in the lines with 0 or 1?
+#run the command to count
+subprocess.Popen(
+    args="diff <(echo 1) <(echo 2)", 
+    shell=True, #If true, the command will be executed through the shell.
+    executable='/bin/bash')
+
+            
+
+
+            #https://stackoverflow.com/a/53529649/12772630
 
 
         #CHCK THIS!!!
             #5013617 records written, 745443 skipped: 0/0/745443 no-ALT/non-biallelic/filtered
+        #CHECK BORKEN PIPE
 
 
         #think checks for the removal of the 5 columns? you are doing checks below about the number of rows and columns
