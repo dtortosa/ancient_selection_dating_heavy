@@ -44,27 +44,30 @@ from subprocess import run, PIPE
 def popen_bash(command):
 
     #run the command
-    p = run(
+    complete_process = run(
         command, 
         shell=True,
         executable="/bin/bash", 
-        stdout=PIPE).stdout
+        stdout=PIPE, 
+        text=True)
     #we have to use popen in order to ensure we use bash, os.system does not allow that
-        #shell=True to execute the command through the shell
+        #shell=True to execute the command through the shell. This means that the command is passed as a string, and shell-specific features, such as wildcard expansion and variable substitution, can be used.
             #THIS IS DANGEROUS IF UNTRUSTED DATA
         #executable="/bin/bash" to ensure the use of bash instead of sh
-        #https://docs.python.org/3/library/subprocess.html#subprocess.Popen
-        #https://unix.stackexchange.com/questions/418616/python-how-to-print-value-that-comes-from-os-system
-        #https://stackoverflow.com/questions/2502833/store-output-of-subprocess-popen-call-in-a-string
+        #stdout=PIPE to capture the output into an python object. You can also capture the error doing stderr=PIPE. stdout and stderr are the standard output and error
+            #you could also use capture_output=True to capture both stdout and stderr
+        #text=True will return the stdout and stderr as string, otherwise as bytes
+            #https://www.datacamp.com/tutorial/python-subprocess
+            #https://docs.python.org/3/library/subprocess.html#subprocess.run
 
-    #decode the output to UTF-8 to avoid strange characters and print
-    print(p.decode("utf-8"))
+    #this generated a CompletedProcess instance where you can get
+        #args: The command and arguments that were run.
+        #returncode: The return code of the subprocess.
+        #stdout: The standard output of the subprocess, as a bytes object.
+        #stderr: The standard error of the subprocess, as a bytes object.
 
-
-
-#CHECCK SUBPROCESS RUN, WHICH SEEMS TO BE THE PREFERED OPTION.
-    #https://docs.python.org/3/library/subprocess.html#subprocess.run
-
+    #print only the standard output
+    print(complete_process.stdout)
 
 #test it
 print("\n#######################################\n#######################################")
@@ -396,7 +399,7 @@ def master_processor(selected_chromosome, selected_pop):
     print("\n#######################################\n#######################################")
     print("chr " + selected_chromosome + " - " + selected_pop + ": see first genotypes for selected samples")
     print("#######################################\n#######################################")
-    os.system(" \
+    popen_bash(" \
         bcftools query \
             -i 'TYPE=\"snp\"' \
             -s " + ",".join(selected_samples) + " \
@@ -427,7 +430,7 @@ def master_processor(selected_chromosome, selected_pop):
         #show only 10 first
 
     #in case you want to save the filtered dataset, but it is slow the file is very big, so it is not worth it, we can directly go to hap
-    #os.system(
+    #popen_bash(
     #    "bcftools view \
     #        " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz \
     #        -i 'TYPE=\"snp\"' \
@@ -484,7 +487,7 @@ def master_processor(selected_chromosome, selected_pop):
     print("\n#######################################\n#######################################")
     print("chr " + selected_chromosome + " - " + selected_pop + ": remove first columns of hap file to leave only haplotype columns")
     print("#######################################\n#######################################")
-    os.system(
+    popen_bash(
         "gunzip -c results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
         cut \
             --complement \
@@ -503,49 +506,52 @@ def master_processor(selected_chromosome, selected_pop):
                 #-f option : Sometimes a file cannot be compressed. Perhaps you are trying to compress a file called “myfile1” but there is already a file called “myfile1.gz”. In this instance, the “gzip” command won’t ordinarily work. To force the “gzip” command to do its stuff simply use -f option
                 #https://www.geeksforgeeks.org/gzip-command-linux/
 
+    #
+    fields_selected_samples = "".join(
+        ["$" + str(i) + "," if i != selected_samples.shape[0]*2+5 else "$" + str(i) for i in range(6, selected_samples.shape[0]*2+5+1, 1)])
+        #create a long string with the index of each column of hap_raw file from 6 (avoiding non-genotype columns) to the index of the last column, i.e., 2 columns times the number of samples plus 5 (because of the non-genotype columns) and 1 (because index 0 is 1)
 
-        fields_selected_samples = "".join(["$" + str(i) + "," if i != selected_samples.shape[0]*2+5 else "$" + str(i) for i in range(6, selected_samples.shape[0]*2+6, 1)])
-
-        os.system(
-            "hap_raw=$( \
-                gunzip \
-                    -c results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
-                awk -F ' ' '{print " + fields_selected_samples + "}'); \
-            hap_clean=$( \
-                gunzip \
-                    -c results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap.gz); \
-            if [ $hap_raw = $hap_clean ]; then \
-                echo 'TRUE'; \
-            else \
-                echo 'FALSE'; \
-            fi")
-
-
-        os.system(
-            "echo $SHELL")
-
-#run the command to count
-subprocess.Popen(
-    args="diff <(echo 1) <(echo 2)", 
-    shell=True, #If true, the command will be executed through the shell.
-    executable='/bin/bash')
-
-            
+    popen_bash(
+        "hap_raw=$( \
+            gunzip \
+                -c results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
+            awk -F ' ' '{print " + fields_selected_samples + "}'); \
+        hap_clean=$( \
+            gunzip \
+                -c results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap.gz); \
+        if [ $hap_raw = $hap_clean ]; then \
+            echo 'TRUE'; \
+        else \
+            echo 'FALSE'; \
+        fi")
 
 
-            #https://stackoverflow.com/a/53529649/12772630
+    #you need to modify the function toonly print if it went well
+    #look this solution
+        #https://stackoverflow.com/questions/16198546/get-exit-code-and-stderr-from-subprocess-call
 
 
-        #CHCK THIS!!!
-            #5013617 records written, 745443 skipped: 0/0/745443 no-ALT/non-biallelic/filtered
-        #CHECK BORKEN PIPE
+    popen_bash("eso=2; eso2=2; if [ $eso = $eso2 ];then echo 'true'; fi")
+
+           
+    #YOU NEED TO SELECT SNPS WITH A MXIMUMG OF 2 ALLELES IN ORDER TO AVOID MULTIALLELIC, WE DID THAT WITH IHS
+         #--max-alleles 2
+         #ASK JESUS AND DAIVD  
+         #https://www.biostars.org/p/141156/
 
 
-        #think checks for the removal of the 5 columns? you are doing checks below about the number of rows and columns
+     #https://stackoverflow.com/a/53529649/12772630
 
-        #CHECK THAT HTE HAP FILE ONLY CONTAINS 0 AND 1 WITH GREP?
 
-        #error borken pipes?
+    #CHCK THIS!!!
+        #5013617 records written, 745443 skipped: 0/0/745443 no-ALT/non-biallelic/filtered
+
+
+    #think checks for the removal of the 5 columns? you are doing checks below about the number of rows and columns
+
+    #CHECK THAT HTE HAP FILE ONLY CONTAINS 0 AND 1 WITH GREP?
+
+    #error borken pipes?
 
 
 
