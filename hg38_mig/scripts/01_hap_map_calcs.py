@@ -48,7 +48,8 @@ def popen_bash(command):
         command, 
         shell=True,
         executable="/bin/bash", 
-        stdout=PIPE, 
+        stdout=PIPE,
+        stderr=PIPE, 
         text=True)
     #we have to use popen in order to ensure we use bash, os.system does not allow that
         #shell=True to execute the command through the shell. This means that the command is passed as a string, and shell-specific features, such as wildcard expansion and variable substitution, can be used.
@@ -66,8 +67,14 @@ def popen_bash(command):
         #stdout: The standard output of the subprocess, as a bytes object.
         #stderr: The standard error of the subprocess, as a bytes object.
 
-    #print only the standard output
-    print(complete_process.stdout)
+    #if stderr is empty
+    if complete_process.stderr == '':
+
+        #print the standard output
+        print(complete_process.stdout)
+    else:
+        #print the error
+        raise ValueError("ERROR! FALSE! WE HAVE A PROBLEM RUNNING COMMAND: " + complete_process.stderr)
 
 #test it
 print("\n#######################################\n#######################################")
@@ -506,41 +513,73 @@ def master_processor(selected_chromosome, selected_pop):
                 #-f option : Sometimes a file cannot be compressed. Perhaps you are trying to compress a file called “myfile1” but there is already a file called “myfile1.gz”. In this instance, the “gzip” command won’t ordinarily work. To force the “gzip” command to do its stuff simply use -f option
                 #https://www.geeksforgeeks.org/gzip-command-linux/
 
-    #
+    #check
+    print("\n#######################################\n#######################################")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": the clean hap file is just the raw hap file but without the first 5 columns?")
+    print("#######################################\n#######################################")
+    #create a long string with the index of each column of hap_raw file
+    #these indexes will be used by awk to select the corresponding columns
     fields_selected_samples = "".join(
         ["$" + str(i) + "," if i != selected_samples.shape[0]*2+5 else "$" + str(i) for i in range(6, selected_samples.shape[0]*2+5+1, 1)])
-        #create a long string with the index of each column of hap_raw file from 6 (avoiding non-genotype columns) to the index of the last column, i.e., 2 columns times the number of samples plus 5 (because of the non-genotype columns) and 1 (because index 0 is 1)
-
+        #from index 6 (avoiding non-genotype columns) to the index of the last column, i.e., 2 columns times the number of samples plus 5 (because of the non-genotype columns) and 1 (because index 0 is 1)
+        #if the index is the last one
+            #add $ to the index and then comma
+        #else
+            #it is the last one so we do not need add comma
+        #join all strings
+    #do comparison
     popen_bash(
-        "hap_raw=$( \
+        "hap_clean_check=$( \
             gunzip \
                 -c results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
             awk -F ' ' '{print " + fields_selected_samples + "}'); \
         hap_clean=$( \
             gunzip \
                 -c results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap.gz); \
-        if [ $hap_raw = $hap_clean ]; then \
+        STATUS='$(cmp --silent $hap_clean_check $hap_clean; echo $?)'; \
+        if [[ $STATUS -eq 0 ]]; then \
             echo 'TRUE'; \
         else \
             echo 'FALSE'; \
         fi")
+        #create again the hap file cleaned
+            #decompress the raw hap file and send it to stdout
+            #select only the genotype columns using awk, which needs to know the delimiter is ' '
+            #save as variable
+        #load the hap file previously cleaned and save it as a variable
+        #check byte by byte whether the two variable are the same
+        #if there is no difference (i.e., STATUS equal to zero) perfect
+            #https://stackoverflow.com/a/53529649/12772630
 
 
-    #you need to modify the function toonly print if it went well
-    #look this solution
-        #https://stackoverflow.com/questions/16198546/get-exit-code-and-stderr-from-subprocess-call
+    popen_bash("eso=2; eso2=2; if [[ $eso = $eso2 ]];then echo 'true'; fi")
 
+    popen_bash(
+        "eso=$(ls | wc -l); \
+        eso2=$(ls | wc -l); \
+        echo $eso; \
+        echo $eso2; \
+        STATUS=$(cmp --silent $eso $eso2; echo $?); \
+        echo $STATUS;\
+        if [[ $STATUS -eq 0 ]]; then \
+            echo 'TRUE'; \
+        else \
+            echo 'FALSE'; \
+        fi")
+    
+    #this does not work
 
-    popen_bash("eso=2; eso2=2; if [ $eso = $eso2 ];then echo 'true'; fi")
+    #maybe == between two variables?
+    #write the files?
 
-           
+    #https://stackoverflow.com/a/53529649/12772630
+
     #YOU NEED TO SELECT SNPS WITH A MXIMUMG OF 2 ALLELES IN ORDER TO AVOID MULTIALLELIC, WE DID THAT WITH IHS
          #--max-alleles 2
          #ASK JESUS AND DAIVD  
          #https://www.biostars.org/p/141156/
 
 
-     #https://stackoverflow.com/a/53529649/12772630
 
 
     #CHCK THIS!!!
