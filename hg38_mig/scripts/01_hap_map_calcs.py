@@ -302,50 +302,6 @@ def master_processor(selected_chromosome, selected_pop):
             #list the samples and count them
             #if the number of samples is equal to the number of samples in the pedigree, perfect
 
-        #inspect
-        print("\n#######################################\n#######################################")
-        print("chr " + selected_chromosome + ": show the variant type, ID, chromosome, position, alleles and frequency for the first snps")
-        print("#######################################\n#######################################")
-        popen_bash(
-            "bcftools query \
-                -f '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF\n' \
-                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-                head -5")
-            #select the format of the query indicating the columns you want to show per SNP.
-                #you can include data from INFO
-                #end with \n to have different lines per SNPs
-
-        #now show only snps
-        print("\n#######################################\n#######################################")
-        print("chr " + selected_chromosome + ": show now only SNPs")
-        print("#######################################\n#######################################")
-        popen_bash(
-            "bcftools filter \
-                -i 'TYPE=\"snp\"' \
-                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-            bcftools query \
-                -f '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF\n' | \
-            head -5")
-            #you can directly filter in query
-            #https://davetang.github.io/learning_vcf_file/#filtering-variant-types
-
-        #see snps of only three samples
-        print("\n#######################################\n#######################################")
-        print("chr " + selected_chromosome + ": see genotypes of these snps for a few samples: ")
-        print("#######################################\n#######################################")
-        popen_bash(" \
-            bcftools filter \
-                -i 'TYPE=\"snp\"' \
-                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-            bcftools query \
-                -s HG00096,HG00097,HG00099 \
-                -f '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | \
-            head -5")
-            #select only snps
-                #you can directly filter in query
-            #make a query making a subset of individuals and then ask in each SNP for the type, chrom... and genotypes. As we are only selecting three samples, we will only see three genotypes
-            #show only first 5 snps
-
         #check
         print("\n#######################################\n#######################################")
         print("chr " + selected_chromosome + ": the chromosome name in the vcf file is correct?")
@@ -365,6 +321,88 @@ def master_processor(selected_chromosome, selected_pop):
             #if the chromosome number is equal to selected_chromosome, perfect
             #equality for strings using 1 bracket is "="
                 #https://stackoverflow.com/questions/18102454/why-am-i-getting-an-unexpected-operator-error-in-bash-string-equality-test
+
+        #inspect
+        print("\n#######################################\n#######################################")
+        print("chr " + selected_chromosome + ": show the variant type, ID, chromosome, position, alleles and frequency for the first snps")
+        print("#######################################\n#######################################")
+        popen_bash(
+            "bcftools query \
+                -f '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF\n' \
+                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+                head -5")
+            #select the format of the query indicating the columns you want to show per SNP.
+                #you can include data from INFO
+                #end with \n to have different lines per SNPs
+
+        #inspect
+        print("\n#######################################\n#######################################")
+        print("chr " + selected_chromosome + ": all variants has '.' for filter?")
+        print("#######################################\n#######################################")
+        popen_bash(" \
+            uniq_filters=$( \
+                bcftools query \
+                    -f '%FILTER\n' \
+                    " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+                uniq); \
+            if [[ $uniq_filters == '.' ]]; then \
+                echo 'True'; \
+            else \
+                echo 'False';\
+            fi")
+            #according to the specific readme of the dataset we are using (http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/README_1kGP_phased_panel_110722.pdf), prior phasing they applied several filters, being one of them that all variants has to be PASS for FILTER. I understand that, because of this, all variants in the chromosome 1 have now ".", being this the unique character. Let's check this for all chromosomes:
+                #make a query asking for the FILTER value of all variants
+                #select unique cases
+                #the unique cases should be a single string with a dot ("."), if yes, perfect.
+
+        #now show only snps
+        print("\n#######################################\n#######################################")
+        print("chr " + selected_chromosome + ": show now only SNPs")
+        print("#######################################\n#######################################")
+        popen_bash(
+            "bcftools view \
+                --include 'TYPE=\"snp\"' \
+                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+            bcftools query \
+                -f '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF\n' | \
+            head -5")
+                #include only those variants with TYPE=snp
+                #query multiple fields for each snp
+
+        #now show only biallelic snps
+        print("\n#######################################\n#######################################")
+        print("chr " + selected_chromosome + ": show now only biallelic SNPs")
+        print("#######################################\n#######################################")
+        popen_bash(
+            "bcftools view \
+                --include 'TYPE=\"snp\"' \
+                --max-alleles 2 \
+                --min-alleles 2 \
+                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+            bcftools query \
+                -f '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF\n' | \
+            head -5")
+            #set the max and min number of alleles to 2, so we only select bi-allelic snps
+                #https://www.biostars.org/p/141156/
+
+        #see snps of only three samples
+        print("\n#######################################\n#######################################")
+        print("chr " + selected_chromosome + ": see genotypes of these snps for a few samples: ")
+        print("#######################################\n#######################################")
+        popen_bash(" \
+            bcftools view \
+                --samples HG00096,HG00097,HG00099 \
+                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+            bcftools view \
+                --include 'TYPE=\"snp\"' \
+                --max-alleles 2 \
+                --min-alleles 2 | \
+            bcftools query \
+                -f '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | \
+            head -5")
+            #select a few samples and then select biallelic snps
+                #IMPORTANT: If filtering (by number of alleles) and subseting (by sample) is in the same line (command), the filtering will be done first. Therefore, you could select SNPs that have 2 alleles when considering the 26 pops, but that are monomorphic (1 allele) for the selected population. Because of this, we have to first subset by sample and then filter by number of alleles whitin the selected samples in separated commands.
+            #query the genotype of each variant
 
 
 
@@ -404,36 +442,39 @@ def master_processor(selected_chromosome, selected_pop):
 
     #see genotypes
     print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": see first genotypes for selected samples")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": see first genotypes of biallelic snps for selected samples")
     print("#######################################\n#######################################")
     popen_bash(" \
-        bcftools query \
-            -i 'TYPE=\"snp\"' \
-            -s " + ",".join(selected_samples) + " \
-            -f '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' \
+        bcftools view \
+            --samples " + ",".join(selected_samples) + " \
             " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+        bcftools view \
+            --include 'TYPE=\"snp\"' \
+            --max-alleles 2 \
+            --min-alleles 2 | \
+        bcftools query \
+            --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | \
         head -5")
-            #make bcftools query
-                #include snps
-                #subset the samples of the selected population
-                #format the query asking for variant type, ID, chromosome, genotype of each variant
-            #show only the first 5 snps
+            #select of the samples of the selected population using a list of them separated by ","
 
     #see complete data for some of the selected samples
     print("\n#######################################\n#######################################")
     print("chr " + selected_chromosome + " - " + selected_pop + ": see complete data for some of the selected samples")
     print("#######################################\n#######################################")
-    popen_bash(
-        "bcftools view \
-            -i 'TYPE=\"snp\"' \
-            -s " + ",".join(selected_samples) + " \
-            -H \
-        " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+    popen_bash(" \
+        bcftools view \
+            --samples " + ",".join(selected_samples) + " \
+            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+        bcftools view \
+            --include 'TYPE=\"snp\"' \
+            --max-alleles 2 \
+            --min-alleles 2 \
+            --no-header | \
         head -3")
         #view complete row, i.e., all INFO fields, genotypes...
-            #for each variant with type=SNP
-            #for the selected samples
-            #and avoid header (-H)
+            #for selected samples
+            #for each variant with type=SNP and 2 alleles in the selected samples
+            #and avoid header
         #show only 10 first
 
     #in case you want to save the filtered dataset, but it is slow the file is very big, so it is not worth it, we can directly go to hap
@@ -449,16 +490,20 @@ def master_processor(selected_chromosome, selected_pop):
     print("\n#######################################\n#######################################")
     print("chr " + selected_chromosome + " - " + selected_pop + ": convert to hap file")
     print("#######################################\n#######################################")
-    popen_bash(
-        "bcftools convert \
-            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz \
-            --include 'TYPE=\"snp\"' \
+    popen_bash(" \
+        bcftools view \
             --samples " + ",".join(selected_samples) + " \
+            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+        bcftools view \
+            --include 'TYPE=\"snp\"' \
+            --max-alleles 2 \
+            --min-alleles 2 | \
+        bcftools convert \
+            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz \
             --hapsample ./results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw")
-        #convert 
-            #those variants that are SNPs
-            #for those samples of the selected pop
-            #to hap format saving in results and using the name of the chromosome and the pop
+        #for those samples of the selected pop
+        #select those variants that are biallelic snps
+        #convert to hap format saving in results and using the name of the chromosome and the pop
             #--vcf-ids 
                 #when this option is given, the second column is set to match the ID column of the VCF.
                 #Without the option, the format follows https://www.cog-genomics.org/plink/2.0/formats#haps with ids (the second column) of the form "CHR:POS_REF_ALT[_END]"
@@ -529,68 +574,65 @@ def master_processor(selected_chromosome, selected_pop):
         #join all strings
     #do comparison
     popen_bash(
-        "hap_clean_check=$( \
-            gunzip \
-                -c results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
-            awk -F ' ' '{print " + fields_selected_samples + "}'); \
-        hap_clean=$( \
-            gunzip \
-                -c results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap.gz); \
-        STATUS='$(cmp --silent $hap_clean_check $hap_clean; echo $?)'; \
+        "gunzip \
+            -c results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
+        awk -F ' ' '{print " + fields_selected_samples + "}' > \
+        results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw_clean_check.hap; \
+        gunzip \
+            -kf results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap.gz; \
+        file1='results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap'; \
+        file2='results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw_clean_check.hap'; \
+        STATUS=$(cmp --silent $file1 $file2; echo $?); \
         if [[ $STATUS -eq 0 ]]; then \
             echo 'TRUE'; \
         else \
             echo 'FALSE'; \
-        fi")
+        fi; \
+        rm $file1; \
+        rm $file2")
         #create again the hap file cleaned
             #decompress the raw hap file and send it to stdout
             #select only the genotype columns using awk, which needs to know the delimiter is ' '
-            #save as variable
-        #load the hap file previously cleaned and save it as a variable
-        #check byte by byte whether the two variable are the same
-        #if there is no difference (i.e., STATUS equal to zero) perfect
-            #https://stackoverflow.com/a/53529649/12772630
+            #save it as a file
+        #decompress the previously cleaned hap file, keeping the compressed file and forcing the decompression in case the decompressed file already exist (-kf)
+            #https://linux.die.net/man/1/gunzip
+        #create two variables with the names of these new files        
+        #check byte by byte whether the two files are the same
+            #cmp takes two files and compare them until 1 byte is different
+            #we make it silent and get the final status
+            #remember that $? gives the return value of the last run command.
+                #For example, 
+                    #ls somefile
+                    #echo $?
+                    #If somefile exists (regardless whether it is a file or directory), you will get the return value thrown by the ls command, which should be 0 (default "success" return value). If it doesn't exist, you should get a number other then 0. The exact number depends on the program.
+                #https://stackoverflow.com/a/6834572/12772630
+            #the return value of cmp will be 0 if the two files are identical, if not, then we have differences between the files
+                #https://stackoverflow.com/a/53529649/12772630
+        #remove the new files
 
 
-    popen_bash("eso=2; eso2=2; if [[ $eso = $eso2 ]];then echo 'true'; fi")
 
-    popen_bash(
-        "eso=$(ls | wc -l); \
-        eso2=$(ls | wc -l); \
-        echo $eso; \
-        echo $eso2; \
-        STATUS=$(cmp --silent $eso $eso2; echo $?); \
-        echo $STATUS;\
-        if [[ $STATUS -eq 0 ]]; then \
-            echo 'TRUE'; \
-        else \
-            echo 'FALSE'; \
-        fi")
-    
-    #this does not work
 
-    #maybe == between two variables?
-    #write the files?
+    ##POR AQUII
+        #--max-missing 1 ??? HOW TO DO IT, allelec count? 
 
-    #https://stackoverflow.com/a/53529649/12772630
+
 
     #YOU NEED TO SELECT SNPS WITH A MXIMUMG OF 2 ALLELES IN ORDER TO AVOID MULTIALLELIC, WE DID THAT WITH IHS
+        #this is done WITHIN EACH POPUALTION, NOT CONSIDERING ALL OF THEM !!! 
          #--max-alleles 2
          #ASK JESUS AND DAIVD  
          #https://www.biostars.org/p/141156/
 
+    #CHECK MAF AND FILTERS IN SLIM
+        #--max-alleles 2 --min-alleles 2 --max-missing 1 --phased
+        #check filters applied in 1000 genomes project
 
 
 
     #CHCK THIS!!!
         #5013617 records written, 745443 skipped: 0/0/745443 no-ALT/non-biallelic/filtered
 
-
-    #think checks for the removal of the 5 columns? you are doing checks below about the number of rows and columns
-
-    #CHECK THAT HTE HAP FILE ONLY CONTAINS 0 AND 1 WITH GREP?
-
-    #error borken pipes?
 
 
 
