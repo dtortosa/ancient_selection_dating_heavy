@@ -614,8 +614,33 @@ def master_processor(selected_chromosome, selected_pop):
 
 
     ##POR AQUII
-        #--max-missing 1 ??? HOW TO DO IT, allelec count? 
 
+    #filters applied in vcftools
+        #--max-alleles 2 --min-alleles 2 --max-missing 1 --phased
+            #https://vcftools.sourceforge.net/man_latest.html
+        #--max-alleles / --min-alleles
+            #Include only sites with a number of alleles greater than or equal to the "--min-alleles" value and less than or equal to the "--max-alleles" value. One of these options may be used without the other.
+                #For example, to include only bi-allelic sites, one could use: vcftools --vcf file1.vcf --min-alleles 2 --max-alleles 2
+            #in bcftools
+                #-m/M, --min-alleles/--max-alleles INT  
+                    #Minimum/maximum number of alleles listed in REF and ALT (e.g. -m2 -M2 for biallelic sites)
+        #--phased
+            #Excludes all sites that contain unphased genotypes
+            #in bcftools
+                #-p/P, --phased/--exclude-phased
+                    #Select/exclude sites where all samples are phased
+        #--max-missing 1
+            #Exclude sites on the basis of the proportion of missing data (defined to be between 0 and 1, where 0 allows sites that are completely missing and 1 indicates no missing data allowed).
+            #in bcftools
+                #
+
+        #bcftools filter --include 'AN=2*N_SAMPLES' [VCF/BCF]
+            #https://www.biostars.org/p/362060/
+
+        #add this as a second condition in --include
+            #https://github.com/samtools/bcftools/issues/822
+
+        ##CHECK WHY YOU SELECTED THESE FITLERS OF VCFTOOLS WHEN CREATING HAP FILES
 
 
     #YOU NEED TO SELECT SNPS WITH A MXIMUMG OF 2 ALLELES IN ORDER TO AVOID MULTIALLELIC, WE DID THAT WITH IHS
@@ -625,8 +650,10 @@ def master_processor(selected_chromosome, selected_pop):
          #https://www.biostars.org/p/141156/
 
     #CHECK MAF AND FILTERS IN SLIM
-        #--max-alleles 2 --min-alleles 2 --max-missing 1 --phased
         #check filters applied in 1000 genomes project
+
+
+        #-p/P, --phased/--exclude-phased        Select/exclude sites where all samples are phased
 
 
 
