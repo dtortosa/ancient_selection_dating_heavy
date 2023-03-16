@@ -41,7 +41,7 @@
 
 #create a wrapper for Popen in order to define a set of arguments and avoid typing them each time
 from subprocess import run, PIPE
-def popen_bash(command):
+def run_bash(command):
 
     #run the command
     complete_process = run(
@@ -80,11 +80,11 @@ def popen_bash(command):
 print("\n#######################################\n#######################################")
 print("see working directory")
 print("#######################################\n#######################################")
-popen_bash("pwd")
+run_bash("pwd")
 print("\n#######################################\n#######################################")
 print("list files/folders there")
 print("#######################################\n#######################################")
-popen_bash("ls")
+run_bash("ls")
 
 
 
@@ -111,7 +111,7 @@ popen_bash("ls")
 input_vcfs_path = "data/vcf_files_hg38"
 
 #create folders to save the results
-popen_bash(
+run_bash(
     "mkdir \
         -p ./results/hap_map_files")
     #-p: no error if the folder already exists, make parent directories as needed
@@ -175,6 +175,14 @@ ped_merged = ped_merged.drop("SampleID", axis=1)
 #change some column names
 ped_merged = ped_merged.rename(columns={"Population": "population", "Superpopulation": "superpopulation"})
 
+
+###POR AQUI, REMOVIN RELATED SAMPLES
+
+ped_merged.loc[(ped_merged["fatherID"] == '0') & (ped_merged["motherID"] == '0'), :]
+ped_merged.loc[(ped_merged["fatherID"] != '0') | (ped_merged["motherID"] != '0'), :]
+
+    #we have 90 more individuals than expected considered as unrelated, it should be 2504 not 2094...
+
 #look
 print("\n#######################################\n#######################################")
 print("final pedigree data")
@@ -201,7 +209,7 @@ print(len(pop_names) == 26)
 print("\n#######################################\n#######################################")
 print("see bcftools version")
 print("#######################################\n#######################################")
-popen_bash("bcftools -v")
+run_bash("bcftools -v")
 
 
 
@@ -225,7 +233,10 @@ def master_processor(selected_chromosome, selected_pop):
         print("\n#######################################\n#######################################")
         print("chr " + selected_chromosome + ": see VCF file version")
         print("#######################################\n#######################################")
-        popen_bash("bcftools head " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | grep -i '^##fileformat'")
+        run_bash(" \
+            bcftools head \
+                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+            grep -i '^##fileformat'")
                 #use bcftools to see the header and then select the row starting with ##fileformat to see the version.
                 #https://www.htslib.org/howtos/headers.html
 
@@ -277,24 +288,24 @@ def master_processor(selected_chromosome, selected_pop):
         print("\n#######################################\n#######################################")
         print("chr " + selected_chromosome + ": see first 10 samples")
         print("#######################################\n#######################################")
-        popen_bash(
-            "bcftools query \
-                -l \
+        run_bash(" \
+            bcftools query \
+                --list-samples \
                 " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-                head -10")
+            head -10")
             #https://samtools.github.io/bcftools/howtos/query.html
 
         #check
         print("\n#######################################\n#######################################")
         print("chr " + selected_chromosome + ": do we have the correct number of total samples?")
         print("#######################################\n#######################################")
-        popen_bash(
-            "n_samples=$( \
+        run_bash(" \
+            n_samples=$( \
                 bcftools query \
-                    -l \
+                    --list-samples \
                     " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
                     wc -l); \
-            if [ $n_samples -eq " + str(ped_merged.shape[0]) + " ]; then \
+            if [[ $n_samples -eq " + str(ped_merged.shape[0]) + " ]]; then \
                 echo 'TRUE'; \
             else \
                 echo 'FALSE'; \
@@ -306,19 +317,19 @@ def master_processor(selected_chromosome, selected_pop):
         print("\n#######################################\n#######################################")
         print("chr " + selected_chromosome + ": the chromosome name in the vcf file is correct?")
         print("#######################################\n#######################################")
-        popen_bash(
-            'chr_vcf=$( \
+        run_bash(" \
+            chr_vcf=$( \
                 bcftools query \
-                    ' + input_vcfs_path + '/1kGP_high_coverage_Illumina.chr' + selected_chromosome + '.filtered.SNV_INDEL_SV_phased_panel.vcf.gz \
-                    --format "%CHROM\n" | \
-                head -1); \
-            if [ $chr_vcf = "chr' + selected_chromosome + '" ]; then \
-                echo "TRUE"; \
+                    " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz \
+                    --format '%CHROM\n' | \
+                uniq); \
+            if [[ $chr_vcf == 'chr" + selected_chromosome + "' ]]; then \
+                echo 'TRUE'; \
             else \
-                echo "FALSE"; \
-            fi')
-            #with bcftools, query for the chromosome of each variant but get only the first line
-            #if the chromosome number is equal to selected_chromosome, perfect
+                echo 'FALSE'; \
+            fi")
+            #with bcftools, query for the chromosome of each variant and get the unique cases
+            #we should have only case, being equal to the selected chromosome
             #equality for strings using 1 bracket is "="
                 #https://stackoverflow.com/questions/18102454/why-am-i-getting-an-unexpected-operator-error-in-bash-string-equality-test
 
@@ -326,9 +337,9 @@ def master_processor(selected_chromosome, selected_pop):
         print("\n#######################################\n#######################################")
         print("chr " + selected_chromosome + ": show the variant type, ID, chromosome, position, alleles and frequency for the first snps")
         print("#######################################\n#######################################")
-        popen_bash(
-            "bcftools query \
-                -f '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF\n' \
+        run_bash(" \
+            bcftools query \
+                --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF\n' \
                 " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
                 head -5")
             #select the format of the query indicating the columns you want to show per SNP.
@@ -339,10 +350,10 @@ def master_processor(selected_chromosome, selected_pop):
         print("\n#######################################\n#######################################")
         print("chr " + selected_chromosome + ": all variants has '.' for filter?")
         print("#######################################\n#######################################")
-        popen_bash(" \
+        run_bash(" \
             uniq_filters=$( \
                 bcftools query \
-                    -f '%FILTER\n' \
+                    --format '%FILTER\n' \
                     " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
                 uniq); \
             if [[ $uniq_filters == '.' ]]; then \
@@ -359,12 +370,12 @@ def master_processor(selected_chromosome, selected_pop):
         print("\n#######################################\n#######################################")
         print("chr " + selected_chromosome + ": show now only SNPs")
         print("#######################################\n#######################################")
-        popen_bash(
-            "bcftools view \
+        run_bash(" \
+            bcftools view \
                 --include 'TYPE=\"snp\"' \
                 " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
             bcftools query \
-                -f '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF\n' | \
+                --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF\n' | \
             head -5")
                 #include only those variants with TYPE=snp
                 #query multiple fields for each snp
@@ -373,23 +384,94 @@ def master_processor(selected_chromosome, selected_pop):
         print("\n#######################################\n#######################################")
         print("chr " + selected_chromosome + ": show now only biallelic SNPs")
         print("#######################################\n#######################################")
-        popen_bash(
-            "bcftools view \
+        run_bash(" \
+            bcftools view \
                 --include 'TYPE=\"snp\"' \
                 --max-alleles 2 \
                 --min-alleles 2 \
                 " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
             bcftools query \
-                -f '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF\n' | \
+                --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF\n' | \
             head -5")
             #set the max and min number of alleles to 2, so we only select bi-allelic snps
                 #https://www.biostars.org/p/141156/
+
+        #show now only biallelic SNPs that are phased for all samples
+        print("\n#######################################\n#######################################")
+        print("chr " + selected_chromosome + ": show now only biallelic SNPs that are phased for all samples")
+        print("#######################################\n#######################################")
+        run_bash(" \
+            bcftools view \
+                --include 'TYPE=\"snp\"' \
+                --max-alleles 2 \
+                --min-alleles 2 \
+                --phased \
+                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+            bcftools query \
+                --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF\n' | \
+            head -5")
+
+        #show now only biallelic SNPs that are phased for all samples have no missing data
+        print("\n#######################################\n#######################################")
+        print("chr " + selected_chromosome + ": show now only biallelic SNPs that are phased for all samples have no missing data")
+        print("#######################################\n#######################################")
+        run_bash(" \
+            bcftools view \
+                --include 'TYPE=\"snp\"' \
+                --max-alleles 2 \
+                --min-alleles 2 \
+                --phased \
+                --genotype ^miss \
+                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+            bcftools query \
+                -f '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF\n' | \
+            head -5")
+                #exclude (^) those genotypes with missing
+                    #there are multiple ways to filter by missing, see for examplem next check
+                        #https://www.biostars.org/p/362060/
+
+        #check that our filter of missing works
+        print("\n#######################################\n#######################################")
+        print("chr " + selected_chromosome + ": check that our filter of missing works")
+        print("#######################################\n#######################################")
+        run_bash(" \
+            n_miss=$( \
+                bcftools view \
+                    --include 'TYPE=\"snp\"' \
+                    --max-alleles 2 \
+                    --min-alleles 2 \
+                    --phased \
+                    --genotype ^miss \
+                    " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+                bcftools view \
+                    --include 'AN_" + selected_pop + "_unrel=0' | \
+                wc -l); \
+            if [[ $n_miss -eq 0 ]]; then \
+                echo 'TRUE'; \
+            else \
+                echo 'FALSE'; \
+            fi")
+                #apply all the filters including the removal of missing genotypes
+                #then try to select only variants with a total number of alleles in called genotypes (AN) equals to 0
+                    #https://www.biostars.org/p/362060/
+                #the number of these variants should be zero
+        
+
+        #POR AQUII
+
+        #REMOVE RELATED INDIVIDUALS IN PEDIGREE
+        #CHECK YOU DO NOT USE ANY INFO FIELD TO FILTER, THESE ARE
+
+        #CHECK ABOUT PHASING AND NUMBER OF ALLELES?
+            #PS is hpasing state and is NOT a field
+
+        #https://www.biostars.org/p/216114/
 
         #see snps of only three samples
         print("\n#######################################\n#######################################")
         print("chr " + selected_chromosome + ": see genotypes of these snps for a few samples: ")
         print("#######################################\n#######################################")
-        popen_bash(" \
+        run_bash(" \
             bcftools view \
                 --samples HG00096,HG00097,HG00099 \
                 " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
@@ -444,7 +526,7 @@ def master_processor(selected_chromosome, selected_pop):
     print("\n#######################################\n#######################################")
     print("chr " + selected_chromosome + " - " + selected_pop + ": see first genotypes of biallelic snps for selected samples")
     print("#######################################\n#######################################")
-    popen_bash(" \
+    run_bash(" \
         bcftools view \
             --samples " + ",".join(selected_samples) + " \
             " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
@@ -461,7 +543,7 @@ def master_processor(selected_chromosome, selected_pop):
     print("\n#######################################\n#######################################")
     print("chr " + selected_chromosome + " - " + selected_pop + ": see complete data for some of the selected samples")
     print("#######################################\n#######################################")
-    popen_bash(" \
+    run_bash(" \
         bcftools view \
             --samples " + ",".join(selected_samples) + " \
             " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
@@ -478,7 +560,7 @@ def master_processor(selected_chromosome, selected_pop):
         #show only 10 first
 
     #in case you want to save the filtered dataset, but it is slow the file is very big, so it is not worth it, we can directly go to hap
-    #popen_bash(
+    #run_bash(
     #    "bcftools view \
     #        " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz \
     #        -i 'TYPE=\"snp\"' \
@@ -490,19 +572,25 @@ def master_processor(selected_chromosome, selected_pop):
     print("\n#######################################\n#######################################")
     print("chr " + selected_chromosome + " - " + selected_pop + ": convert to hap file")
     print("#######################################\n#######################################")
-    popen_bash(" \
+    run_bash(" \
         bcftools view \
             --samples " + ",".join(selected_samples) + " \
             " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
         bcftools view \
             --include 'TYPE=\"snp\"' \
             --max-alleles 2 \
-            --min-alleles 2 | \
+            --min-alleles 2 \
+            --phased \
+            --genotype ^miss | \
         bcftools convert \
             " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz \
             --hapsample ./results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw")
         #for those samples of the selected pop
-        #select those variants that are biallelic snps
+        #select those variants that are 
+            #biallelic 
+            #snps
+            #that are phased for all the selected samples
+            #that do not have missing data
         #convert to hap format saving in results and using the name of the chromosome and the pop
             #--vcf-ids 
                 #when this option is given, the second column is set to match the ID column of the VCF.
@@ -531,7 +619,7 @@ def master_processor(selected_chromosome, selected_pop):
     print("\n#######################################\n#######################################")
     print("chr " + selected_chromosome + " - " + selected_pop + ": see first variants of the hap file")
     print("#######################################\n#######################################")
-    popen_bash(
+    run_bash(
         "gunzip -c results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
         head -2")
     
@@ -539,7 +627,7 @@ def master_processor(selected_chromosome, selected_pop):
     print("\n#######################################\n#######################################")
     print("chr " + selected_chromosome + " - " + selected_pop + ": remove first columns of hap file to leave only haplotype columns")
     print("#######################################\n#######################################")
-    popen_bash(
+    run_bash(
         "gunzip -c results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
         cut \
             --complement \
@@ -573,7 +661,7 @@ def master_processor(selected_chromosome, selected_pop):
             #it is the last one so we do not need add comma
         #join all strings
     #do comparison
-    popen_bash(
+    run_bash(
         "gunzip \
             -c results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
         awk -F ' ' '{print " + fields_selected_samples + "}' > \
@@ -654,6 +742,9 @@ def master_processor(selected_chromosome, selected_pop):
 
 
         #-p/P, --phased/--exclude-phased        Select/exclude sites where all samples are phased
+
+    #you can add mask with bcftools filter
+        #    -M, --mask-file [^]FILE        Soft filter regions listed in a file, "^" to negate
 
 
 
@@ -803,22 +894,6 @@ def master_processor(selected_chromosome, selected_pop):
     #filter by accesibility mask?
 
 
-    for index, variant in enumerate(VCF("data/vcf_files_hg38/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz")): # or VCF('some.bcf')
-        if(index == 0):
-            print(variant) # e.g. REF='A', ALT=['C', 'T']
-
-
-#run in paralle across combinations of chromosomes and populations
-
-##YOU CAN USEE SPARK IN A SINGLE DF!!! THE FILE WILL NOT BE FULLY LOADED IN MEMORY
-
-##clean vcf, then impute to create the hap file as in the slim simulations
-
-#they say this package is faster than the original becuase uses cython (like C but in python)
-#https://stackoverflow.com/questions/72574865/how-to-read-a-vcf-gz-file-in-python
-#https://brentp.github.io/cyvcf2/
-#https://github.com/brentp/cyvcf2
-from cyvcf2 import VCF
 
 ##POR AQUIII
 
@@ -828,6 +903,7 @@ from cyvcf2 import VCF
 #ASK ENARD ABOUT REMOVING RELATED INDIVIDUALS
     #I should remove indels and structural variations, right?
     #¿Estás usando los individuos emparentados? Hasta ahora yo he trabajado con unrelated, pero en el último dataset han metido también 698 que son parientes de los 2504 originales. No sé si lo has hablado con David, pero imagino que habrá que eliminar estos individuos ya que lógicamente sus genotipos van a estar muy correlacionados con individuos ya incluidos en la muestra. Si, por ejemplo, estás calculando la homozigosidad, estarías metiendo secuencias muy correlacionadas que podrían inflar la homozigosidad por parentesco, no porque haya habido selección en la población y ha hecho esa haplotipo más frecuente.
+
 
 
 #WHEN PREPARING MAP FILE, REMEMBER THAT VCF IS 1 BASED!
