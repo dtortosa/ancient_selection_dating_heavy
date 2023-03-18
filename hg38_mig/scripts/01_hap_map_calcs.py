@@ -176,12 +176,49 @@ ped_merged = ped_merged.drop("SampleID", axis=1)
 ped_merged = ped_merged.rename(columns={"Population": "population", "Superpopulation": "superpopulation"})
 
 
-###POR AQUI, REMOVIN RELATED SAMPLES
+##explore the pedigree in more detail
+#check the number of males/females
+print("\n#######################################\n#######################################")
+print("Do we have 1,598 males and 1,604 females?")
+print("#######################################\n#######################################")
+ped_merged.loc[ped_merged["sex"] == 1, :]
+ped_merged.loc[ped_merged["sex"] == 2, :]
+
+    #POR AQUIII
+
+    #As part of this publication, we sequenced 3,202 lymphoblastoid cell line (LCL) samples from the 1kGP collection, including 1,598 males and 1,604 females.
+        #https://www.cell.com/cell/fulltext/S0092-8674(22)00991-6?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867422009916%3Fshowall%3Dtrue
+    #The number of males and females matches what I have
+
+#
+ped_merged.loc[ped_merged["superpopulation"] == "AFR", :]
+ped_merged.loc[ped_merged["superpopulation"] == "EUR", :]
+ped_merged.loc[ped_merged["superpopulation"] == "EAS", :]
+ped_merged.loc[ped_merged["superpopulation"] == "SAS", :]
+ped_merged.loc[ped_merged["superpopulation"] == "AMR", :]
+    #The 3,202 samples were drawn from 26 populations (listed in Table S1) across the following 5 continental ancestry groups: African (AFR, n = 893), European (EUR, n = 633), East Asian (EAS, n = 601), South Asian (SAS, n = 585), and American (AMR, n = 490)
+        #https://www.cell.com/cell/fulltext/S0092-8674(22)00991-6?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867422009916%3Fshowall%3Dtrue
+        #the number of samples of populations matches what I have except for the case of EAS and SAS. I think EAS and SAS are flipped, because i got the exact number but in the opposite way.
+            #indeed, I have sum the number of samples of EAS and SAS according to Table S1 of the paper and matches what I have
+                #EAS: 44+49+46+57+86+77+56+48+60+62=585
+                #SAS: 60+71+56+47+61+46+77+69+65+49=601
+                #https://www.cell.com/cms/10.1016/j.cell.2022.08.004/attachment/1e0ee9bf-5514-4660-8ff2-6d2c2be97687/mmc1
+
+
 
 ped_merged.loc[(ped_merged["fatherID"] == '0') & (ped_merged["motherID"] == '0'), :]
 ped_merged.loc[(ped_merged["fatherID"] != '0') | (ped_merged["motherID"] != '0'), :]
+    #Among the 3,202 samples, there are 602 father-mother-child trios (including 2 trios that are part of a multi-generational family, and 10 trios that were split from 5 quads for the purpose of pedigree-based correction applied after haplotype phasing) and 6 parent-child duos.
+        #https://www.cell.com/cell/fulltext/S0092-8674(22)00991-6?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867422009916%3Fshowall%3Dtrue
+    #the total number of trios and duos is 608, which matches the number of cases with parentID different from zero. The rest of samples are unrelated.
+    #it is ok if they 3202-608 gives 2594 instead 2504. 2504 is the sample size of phase 3, but there are more samples in this new phase of the project.
+    #the problem is with the rest of the samples. 3202-608 is 2594, not 2504, which is in theory, the number of unrelated-samples
 
-    #we have 90 more individuals than expected considered as unrelated, it should be 2504 not 2094...
+
+
+
+
+
 
 #look
 print("\n#######################################\n#######################################")
