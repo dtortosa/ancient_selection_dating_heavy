@@ -138,15 +138,19 @@ run_bash(
 # pops prep #
 #############
 
-#load pedigree of the latest version of the phased data that has sample IDs, sex and parents but no pop names
+#load pedigree of the latest version of the phased data that has sample IDs, sex and parents but no pop names. 
+#Downloaded from: http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/1kGP.3202_samples.pedigree_info.txt
 import pandas as pd
-samples_pedigree = pd.read_csv("data/pedigrees/1kGP.3202_samples.pedigree_info.txt", 
+samples_pedigree = pd.read_csv(
+    "data/pedigrees/1kGP.3202_samples.pedigree_info.txt", 
     sep=" ", 
     header=0, 
     low_memory=False)
 
 #load also a pedigree present in the main directory of the high coverage data. This has sample and pop IDs, but parents and sex are different with respect to the pedigree of the new sample
-samples_pedigree_pop = pd.read_csv("data/pedigrees/20130606_g1k_3202_samples_ped_population.txt", 
+#downloaded from: http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/20130606_g1k_3202_samples_ped_population.txt
+samples_pedigree_pop = pd.read_csv(
+    "data/pedigrees/20130606_g1k_3202_samples_ped_population.txt", 
     sep=" ", 
     header=0, 
     low_memory=False)
@@ -205,6 +209,10 @@ ped_merged.loc[ped_merged["sex"] == 2, :]
     #YOU HAVE MODIFIED RUN_BAHS FUNCTION, but it should be ok, the default behaviour is like you are using it here
     #CHECK AGAIN THIS.
 
+    #CHECK THIS, THIS DOES NOT MATCH WAHT THE PAPER IS SAYING, BUT THEY TALK ABOUT RELEASES DURING 2020
+        #http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/README_2504_plus_additional_698_related_samples.txt
+
+
     #As part of this publication, we sequenced 3,202 lymphoblastoid cell line (LCL) samples from the 1kGP collection, including 1,598 males and 1,604 females.
         #https://www.cell.com/cell/fulltext/S0092-8674(22)00991-6?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867422009916%3Fshowall%3Dtrue
     #The number of males and females matches what I have
@@ -227,12 +235,23 @@ ped_merged.loc[ped_merged["superpopulation"] == "AMR", :]
 
 ped_merged.loc[(ped_merged["fatherID"] == '0') & (ped_merged["motherID"] == '0'), :]
 ped_merged.loc[(ped_merged["fatherID"] != '0') | (ped_merged["motherID"] != '0'), :]
-    #Among the 3,202 samples, there are 602 father-mother-child trios (including 2 trios that are part of a multi-generational family, and 10 trios that were split from 5 quads for the purpose of pedigree-based correction applied after haplotype phasing) and 6 parent-child duos.
+    #Among the 3,202 samples, there are 602 father-mother-child trios
+    #This includes 
+        #2 trios that are part of a multi-generational family, i.e., one sample is child of another sample but also is parent of another sample. This would be the case of HG00702.
+        #10 trios that were split from 5 quads for the purpose of pedigree-based correction applied after haplotype phasing). I GUESS a quad would be a sample that is parent of another sample, that other sample is in turn parent of another sample. This would be the case of HG00656, which is parent of HG00702 that in turn is parent of HG00703.
+        #6 parent-child duos. Where a sample only has one parent included here. For example, HG02569 only has mother (HG02568).
         #https://www.cell.com/cell/fulltext/S0092-8674(22)00991-6?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867422009916%3Fshowall%3Dtrue
     #the total number of trios and duos is 608, which matches the number of cases with parentID different from zero. The rest of samples are unrelated.
     #it is ok if they 3202-608 gives 2594 instead 2504. 2504 is the sample size of phase 3, but there are more samples in this new phase of the project.
-    #the problem is with the rest of the samples. 3202-608 is 2594, not 2504, which is in theory, the number of unrelated-samples
 
+
+##duos, which should be 6
+ped_merged.loc[(ped_merged["fatherID"] == '0') & (ped_merged["motherID"] != '0'), :]
+ped_merged.loc[(ped_merged["fatherID"] != '0') & (ped_merged["motherID"] == '0'), :]
+
+
+samples_pedigree_pop.loc[(samples_pedigree_pop["FatherID"] == '0') & (samples_pedigree_pop["MotherID"] == '0'), :]
+samples_pedigree_pop.loc[(samples_pedigree_pop["FatherID"] != '0') | (samples_pedigree_pop["MotherID"] != '0'), :]
 
 
 
