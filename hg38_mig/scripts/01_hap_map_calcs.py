@@ -39,9 +39,10 @@
 # define function to run bash commands #
 ########################################
 
-#create a wrapper for Popen in order to define a set of arguments and avoid typing them each time
+#create a wrapper for subprocess.run in order to define a set of arguments and avoid typing them each time. We will ensure that we are using bash always and not sh.
 from subprocess import run, PIPE
-def run_bash(command):
+#command="ls"
+def run_bash(command, return_value=False):
 
     #run the command
     complete_process = run(
@@ -68,12 +69,27 @@ def run_bash(command):
         #stderr: The standard error of the subprocess, as a bytes object.
 
     #if stderr is empty
-    if complete_process.stderr == '':
+    if complete_process.stderr=="":
 
-        #print the standard output
+        #print the standard output without "\n" and other characters
         print(complete_process.stdout)
+
+        #return also the value if required
+        if return_value==True:
+            return complete_process.stdout
+    elif ("Warning" in complete_process.stderr) | ("warning" in complete_process.stderr):
+
+        #print the standard output without "\n" and other characters
+        print(complete_process.stdout)
+
+        #print the standard error without stopping
+        print("WARNING! FALSE!: " + complete_process.stderr)
+
+        #return also the value if required
+        if return_value==True:
+            return complete_process.stdout
     else:
-        #print the error
+        #print the standard error and stop
         raise ValueError("ERROR! FALSE! WE HAVE A PROBLEM RUNNING COMMAND: " + complete_process.stderr)
 
 #test it
@@ -185,6 +201,9 @@ ped_merged.loc[ped_merged["sex"] == 1, :]
 ped_merged.loc[ped_merged["sex"] == 2, :]
 
     #POR AQUIII
+
+    #YOU HAVE MODIFIED RUN_BAHS FUNCTION, but it should be ok, the default behaviour is like you are using it here
+    #CHECK AGAIN THIS.
 
     #As part of this publication, we sequenced 3,202 lymphoblastoid cell line (LCL) samples from the 1kGP collection, including 1,598 males and 1,604 females.
         #https://www.cell.com/cell/fulltext/S0092-8674(22)00991-6?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867422009916%3Fshowall%3Dtrue
@@ -1028,4 +1047,10 @@ for zipinfo in zipinfos:
 
 
 
-#
+### 
+#finish hap and map files as soon as possible and send to elise
+#while she calculates flex sweep prob, you calculate predictors in non-overlapping windwos for hg38, ask david about non-overlapping. It can be good to explore the whole genome, have more data, reduce correlation between windows, and we can just add the number of interest genes in each window, but then who we do the enrichment test? maybe taking the closest non-overlapping window to the center of each gene?
+
+#this should be done in April, in may you could spend time doing modeling and get first results in hg38, ready for ambizione and conferences.
+
+#in these two months, maybe you could have ready the cleaning of combat genes data, and you can show just a preliminary manhantan plot for the change in fitness? 
