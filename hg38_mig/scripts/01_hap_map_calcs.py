@@ -197,82 +197,113 @@ ped_merged = ped_merged.rename(columns={"Population": "population", "Superpopula
 
 
 ##explore the pedigree in more detail
-#check the number of males/females
+#As part of this publication, we sequenced 3,202 lymphoblastoid cell line (LCL) samples from the 1kGP collection, including 1,598 males and 1,604 females.
+    #https://www.cell.com/cell/fulltext/S0092-8674(22)00991-6?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867422009916%3Fshowall%3Dtrue
+#check
 print("\n#######################################\n#######################################")
-print("Do we have 1,598 males and 1,604 females?")
+print("Do we have 1598 males?")
 print("#######################################\n#######################################")
-ped_merged.loc[ped_merged["sex"] == 1, :]
-ped_merged.loc[ped_merged["sex"] == 2, :]
+male_samples = ped_merged.loc[ped_merged["sex"] == 1, :]
+print(male_samples.shape[0] == 1598)
+print(male_samples)
+print("\n#######################################\n#######################################")
+print("Do we have 1604 females?")
+print("#######################################\n#######################################")
+female_samples = ped_merged.loc[ped_merged["sex"] == 2, :]
+print(female_samples.shape[0] == 1604)
+print(female_samples)
 
-    #POR AQUIII
-
-    #YOU HAVE MODIFIED RUN_BAHS FUNCTION, but it should be ok, the default behaviour is like you are using it here
-    #CHECK AGAIN THIS.
-
-    #CHECK THIS, THIS DOES NOT MATCH WAHT THE PAPER IS SAYING, BUT THEY TALK ABOUT RELEASES DURING 2020
-        #http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/README_2504_plus_additional_698_related_samples.txt
-
-
-    #As part of this publication, we sequenced 3,202 lymphoblastoid cell line (LCL) samples from the 1kGP collection, including 1,598 males and 1,604 females.
-        #https://www.cell.com/cell/fulltext/S0092-8674(22)00991-6?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867422009916%3Fshowall%3Dtrue
-    #The number of males and females matches what I have
-
-#
-ped_merged.loc[ped_merged["superpopulation"] == "AFR", :]
-ped_merged.loc[ped_merged["superpopulation"] == "EUR", :]
-ped_merged.loc[ped_merged["superpopulation"] == "EAS", :]
-ped_merged.loc[ped_merged["superpopulation"] == "SAS", :]
-ped_merged.loc[ped_merged["superpopulation"] == "AMR", :]
-    #The 3,202 samples were drawn from 26 populations (listed in Table S1) across the following 5 continental ancestry groups: African (AFR, n = 893), European (EUR, n = 633), East Asian (EAS, n = 601), South Asian (SAS, n = 585), and American (AMR, n = 490)
-        #https://www.cell.com/cell/fulltext/S0092-8674(22)00991-6?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867422009916%3Fshowall%3Dtrue
+#see the number of samples per superpopulation
+#The 3,202 samples were drawn from 26 populations (listed in Table S1) across the following 5 continental ancestry groups: African (AFR, n = 893), European (EUR, n = 633), East Asian (EAS, n = 601), South Asian (SAS, n = 585), and American (AMR, n = 490)
+    #https://www.cell.com/cell/fulltext/S0092-8674(22)00991-6?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867422009916%3Fshowall%3Dtrue
+afr_samples = ped_merged.loc[ped_merged["superpopulation"] == "AFR", :]
+eur_samples = ped_merged.loc[ped_merged["superpopulation"] == "EUR", :]
+eas_samples = ped_merged.loc[ped_merged["superpopulation"] == "EAS", :]
+sas_samples = ped_merged.loc[ped_merged["superpopulation"] == "SAS", :]
+amr_samples = ped_merged.loc[ped_merged["superpopulation"] == "AMR", :]
+#check
+print("\n#######################################\n#######################################")
+print("Do we have the correct number of samples per superpopulation?")
+print("#######################################\n#######################################")
+print(afr_samples.shape[0] == 893)
+print(afr_samples)
+print(eur_samples.shape[0] == 633)
+print(eur_samples)
+print(eas_samples.shape[0] == 585)
+print(eas_samples)
+print(sas_samples.shape[0] == 601)
+print(sas_samples)
+print(amr_samples.shape[0] == 490)
+print(amr_samples)
         #the number of samples of populations matches what I have except for the case of EAS and SAS. I think EAS and SAS are flipped, because i got the exact number but in the opposite way.
-            #indeed, I have sum the number of samples of EAS and SAS according to Table S1 of the paper and matches what I have
-                #EAS: 44+49+46+57+86+77+56+48+60+62=585
-                #SAS: 60+71+56+47+61+46+77+69+65+49=601
-                #https://www.cell.com/cms/10.1016/j.cell.2022.08.004/attachment/1e0ee9bf-5514-4660-8ff2-6d2c2be97687/mmc1
-
-
-
-ped_merged.loc[(ped_merged["fatherID"] == '0') & (ped_merged["motherID"] == '0'), :]
-ped_merged.loc[(ped_merged["fatherID"] != '0') | (ped_merged["motherID"] != '0'), :]
-    #Among the 3,202 samples, there are 602 father-mother-child trios
+        #indeed, I have sum the number of samples of EAS and SAS according to Table S1 of the paper and matches what I have
+            #EAS: 44+49+46+57+86+77+56+48+60+62=585
+            #SAS: 60+71+56+47+61+46+77+69+65+49=601
+        #https://www.cell.com/cms/10.1016/j.cell.2022.08.004/attachment/1e0ee9bf-5514-4660-8ff2-6d2c2be97687/mmc1.pdf
+#Among the 3,202 samples, there are 602 father-mother-child trios
+trios = ped_merged.loc[(ped_merged["fatherID"] != '0') & (ped_merged["motherID"] != '0'), :]
+    #select samples with father and mother
     #This includes 
         #2 trios that are part of a multi-generational family, i.e., one sample is child of another sample but also is parent of another sample. This would be the case of HG00702.
         #10 trios that were split from 5 quads for the purpose of pedigree-based correction applied after haplotype phasing). I GUESS a quad would be a sample that is parent of another sample, that other sample is in turn parent of another sample. This would be the case of HG00656, which is parent of HG00702 that in turn is parent of HG00703.
-        #6 parent-child duos. Where a sample only has one parent included here. For example, HG02569 only has mother (HG02568).
         #https://www.cell.com/cell/fulltext/S0092-8674(22)00991-6?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867422009916%3Fshowall%3Dtrue
-    #the total number of trios and duos is 608, which matches the number of cases with parentID different from zero. The rest of samples are unrelated.
-    #it is ok if they 3202-608 gives 2594 instead 2504. 2504 is the sample size of phase 3, but there are more samples in this new phase of the project.
-
-
-##duos, which should be 6
-ped_merged.loc[(ped_merged["fatherID"] == '0') & (ped_merged["motherID"] != '0'), :]
-ped_merged.loc[(ped_merged["fatherID"] != '0') & (ped_merged["motherID"] == '0'), :]
-
-
-samples_pedigree_pop.loc[(samples_pedigree_pop["FatherID"] == '0') & (samples_pedigree_pop["MotherID"] == '0'), :]
-samples_pedigree_pop.loc[(samples_pedigree_pop["FatherID"] != '0') | (samples_pedigree_pop["MotherID"] != '0'), :]
-
-
-
-
-
-
-#look
+#check
 print("\n#######################################\n#######################################")
-print("final pedigree data")
+print("Do we have 602 trios?")
 print("#######################################\n#######################################")
-print(ped_merged)
+print(trios.shape[0] == 602)
+print(trios)
+
+#we also have duos
+duos = ped_merged.loc[
+    (ped_merged["fatherID"] == '0') & (ped_merged["motherID"] != '0') | 
+    (ped_merged["fatherID"] != '0') & (ped_merged["motherID"] == '0'), :]
+    #select samples that
+        #have mother but not father OR
+        #have father but not mother
+    #there are also 6 parent-child duos. Where a sample only has one parent included here. For example, HG02569 only has mother (HG02568), not father.
+        #https://www.cell.com/cell/fulltext/S0092-8674(22)00991-6?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867422009916%3Fshowall%3Dtrue
+#check
+print("\n#######################################\n#######################################")
+print("Do we have 6 duos?")
+print("#######################################\n#######################################")
+print(duos.shape[0] == 6)
+print(duos)
+
+#the total number of trios and duos is 608, which matches the number of cases with parentID different from zero.
+print("\n#######################################\n#######################################")
+print("Do we have 608 duos and trios?")
+print("#######################################\n#######################################")
+print(duos.shape[0] + trios.shape[0] == 608)
+
+#The rest of samples are unrelated.
+unrelated_samples = ped_merged.loc[(ped_merged["fatherID"] == '0') & (ped_merged["motherID"] == '0'), :]
+#check
+print("\n#######################################\n#######################################")
+print("Do we have 2594 unrelated samples?")
+print("#######################################\n#######################################")
+print(unrelated_samples.shape[0] == 2594)
+print(unrelated_samples)
+    #They do not give an exact number of unrelated samples. I think it is ok if 3202-608 gives 2594 instead 2504. 2504 is the sample size of phase 3, but there are more samples in this new phase of the project.
+        #https://www.cell.com/cell/fulltext/S0092-8674(22)00991-6?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867422009916%3Fshowall%3Dtrue#supplementaryMaterial
+
+#there is an older readme saying that the number of trios is 698 (http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/README_2504_plus_additional_698_related_samples.txt), but this comes from older data, a dataset released in 2020. In contrast, our data here matches with the paper of the latest release
+
+#we are going to use unrelated samples only. If we are calculating haplotype homozygosity by counting haplotypes, if a father and child have the same haplotype, this is not caused by selection but just by shared ancestry
+print("\n#######################################\n#######################################")
+print("see final pedigree data with only unrelated samples")
+print("#######################################\n#######################################")
+print(unrelated_samples)
 
 #extract the distinct population names
-pop_names = ped_merged["population"].unique()
+pop_names = unrelated_samples["population"].unique()
 
 #check
 print("\n#######################################\n#######################################")
-print("see distinct population names and check they are 26")
+print("Do we have 26 pops?")
 print("#######################################\n#######################################")
-print(pop_names)
 print(len(pop_names) == 26)
+print(pop_names)
 
 
 
@@ -372,7 +403,7 @@ def master_processor(selected_chromosome, selected_pop):
 
         #check
         print("\n#######################################\n#######################################")
-        print("chr " + selected_chromosome + ": do we have the correct number of total samples?")
+        print("chr " + selected_chromosome + ": do we have as samples as the total number of samples considering unrelated individuals and trios-duos?")
         print("#######################################\n#######################################")
         run_bash(" \
             n_samples=$( \
@@ -519,7 +550,7 @@ def master_processor(selected_chromosome, selected_pop):
                     --genotype ^miss \
                     " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
                 bcftools view \
-                    --include 'AN_" + selected_pop + "_unrel=0' | \
+                    --genotype miss | \
                 wc -l); \
             if [[ $n_miss -eq 0 ]]; then \
                 echo 'TRUE'; \
@@ -534,8 +565,9 @@ def master_processor(selected_chromosome, selected_pop):
 
         #POR AQUII
 
-        #REMOVE RELATED INDIVIDUALS IN PEDIGREE
-        #CHECK YOU DO NOT USE ANY INFO FIELD TO FILTER, THESE ARE
+        #it is important to be sure that the fields you are using for filtering, are updated after subseting samples. Of course, type="snp" will be always "snp" irrespectively of the samples we select, but this is not the case of the number of alleles, because you can have SNPs with 3 alleles considering all 26 populations, but then in GBR they can have only 2 or 1. We are interested in SNPs that are biallelic within the selected populaion, CHECK DAVID
+        #The same goes for phasing and genotype ^miss. You have to be sure that these filters only consider data from the filtered samples, not fixed data in fields that are not updated.
+
 
         #CHECK ABOUT PHASING AND NUMBER OF ALLELES?
             #PS is hpasing state and is NOT a field
@@ -561,6 +593,96 @@ def master_processor(selected_chromosome, selected_pop):
                 #IMPORTANT: If filtering (by number of alleles) and subseting (by sample) is in the same line (command), the filtering will be done first. Therefore, you could select SNPs that have 2 alleles when considering the 26 pops, but that are monomorphic (1 allele) for the selected population. Because of this, we have to first subset by sample and then filter by number of alleles whitin the selected samples in separated commands.
             #query the genotype of each variant
 
+        #IMPORTANT NOTES AND CHECKS ABOUT FILTERING
+        print("\n#######################################\n#######################################")
+        print("chr " + selected_chromosome + ": We are going to use dummy vcf files in order to check that the subset and filtering methods we are using are correct: ")
+        print("#######################################\n#######################################")
+        
+        #see dummy snps
+        print("\n#######################################\n#######################################")
+        print("chr " + selected_chromosome + ": see dummy SNPs: ")
+        print("#######################################\n#######################################")
+        run_bash(" \
+            bcftools view \
+                data/dummy_vcf_files/dummy_example.vcf | \
+            bcftools query \
+                -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+            #we have 4 SNPs, with different number of alleles, frequencies, etc...
+                #SNP rs6054257 20 14370 G A 6 3 0.5 GTs: 1|0 1|1 0|0
+                #SNP rs6040351 20 17330 T A 6 2 0.333 GTs: 0|0 1|0 1|0
+                #SNP rs6040355 20 1110696 A G,T 6 2,2 0.333,0.333 GTs: 1|1 2|2 0|0
+                #SNP rs6054255 20 14371 G C 6 3 0.667 GTs: 0|1 1|1 1|0
+
+        #primero 
+        print("\n#######################################\n#######################################")
+        print("chr " + selected_chromosome + ": select only the first and second sample, to reduce the number of alleles of the multiallelic snp to 2, also check how AN and AC changes but AF, ALT... ")
+        print("#######################################\n#######################################")
+        run_bash(" \
+            bcftools view \
+                --samples NA00001,NA00002 \
+                data/dummy_vcf_files/dummy_example.vcf | \
+            bcftools view \
+                --include 'TYPE=\"snp\"' | \
+            bcftools query \
+                -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+            #now, the multiallelic snp only have allele 1 and 2 but no 0, in the subset
+            #AN AND AC ARE UPDATED: you can see in the last snp how the total number of alleles is 4 now, and the count for ALT is 2, while in the whole set is 6 and 3.
+            #AF IS NOT UPDATED: The frequency of ALT should be now 0.75, because is 3/4, but the old frequency is retained.
+
+        #now check if the --max-allele filter works, it should not because ALT is not updated after subsetting
+        print("\n#######################################\n#######################################")
+        print("chr " + selected_chromosome + ": now check if the --max-allele filter works, it should not because ALT is not updated after subsetting: ")
+        print("#######################################\n#######################################")
+        run_bash(" \
+            bcftools view \
+                --samples NA00001,NA00002 \
+                data/dummy_vcf_files/dummy_example.vcf | \
+            bcftools view \
+                --include 'TYPE=\"snp\"' \
+                --max-alleles 2 \
+                --min-alleles 2 | \
+            bcftools query \
+                -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+            #we have removed the third sample, so the multiallelic snp is no longer multiallelic because there are only two alleles in the subset, but --max-alleles 2 still removes this snp because ALT remains the same despite the subsetting.
+            #therefore, we cannot just use this to filter a subset of samples
+
+        #try --trim-alt-alleles
+        print("\n#######################################\n#######################################")
+        print("chr " + selected_chromosome + ": try --trim-alt-alleles")
+        print("#######################################\n#######################################")
+        run_bash(" \
+            bcftools view \
+                --samples NA00001,NA00003\
+                --trim-alt-alleles \
+                data/dummy_vcf_files/dummy_example.vcf | \
+            bcftools view \
+                --include 'TYPE=\"snp\"' \
+                --max-alleles 2 \
+                --min-alleles 2 | \
+            bcftools query \
+                -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+            #--trim-alt-alleles
+                #remove alleles not seen in the genotype fields from the ALT column. Note that if no alternate allele remains after trimming, the record itself is not removed but ALT is set to ".". If the option -s or -S is given, removes alleles not seen in the subset. INFO and FORMAT tags declared as Type=A, G or R will be trimmed as well.
+                    #https://samtools.github.io/bcftools/bcftools.html
+                #therefore, we have to subset the samples and apply this option in the same step, if not we do not get rid of snps with the lacking allele?
+                    #CHECK THIS
+
+            #PROBLEM, if the ancestral dissapear, the REF remains the same but now you have 0 for one of the alt..
+                #not sure if this is very frequent...
+
+
+        #CHECK WITH MONOMORPHIC
+
+
+
+        #fixed fileds are fixes, the inly updating is for INFO/AN INFO/AC
+            #    -I, --no-update                   Do not (re)calculate INFO fields for the subset (currently INFO/AC and INFO/AN)
+        #genotype/format fields changes
+
+        #the problem is that min/max allele flags use REF/ALT column to calculate number of alleles, so i guess you could remove snps that are multialleles because some african pop, but bi allelic
+
+        #CHECK YOU DO NOT USE ANY INFO FIELD that can be influenced by subseting samples. For example, if you select a subset of samples, obvioulsy count of alleles or the HWE p-value will be different. 
+
 
 
     #######################
@@ -568,7 +690,7 @@ def master_processor(selected_chromosome, selected_pop):
     #######################
 
     #select the sample IDs for the selected population
-    subset_pop = ped_merged.loc[ped_merged["population"] == selected_pop, :]
+    subset_pop = unrelated_samples.loc[unrelated_samples["population"] == selected_pop, :]
 
     #reset index
     subset_pop = subset_pop.reset_index(
@@ -577,9 +699,10 @@ def master_processor(selected_chromosome, selected_pop):
 
     #check
     print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": check we only have the selected pop")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": check we only have the selected pop and unrelated samples")
     print("#######################################\n#######################################")
-    print(all(subset_pop["population"] == selected_pop))
+    print(subset_pop["population"].unique()[0] == selected_pop)
+    print(all((subset_pop["fatherID"] == "0") & (subset_pop["motherID"] == "0")))
 
     #select the sample IDs
     selected_samples = subset_pop["sampleID"]
@@ -1062,6 +1185,10 @@ for zipinfo in zipinfos:
 #parse large vcf file?
 #https://www.biostars.org/p/101444/
 
+
+#ASK DAVID
+    #remove unrelated samples
+        #we are going to use unrelated samples only. If we are calculating haplotype homozygosity by counting haplotypes, if a father and child have the same haplotype, this is not caused by selection but just by shared ancestry
 
 
 
