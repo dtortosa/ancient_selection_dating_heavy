@@ -330,6 +330,370 @@ run_bash("bcftools -v")
 
 
 
+####################################################
+# check bcftools's behaviour with a dummy vcf file #
+####################################################
+
+print("\n#######################################\n#######################################")
+print("chr " + selected_chromosome + " - " + selected_pop + ": We are going to use dummy vcf file to check the behaviour of bcftools: ")
+print("#######################################\n#######################################")
+        
+
+
+
+ 
+        #try --trim-alt-alleles
+        print("\n#######################################\n#######################################")
+        print("chr " + selected_chromosome + " - " + selected_pop + ": try --trim-alt-alleles")
+        print("#######################################\n#######################################")
+        run_bash(" \
+            bcftools view \
+                --samples NA00001,NA00003\
+                --trim-alt-alleles \
+                data/dummy_vcf_files/dummy_example.vcf | \
+            bcftools view \
+                --include 'TYPE=\"snp\"' \
+                --max-alleles 2 \
+                --min-alleles 2 | \
+            bcftools query \
+                -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+            #--trim-alt-alleles
+                #remove alleles not seen in the genotype fields from the ALT column. Note that if no alternate allele remains after trimming, the record itself is not removed but ALT is set to ".". If the option -s or -S is given, removes alleles not seen in the subset. INFO and FORMAT tags declared as Type=A, G or R will be trimmed as well.
+                    #https://samtools.github.io/bcftools/bcftools.html
+                #therefore, we have to subset the samples and apply this option in the same step, if not we do not get rid of snps with the lacking allele?
+                    #CHECK THIS
+
+
+
+            #PROBLEM, if the ancestral dissapear, the REF remains the same but now you have 0 for one of the alt..
+                #not sure if this is very frequent...
+
+            #ALSO, multiallelic snps in 1000 genomes are split in several lines, so this will not work
+
+
+
+
+
+
+
+        #POR AQUII
+
+
+
+
+
+
+
+        #CHECK ABOUT PHASING AND NUMBER OF ALLELES?
+            #PS is hpasing state and is NOT a field
+
+        #https://www.biostars.org/p/216114/
+
+
+
+        #por aquiiiii
+        #next lines do the most updated filters
+        #clean previus lines and update the lines with selected subset samples
+
+
+        #CHECK THAT WE HAVE MULTIALLEIC SPLIT IN 1000 GENOMES
+
+
+
+        ###PON DUMMY AL PRINCIPIO QUE SE CORRA UNA SOLA VEZ, O INCLUSO, SACALLO DE LA FUNCION!
+
+
+
+
+
+       #see dummy vcf file including multiallelic snps, but split those in different lines
+        run_bash(" \
+            bcftools view \
+                data/dummy_vcf_files/dummy_example.vcf | \
+            bcftools norm \
+                --multiallelic -snps | \
+            bcftools query \
+                -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+            #split multiallelic SNPs in different lines
+                #--multiallelic -snps
+                    #split multiallelic sites into biallelic records (-) or join biallelic sites into multiallelic records (+).
+                    #https://samtools.github.io/bcftools/bcftools.html#norm
+            #when a multiallelic snp (e.g., REF=A, ALT=G,T) is split in several lines, having all the same ID and position, thus being considered duplicates. This was done in 1000 genomes data. They also add 1 to the position of each new line to do the phasing, but then they put all lines in the same position.
+                    #http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/README_1kGP_phased_panel_110722.pdf 
+                #First scenario: rs6040355
+                    #the first line shows the genotypes for A and G, so a sample that is G|G would be 1|1, but a T|T sample would be 0|0, although 0 should be only A. Indeed, A|A would also be 0|0. This is ok, because the next line shows genotypes for A and T, and that T|T sample will be 1|1.
+                        #This case is multiallelic, so we should remove both lines by removing duplicates.
+                #Second scenario: rs6040356
+                    #we could also have a case where the second ALT does not exist in our subpop, then the first line would be 0s (for A) and 1s (for G), while the second one would be all zeros, because T (1) is not present.
+                        #We need to retain the first row but not the second. This can be solved removing monomorphic so the second row with all 0 is removed, then pass duplicates filter, which should not affect the first line, as its "sister" row has been removed.
+                #Third scenario: rs6040357
+                    #we could also have a case where the first line is all 1 (G) except for the cases that are T (0), zero in this case, not A (REF). In the second row, all 1 (T), except those that are G (0) in this case, not A (REF). Therefore, we do not have the REF in the subset, and only the two ALT alleles.
+                        #We have several ALT alleles, and no REF, so we should remove these SNPs, all lines. This case would be solved just by removing duplicated SNPs, i.e., similar ID and position.
+                #Fourth scenario: rs6040358
+                    #we could also have a scenario similar to the previous one but with a missing for the second chromosome of the last sample, so the second line is no longer 0|0, but it has also 0|.
+            #we also have a exact duplicate, i.e., same pos, chr, REF, alt (rs6040359)
+                #we can select only the appearance and remove the next using bcftools norm --rm-dup exact
+            #we also have a microsatellite
+
+        #select only two tables to check whether AC, AN and AF changes
+        run_bash(" \
+            bcftools view \
+                --samples NA00001,NA00002 \
+                data/dummy_vcf_files/dummy_example.vcf | \
+            bcftools norm \
+                --multiallelic -snps | \
+            bcftools query \
+                -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+            #you can see how AN and AC are updated but not AF. For example, rs6040357 has three copies of the two ALT alleles (AC=3,3) and a total number of 6 alleles (AN=6), but after removing the third sample (1|2), AC becomes 2,2 and AN becomes 5. Similarly, rs6040351 has AN=6, 2 copies of the allele and frequency of 2/6=0.33, but after removing the third sample (1|0), AN becomes 4, AC is 1, BUT AF remains 0.333, when it should be 0.25.
+            #Indeed, there is a command (--no-update) to avoid (re)calculating INFO fields for the subset, currently including only INFO/AC and INFO/AN. Therefore, they are clearly saying that AN and AC are the only INFO fields updated for the subset.
+            #SUMMARY: AC and AN are updated after subsetting, but not AF.
+
+        #select only SNPs
+        run_bash(" \
+            bcftools view \
+                data/dummy_vcf_files/dummy_example.vcf | \
+            bcftools norm \
+                --multiallelic -snps | \
+            bcftools view \
+                --types snps | \
+            bcftools query \
+                -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+                #--types/--exclude-types LIST
+                    #Select/exclude comma-separated list of variant types: snps,indels,mnps,ref,bnd,other
+
+        #remove first the SNPs with missing
+        run_bash(" \
+            bcftools norm \
+                --multiallelic -snps \
+                data/dummy_vcf_files/dummy_example.vcf | \
+            bcftools view \
+                --types snps | \
+            bcftools view \
+                --genotype ^miss |\
+            bcftools query \
+                -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+            #remove missing genotypes
+                #--genotype
+                    #Require one or more hom/het/missing genotype or, if prefixed with "^", exclude such sites
+            #The last two lines corresponding with the last multiallelic SNP have been removed because the last sample has a missing genotype.
+
+        #remove now the exact duplicates
+        run_bash(" \
+            bcftools norm \
+                --multiallelic -snps \
+                data/dummy_vcf_files/dummy_example.vcf | \
+            bcftools view \
+                --types snps | \
+            bcftools view \
+                --genotype ^miss |\
+            bcftools norm \
+                --rm-dup exact | \
+            bcftools query \
+                -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+            #remove those snps that are exact duplicates, meaning identical chr, pos, ref, and alt. As you can see for rs6040359, it does not matter the ID or the genotypes, this command only targets chr, pos, ref, and alt.
+                #https://github.com/samtools/bcftools/issues/1089
+                #https://samtools.github.io/bcftools/bcftools.html#norm
+            #when using --multiallelic +snps, you also get rid of these duplicated SNPs because they are not considered different alleles of a multiallelic snps given that they have the same ALT. We add this step anyways just in case to be sue we remove first exact duplicates.
+
+        #exclude also those monomorphic snps
+        run_bash(" \
+            bcftools norm \
+                --multiallelic -snps \
+                data/dummy_vcf_files/dummy_example.vcf | \
+            bcftools view \
+                --types snps | \
+            bcftools view \
+                --genotype ^miss |\
+            bcftools norm \
+                --rm-dup exact | \
+            bcftools view \
+                --exclude 'COUNT(GT=\"AA\")=" + str(3) + " || COUNT(GT=\"RR\")=" + str(3) + "' |\
+            bcftools query \
+                -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+            #exclude those variants for which the number of ALT|ALT or REF|REF is equal to the number of samples, so there is no variability.
+                #we use count() to count the number of homozygous and then exclude those
+                #It seems this consider the genotype columns, not AC field. Indeed, I have purposely set AC field for rs6040356 as 2,1 indicating that there is 1 copy of the second ALT allele, while this is not true in the genotype. The expression still excludes this line with all 0|0 in the genotype, so we are good.
+                #Also, if you have missing (.), this is not included in GT=AA or GT=RR, because not all genotypes are AA or RR. Because of this, we removed first any SNP with missing genotypes.
+                    #https://www.biostars.org/p/360620/
+
+        #combine lines of multialleic snps in just one line
+        run_bash(" \
+            bcftools norm \
+                --multiallelic -snps \
+                data/dummy_vcf_files/dummy_example.vcf | \
+            bcftools view \
+                --types snps | \
+            bcftools view \
+                --genotype ^miss |\
+            bcftools norm \
+                --rm-dup exact | \
+            bcftools view \
+                --exclude 'COUNT(GT=\"AA\")=" + str(3) + " || COUNT(GT=\"RR\")=" + str(3) + "' |\
+            bcftools norm \
+                --multiallelic +snps | \
+            bcftools query \
+                -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+                #by combining the different lines of each multiallelic SNP, we update the ALT column, which now includes several ALT alleles. Therefore, we can filter out these SNPs with --max-alleles.
+                #--multiallelic +snps
+                    #split multiallelic sites into biallelic records (-) or join biallelic sites into multiallelic records (+). An optional type string can follow which controls variant types which should be split or merged together: If only SNP records should be split or merged, specify snps
+                        #https://samtools.github.io/bcftools/bcftools.html#norm
+                #some genotypes appear as not phased within the new fused multiallelic SNPs, but that is not a problem because these will be removed anyway.
+
+
+        #check what happens if we remove the third sample and then rs6040355 have no REF anymore, only two ALTs, thus it is not monomorphic
+        run_bash(" \
+            bcftools norm \
+                --multiallelic -snps \
+                data/dummy_vcf_files/dummy_example.vcf | \
+            bcftools view \
+                --samples NA00001,NA00002 \
+            bcftools view \
+                --types snps | \
+            bcftools view \
+                --genotype ^miss |\
+            bcftools norm \
+                --rm-dup exact | \
+            bcftools view \
+                --exclude 'COUNT(GT=\"AA\")=" + str(3) + " || COUNT(GT=\"RR\")=" + str(3) + "' |\
+            bcftools norm \
+                --multiallelic +snps | \
+            bcftools query \
+                -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+                #Despite losing the REF, both line of rs6040355 are merged into a multiallelic SNP, thus it can be removed with --max-alleles 2.
+
+        #now we can remove those SNPs with more than 1 allele in ALT
+        run_bash(" \
+            bcftools norm \
+                --multiallelic -snps \
+                data/dummy_vcf_files/dummy_example.vcf | \
+            bcftools view \
+                --types snps | \
+            bcftools view \
+                --genotype ^miss | \
+            bcftools norm \
+                --rm-dup exact | \
+            bcftools view \
+                --exclude 'COUNT(GT=\"AA\")=" + str(3) + " || COUNT(GT=\"RR\")=" + str(3) + "' |\
+            bcftools norm \
+                --multiallelic +snps | \
+            bcftools view \
+                --max-alleles 2 \
+                --min-alleles 2 | \
+            bcftools query \
+                -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+                #--min-alleles/--max-alleles INT  
+                    #Minimum/maximum number of alleles listed in REF and ALT
+                    #This looks at REF/ALT, so we need these columns updated in order to use this. If you just do this when the multiallelic SNPs are splitted across different lines, then you would not remove them, because each one is presented like a biallelic SNP.
+            
+        #select only phased data
+        run_bash(" \
+            bcftools norm \
+                --multiallelic -snps \
+                data/dummy_vcf_files/dummy_example.vcf | \
+            bcftools view \
+                --types snps | \
+            bcftools view \
+                --genotype ^miss | \
+            bcftools norm \
+                --rm-dup exact | \
+            bcftools view \
+                --exclude 'COUNT(GT=\"AA\")=" + str(3) + " || COUNT(GT=\"RR\")=" + str(3) + "' |\
+            bcftools norm \
+                --multiallelic +snps | \
+            bcftools view \
+                --max-alleles 2 \
+                --min-alleles 2 \
+                --phased | \
+            bcftools query \
+                -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+        #SUMMARY: With all these commands, we have recreated the scenario we have in 1KGP data, with multiallelic SNPs separated into different lines, we then select snps, remove those with missing genotypes, remove exact duplicates (this does not touch different lines of the same multiallelic snp because they have different REF/ALT), exclude those SNPs that have the same allele for all samples, and we can do that using RR (REF|REF) and AA (A|A), because there are no missing (.) genotypes, as they have been removed. Then we combine all lines of each multiallleic snp and now they have ALT column with several alleles, so we can filter them usin --max-alleles 2. Add last filter for selecting phased data only and finished.
+
+
+
+        #Note about the update of the INFO fields
+            #it is important to be sure that the fields you are using for filtering, are updated after subseting samples. Of course, type="snp" will be always "snp" irrespectively of the samples we select, but this is not the case of the number of alleles, because you can have SNPs with 3 alleles considering all 26 populations, but then in GBR they can have only 2 or 1. We are interested in SNPs that are biallelic within the selected population. See below for how to deal with multiallelic SNPs within a subset.
+            #The same goes for phasing and genotype ^miss. You have to be sure that these filters only consider data from the filtered samples, not fixed data in fields that are not updated.
+
+
+        #IMPORTANT:
+            #We are going to use an approach that leaves a VCF file with INFO fields no updated. In addition, the 
+
+
+        ##POR AQUIIII
+
+
+        #use +fill-tag to update INFO fields
+
+        run_bash(" \
+            bcftools view \
+                --samples NA00001,NA00002 \
+                data/dummy_vcf_files/dummy_example.vcf | \
+            bcftools query \
+                -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+            #As expected, after the subset of samples AN and AC are updated considering only the selected samples, while AF is not. For example, rs6040351 has only 1 ALT allele after selecting the two first samples, so AN=4, AC=1 but AF is still 0.333 instead of 0.25 (1/4).
+
+        run_bash(" \
+            bcftools view \
+                --samples NA00001,NA00002 \
+                data/dummy_vcf_files/dummy_example.vcf | \
+            bcftools +fill-tags \
+                -- --tags AN,AC,AF | \
+            bcftools query \
+                -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+                #+fill-tags has updated AF, so for example, rs6040355 has 0.5 for the frequency of both ALTs, while before it was 0.333.
+
+        run_bash(" \
+            bcftools view \
+                --samples NA00001,NA00002 \
+                data/dummy_vcf_files/dummy_example.vcf | \
+            bcftools +fill-tags \
+                -- --tags AC,AC_Hom,AC_Het,AF,AN,ExcHet,HWE,NS,MAF | \
+            bcftools query \
+                -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AC_Hom %AC_Het %AF %ExcHet %HWE %NS %MAF GTs:[ %GT]\n'")
+            #INFO/AC: Allele count in genotypes
+            #INFO/AC_Hom: Allele counts in homozygous genotypes
+            #INFO/AC_Het: Allele counts in heterozygous genotypes
+            #INFO/AF: Allele frequency from FMT/GT or AC,AN if FMT/GT is not present
+            #INFO/AN: Total number of alleles in called genotypes
+            #INFO/ExcHet: Test excess heterozygosity; 1=good, 0=bad
+            #INFO/HWE: HWE test (PMID:15789306); 1=good, 0=bad
+            #INFO/MAF: Frequency of the second most common allele
+            #INFO/NS: Number of samples with data
+            #INFO/TYPE: The record type (REF,SNP,MNP,INDEL,etc)
+
+
+
+
+        run_bash(" \
+            bcftools norm \
+                --multiallelic -snps \
+                data/dummy_vcf_files/dummy_example.vcf | \
+            bcftools view \
+                --samples NA00001,NA00002 |\
+            bcftools view \
+                --types snps | \
+            bcftools view \
+                --genotype ^miss | \
+            bcftools norm \
+                --rm-dup exact | \
+            bcftools view \
+                --exclude 'COUNT(GT=\"AA\")=" + str(3) + " || COUNT(GT=\"RR\")=" + str(3) + "' |\
+            bcftools norm \
+                --multiallelic +snps | \
+            bcftools view \
+                --max-alleles 2 \
+                --min-alleles 2 \
+                --phased | \
+            bcftools +fill-tags \
+                -- --tags AN | \
+            bcftools query \
+                -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+
+
+
+        ##ADD FILL TAGS BELOW
+
+
 ################################################################
 #### function to clean vcf files and create hap - map files ####
 ################################################################
@@ -432,20 +796,20 @@ def master_processor(selected_chromosome, selected_pop):
 
         #check
         print("\n#######################################\n#######################################")
-        print("chr " + selected_chromosome + ": the chromosome name in the vcf file is correct?")
+        print("chr " + selected_chromosome + ": the chromosome name of the first variant is correct?")
         print("#######################################\n#######################################")
         run_bash(" \
             chr_vcf=$( \
                 bcftools query \
                     " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz \
                     --format '%CHROM\n' | \
-                uniq); \
+                head -1); \
             if [[ $chr_vcf == 'chr" + selected_chromosome + "' ]]; then \
                 echo 'TRUE'; \
             else \
                 echo 'FALSE'; \
             fi")
-            #with bcftools, query for the chromosome of each variant and get the unique cases
+            #with bcftools, query for the chromosome of the first variant
             #we should have only case, being equal to the selected chromosome
             #equality for strings using 1 bracket is "="
                 #https://stackoverflow.com/questions/18102454/why-am-i-getting-an-unexpected-operator-error-in-bash-string-equality-test
@@ -478,7 +842,7 @@ def master_processor(selected_chromosome, selected_pop):
             else \
                 echo 'False';\
             fi")
-            #according to the specific readme of the dataset we are using (http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/README_1kGP_phased_panel_110722.pdf), prior phasing they applied several filters, being one of them that all variants has to be PASS for FILTER. I understand that, because of this, all variants in the chromosome 1 have now ".", being this the unique character. Let's check this for all chromosomes:
+            #according to the specific readme of the dataset we are using (http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/README_1kGP_phased_panel_110722.pdf), prior phasing they applied several filters, being one of them that all variants has to be PASS for FILTER. I understand that, because of this, all variants in the chromosome have now ".", being this the unique character. Let's check this for all chromosomes:
                 #make a query asking for the FILTER value of all variants
                 #select unique cases
                 #the unique cases should be a single string with a dot ("."), if yes, perfect.
@@ -522,7 +886,7 @@ def master_processor(selected_chromosome, selected_pop):
 
     #see genotypes of few samples
     print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + ": see genotypes of few samples")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": see genotypes of few samples")
     print("#######################################\n#######################################")
     run_bash(" \
         bcftools view \
@@ -537,7 +901,7 @@ def master_processor(selected_chromosome, selected_pop):
 
     #now show only snps
     print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + ": show now only SNPs")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": show now only SNPs")
     print("#######################################\n#######################################")
     run_bash(" \
         bcftools view \
@@ -553,7 +917,7 @@ def master_processor(selected_chromosome, selected_pop):
 
     #remove SNPs with missing
     print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + ": remove SNPs with missing")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": remove SNPs with missing")
     print("#######################################\n#######################################")
     run_bash(" \
         bcftools view \
@@ -572,7 +936,7 @@ def master_processor(selected_chromosome, selected_pop):
 
     #remove also exact duplicates
     print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + ": remove also exact duplicates")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": remove also exact duplicates")
     print("#######################################\n#######################################")
     run_bash(" \
         bcftools view \
@@ -591,7 +955,7 @@ def master_processor(selected_chromosome, selected_pop):
 
     #exclude monomorphic
     print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + ": exclude monomorphic")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": exclude monomorphic")
     print("#######################################\n#######################################")
     run_bash(" \
         bcftools view \
@@ -612,7 +976,7 @@ def master_processor(selected_chromosome, selected_pop):
 
     #combine multiallelic SNPs in one line and select them
     print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + ": combine multiallelic SNPs in one line and select them")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": combine multiallelic SNPs in one line and select them")
     print("#######################################\n#######################################")
     run_bash(" \
         bcftools view \
@@ -643,7 +1007,7 @@ def master_processor(selected_chromosome, selected_pop):
 
     #now show only biallelic snps
     print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + ": show now only biallelic SNPs")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": show now only biallelic SNPs")
     print("#######################################\n#######################################")
     run_bash(" \
         bcftools view \
@@ -671,7 +1035,7 @@ def master_processor(selected_chromosome, selected_pop):
 
     #show now only biallelic SNPs that are phased for all samples
     print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + ": show now only biallelic SNPs that are phased for all samples")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": show now only biallelic SNPs that are phased for all samples")
     print("#######################################\n#######################################")
     run_bash(" \
         bcftools view \
@@ -697,91 +1061,6 @@ def master_processor(selected_chromosome, selected_pop):
         head -7")
 
 
-        ###POR AQUIIII
-        #check COUNT(GT=\"AA\")=" + str(len(selected_samples)
-
-
-
-
-
-        #IMPORTANT NOTES AND CHECKS ABOUT FILTERING
-        print("\n#######################################\n#######################################")
-        print("chr " + selected_chromosome + ": We are going to use dummy vcf files in order to check that the subset and filtering methods we are using are correct: ")
-        print("#######################################\n#######################################")
-        
-        #see dummy snps
-        print("\n#######################################\n#######################################")
-        print("chr " + selected_chromosome + ": see dummy SNPs: ")
-        print("#######################################\n#######################################")
-        run_bash(" \
-            bcftools view \
-                data/dummy_vcf_files/dummy_example.vcf | \
-            bcftools query \
-                -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
-            #we have 4 SNPs, with different number of alleles, frequencies, etc...
-                #SNP rs6054257 20 14370 G A 6 3 0.5 GTs: 1|0 1|1 0|0
-                #SNP rs6040351 20 17330 T A 6 2 0.333 GTs: 0|0 1|0 1|0
-                #SNP rs6040355 20 1110696 A G,T 6 2,2 0.333,0.333 GTs: 1|1 2|2 0|0
-                #SNP rs6054255 20 14371 G C 6 3 0.667 GTs: 0|1 1|1 1|0
-
-        #primero 
-        print("\n#######################################\n#######################################")
-        print("chr " + selected_chromosome + ": select only the first and second sample, to reduce the number of alleles of the multiallelic snp to 2, also check how AN and AC changes but AF, ALT... ")
-        print("#######################################\n#######################################")
-        run_bash(" \
-            bcftools view \
-                --samples NA00001,NA00002 \
-                data/dummy_vcf_files/dummy_example.vcf | \
-            bcftools view \
-                --include 'TYPE=\"snp\"' | \
-            bcftools query \
-                -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
-            #now, the multiallelic snp only have allele 1 and 2 but no 0, in the subset
-            #AN AND AC ARE UPDATED: you can see in the last snp how the total number of alleles is 4 now, and the count for ALT is 2, while in the whole set is 6 and 3.
-            #AF IS NOT UPDATED: The frequency of ALT should be now 0.75, because is 3/4, but the old frequency is retained.
-
-        #now check if the --max-allele filter works, it should not because ALT is not updated after subsetting
-        print("\n#######################################\n#######################################")
-        print("chr " + selected_chromosome + ": now check if the --max-allele filter works, it should not because ALT is not updated after subsetting: ")
-        print("#######################################\n#######################################")
-        run_bash(" \
-            bcftools view \
-                --samples NA00001,NA00002 \
-                data/dummy_vcf_files/dummy_example.vcf | \
-            bcftools view \
-                --include 'TYPE=\"snp\"' \
-                --max-alleles 2 \
-                --min-alleles 2 | \
-            bcftools query \
-                -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
-            #we have removed the third sample, so the multiallelic snp is no longer multiallelic because there are only two alleles in the subset, but --max-alleles 2 still removes this snp because ALT remains the same despite the subsetting.
-            #therefore, we cannot just use this to filter a subset of samples
-
-        #try --trim-alt-alleles
-        print("\n#######################################\n#######################################")
-        print("chr " + selected_chromosome + ": try --trim-alt-alleles")
-        print("#######################################\n#######################################")
-        run_bash(" \
-            bcftools view \
-                --samples NA00001,NA00003\
-                --trim-alt-alleles \
-                data/dummy_vcf_files/dummy_example.vcf | \
-            bcftools view \
-                --include 'TYPE=\"snp\"' \
-                --max-alleles 2 \
-                --min-alleles 2 | \
-            bcftools query \
-                -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
-            #--trim-alt-alleles
-                #remove alleles not seen in the genotype fields from the ALT column. Note that if no alternate allele remains after trimming, the record itself is not removed but ALT is set to ".". If the option -s or -S is given, removes alleles not seen in the subset. INFO and FORMAT tags declared as Type=A, G or R will be trimmed as well.
-                    #https://samtools.github.io/bcftools/bcftools.html
-                #therefore, we have to subset the samples and apply this option in the same step, if not we do not get rid of snps with the lacking allele?
-                    #CHECK THIS
-
-            #PROBLEM, if the ancestral dissapear, the REF remains the same but now you have 0 for one of the alt..
-                #not sure if this is very frequent...
-
-            #ALSO, multiallelic snps in 1000 genomes are split in several lines, so this will not work
 
 
 
@@ -789,211 +1068,13 @@ def master_processor(selected_chromosome, selected_pop):
 
 
 
-        #POR AQUII
-
-        #it is important to be sure that the fields you are using for filtering, are updated after subseting samples. Of course, type="snp" will be always "snp" irrespectively of the samples we select, but this is not the case of the number of alleles, because you can have SNPs with 3 alleles considering all 26 populations, but then in GBR they can have only 2 or 1. We are interested in SNPs that are biallelic within the selected populaion, CHECK DAVID
-        #The same goes for phasing and genotype ^miss. You have to be sure that these filters only consider data from the filtered samples, not fixed data in fields that are not updated.
 
 
 
 
 
 
-        #CHECK ABOUT PHASING AND NUMBER OF ALLELES?
-            #PS is hpasing state and is NOT a field
-
-        #https://www.biostars.org/p/216114/
-
-
-
-        #por aquiiiii
-        #next lines do the most updated filters
-        #clean previus lines and update the lines with selected subset samples
-
-
-        #CHECK THAT WE HAVE MULTIALLEIC SPLIT IN 1000 GENOMES
-
-
-
-        ###PON DUMMY AL PRINCIPIO QUE SE CORRA UNA SOLA VEZ, O INCLUSO, SACALLO DE LA FUNCION!
-
-
-
-        #see dummy vcf file including multiallelic snps, but split those in different lines
-        run_bash(" \
-            bcftools view \
-                data/dummy_vcf_files/dummy_example.vcf | \
-            bcftools norm \
-                --multiallelic -snps | \
-            bcftools query \
-                -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
-            #split multiallelic SNPs in different lines
-                #--multiallelic -snps
-                    #split multiallelic sites into biallelic records (-) or join biallelic sites into multiallelic records (+).
-                    #https://samtools.github.io/bcftools/bcftools.html#norm
-            #when a multiallelic snp (e.g., REF=A, ALT=G,T) is split in several lines, having all the same ID and position, thus being considered duplicates. This was done in 1000 genomes data. They also add 1 to the position of each new line to do the phasing, but then they put all lines in the same position.
-                    #http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/README_1kGP_phased_panel_110722.pdf 
-                #First scenario: rs6040355
-                    #the first line shows the genotypes for A and G, so a sample that is G|G would be 1|1, but a T|T sample would be 0|0, although 0 should be only A. Indeed, A|A would also be 0|0. This is ok, because the next line shows genotypes for A and T, and that T|T sample will be 1|1.
-                        #This case is multiallelic, so we should remove both lines by removing duplicates.
-                #Second scenario: rs6040356
-                    #we could also have a case where the second ALT does not exist in our subpop, then the first line would be 0s (for A) and 1s (for G), while the second one would be all zeros, because T (1) is not present.
-                        #We need to retain the first row but not the second. This can be solved removing monomorphic so the second row with all 0 is removed, then pass duplicates filter, which should not affect the first line, as its "sister" row has been removed.
-                #Third scenario: rs6040357
-                    #we could also have a case where the first line is all 1 (G) except for the cases that are T (0), zero in this case, not A (REF). In the second row, all 1 (T), except those that are G (0) in this case, not A (REF). Therefore, we do not have the REF in the subset, and only the two ALT alleles.
-                        #We have several ALT alleles, and no REF, so we should remove these SNPs, all lines. This case would be solved just by removing duplicated SNPs, i.e., similar ID and position.
-                #Fourth scenario: rs6040358
-                    #we could also have a scenario similar to the previous one but with a missing for the second chromosome of the last sample, so the second line is no longer 0|0, but it has also 0|.
-            #we also have a exact duplicate, i.e., same pos, chr, REF, alt (rs6040359)
-                #we can select only the appearance and remove the next using bcftools norm --rm-dup exact
-            #we also have a microsatellite
-
-        #important note about AC here.
-            #the output of the previous line shows that the number of alleles and the counts of ALT are not updated in INFO because the last multiallelic SNP (rs6040358) lacks one allele for one sample but thte AN is still 6, not 5.
-
-        #select only SNPs
-        run_bash(" \
-            bcftools view \
-                data/dummy_vcf_files/dummy_example.vcf | \
-            bcftools norm \
-                --multiallelic -snps | \
-            bcftools view \
-                --types snps | \
-            bcftools query \
-                -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
-                #--types/--exclude-types LIST
-                    #Select/exclude comma-separated list of variant types: snps,indels,mnps,ref,bnd,other
-
-        #remove first the SNPs with missing
-        run_bash(" \
-            bcftools norm \
-                --multiallelic -snps \
-                data/dummy_vcf_files/dummy_example.vcf | \
-            bcftools view \
-                --types snps | \
-            bcftools view \
-                --genotype ^miss |\
-            bcftools query \
-                -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
-            #remove missing genotypes
-                #--genotype
-                    #Require one or more hom/het/missing genotype or, if prefixed with "^", exclude such sites
-            #The last two lines corresponding with the last multiallelic SNP have been removed because the last sample has a missing genotype.
-
-        #remove now the exact duplicates
-        run_bash(" \
-            bcftools norm \
-                --multiallelic -snps \
-                data/dummy_vcf_files/dummy_example.vcf | \
-            bcftools view \
-                --types snps | \
-            bcftools view \
-                --genotype ^miss |\
-            bcftools norm \
-                --rm-dup exact | \
-            bcftools query \
-                -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
-            #remove those snps that are exact duplicates, meaning identical chr, pos, ref, and alt. As you can see for rs6040359, it does not matter the ID or the genotypes, this command only targets chr, pos, ref, and alt.
-                #https://github.com/samtools/bcftools/issues/1089
-                #https://samtools.github.io/bcftools/bcftools.html#norm
-            #when using --multiallelic +snps, you also get rid of these duplicated SNPs because they are not considered different alleles of a multiallelic snps given that they have the same ALT. We add this step anyways just in case to be sue we remove first exact duplicates.
-
-        #exclude also those monomorphic snps
-        run_bash(" \
-            bcftools norm \
-                --multiallelic -snps \
-                data/dummy_vcf_files/dummy_example.vcf | \
-            bcftools view \
-                --types snps | \
-            bcftools view \
-                --genotype ^miss |\
-            bcftools norm \
-                --rm-dup exact | \
-            bcftools view \
-                --exclude 'COUNT(GT=\"AA\")=" + str(3) + " || COUNT(GT=\"RR\")=" + str(3) + "' |\
-            bcftools query \
-                -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
-            #exclude those variants for which the number of ALT|ALT or REF|REF is equal to the number of samples, so there is no variability.
-                #we use count() to count the number of homozygous and then exclude those
-                #It seems this consider the genotype columns, not AC field. Indeed, I have purposely set AC field for rs6040356 as 2,1 indicating that there is 1 copy of the second ALT allele, while this is not true in the genotype. The expression still excludes this line with all 0|0 in the genotype, so we are good.
-                #Also, if you have missing (.), this is not included in GT=AA or GT=RR, because not all genotypes are AA or RR. Because of this, we removed first any SNP with missing genotypes.
-                    #https://www.biostars.org/p/360620/
-
-        #combine lines of multialleic snps in just one line
-        run_bash(" \
-            bcftools norm \
-                --multiallelic -snps \
-                data/dummy_vcf_files/dummy_example.vcf | \
-            bcftools view \
-                --types snps | \
-            bcftools view \
-                --genotype ^miss |\
-            bcftools norm \
-                --rm-dup exact | \
-            bcftools view \
-                --exclude 'COUNT(GT=\"AA\")=" + str(3) + " || COUNT(GT=\"RR\")=" + str(3) + "' |\
-            bcftools norm \
-                --multiallelic +snps | \
-            bcftools query \
-                -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
-                #by combining the different lines of each multiallelic SNP, we update the ALT column, which now includes several ALT alleles. Therefore, we can filter out these SNPs with --max-alleles.
-                #--multiallelic +snps
-                    #split multiallelic sites into biallelic records (-) or join biallelic sites into multiallelic records (+). An optional type string can follow which controls variant types which should be split or merged together: If only SNP records should be split or merged, specify snps
-                        #https://samtools.github.io/bcftools/bcftools.html#norm
-                #some genotypes appear as not phased within the new fused multiallelic SNPs, but that is not a problem because these will be removed anyway.
-
-        #now we can remove those SNPs with more than 1 allele in ALT
-        run_bash(" \
-            bcftools norm \
-                --multiallelic -snps \
-                data/dummy_vcf_files/dummy_example.vcf | \
-            bcftools view \
-                --types snps | \
-            bcftools view \
-                --genotype ^miss | \
-            bcftools norm \
-                --rm-dup exact | \
-            bcftools view \
-                --exclude 'COUNT(GT=\"AA\")=" + str(3) + " || COUNT(GT=\"RR\")=" + str(3) + "' |\
-            bcftools norm \
-                --multiallelic +snps | \
-            bcftools view \
-                --max-alleles 2 \
-                --min-alleles 2 | \
-            bcftools query \
-                -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
-                #--min-alleles/--max-alleles INT  
-                    #Minimum/maximum number of alleles listed in REF and ALT
-                    #This looks at REF/ALT, so we need these columns updated in order to use this. If you just do this when the multiallelic SNPs are splitted across different lines, then you would not remove them, because each one is presented like a biallelic SNP.
-            
-        #select only phased data
-        run_bash(" \
-            bcftools norm \
-                --multiallelic -snps \
-                data/dummy_vcf_files/dummy_example.vcf | \
-            bcftools view \
-                --types snps | \
-            bcftools view \
-                --genotype ^miss | \
-            bcftools norm \
-                --rm-dup exact | \
-            bcftools view \
-                --exclude 'COUNT(GT=\"AA\")=" + str(3) + " || COUNT(GT=\"RR\")=" + str(3) + "' |\
-            bcftools norm \
-                --multiallelic +snps | \
-            bcftools view \
-                --max-alleles 2 \
-                --min-alleles 2 \
-                --phased | \
-            bcftools query \
-                -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
-        #SUMMARY: With all these commands, we have recreated the scenario we have in 1KGP data, with multiallelic SNPs separated into different lines, we then select snps, remove those with missing genotypes, remove exact duplicates (this does not touch different lines of the same multiallelic snp because they have different REF/ALT), exclude those SNPs that have the same allele for all samples, and we can do that using RR (REF|REF) and AA (A|A), because there are no missing (.) genotypes, as they have been removed. Then we combine all lines of each multiallleic snp and now they have ALT column with several alleles, so we can filter them usin --max-alleles 2. Add last filter for selecting phased data only and finished.
-
-
-
-
-
-    #remove next lines and combine with the previous
+    #remove next lines (until "convert VCF file to hap file") and combine with the previous
 
 
 
@@ -1046,6 +1127,11 @@ def master_processor(selected_chromosome, selected_pop):
     #        -H \
     #        -s " + ",".join(selected_samples) + " \
     #        -o data/" + selected_pop + ".bcf.gz")
+
+
+
+
+
 
     #convert VCF file to hap file    
     print("\n#######################################\n#######################################")
