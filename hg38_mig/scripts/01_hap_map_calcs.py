@@ -88,6 +88,17 @@ def run_bash(command, return_value=False):
         #return also the value if required
         if return_value==True:
             return complete_process.stdout
+    elif ("Lines   total/split/realigned/skipped" in complete_process.stderr):
+
+        #print the standard output without "\n" and other characters
+        print(complete_process.stdout)
+
+        #print the standard error, which is not an error
+        print(complete_process.stderr)
+
+        #return also the value if required
+        if return_value==True:
+            return complete_process.stdout 
     else:
         #print the standard error and stop
         raise ValueError("ERROR! FALSE! WE HAVE A PROBLEM RUNNING COMMAND: " + complete_process.stderr)
@@ -670,9 +681,103 @@ def master_processor(selected_chromosome, selected_pop):
             #PROBLEM, if the ancestral dissapear, the REF remains the same but now you have 0 for one of the alt..
                 #not sure if this is very frequent...
 
+            #ALSO, multiallelic snps in 1000 genomes are split in several lines, so this will not work
+
+
+
+
+
+        #see dummy vcf file including multiallelic snps, but split those in different lines
+        run_bash(" \
+            bcftools view \
+                data/dummy_vcf_files/dummy_example.vcf | \
+            bcftools norm \
+                --multiallelic -snps | \
+            bcftools query \
+                -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+            #split multiallelic SNPs in different lines
+                #--multiallelic -snps
+                    #split multiallelic sites into biallelic records (-) or join biallelic sites into multiallelic records (+).
+                    #https://samtools.github.io/bcftools/bcftools.html#norm
+            #when a multiallelic snp (e.g., REF=A, ALT=G,T) is split in several lines, having all the same ID and position, thus being considered duplicates. This was done in 1000 genomes data. They also add 1 to the position of each new line to do the phasing, but then they put all lines in the same position.
+                    #http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/README_1kGP_phased_panel_110722.pdf 
+                #First scenario: rs6040355
+                    #the first line shows the genotypes for A and G, so a sample that is G|G would be 1|1, but a T|T sample would be 0|0, although 0 should be only A. Indeed, A|A would also be 0|0. This is ok, because the next line shows genotypes for A and T, and that T|T sample will be 1|1.
+                        #This case is multiallelic, so we should remove both lines by removing duplicates, i.e., SNPs with the same ID and position.
+                #Second scenario: rs6040356
+                    #we could also have a case where the second ALT does not exist in our subpop, then the first line would be 0s (for A) and 1s (for G), while the second one would be all zeros, because T (1) is not present.
+                        #We need to retain the first row but not the second. This can be solved removing monomorphic so the second row with all 0 is removed, then pass duplicates filter, which should not affect the first line, as its "sister" row has been removed.
+                #Third scenario: rs6040357
+                    #we could also have a case where the first line is all 1 (G) except for the cases that are T (0), zero in this case, not A (REF). In the second row, all 1 (T), except those that are G (0) in this case, not A (REF). Therefore, we do not have the REF in the subset, and only the two ALT alleles.
+                        #We have several ALT alleles, and no REF, so we should remove these SNPs, all lines. This case would be solved just by removing duplicated SNPs, i.e., similar ID and position.
+                #Fourth scenario: rs6040358
+                    #we could also have a scenario similar to the previous one but with a missing for the second chromosome of the last sample, so the second line is no longer 0|0, but it has also 0|.
+
+        #remove first the SNPs with missing
+        run_bash(" \
+            bcftools norm \
+                --multiallelic -snps \
+                data/dummy_vcf_files/dummy_example.vcf | \
+            bcftools view \
+                --genotype ^miss |\
+            bcftools query \
+                -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+            #remove missing genotypes
+                #--genotype
+                    #Require one or more hom/het/missing genotype or, if prefixed with "^", exclude such sites
+            #The last two lines corresponding with the last multiallelic SNP have been removed because the last sample has a missing genotype.
+
+        #NOW EXLCUDE MONO
+
+
+
+
+        #apply all the filters at the same time
+        run_bash(" \
+            bcftools norm \
+                --multiallelic -snps \
+                data/dummy_vcf_files/dummy_example.vcf | \
+            bcftools view \
+                --genotype ^miss |\
+            bcftools view \
+                --exclude 'COUNT(GT=\"AA\")=" + str(3) + " || COUNT(GT=\"RR\")=" + str(3) + "' |\
+            bcftools norm \
+                --rm-dup snps| \
+            bcftools query \
+                -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+                #split multiallelic SNPs in different lines
+                    #--multiallelic -snps
+                        #split multiallelic sites into biallelic records (-) or join biallelic sites into multiallelic records (+).
+                        #https://samtools.github.io/bcftools/bcftools.html#norm
+                #remove missing genotypes
+                    #--genotype
+                        #Require one or more hom/het/missing genotype or, if prefixed with "^", exclude such sites
+                #exclude those variants for which the number of ALT|ALT or REF|REF is equal to the number of samples, so there is no variability.
+                    #we use count() to count the number of homozygous and then exclude those
+                    #It seems this consider the genotype columns, not AC field.
+                #remove those snps that are duplicated, i.e., same ID and position.
+
+        #The point here is that we can use this within a subpop to remove those lines that are monoprhic and then remove duplicates, so if a multiallelic snp split in several lines, have only one ALT in the subpop, it will NOT be removed. 
+
+        #CHECK count() works on genotype data not INFO using the dummy!!!
+        #check --rm-dup does npt remove snps with same Id but differentposition
+
+        #CHECK THAT WE HAVE MULTIALLEIC SPLIT IN 1000 GENOMES
+
+        #metido missing in a new scenario
+
+
+
+        #REMOVE ALSO MONOMORFHIC WITHIN POP
+            #this link explains it well, but i think you should remove first samples with missing so the expression works
+            #https://www.biostars.org/p/360620/
+
 
         #CHECK WITH MONOMORPHIC
 
+
+        #summary of filters
+            #https://www.biostars.org/p/385427/
 
 
         #fixed fileds are fixes, the inly updating is for INFO/AN INFO/AC
