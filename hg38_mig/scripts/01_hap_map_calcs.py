@@ -1154,7 +1154,7 @@ def master_processor(selected_chromosome, selected_pop):
 ##ADD FILL TAGS BELOW, and update filters
 
 
-
+#change the run_bash function for this and the bcftools script, so warnings have only warning but no FALSE, so you can differentiate
 
 
 run_bash(" \
