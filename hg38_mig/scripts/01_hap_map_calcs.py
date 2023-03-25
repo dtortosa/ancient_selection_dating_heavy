@@ -1219,11 +1219,56 @@ def master_processor(selected_chromosome, selected_pop):
         bcftools +fill-tags \
             -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
         bcftools query \
-        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AC_Hom %AC_Het %AF %MAF %ExcHet %HWE %NS GTs:[ %GT]\n' | \
+        --format '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AC_Hom %AC_Het %AF %MAF %ExcHet %HWE %NS GTs:[ %GT]\n' | \
         head -7")
             #we sue +fill-tags to update fields that are not updated after subsetting like frequency of alternative allele and create some additional fields.
             #I understand that when using --multiallelic + or -, there is no update because the genotypes should not change, you are just spliting or merging the different ALT alleles. If AC/AN has changed sue to the subset, this is updated in the AC/AN fields and these are used to do the combine/split AC/AN fields. The problem is that only AC/AN are updated, not the rest of fields.
             #see dummy example for further details.
+
+    #
+    print("\n#######################################\n#######################################")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": remove all previous INFO/Fields, retain only what we are interested in and show the result asking for ALL fields")
+    print("#######################################\n#######################################")
+    run_bash(" \
+        bcftools view \
+            --samples " + ",".join(selected_samples) + " \
+            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+        bcftools view \
+            --types snps | \
+        bcftools view \
+            --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+        bcftools view \
+            --genotype ^miss | \
+        bcftools norm \
+            --rm-dup exact | \
+        bcftools norm \
+            --multiallelic +snps | \
+        bcftools view \
+            --max-alleles 2  \
+            --min-alleles 2 | \
+        bcftools view \
+            --phased | \
+        bcftools annotate \
+            --remove INFO,^FORMAT/GT | \
+        bcftools +fill-tags \
+            -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
+        bcftools view \
+            --no-header | \
+        head -7")
+            #remove all INFO fields and all FORMAT fields (except GT) using annotate and then add the fields we are interested in.
+                #--remove LIST
+                    #List of annotations to remove. 
+                        #Use "FILTER" to remove all filters or "FILTER/SomeFilter" to remove a specific filter. Similarly, "INFO" can be used to remove all INFO tags and "FORMAT" to remove all FORMAT tags except GT. 
+                        #To remove all INFO tags except "FOO" and "BAR", use "^INFO/FOO,INFO/BAR" (and similarly for FORMAT and FILTER). "INFO" can be abbreviated to "INF" and "FORMAT" to "FMT".
+                #https://samtools.github.io/bcftools/bcftools.html#annotate
+            #use view with option --no-header to see all fields without the header.
+
+
+
+    ###CHECK WE ARE NOT LOSING ANY INTERESTING FIELD IN THE ORIGINAL VCF FILE
+    ###check in a few genotypes that they are not touched
+        ###do IT IN THE DUMMY EXAMPLE.
+
 
     #
     print("\n#######################################\n#######################################")
@@ -1248,10 +1293,12 @@ def master_processor(selected_chromosome, selected_pop):
             --min-alleles 2 | \
         bcftools view \
             --phased | \
+        bcftools annotate \
+            --remove INFO,^FORMAT/GT | \
         bcftools +fill-tags \
             -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
         bcftools head")
-            #the different subsets, filters and fields added are shown now in the header after the original fields of the VCF file. Therefore, we have an history of the changes in this file.
+            #the different subsets, filters and fields added are shown now in the header. Also the fields of the old VCF file are not shown.
             #see dummy example for further details.
 
 
@@ -1259,55 +1306,6 @@ def master_processor(selected_chromosome, selected_pop):
 
 
 
-
-######POR AQUI
-
-
-
-    #remove next lines (until "convert VCF file to hap file") but before see if there is anything interesting to save
-
-
-
-    ##################################
-    # operations within selected pop #
-    ##################################
-
-    #see genotypes
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": see first genotypes of biallelic snps for selected samples")
-    print("#######################################\n#######################################")
-    run_bash(" \
-        bcftools view \
-            --samples " + ",".join(selected_samples) + " \
-            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-        bcftools view \
-            --include 'TYPE=\"snp\"' \
-            --max-alleles 2 \
-            --min-alleles 2 | \
-        bcftools query \
-            --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | \
-        head -5")
-            #select of the samples of the selected population using a list of them separated by ","
-
-    #see complete data for some of the selected samples
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": see complete data for some of the selected samples")
-    print("#######################################\n#######################################")
-    run_bash(" \
-        bcftools view \
-            --samples " + ",".join(selected_samples) + " \
-            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-        bcftools view \
-            --include 'TYPE=\"snp\"' \
-            --max-alleles 2 \
-            --min-alleles 2 \
-            --no-header | \
-        head -3")
-        #view complete row, i.e., all INFO fields, genotypes...
-            #for selected samples
-            #for each variant with type=SNP and 2 alleles in the selected samples
-            #and avoid header
-        #show only 10 first
 
     #in case you want to save the filtered dataset, but it is slow the file is very big, so it is not worth it, we can directly go to hap
     #run_bash(
@@ -1340,11 +1338,22 @@ def master_processor(selected_chromosome, selected_pop):
             --samples " + ",".join(selected_samples) + " \
             " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
         bcftools view \
-            --include 'TYPE=\"snp\"' \
-            --max-alleles 2 \
-            --min-alleles 2 \
-            --phased \
+            --types snps | \
+        bcftools view \
+            --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+        bcftools view \
             --genotype ^miss | \
+        bcftools norm \
+            --rm-dup exact | \
+        bcftools norm \
+            --multiallelic +snps | \
+        bcftools view \
+            --max-alleles 2  \
+            --min-alleles 2 | \
+        bcftools view \
+            --phased | \
+        bcftools +fill-tags \
+            -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
         bcftools convert \
             " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz \
             --hapsample ./results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw")
