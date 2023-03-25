@@ -1193,14 +1193,10 @@ def master_processor(selected_chromosome, selected_pop):
             --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | \
         head -7")
 
-
-
-
-######POR AQUI
-
-##ADD FILL TAGS, and update filters
-
-
+    #
+    print("\n#######################################\n#######################################")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": update and add some fields using fill-tags")
+    print("#######################################\n#######################################")
     run_bash(" \
         bcftools view \
             --samples " + ",".join(selected_samples) + " \
@@ -1225,8 +1221,14 @@ def master_processor(selected_chromosome, selected_pop):
         bcftools query \
         -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AC_Hom %AC_Het %AF %MAF %ExcHet %HWE %NS GTs:[ %GT]\n' | \
         head -7")
+            #we sue +fill-tags to update fields that are not updated after subsetting like frequency of alternative allele and create some additional fields.
+            #I understand that when using --multiallelic + or -, there is no update because the genotypes should not change, you are just spliting or merging the different ALT alleles. If AC/AN has changed sue to the subset, this is updated in the AC/AN fields and these are used to do the combine/split AC/AN fields. The problem is that only AC/AN are updated, not the rest of fields.
+            #see dummy example for further details.
 
-
+    #
+    print("\n#######################################\n#######################################")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": see header after applying fill-tags")
+    print("#######################################\n#######################################")
     run_bash(" \
         bcftools view \
             --samples " + ",".join(selected_samples) + " \
@@ -1249,10 +1251,16 @@ def master_processor(selected_chromosome, selected_pop):
         bcftools +fill-tags \
             -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
         bcftools head")
+            #the different subsets, filters and fields added are shown now in the header after the original fields of the VCF file. Therefore, we have an history of the changes in this file.
+            #see dummy example for further details.
 
 
 
 
+
+
+
+######POR AQUI
 
 
 
