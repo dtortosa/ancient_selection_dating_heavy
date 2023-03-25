@@ -83,7 +83,7 @@ def run_bash(command, return_value=False):
         print(complete_process.stdout)
 
         #print the standard error without stopping
-        print("WARNING! FALSE! THIS WARNING SHOULD BE ONLY IN DUMMY DATA NOT IN 1KGP DATA as AC field should have only 1 value per line in the data. " + complete_process.stderr)
+        print("WARNING: THIS WARNING SHOULD BE ONLY IN DUMMY DATA NOT IN 1KGP DATA as AC field should have only 1 value per line in the data. " + complete_process.stderr)
 
         #return also the value if required
         if return_value==True:
@@ -94,7 +94,7 @@ def run_bash(command, return_value=False):
         print(complete_process.stdout)
 
         #print the standard error without stopping
-        print("WARNING! FALSE!: " + complete_process.stderr)
+        print("WARNING: " + complete_process.stderr)
 
         #return also the value if required
         if return_value==True:
@@ -112,7 +112,7 @@ def run_bash(command, return_value=False):
             return complete_process.stdout 
     else:
         #print the standard error and stop
-        raise ValueError("ERROR! FALSE! WE HAVE A PROBLEM RUNNING COMMAND: " + complete_process.stderr)
+        raise ValueError("ERROR: FALSE! WE HAVE A PROBLEM RUNNING COMMAND: " + complete_process.stderr)
 
 #test it
 print("\n#######################################\n#######################################")
@@ -367,13 +367,14 @@ run_bash(" \
                 #SNP rs6040356 20 1110697 A G,T 6 2,1 0.333,0 GTs: 1|1 0|0 0|0
                 #SNP rs6040357 20 1110698 A G,T 6 3,3 0.5,0.5 GTs: 1|1 2|2 1|2
                 #SNP rs6040358 20 1110699 A G,T 6 2,0 0.333,0 GTs: 1|1 0|0 0|.
+                #SNP rs6040359 20 1110700 A G,T 5 0,3 0,0.6 GTs: 2|2 2|2 .|2
             #Exact duplicate SNPs, i.e., pos, chr, REF, alt
-                #SNP rs6040359 20 1110700 A G 6 3 0.5 GTs: 1|1 0|0 0|1
-                #SNP rs6040359_copy 20 1110700 A G 6 3 0.5 GTs: 1|1 1|0 0|1
+                #SNP rs6040360 20 1110701 A G 6 3 0.5 GTs: 1|1 0|0 0|1
+                #SNP rs6040360_copy 20 1110701 A G 6 3 0.5 GTs: 1|1 1|0 0|1
             #SNP with unphased data
-                #SNP rs6040360 20 1110701 A G 6 3 0.5 GTs: 1|1 0/0 0|1
+                #SNP rs6040361 20 1110702 A G 6 3 0.5 GTs: 1|1 0/0 0|1
             #microsatellite (indel)
-                #INDEL microsat1 20 1110702 GTC G,GTCT . . . GTs: 0/1 0/2 1/1
+                #INDEL microsat1 20 1110703 GTC G,GTCT . . . GTs: 0/1 0/2 1/1
 
 #
 print("\n#######################################\n#######################################")
@@ -442,6 +443,68 @@ run_bash(" \
 
 #
 print("\n#######################################\n#######################################")
+print("see monomorphic snps")
+print("#######################################\n#######################################")
+run_bash(" \
+    bcftools norm \
+        --multiallelic -snps \
+        data/dummy_vcf_files/dummy_example.vcf | \
+    bcftools view \
+        --types snps | \
+    bcftools view \
+        --include 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+    bcftools query \
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+        #select those variants for which the number of ALT|ALT or REF|REF is equal to the number of samples (3 in this case), so there is no variability.
+            #we use count() to count the number of homozygous AA and RR
+                #count is a function that gives you the number of cases, it can be used on FORMAT tags (over samples) and INFO tags (over vector fields).
+                #we are counting number of genotypes that satisfy the condition, given that GT is a format field, we are using count over samples (see below).
+            #We look for genotypes including both copies of reference (GT="RR") or alternative (GT="AA") alleles
+                #sample genotype: reference (haploid or diploid), alternate (hom or het, haploid or diploid), missing genotype, homozygous, heterozygous, haploid, ref-ref hom, alt-alt hom, ref-alt het, alt-alt het, haploid ref, haploid alt (case-insensitive)
+                #It seems this consider the genotype columns, not AC field, as we are using GT. Indeed, I have purposely set AC field for rs6040356 as 2,1 indicating that there is 1 copy of the second ALT allele, while this is not true in the genotype. The expression still excludes this line with all 0|0 in the genotype, so we are good.
+                #Also, if you have missing (.), this is not included in GT=AA or GT=RR, because not all genotypes are AA or RR. Because of this, we removed first any SNP with missing genotypes.
+                    #https://www.biostars.org/p/360620/
+            #We also look for genotypes that are missing "."
+                #missing genotypes can be matched regardless of phase and ploidy (".|.", "./.", ".", "0|.", "1|.") using these expressions
+                    #GT="mis", GT~"\.", GT!~"\."
+            #This is second condition that has to be met, we are interested in selecting also those cases where everything is the same allele except missing cases. 
+                #We have to use "|" instead of "||". 
+                    #You look to a given sample and check in the same sample whether the genotype is A|A, A|. or .|A. 
+                    #If it satisfies any of these conditions, then we can count it
+                    #Therefore, the conditions are checked within the same sample, so we have to use "|" instead of "||".
+                    #In case it is not clear see and example from the manual:
+                        #Say our VCF contains the per-sample depth and genotype quality annotations and we want to include only sites where one or more samples have big enough coverage (DP>10) and genotype quality (GQ>20). The expression -i 'FMT/DP>10 & FMT/GQ>20' selects sites where the conditions are satisfied WITHIN THE SAME SAMPLE: 'FMT/DP>10 & FMT/GQ>20'
+                        #On the other hand, if we need to include sites where both conditions met but not necessarily in the same sample, we use the && operator rather than &: 'FMT/DP>10 && FMT/GQ>20'
+                            #http://samtools.github.io/bcftools/howtos/filtering.html
+            #check for equality with N_SAMPLES. This is the number of samples and it is calculated on the fly by bcftools
+                #variables calculated on the fly if not present: number of alternate alleles; number of samples; count of alternate alleles; minor allele count (similar to AC but is always smaller than 0.5); frequency of alternate alleles (AF=AC/AN); frequency of minor alleles (MAF=MAC/AN); number of alleles in called genotypes; number of samples with missing genotype; fraction of samples with missing genotype; indel length (deletions negative, insertions positive)
+            #details about the use of expressions can be found here
+                #https://samtools.github.io/bcftools/bcftools.html#expressions
+        #we get all SNPs that are monomorphic. This includes 
+            #all 0
+                #SNP rs6040356 20 1110697 A T 6 2,1 0 GTs: 0|0 0|0 0|0
+            #all 0 or all 1 except missing in the first or second position. This includes cases with multiallelic SNPs, where only the lines with the same alelle (+ missing) are considered monomorphic.
+                #SNP rs6040358 20 1110699 A T 6 2,0 0 GTs: 0|0 0|0 0|.
+                #SNP rs6040359 20 1110700 A G 5 0,3 0 GTs: 0|0 0|0 .|0
+                #SNP rs6040359 20 1110700 A T 5 0,3 0.6 GTs: 1|1 1|1 .|1
+
+#
+print("\n#######################################\n#######################################")
+print("exlcude monomorphic snps")
+print("#######################################\n#######################################")
+run_bash(" \
+    bcftools norm \
+        --multiallelic -snps \
+        data/dummy_vcf_files/dummy_example.vcf | \
+    bcftools view \
+        --types snps | \
+    bcftools view \
+        --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+    bcftools query \
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+
+#
+print("\n#######################################\n#######################################")
 print("remove SNPs with missing")
 print("#######################################\n#######################################")
 run_bash(" \
@@ -451,13 +514,15 @@ run_bash(" \
     bcftools view \
         --types snps | \
     bcftools view \
+        --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+    bcftools view \
         --genotype ^miss |\
     bcftools query \
         -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
     #remove missing genotypes
         #--genotype
             #Require one or more hom/het/missing genotype or, if prefixed with "^", exclude such sites
-    #Lines of multiallelic rs6040358 have been removed because the last sample has a missing genotype.
+    #Lines of multiallelic rs6040358 have been removed because the last sample has a missing genotype. Note that rs6040358 has not been excluded as monomorphic as it has 1 and 0, but because it has missing.
 
 #
 print("\n#######################################\n#######################################")
@@ -470,48 +535,17 @@ run_bash(" \
     bcftools view \
         --types snps | \
     bcftools view \
+        --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+    bcftools view \
         --genotype ^miss |\
     bcftools norm \
         --rm-dup exact | \
     bcftools query \
         -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
         #remove those snps that are exact duplicates, meaning identical chr, pos, ref, and alt. As you can see for rs6040359, it does not matter the ID or the genotypes, this command only targets chr, pos, ref, and alt. 
-        #bcftools norm --rm-dup exact selects only the first appearance and remove the next.
+        #bcftools norm --rm-dup exact selects only the first appearance and remove the next. Consequently, rs6040360_copy is filtered out, retaining rs6040360.
             #https://github.com/samtools/bcftools/issues/1089
         #https://samtools.github.io/bcftools/bcftools.html#norm
-
-#
-print("\n#######################################\n#######################################")
-print("exclude also those monomorphic snps")
-print("#######################################\n#######################################")
-run_bash(" \
-    bcftools norm \
-        --multiallelic -snps \
-        data/dummy_vcf_files/dummy_example.vcf | \
-    bcftools view \
-        --types snps | \
-    bcftools view \
-        --genotype ^miss |\
-    bcftools norm \
-        --rm-dup exact | \
-    bcftools view \
-        --exclude 'COUNT(GT=\"AA\")=N_SAMPLES || COUNT(GT=\"RR\")=N_SAMPLEs' |\
-    bcftools query \
-        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
-        #exclude those variants for which the number of ALT|ALT or REF|REF is equal to the number of samples (3 in this case), so there is no variability.
-            #we use count() to count the number of homozygous AA and RR
-                #count is a function that gives you the number of cases, it can be used on FORMAT tags (over samples) and INFO tags (over vector fields).
-                #we are counting number of genotypes that satisfy the condition, given that GT is a format field, we are using count over samples (see below).
-            #We look for genotypes including both copies of reference (GT="RR") or alternative (GT="AA") alleles
-                #sample genotype: reference (haploid or diploid), alternate (hom or het, haploid or diploid), missing genotype, homozygous, heterozygous, haploid, ref-ref hom, alt-alt hom, ref-alt het, alt-alt het, haploid ref, haploid alt (case-insensitive)
-                #It seems this consider the genotype columns, not AC field, as we are using GT. Indeed, I have purposely set AC field for rs6040356 as 2,1 indicating that there is 1 copy of the second ALT allele, while this is not true in the genotype. The expression still excludes this line with all 0|0 in the genotype, so we are good.
-                #Also, if you have missing (.), this is not included in GT=AA or GT=RR, because not all genotypes are AA or RR. Because of this, we removed first any SNP with missing genotypes.
-                    #https://www.biostars.org/p/360620/
-            #check for equality with N_SAMPLES. This is the number of samples and it is calculated on the fly by bcftools
-                #variables calculated on the fly if not present: number of alternate alleles; number of samples; count of alternate alleles; minor allele count (similar to AC but is always smaller than 0.5); frequency of alternate alleles (AF=AC/AN); frequency of minor alleles (MAF=MAC/AN); number of alleles in called genotypes; number of samples with missing genotype; fraction of samples with missing genotype; indel length (deletions negative, insertions positive)
-            #details about the use of expressions can be found here
-                #https://samtools.github.io/bcftools/bcftools.html#expressions
-            #IT IS IMPORTANT TO REMOVE MISSING FIRST, BECAUSE OUR EXPRESSION DOES NOT CONSIDER MONOMORPHIC THE FOLLOWING: 0|0 0|.
 
 #
 print("\n#######################################\n#######################################")
@@ -524,11 +558,11 @@ run_bash(" \
     bcftools view \
         --types snps | \
     bcftools view \
+        --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+    bcftools view \
         --genotype ^miss |\
     bcftools norm \
         --rm-dup exact | \
-    bcftools view \
-        --exclude 'COUNT(GT=\"AA\")=N_SAMPLES || COUNT(GT=\"RR\")=N_SAMPLES' |\
     bcftools norm \
         --multiallelic +snps | \
     bcftools query \
@@ -560,11 +594,11 @@ run_bash(" \
     bcftools view \
         --types snps | \
     bcftools view \
+        --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+    bcftools view \
         --genotype ^miss |\
     bcftools norm \
         --rm-dup exact | \
-    bcftools view \
-        --exclude 'COUNT(GT=\"AA\")=N_SAMPLES || COUNT(GT=\"RR\")=N_SAMPLES' |\
     bcftools norm \
         --multiallelic +snps | \
     bcftools query \
@@ -580,13 +614,15 @@ run_bash(" \
         --multiallelic -snps \
         data/dummy_vcf_files/dummy_example.vcf | \
     bcftools view \
+        --samples NA00001,NA00002 | \
+    bcftools view \
         --types snps | \
     bcftools view \
-        --genotype ^miss | \
+        --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+    bcftools view \
+        --genotype ^miss |\
     bcftools norm \
         --rm-dup exact | \
-    bcftools view \
-        --exclude 'COUNT(GT=\"AA\")=N_SAMPLES || COUNT(GT=\"RR\")=N_SAMPLES' |\
     bcftools norm \
         --multiallelic +snps | \
     bcftools view \
@@ -607,13 +643,15 @@ run_bash(" \
         --multiallelic -snps \
         data/dummy_vcf_files/dummy_example.vcf | \
     bcftools view \
+        --samples NA00001,NA00002 | \
+    bcftools view \
         --types snps | \
     bcftools view \
-        --genotype ^miss | \
+        --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+    bcftools view \
+        --genotype ^miss |\
     bcftools norm \
         --rm-dup exact | \
-    bcftools view \
-        --exclude 'COUNT(GT=\"AA\")=N_SAMPLES || COUNT(GT=\"RR\")=N_SAMPLES' |\
     bcftools norm \
         --multiallelic +snps | \
     bcftools view \
@@ -712,15 +750,15 @@ run_bash(" \
         --multiallelic -snps \
         data/dummy_vcf_files/dummy_example.vcf | \
     bcftools view \
-        --samples NA00001,NA00002 |\
+        --samples NA00001,NA00002 | \
     bcftools view \
         --types snps | \
     bcftools view \
-        --genotype ^miss | \
+        --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+    bcftools view \
+        --genotype ^miss |\
     bcftools norm \
         --rm-dup exact | \
-    bcftools view \
-        --exclude 'COUNT(GT=\"AA\")=N_SAMPLES || COUNT(GT=\"RR\")=N_SAMPLES' |\
     bcftools norm \
         --multiallelic +snps | \
     bcftools view \
@@ -746,15 +784,15 @@ run_bash(" \
         --multiallelic -snps \
         data/dummy_vcf_files/dummy_example.vcf | \
     bcftools view \
-        --samples NA00001,NA00002 |\
+        --samples NA00001,NA00002 | \
     bcftools view \
         --types snps | \
     bcftools view \
-        --genotype ^miss | \
+        --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+    bcftools view \
+        --genotype ^miss |\
     bcftools norm \
         --rm-dup exact | \
-    bcftools view \
-        --exclude 'COUNT(GT=\"AA\")=N_SAMPLES || COUNT(GT=\"RR\")=N_SAMPLES' |\
     bcftools norm \
         --multiallelic +snps | \
     bcftools view \
@@ -763,7 +801,7 @@ run_bash(" \
     bcftools view \
         --phased | \
     bcftools +fill-tags \
-        -- --tags AN,AC,AC_Hom,AC_Het,AF,ExcHet,HWE,NS,MAF | \
+        -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
     bcftools head")
         #the new header shows 
             #the fields of the previous VCF file.
@@ -985,7 +1023,7 @@ def master_processor(selected_chromosome, selected_pop):
         head -7")
             #select a few samples and then select biallelic snps
                 #IMPORTANT: If filtering (by number of alleles) and subseting (by sample) is in the same line (command), the filtering will be done first. Therefore, you could select SNPs that have 2 alleles when considering the 26 pops, but that are monomorphic (1 allele) for the selected population. Because of this, we have to first subset by sample and then filter by number of alleles whitin the selected samples in separated commands (see dummy example).
-            #query the genotype of each variant
+            #query multiple fields for each snp
 
     #
     print("\n#######################################\n#######################################")
@@ -1001,7 +1039,39 @@ def master_processor(selected_chromosome, selected_pop):
             --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | \
         head -7")
             #include only those variants with TYPE=snp
-            #query multiple fields for each snp
+
+    #
+    print("\n#######################################\n#######################################")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": see monomorphic")
+    print("#######################################\n#######################################")
+    run_bash(" \
+        bcftools view \
+            --samples " + ",".join(selected_samples) + " \
+            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+        bcftools view \
+            --types snps | \
+        bcftools view \
+            --include 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+        bcftools query \
+            --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | \
+        head -7")
+            #select those variants for which the number of ALT|ALT or REF|REF is equal to the number of samples, so there is no variability. All ALT + missing or all REF + missing are also considered. See dummy example for further details.
+
+    #
+    print("\n#######################################\n#######################################")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": exclude monomorphic")
+    print("#######################################\n#######################################")
+    run_bash(" \
+        bcftools view \
+            --samples " + ",".join(selected_samples) + " \
+            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+        bcftools view \
+            --types snps | \
+        bcftools view \
+            --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+        bcftools query \
+            --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | \
+        head -7")
 
     #
     print("\n#######################################\n#######################################")
@@ -1013,6 +1083,8 @@ def master_processor(selected_chromosome, selected_pop):
             " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
         bcftools view \
             --types snps | \
+        bcftools view \
+            --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
         bcftools view \
             --genotype ^miss | \
         bcftools query \
@@ -1033,6 +1105,8 @@ def master_processor(selected_chromosome, selected_pop):
         bcftools view \
             --types snps | \
         bcftools view \
+            --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+        bcftools view \
             --genotype ^miss | \
         bcftools norm \
             --rm-dup exact | \
@@ -1040,27 +1114,6 @@ def master_processor(selected_chromosome, selected_pop):
             --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | \
         head -7")
             #remove those snps that are exact duplicates, meaning identical chr, pos, ref, and alt. See dummy example for behaviour.
-
-    #
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": exclude monomorphic")
-    print("#######################################\n#######################################")
-    run_bash(" \
-        bcftools view \
-            --samples " + ",".join(selected_samples) + " \
-            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-        bcftools view \
-            --types snps | \
-        bcftools view \
-            --genotype ^miss | \
-        bcftools norm \
-            --rm-dup exact | \
-        bcftools view \
-            --exclude 'COUNT(GT=\"AA\")=N_SAMPLES || COUNT(GT=\"RR\")=N_SAMPLES' |\
-        bcftools query \
-            --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | \
-        head -7")
-            #exclude those variants for which the number of ALT|ALT or REF|REF is equal to the number of samples, so there is no variability. No missing genotype should be in the data, because 0|0 0|. is not conidered monomorphic for this expression. See dummy example for further details.
 
     #combine multiallelic SNPs in one line and select them
     print("\n#######################################\n#######################################")
@@ -1073,11 +1126,11 @@ def master_processor(selected_chromosome, selected_pop):
         bcftools view \
             --types snps | \
         bcftools view \
+            --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+        bcftools view \
             --genotype ^miss | \
         bcftools norm \
             --rm-dup exact | \
-        bcftools view \
-            --exclude 'COUNT(GT=\"AA\")=N_SAMPLES || COUNT(GT=\"RR\")=N_SAMPLES' | \
         bcftools norm \
             --multiallelic +snps | \
         bcftools view \
@@ -1085,8 +1138,8 @@ def master_processor(selected_chromosome, selected_pop):
         bcftools query \
             --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | \
         head -7")
-        #we have SNPs with the same position and chromosome but different ALT alleles. According to the 1KGP paper, they split multiallelic SNPs in different lines, so this makes sense. See dummy for further details.
-        #combine the different lines of each multiallelic SNP into one line and update the ALT column to include the different ALT alleles and we can filter with --max-alleles
+            #we have SNPs with the same position and chromosome but different ALT alleles. According to the 1KGP paper, they split multiallelic SNPs in different lines, so this makes sense. See dummy for further details.
+            #combine the different lines of each multiallelic SNP into one line and update the ALT column to include the different ALT alleles and we can filter with --max-alleles
 
     #now show only biallelic snps
     print("\n#######################################\n#######################################")
@@ -1099,11 +1152,11 @@ def master_processor(selected_chromosome, selected_pop):
         bcftools view \
             --types snps | \
         bcftools view \
+            --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+        bcftools view \
             --genotype ^miss | \
         bcftools norm \
             --rm-dup exact | \
-        bcftools view \
-            --exclude 'COUNT(GT=\"AA\")=N_SAMPLES || COUNT(GT=\"RR\")=N_SAMPLES' | \
         bcftools norm \
             --multiallelic +snps | \
         bcftools view \
@@ -1124,11 +1177,11 @@ def master_processor(selected_chromosome, selected_pop):
         bcftools view \
             --types snps | \
         bcftools view \
+            --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+        bcftools view \
             --genotype ^miss | \
         bcftools norm \
             --rm-dup exact | \
-        bcftools view \
-            --exclude 'COUNT(GT=\"AA\")=N_SAMPLES || COUNT(GT=\"RR\")=N_SAMPLES' | \
         bcftools norm \
             --multiallelic +snps | \
         bcftools view \
@@ -1141,47 +1194,61 @@ def master_processor(selected_chromosome, selected_pop):
         head -7")
 
 
-##POR AQUI
-
-#THIS COULD WORK TO CONSIDER MONOMORJOFHC BOTH 0|0 0|0 AND 0|0 0|.
-    #--exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLEs' |\
-        #| means that the condtions has to be satified whitin the sample, in contrast wht ||
-        #http://samtools.github.io/bcftools/howtos/filtering.html
-
-    #worth it? we are going to remove misssing samples anywiats, but maybe in the futuere...
 
 
-##ADD FILL TAGS BELOW, and update filters
+######POR AQUI
+
+##ADD FILL TAGS, and update filters
 
 
-#change the run_bash function for this and the bcftools script, so warnings have only warning but no FALSE, so you can differentiate
+    run_bash(" \
+        bcftools view \
+            --samples " + ",".join(selected_samples) + " \
+            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+        bcftools view \
+            --types snps | \
+        bcftools view \
+            --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+        bcftools view \
+            --genotype ^miss | \
+        bcftools norm \
+            --rm-dup exact | \
+        bcftools norm \
+            --multiallelic +snps | \
+        bcftools view \
+            --max-alleles 2  \
+            --min-alleles 2 | \
+        bcftools view \
+            --phased | \
+        bcftools +fill-tags \
+            -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
+        bcftools query \
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AC_Hom %AC_Het %AF %MAF %ExcHet %HWE %NS GTs:[ %GT]\n' | \
+        head -7")
 
 
-run_bash(" \
-    bcftools norm \
-        --multiallelic -snps \
-        data/dummy_vcf_files/dummy_example.vcf | \
-    bcftools view \
-        --samples NA00001,NA00002 |\
-    bcftools view \
-        --types snps | \
-    bcftools view \
-        --genotype ^miss | \
-    bcftools norm \
-        --rm-dup exact | \
-    bcftools view \
-        --exclude 'COUNT(GT=\"AA\")=N_SAMPLES || COUNT(GT=\"RR\")=N_SAMPLES' |\
-    bcftools norm \
-        --multiallelic +snps | \
-    bcftools view \
-        --max-alleles 2 \
-        --min-alleles 2 | \
-    bcftools view \
-        --phased | \
-    bcftools +fill-tags \
-        -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
-    bcftools query \
-        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AC_Hom %AC_Het %AF %MAF %ExcHet %HWE %NS GTs:[ %GT]\n'")
+    run_bash(" \
+        bcftools view \
+            --samples " + ",".join(selected_samples) + " \
+            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+        bcftools view \
+            --types snps | \
+        bcftools view \
+            --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+        bcftools view \
+            --genotype ^miss | \
+        bcftools norm \
+            --rm-dup exact | \
+        bcftools norm \
+            --multiallelic +snps | \
+        bcftools view \
+            --max-alleles 2  \
+            --min-alleles 2 | \
+        bcftools view \
+            --phased | \
+        bcftools +fill-tags \
+            -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
+        bcftools head")
 
 
 
@@ -1189,7 +1256,7 @@ run_bash(" \
 
 
 
-    #remove next lines (until "convert VCF file to hap file") and combine with the previous
+    #remove next lines (until "convert VCF file to hap file") but before see if there is anything interesting to save
 
 
 
@@ -1244,7 +1311,14 @@ run_bash(" \
     #        -o data/" + selected_pop + ".bcf.gz")
 
 
+
+
+
+
+
+
     ##CREATE A VCF FILE WITH THE FILTERS AND COMPARE THE NUMBER OF VARIANTS WITH THE ORIGINAL VCF FILE
+
 
 
 
@@ -1684,3 +1758,9 @@ for zipinfo in zipinfos:
 #this should be done in April, in may you could spend time doing modeling and get first results in hg38, ready for ambizione and conferences.
 
 #in these two months, maybe you could have ready the cleaning of combat genes data, and you can show just a preliminary manhantan plot for the change in fitness? 
+
+
+##update github key
+#they had a problem last week 
+#https://news.ycombinator.com/item?id=35285387
+#https://github.blog/2023-03-23-we-updated-our-rsa-ssh-host-key/
