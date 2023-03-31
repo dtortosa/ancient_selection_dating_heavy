@@ -353,6 +353,8 @@ print("\n#######################################\n##############################
 print("see bcftools version")
 print("#######################################\n#######################################")
 run_bash("bcftools -v")
+    #bcftools cheatsheet
+        #https://gist.github.com/elowy01/93922762e131d7abd3c7e8e166a74a0b#file-bcftools-cheat-sheet
 
 
 
@@ -1081,8 +1083,9 @@ def master_processor(selected_chromosome, selected_pop):
     selected_samples = subset_pop["sampleID"]
 
     #save as txt to use it later
+    #it is redundant to do it in each chromosome of the same population (same samples) but I do it anyway to avoid confusion between chromosomes
     selected_samples.to_csv(
-        "results/hap_map_files_raw/samples_to_bcftools_" + selected_pop + ".txt", 
+        "results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_samples_to_bcftools.txt", 
         sep="\t", 
         header=None, 
         index=False)
@@ -1583,11 +1586,7 @@ def master_processor(selected_chromosome, selected_pop):
             #decompress the hap file and count the number of line
             #check both numbers are the same
 
-
-    ##POR AQUII
-
-    ##SUMMARY OF THE FILTERS APPLIED WITH VCFTOOLS IN VCF FILES FROM SLIM SIMULATIONS
-    #filters applied in vcftools
+    #summary of the filters applied with vcftools in vcf files from slim simulations
         #--max-alleles 2 --min-alleles 2 --max-missing 1 --phased
             #https://vcftools.sourceforge.net/man_latest.html
         #--max-alleles / --min-alleles
@@ -1595,124 +1594,38 @@ def master_processor(selected_chromosome, selected_pop):
                 #For example, to include only bi-allelic sites, one could use: vcftools --vcf file1.vcf --min-alleles 2 --max-alleles 2
         #--phased
             #Excludes all sites that contain unphased genotypes
-            #in bcftools
-                #-p/P, --phased/--exclude-phased
-                    #Select/exclude sites where all samples are phased
         #--max-missing 1
             #Exclude sites on the basis of the proportion of missing data (defined to be between 0 and 1, where 0 allows sites that are completely missing and 1 indicates no missing data allowed).
+            #we used 1 because we were working with simulations, we have for sure data for all samples and snps. Ask David what to do in this case.
 
-
-        ##CHECK WHY YOU SELECTED THESE FITLERS OF VCFTOOLS WHEN CREATING HAP FILES
-
-
-    #YOU NEED TO SELECT SNPS WITH A MXIMUMG OF 2 ALLELES IN ORDER TO AVOID MULTIALLELIC, WE DID THAT WITH IHS
-        #this is done WITHIN EACH POPUALTION, NOT CONSIDERING ALL OF THEM !!! 
-         #--max-alleles 2
-         #ASK JESUS AND DAIVD  
-         #https://www.biostars.org/p/141156/
-
-    #CHECK MAF AND FILTERS IN SLIM
-        #check filters applied in 1000 genomes project
-
-
-        #-p/P, --phased/--exclude-phased        Select/exclude sites where all samples are phased
-
-    #you can add mask with bcftools filter
-        #    -M, --mask-file [^]FILE        Soft filter regions listed in a file, "^" to negate
-
-
-
-    #CHCK THIS!!!
-        #5013617 records written, 745443 skipped: 0/0/745443 no-ALT/non-biallelic/filtered
-
-
-
-
-    #check we are only selecting SNPs
-    os.system(
-        "n_no_snps=$( \
-            bcftools query \
-                --include 'TYPE=\"snp\"' \
-                --samples " + ",".join(selected_samples) + " \
-                --format '%TYPE\n' \
-                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-            grep -v 'SNP' | \
-            wc -l) ; \
-        if [ $n_no_snps -eq 0 ]; then \
-            echo 'TRUE'; \
-        else \
-            echo 'FALSE'; \
-        fi")
-        #make a query that
-            #includes only snps and the selected samples
-            #returns the variant type, which should be only snp
-        #from the list of variant types
-            #select those that do not include SNP (-v flag)
-            #https://stackoverflow.com/questions/29489050/unix-command-to-get-lines-not-containing-certain-text
-        #the total number of these lines should be zero
-
-
-    #check that generated hap file has the correct number of SNPs, i.e., rows
-    os.system(
-        'n_unique_snps=$( \
-            bcftools query \
-                --include "TYPE=\'snp\'" \
-                --samples ' + ','.join(selected_samples) + ' \
-                --format "%ID\n" \
-                ' + input_vcfs_path + '/1kGP_high_coverage_Illumina.chr' + selected_chromosome + '.filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-            uniq | \
-            wc -l); \
-        echo "We have" "${n_unique_snps}" "unique SNPs in the query of VCF file"; \
-        n_lines_hap=$( \
+    #
+    print("\n#######################################\n#######################################")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": do we have the correct number of samples in the hap file?")
+    print("#######################################\n#######################################")
+    run_bash(" \
+        nfields_hap=$( \
             gunzip \
-                -c \
-                results/hap_map_files/chr' + selected_chromosome + '_' + selected_pop + '_IMPUTE2.hap.gz | \
-            wc -l); \
-        echo "We have" "${n_lines_hap}" "lines in the hap file"; \
-        echo "Both numbers are the same?"; \
-        if [ $n_unique_snps -eq $n_lines_hap ]; then \
-            echo "TRUE"; \
-        else \
-            echo "FALSE"; \
-        fi')
-        #calculate the number of unique snps
-            #querying variants 
-                #with type=snp
-                #for selected samples
-                #get the ID of the variants
-            #select unique cases
-            #count them
-        #calculate the number of lines in the previously generate hap file
-            #gunzip with "c" flag to simply write the output stream to stdout. This will leave the compressed file untouched. In other words, you do not create a file, but just show the content of the compressed file into the terminal. We will pipe that to wc
-                #https://superuser.com/questions/135329/count-lines-in-a-compressed-file
-            #count lines of the file
-        #check that both numbers are the same
-
-    #do we have the correct number of samples in the hap file?
-    os.system(
-        'nfields_hap=$( \
-            gunzip \
-                -c results/hap_map_files/chr' + selected_chromosome + '_' + selected_pop + '_IMPUTE2.hap.gz | \
-            awk -F " "  "{print NF}" | \
+                -c results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap.gz | \
+            awk -F ' ' '{print NF}' | \
             sort | \
             uniq); \
         nfields_hap_nlines=$( \
-            echo -n "$nfields_hap" | \
-            grep -c "^"); \
-        if [ "${nfields_hap_nlines}" -eq 1 ]; then \
+            echo -n $nfields_hap | \
+            grep -c '^'); \
+        if [[ $nfields_hap_nlines == 1 ]]; then \
             nsamples_hap=$(($nfields_hap/2)); \
             nsamples_bcftools=$( \
-                cat results/hap_map_files/samples_to_bcftools_' + selected_pop + '.txt | \
-                grep -c "^"); \
-            if [ "${nsamples_hap}" -eq "${nsamples_bcftools}" ]; then \
-                echo "TRUE"; \
+                cat results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_samples_to_bcftools.txt | \
+                grep -c '^'); \
+            if [[ $nsamples_hap == $nsamples_bcftools ]]; then \
+                echo 'TRUE'; \
             else \
-                echo "FALSE"; \
+                echo 'FALSE'; \
             fi\
-        fi')
+        fi")
         #calculate the number of fields/columns in the hap file
             #decompress the hap file and send the output to stdout (flag c of gunzip)
-            #use the interpreter of awk language (awk), indicating the delimiter of the columns (-F) and asking to print the number of field. You could also ask for column 1 typing $1... NF will give the number of columns or fields.
+            #use the interpreter of awk language (awk), indicating the delimiter of the columns (-F) and asking to print the number of fields. You could also ask for column 1 typing $1... NF will give the number of columns or fields.
                 #https://www.unix.com/shell-programming-and-scripting/110272-no-columns-csv-file.html
                 #https://askubuntu.com/questions/342842/what-does-this-command-mean-awk-f-print-4
             #you get the number of fields per row, so you have to sort the output and obtain the uniq cases.
@@ -1727,50 +1640,49 @@ def master_processor(selected_chromosome, selected_pop):
         #if the number of unique number of columns is 1, we are fine so continue
             #take nfields_hap, divide by 2. Remember that we remove the initial 5 columns, so we only have haplo columns. In these columns, we have 2 genotype columns per sample, so the number of columns/2 is the number of samples.
                 #https://phoenixnap.com/kb/bash-math
-            #calculate the number of samples from the .txt file generated.
+            #calculate the number of samples from the .txt file with the IDs of all samples.
                 #load the file with cat and count the number of lines that start with any character
             #check that the number of samples according to the hap file and the txt are the same.
 
-
-
+    #
+    print("\n#######################################\n#######################################")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": check that sample file generated with hap has the correct sample IDs?")
+    print("#######################################\n#######################################")
+    #read the sample file
     sample_list_from_hap = pd.read_csv(
-        './results/hap_map_files/IBS.samples',
+        "./results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.samples",
         header=0, 
-        sep=' ', 
+        sep=" ", 
         low_memory=False)
-
-    sample_list_from_hap_clean = sample_list_from_hap.loc[(sample_list_from_hap["ID_1"] != '0') | (sample_list_from_hap["ID_2"] != '0'), :]
-
+    #select those rows whose ID is not zero
+    sample_list_from_hap_clean = sample_list_from_hap.loc[(sample_list_from_hap["ID_1"] != "0") | (sample_list_from_hap["ID_2"] != "0"), :]
+    #reset the index
     sample_list_from_hap_clean = sample_list_from_hap_clean.reset_index()
+    #check that these IDs are identical to those of selected_samples
+    print(sample_list_from_hap_clean["ID_1"].equals(selected_samples))
+    print(sample_list_from_hap_clean["ID_2"].equals(selected_samples))
 
-    sample_list_from_hap_clean["ID_1"].equals(selected_samples)
-    sample_list_from_hap_clean["ID_2"].equals(selected_samples)
 
 
 
-    #check for duplicates in snp ID and position
-        #https://www.biostars.org/p/274824/
+
+    ##POR AQUIII
+
+
 
 
     #more CHECKS??
         #https://www.biostars.org/p/270381/
 
 
-    #ask jesus about the filters he applied besides the ones applied by 1000 genomes project according to readme file.
-    #ask jesus about the number of unrelated samples, see begining of the script
+#ask jesus about the filters he applied besides the ones applied by 1000 genomes project according to readme file.
+#ask jesus about the number of unrelated samples, see begining of the script
 
-    #ON FILTERING SNPS WITH BCFTOOLS
-        #https://www.htslib.org/workflow/filter.html
-
-    #BCFTOOLS CHEATSHEET
-        #https://gist.github.com/elowy01/93922762e131d7abd3c7e8e166a74a0b#file-bcftools-cheat-sheet
-
-
-    #filter by accesibility mask?
+#ON FILTERING SNPS WITH BCFTOOLS
+    #https://www.htslib.org/workflow/filter.html
 
 
 
-##POR AQUIII
 
 #ASK JESUS ABOUT 
     #THE MASKS
@@ -1864,18 +1776,29 @@ for zipinfo in zipinfos:
 #https://www.biostars.org/p/101444/
 
 
-#ASK DAVID
+#ASK JESUS-DAVID
     #remove unrelated samples
         #we are going to use unrelated samples only. If we are calculating haplotype homozygosity by counting haplotypes, if a father and child have the same haplotype, this is not caused by selection but just by shared ancestry
+    #filters within population
+        #I have applied several filters like the number of alleles, being 2.
+        #I have done this within population, so if a SNPs has 3 alleles considering all populations of the panel but only 2 within the selected population, then that SNP is retained for the selected population.
+    #percentage of missing
+        #they select only variants with missingness < 5%
+        #I have additionally removed variants with any missing genotype, is that ok or I should retain all with missing<5%?
+            #If that is the case, you can just remove the --genotype filter, as they already filtered by missing<5%.
     #accesibility masks
         #The calculation of accessibility to short-reads NGS is based on the alignment of whole genome low coverage data of 2691 phase3 samples to GRCh38.
         #it is worth it to use this when accesibility was calculated based on low-coverage data? it would be the same in high coverage data because it was also obtained with short-reads?
             #http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/working/20160622_genome_mask_GRCh38/README.accessible_genome_mask.20160622
+            #bcftools filter --mask-file
     #HWE within the population?
         #they selected snps that passes HWE filter in at least one superpopulation, but it is possible that some of these snps violate HWE within a specific population.
         #should I remove these snps?
 
 
+
+    #CHCK THIS!!!
+        #5013617 records written, 745443 skipped: 0/0/745443 no-ALT/non-biallelic/filtered
 
 ### 
 #finish hap and map files as soon as possible and send to elise
