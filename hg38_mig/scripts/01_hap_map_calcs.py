@@ -110,6 +110,17 @@ def run_bash(command, return_value=False):
         #return also the value if required
         if return_value==True:
             return complete_process.stdout 
+    elif ("no-ALT/non-biallelic/filtered" in complete_process.stderr):
+        
+        #print the standard output without "\n" and other characters
+        print(complete_process.stdout)
+
+        #print the standard error, which is not an error
+        print(complete_process.stderr)
+
+        #return also the value if required
+        if return_value==True:
+            return complete_process.stdout
     else:
         #print the standard error and stop
         raise ValueError("ERROR: FALSE! WE HAVE A PROBLEM RUNNING COMMAND: " + complete_process.stderr)
@@ -150,6 +161,8 @@ input_vcfs_path = "data/vcf_files_hg38"
 
 #create folders to save the results
 run_bash(" \
+    mkdir \
+        -p ./results/hap_map_files_raw; \
     mkdir \
         -p ./results/hap_map_files; \
     mkdir \
@@ -1069,7 +1082,7 @@ def master_processor(selected_chromosome, selected_pop):
 
     #save as txt to use it later
     selected_samples.to_csv(
-        "results/hap_map_files/samples_to_bcftools_" + selected_pop + ".txt", 
+        "results/hap_map_files_raw/samples_to_bcftools_" + selected_pop + ".txt", 
         sep="\t", 
         header=None, 
         index=False)
@@ -1357,7 +1370,8 @@ def master_processor(selected_chromosome, selected_pop):
         bcftools +fill-tags \
             -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
         bcftools head")
-            #the different subsets, filters and fields added are shown now in the header. Also the fields of the old VCF file are not shown.
+            #you can see that after the list of contigs, the only field shown before the list of my commands is just GT (phased genotypes) because I have removed all INFO and FORMAT fields with the exception of FORMAT/GT.
+            #then we have all the commands I have run in order to subset individuals and filter SNPs.
             #see dummy example for further details.
 
     #
@@ -1398,13 +1412,33 @@ def master_processor(selected_chromosome, selected_pop):
             #--compression-level
                 #Compression level: 0 uncompressed, 1 best speed, 9 best compression [-1]
 
+    #
+    print("\n#######################################\n#######################################")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": see the header of the recently created vcf file")
+    print("#######################################\n#######################################")
+    run_bash(" \
+        bcftools head \
+            ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz")
 
-
-
-
-    ##CREATE A VCF FILE WITH THE FILTERS AND COMPARE THE NUMBER OF VARIANTS WITH THE ORIGINAL VCF FILE
-
-
+    #
+    print("\n#######################################\n#######################################")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": see the genotypes of a few individuals from the recently created vcf file")
+    print("#######################################\n#######################################")
+    run_bash(" \
+        bcftools view \
+            ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz \
+            --no-header | \
+        head -5")
+            #As expected, we have 
+                #CHROM
+                #POS
+                #ID
+                #REF
+                #ALT
+                #QUAL (empty)
+                #FILTER (empty)
+                #INFO (with the fields I specifically created)
+                #FORMAT (only GT)
 
     #    
     print("\n#######################################\n#######################################")
@@ -1413,7 +1447,7 @@ def master_processor(selected_chromosome, selected_pop):
     run_bash(" \
         bcftools convert \
             ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz \
-            --hapsample ./results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw")
+            --hapsample ./results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw")
             #load the cleaned vcf file
             #--vcf-ids 
                 #when this option is given, the second column is set to match the ID column of the VCF.
@@ -1442,23 +1476,21 @@ def master_processor(selected_chromosome, selected_pop):
                 #In addition, hap files in yoruba folder of flexsweep are just our hap files for iHS, i.e., ONLY THE HAPLOTYPE COLUMNS.
                     #/xdisk/denard/lauterbur/yoruba/hapmap_YRI_hg19_decode2019/
 
-
-
-
     #see first variants
     print("\n#######################################\n#######################################")
     print("chr " + selected_chromosome + " - " + selected_pop + ": see first variants of the hap file")
     print("#######################################\n#######################################")
     run_bash(
-        "gunzip -c results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
-        head -2")
+        "gunzip -c results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
+        head -3")
+            #decompress the hap file and show in stdout 
     
     #clean
     print("\n#######################################\n#######################################")
     print("chr " + selected_chromosome + " - " + selected_pop + ": remove first columns of hap file to leave only haplotype columns")
     print("#######################################\n#######################################")
     run_bash(
-        "gunzip -c results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
+        "gunzip -c results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
         cut \
             --complement \
             --delimiter ' ' \
@@ -1480,26 +1512,26 @@ def master_processor(selected_chromosome, selected_pop):
     print("\n#######################################\n#######################################")
     print("chr " + selected_chromosome + " - " + selected_pop + ": the clean hap file is just the raw hap file but without the first 5 columns?")
     print("#######################################\n#######################################")
-    #create a long string with the index of each column of hap_raw file
-    #these indexes will be used by awk to select the corresponding columns
+    #create a long string with the index of each column of hap_raw file (without 5 first columns)
+    #these indexes will be used by awk to select the corresponding columns so we are creating the cleaned hap file again using another approach
     fields_selected_samples = "".join(
         ["$" + str(i) + "," if i != selected_samples.shape[0]*2+5 else "$" + str(i) for i in range(6, selected_samples.shape[0]*2+5+1, 1)])
-        #from index 6 (avoiding non-genotype columns) to the index of the last column, i.e., 2 columns times the number of samples plus 5 (because of the non-genotype columns) and 1 (because index 0 is 1)
-        #if the index is the last one
+        #from index 6 (avoiding non-genotype columns) to the index of the last column, i.e., 2 columns times the number of samples plus 5 (because of the non-genotype columns) and 1 (because index 1 in python is 0, so if you do range from 0 to 10, you get until 9, not 10, you need to add 1 (i.e., 11) to get the last one)
+        #if the index is NOT the last one
             #add $ to the index and then comma
         #else
             #it is the last one so we do not need add comma
         #join all strings
     #do comparison
-    run_bash(
-        "gunzip \
-            -c results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
+    run_bash(" \
+        gunzip \
+            -c results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
         awk -F ' ' '{print " + fields_selected_samples + "}' > \
-        results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw_clean_check.hap; \
+        results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw_clean_check.hap; \
         gunzip \
             -kf results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap.gz; \
         file1='results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap'; \
-        file2='results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw_clean_check.hap'; \
+        file2='results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw_clean_check.hap'; \
         STATUS=$(cmp --silent $file1 $file2; echo $?); \
         if [[ $STATUS -eq 0 ]]; then \
             echo 'TRUE'; \
@@ -1518,7 +1550,7 @@ def master_processor(selected_chromosome, selected_pop):
         #check byte by byte whether the two files are the same
             #cmp takes two files and compare them until 1 byte is different
             #we make it silent and get the final status
-            #remember that $? gives the return value of the last run command.
+            #remember that "$?" gives the return value of the last run command.
                 #For example, 
                     #ls somefile
                     #echo $?
@@ -1528,20 +1560,39 @@ def master_processor(selected_chromosome, selected_pop):
                 #https://stackoverflow.com/a/53529649/12772630
         #remove the new files
 
-
+    #
+    print("\n#######################################\n#######################################")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": check we have the same number of rows (variants) in the cleaned vcf and hap files")
+    print("#######################################\n#######################################")
+    run_bash(" \
+        n_snps_vcf=$( \
+            bcftools view \
+                ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz \
+                --no-header | \
+            wc -l); \
+        n_snps_hap=$( \
+            gunzip \
+                -c results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap.gz | \
+            wc -l); \
+        if [[ $n_snps_vcf == $n_snps_hap ]];then \
+            echo 'TRUE'; \
+        else \
+            echo 'FALSE'; \
+        fi")
+            #load the cleaned vcf file with bcftools and show only the snps, with no header, then count the number of lines and save the result
+            #decompress the hap file and count the number of line
+            #check both numbers are the same
 
 
     ##POR AQUII
 
+    ##SUMMARY OF THE FILTERS APPLIED WITH VCFTOOLS IN VCF FILES FROM SLIM SIMULATIONS
     #filters applied in vcftools
         #--max-alleles 2 --min-alleles 2 --max-missing 1 --phased
             #https://vcftools.sourceforge.net/man_latest.html
         #--max-alleles / --min-alleles
             #Include only sites with a number of alleles greater than or equal to the "--min-alleles" value and less than or equal to the "--max-alleles" value. One of these options may be used without the other.
                 #For example, to include only bi-allelic sites, one could use: vcftools --vcf file1.vcf --min-alleles 2 --max-alleles 2
-            #in bcftools
-                #-m/M, --min-alleles/--max-alleles INT  
-                    #Minimum/maximum number of alleles listed in REF and ALT (e.g. -m2 -M2 for biallelic sites)
         #--phased
             #Excludes all sites that contain unphased genotypes
             #in bcftools
@@ -1549,14 +1600,7 @@ def master_processor(selected_chromosome, selected_pop):
                     #Select/exclude sites where all samples are phased
         #--max-missing 1
             #Exclude sites on the basis of the proportion of missing data (defined to be between 0 and 1, where 0 allows sites that are completely missing and 1 indicates no missing data allowed).
-            #in bcftools
-                #
 
-        #bcftools filter --include 'AN=2*N_SAMPLES' [VCF/BCF]
-            #https://www.biostars.org/p/362060/
-
-        #add this as a second condition in --include
-            #https://github.com/samtools/bcftools/issues/822
 
         ##CHECK WHY YOU SELECTED THESE FITLERS OF VCFTOOLS WHEN CREATING HAP FILES
 
@@ -1823,7 +1867,13 @@ for zipinfo in zipinfos:
 #ASK DAVID
     #remove unrelated samples
         #we are going to use unrelated samples only. If we are calculating haplotype homozygosity by counting haplotypes, if a father and child have the same haplotype, this is not caused by selection but just by shared ancestry
-
+    #accesibility masks
+        #The calculation of accessibility to short-reads NGS is based on the alignment of whole genome low coverage data of 2691 phase3 samples to GRCh38.
+        #it is worth it to use this when accesibility was calculated based on low-coverage data? it would be the same in high coverage data because it was also obtained with short-reads?
+            #http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/working/20160622_genome_mask_GRCh38/README.accessible_genome_mask.20160622
+    #HWE within the population?
+        #they selected snps that passes HWE filter in at least one superpopulation, but it is possible that some of these snps violate HWE within a specific population.
+        #should I remove these snps?
 
 
 
