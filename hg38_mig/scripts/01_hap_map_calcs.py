@@ -1781,3 +1781,6 @@ for zipinfo in zipinfos:
 #they had a problem last week 
 #https://news.ycombinator.com/item?id=35285387
 #https://github.blog/2023-03-23-we-updated-our-rsa-ssh-host-key/
+
+
+#   - Two windows that are physically very close can share the same sweep even if you are using haplo-statistics in high recombination regions. You are considering two times the same sweep. This is something that happens in our MDR, but also in previous papers correlating genomic features across the genome. They consider recombination rate, but not physical position. I cannot think an obvious solution to this. Maybe adding the position (1 for the first base of the first chromosome and last for the last base of the 22 chromosome) to the model? You would need a flexible approach that can learn that some clusters of positions have sweeps and other not, but at the end this would reduce the power? You are just telling the model to predict the sweeps knowing its position... Maybe include in some way the cluster between windows....
