@@ -149,9 +149,11 @@ run_bash("ls")
 input_vcfs_path = "data/vcf_files_hg38"
 
 #create folders to save the results
-run_bash(
-    "mkdir \
-        -p ./results/hap_map_files")
+run_bash(" \
+    mkdir \
+        -p ./results/hap_map_files; \
+    mkdir \
+        -p ./results/cleaned_vcf_files")
     #-p: no error if the folder already exists, make parent directories as needed
 
 
@@ -1324,17 +1326,8 @@ def master_processor(selected_chromosome, selected_pop):
             --no-header | \
         head -7")
             #remove all INFO fields and all FORMAT fields (except GT) using annotate and then add the fields we are interested in.
-                #--remove LIST
-                    #List of annotations to remove. 
-                        #Use "FILTER" to remove all filters or "FILTER/SomeFilter" to remove a specific filter. Similarly, "INFO" can be used to remove all INFO tags and "FORMAT" to remove all FORMAT tags except GT. 
-                        #To remove all INFO tags except "FOO" and "BAR", use "^INFO/FOO,INFO/BAR" (and similarly for FORMAT and FILTER). "INFO" can be abbreviated to "INF" and "FORMAT" to "FMT".
-                #https://samtools.github.io/bcftools/bcftools.html#annotate
+            #see dummy example for further details.
             #use view with option --no-header to see all fields without the header.
-
-
-
-    ###CHECK WE ARE NOT LOSING ANY INTERESTING FIELD IN THE ORIGINAL VCF FILE
-
 
     #
     print("\n#######################################\n#######################################")
@@ -1367,37 +1360,9 @@ def master_processor(selected_chromosome, selected_pop):
             #the different subsets, filters and fields added are shown now in the header. Also the fields of the old VCF file are not shown.
             #see dummy example for further details.
 
-
-
-
-
-
-
-    #in case you want to save the filtered dataset, but it is slow the file is very big, so it is not worth it, we can directly go to hap
-    #run_bash(
-    #    "bcftools view \
-    #        " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz \
-    #        -i 'TYPE=\"snp\"' \
-    #        -H \
-    #        -s " + ",".join(selected_samples) + " \
-    #        -o data/" + selected_pop + ".bcf.gz")
-
-
-
-
-
-
-
-
-    ##CREATE A VCF FILE WITH THE FILTERS AND COMPARE THE NUMBER OF VARIANTS WITH THE ORIGINAL VCF FILE
-
-
-
-
-
-    #convert VCF file to hap file    
+    #
     print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": convert to hap file")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": save the cleaned vcf as a compressed file so we have an historial of the changes made in the vcf file")
     print("#######################################\n#######################################")
     run_bash(" \
         bcftools view \
@@ -1418,29 +1383,53 @@ def master_processor(selected_chromosome, selected_pop):
             --min-alleles 2 | \
         bcftools view \
             --phased | \
+        bcftools annotate \
+            --remove INFO,^FORMAT/GT | \
         bcftools +fill-tags \
             -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
+        bcftools view \
+            --output ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz \
+            --output-type z \
+            --compression-level 1")
+            #--output
+                #just the path and name of the file
+            #--output-type
+                #v for compressed VCF file
+            #--compression-level
+                #Compression level: 0 uncompressed, 1 best speed, 9 best compression [-1]
+
+
+
+
+
+    ##CREATE A VCF FILE WITH THE FILTERS AND COMPARE THE NUMBER OF VARIANTS WITH THE ORIGINAL VCF FILE
+
+
+
+    #    
+    print("\n#######################################\n#######################################")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": convert to hap file")
+    print("#######################################\n#######################################")
+    run_bash(" \
         bcftools convert \
-            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz \
+            ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz \
             --hapsample ./results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw")
-        #for those samples of the selected pop
-        #select those variants that are 
-            #biallelic 
-            #snps
-            #that are phased for all the selected samples
-            #that do not have missing data
-        #convert to hap format saving in results and using the name of the chromosome and the pop
+            #load the cleaned vcf file
             #--vcf-ids 
                 #when this option is given, the second column is set to match the ID column of the VCF.
-                #Without the option, the format follows https://www.cog-genomics.org/plink/2.0/formats#haps with ids (the second column) of the form "CHR:POS_REF_ALT[_END]"
-                #https://www.htslib.org/doc/bcftools.html#convert
+                #Without the option, the format follows https://www.cog-genomics.org/plink/2.0/formats#haps with ids (the second column) of the form "CHR:POS_REF_ALT[_END], with the _END being optional for defining the INFO/END tag when ALT is a symbolic allele.
+                #we are not using --vcf-ids so we can have "CHR:POS_REF_ALT". This can avoid strand swaps (see below).
+            #--hapsample
+                #convert from VCF to hap/sample format used by IMPUTE2 and SHAPEIT. The columns of .hap file begin with ID,RSID,POS,REF,ALT. In order to prevent strand swaps, the program uses IDs of the form "CHROM:POS_REF_ALT".
+                #save the results and using the name of the chromosome and the pop
+            #https://www.htslib.org/doc/bcftools.html#convert
         #IMPUTE2 hap format
             #https://www.cog-genomics.org/plink/2.0/formats#haps
             #we are going to use the reference panel haplotype file format for IMPUTE2. 
-            #This is a text file with no header line, and either 2N+5 or 2N fields where N is the number of samples. In other words, you can have 5 initial columns with data about the variants, or just the happlotype columns. In the former case, the first five columns are:
+            #This is a text file with no header line, and either 2N+5 or 2N fields where N is the number of samples. In other words, you can have 5 initial columns with data about the variants, or just the haplotype columns. In the former case, the first five columns are:
                 #Chromosome code
                 #Variant ID
-                    #This is in the format CHROM:POS_REF_ALT to prevent strand swaps.
+                    #This is in the format CHROM:POS_REF_ALT to prevent strand swaps. I guess you avoid strand swaps by having information about the REF and ALT alleles, so you can be sure the strand you are using.
                 #Base-pair coordinate (POS)
                 #REF allele
                 #ALT allele
@@ -1452,6 +1441,9 @@ def master_processor(selected_chromosome, selected_pop):
                     #/xdisk/denard/dftortosa/genomic_determinants_recent_selection/hapbin_inputs/
                 #In addition, hap files in yoruba folder of flexsweep are just our hap files for iHS, i.e., ONLY THE HAPLOTYPE COLUMNS.
                     #/xdisk/denard/lauterbur/yoruba/hapmap_YRI_hg19_decode2019/
+
+
+
 
     #see first variants
     print("\n#######################################\n#######################################")
@@ -1721,6 +1713,7 @@ def master_processor(selected_chromosome, selected_pop):
 
 
     #ask jesus about the filters he applied besides the ones applied by 1000 genomes project according to readme file.
+    #ask jesus about the number of unrelated samples, see begining of the script
 
     #ON FILTERING SNPS WITH BCFTOOLS
         #https://www.htslib.org/workflow/filter.html
