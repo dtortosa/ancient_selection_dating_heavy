@@ -694,7 +694,9 @@ run_bash(" \
         -- --tags AN,AC,AF | \
     bcftools query \
         -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
-        #+fill-tags has updated AF, so for example, rs6040355 has 0.5 for the frequency of both ALTs, while before it was 0.333. Similarly, the frequency of the ALT is 0.25 in rs6040351, which is correct.
+        #we use +fill-tags to update fields that are not updated after subsetting like frequency of the alternative allele and create some additional fields.
+            #+fill-tags has updated AF, so for example, rs6040355 has 0.5 for the frequency of both ALTs, while before it was 0.333. Similarly, the frequency of the ALT is 0.25 in rs6040351, which is correct.
+        #I understand that when using --multiallelic + or -, there is no update because the genotypes should not change, you are just spliting or merging the different ALT alleles. If AC/AN has changed due to the subset, this is updated in the AC/AN fields and these are used to do the combine/split AC/AN fields. The problem is that only AC/AN are updated, not the rest of fields.
 
 #
 print("\n#######################################\n#######################################")
@@ -743,7 +745,7 @@ run_bash(" \
 
 #
 print("\n#######################################\n#######################################")
-print("update fields using fill-tags after applying all the filters")
+print("remove all previous INFO and FORMAT fields except GT and create the fields you are interested in by using fill-tags but after applying all the filters")
 print("#######################################\n#######################################")
 run_bash(" \
     bcftools norm \
@@ -766,14 +768,78 @@ run_bash(" \
         --min-alleles 2 | \
     bcftools view \
         --phased | \
+    bcftools annotate \
+        --remove INFO,^FORMAT/GT | \
     bcftools +fill-tags \
         -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
     bcftools query \
         -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AC_Hom %AC_Het %AF %MAF %ExcHet %HWE %NS GTs:[ %GT]\n'")
+        #before updating/creating fields, remove all INFO fields and all FORMAT fields (except GT) using annotate and then add the fields we are interested in.
+            #--remove LIST
+                #List of annotations to remove. 
+                    #Use "FILTER" to remove all filters or "FILTER/SomeFilter" to remove a specific filter. Similarly, "INFO" can be used to remove all INFO tags and "FORMAT" to remove all FORMAT tags. 
+                    #To remove all INFO tags except "FOO" and "BAR", use "^INFO/FOO,INFO/BAR" (and similarly for FORMAT and FILTER). "INFO" can be abbreviated to "INF" and "FORMAT" to "FMT".
+            #https://samtools.github.io/bcftools/bcftools.html#annotate
         #It is ok to have the message "Incorrect number of AC fields". 
-            #This happens when we have multiallelic SNPs separated in several lines. You have only 1 ALT in each line, but you still have two AC values separated by comma. Because of this, when you subset by sample, then bcftools tries to update AC, it sees you have 1 ALT but two AC values, and prints that warning.
+            #This happens when we have multiallelic SNPs separated in several lines. You have only 1 ALT in each line, but you still have two AC values separated by comma. Because of this, when you subset by sample, then bcftools tries to update AC, it sees that you have 1 ALT but two AC values, and prints that warning.
             #No problem at all, as AC is correctly updated with the number of ALT alleles we have in the subset genotypes. The same goes for bcftools +fill-tags.
             #In addition, 1KGDP data is already split and the AC/AN fields seem to be updated, with just one value per line. So we should not see this warning.
+
+#
+print("\n#######################################\n#######################################")
+print("compare GT between applying or not the +fill-tags commands and the removal of fields")
+print("#######################################\n#######################################")
+run_bash(" \
+    bcftools norm \
+        --multiallelic -snps \
+        data/dummy_vcf_files/dummy_example.vcf | \
+    bcftools view \
+        --samples NA00001,NA00002 | \
+    bcftools view \
+        --types snps | \
+    bcftools view \
+        --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+    bcftools view \
+        --genotype ^miss |\
+    bcftools norm \
+        --rm-dup exact | \
+    bcftools norm \
+        --multiallelic +snps | \
+    bcftools view \
+        --max-alleles 2 \
+        --min-alleles 2 | \
+    bcftools view \
+        --phased | \
+    bcftools annotate \
+        --remove INFO,^FORMAT/GT | \
+    bcftools +fill-tags \
+        -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
+    bcftools view \
+        --no-header")
+run_bash(" \
+    bcftools norm \
+        --multiallelic -snps \
+        data/dummy_vcf_files/dummy_example.vcf | \
+    bcftools view \
+        --samples NA00001,NA00002 | \
+    bcftools view \
+        --types snps | \
+    bcftools view \
+        --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+    bcftools view \
+        --genotype ^miss |\
+    bcftools norm \
+        --rm-dup exact | \
+    bcftools norm \
+        --multiallelic +snps | \
+    bcftools view \
+        --max-alleles 2 \
+        --min-alleles 2 | \
+    bcftools view \
+        --phased | \
+    bcftools view \
+        --no-header")
+    #I have checked that the genotypes remain the same despite removing all previous INFO fields and all FORMAT fields (except GT) and then adding new INFO fields, so we are good here.
 
 #
 print("\n#######################################\n#######################################")
@@ -800,6 +866,8 @@ run_bash(" \
         --min-alleles 2 | \
     bcftools view \
         --phased | \
+    bcftools annotate \
+        --remove INFO,^FORMAT/GT | \
     bcftools +fill-tags \
         -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
     bcftools head")
@@ -1266,8 +1334,6 @@ def master_processor(selected_chromosome, selected_pop):
 
 
     ###CHECK WE ARE NOT LOSING ANY INTERESTING FIELD IN THE ORIGINAL VCF FILE
-    ###check in a few genotypes that they are not touched
-        ###do IT IN THE DUMMY EXAMPLE.
 
 
     #
