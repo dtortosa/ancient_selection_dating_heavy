@@ -1675,6 +1675,8 @@ def master_processor(selected_chromosome, selected_pop):
         #https://www.biostars.org/p/270381/
 
 
+#FINAL QUESTIONS AT THE BOTTOM, FIRST JESUS, THEN DAVID.
+
 #ask jesus about the filters he applied besides the ones applied by 1000 genomes project according to readme file.
 #ask jesus about the number of unrelated samples, see begining of the script
 
