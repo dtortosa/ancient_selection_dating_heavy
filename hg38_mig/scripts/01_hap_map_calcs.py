@@ -435,6 +435,7 @@ run_bash(" \
         --multiallelic -snps | \
     bcftools query \
         -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+        #the order you use in --samples is the order that will follow the genotypes. So if you --samples NA00002,NA00001, you get first the genotype of NA00002 and then those of NA00001. In other words, the genotype columns are ordered based on the sample ID you used as input.
         #you can see how AN and AC are updated but not AF. 
             #For example, rs6040357 has three copies of the two ALT alleles (AC=3,3) and a total number of 6 alleles (AN=6), but after removing the third sample (1|2), AC becomes 2,2 and AN becomes 4. 
             #Similarly, rs6040351 has AN=6, 2 copies of the allele and frequency of 2/6=0.33, but after removing the third sample (1|0), AN becomes 4, AC is 1, BUT AF remains 0.333, when it should be 0.25.
@@ -895,6 +896,65 @@ run_bash(" \
             #version of +fill-tags, flags selected
         #Therefore, the new header includes a history of the changes made to the VCF file inside of the file itself.
 
+#
+print("\n#######################################\n#######################################")
+print("save the cleaned vcf file")
+print("#######################################\n#######################################")
+run_bash(" \
+    bcftools norm \
+        --multiallelic -snps \
+        data/dummy_vcf_files/dummy_example.vcf | \
+    bcftools view \
+        --samples NA00001,NA00002 | \
+    bcftools view \
+        --types snps | \
+    bcftools view \
+        --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+    bcftools view \
+        --genotype ^miss |\
+    bcftools norm \
+        --rm-dup exact | \
+    bcftools norm \
+        --multiallelic +snps | \
+    bcftools view \
+        --max-alleles 2 \
+        --min-alleles 2 | \
+    bcftools view \
+        --phased | \
+    bcftools annotate \
+        --remove INFO,^FORMAT/GT | \
+    bcftools +fill-tags \
+        -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
+    bcftools view \
+        --output ./data/dummy_vcf_files/dummy_example_cleaned.vcf.gz \
+        --output-type z \
+        --compression-level 1")
+        #--output
+            #just the path and name of the file
+        #--output-type
+            #z for compressed VCF file
+        #--compression-level
+            #Compression level: 0 uncompressed, 1 best speed, 9 best compression
+
+#
+print("\n#######################################\n#######################################")
+print("chr " + selected_chromosome + " - " + selected_pop + ": see the header of the recently created dummy vcf file")
+print("#######################################\n#######################################")
+run_bash(" \
+    bcftools head \
+        ./data/dummy_vcf_files/dummy_example_cleaned.vcf.gz")
+    #we get first the fields of FILTER and FORMAT that have been not removed (you only removed INFO field and all FORMAT except GT). 
+    #Then we get all the commands we have run and the fields we have added.
+
+#
+print("\n#######################################\n#######################################")
+print("chr " + selected_chromosome + " - " + selected_pop + ": see the genotypes of a few individuals from the recently created dummy vcf file")
+print("#######################################\n#######################################")
+run_bash(" \
+    bcftools view \
+        ./data/dummy_vcf_files/dummy_example_cleaned.vcf.gz \
+        --no-header")
+
 #SUMMARY: 
     #With all these commands, we have recreated the scenario we have in 1KGP data, with multiallelic SNPs separated into different lines, select some samples, we then select snps, remove those with missing genotypes, remove exact duplicates (this does not touch different lines of the same multiallelic snp because they have different REF/ALT), exclude those SNPs that have the same allele for all samples, and we can do that using RR (REF|REF) and AA (A|A), because there are no missing (.) genotypes, as they have been removed. Then we combine all lines of each multiallleic snp and now they have ALT column with several alleles, so we can filter them using --max-alleles 2. Add last filter for selecting phased data only. We can also use bcftools +fill-tags to update important fields for each SNP, so if a SNP was multiallelic, but it is not multiallelic in the subset population (i.e., only REF and 1 ALT), we no longer will have two allele frequencies, two counts.... for the remainder biallelic SNP in the subset.
 
@@ -1092,9 +1152,9 @@ def master_processor(selected_chromosome, selected_pop):
 
 
 
-    ##################################
-    # operations within selected pop #
-    ##################################
+    ##########################################
+    # calculate hap file within selected pop #
+    ##########################################
 
     #
     print("\n#######################################\n#######################################")
@@ -1408,12 +1468,7 @@ def master_processor(selected_chromosome, selected_pop):
             --output ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz \
             --output-type z \
             --compression-level 1")
-            #--output
-                #just the path and name of the file
-            #--output-type
-                #v for compressed VCF file
-            #--compression-level
-                #Compression level: 0 uncompressed, 1 best speed, 9 best compression [-1]
+            #after subseting and filtering, save as a compressed VCF file, selecting the option for best speed (see dummy example for further details)
 
     #
     print("\n#######################################\n#######################################")
@@ -1664,157 +1719,26 @@ def master_processor(selected_chromosome, selected_pop):
 
 
 
+    ##########################################
+    # calculate map file within selected pop #
+    ##########################################
 
+    #WHEN PREPARING MAP FILE, REMEMBER THAT VCF IS 1 BASED!
 
-    ##POR AQUIII
+    #last conversion hap, I guess non-billalte and non-alt shoudl be removed to meet impute requeriments
+    #Hap file: ./results/hap_map_files_raw/chr1_GBR_IMPUTE2_raw.hap.gz
+    #Sample file: ./results/hap_map_files_raw/chr1_GBR_IMPUTE2_raw.samples
+    #938126 records written, 0 skipped: 0/0/0 no-ALT/non-biallelic/filtered
 
-
-
-
-    #more CHECKS??
-        #https://www.biostars.org/p/270381/
-
-
-#FINAL QUESTIONS AT THE BOTTOM, FIRST JESUS, THEN DAVID.
-
-#ask jesus about the filters he applied besides the ones applied by 1000 genomes project according to readme file.
-#ask jesus about the number of unrelated samples, see begining of the script
-
-#ON FILTERING SNPS WITH BCFTOOLS
-    #https://www.htslib.org/workflow/filter.html
-
-
-
-
-#ASK JESUS ABOUT 
-    #THE MASKS
-    #the pedigree used
-        #EAS and SAS problem
-#ASK ENARD ABOUT REMOVING RELATED INDIVIDUALS
-    #I should remove indels and structural variations, right?
-    #¿Estás usando los individuos emparentados? Hasta ahora yo he trabajado con unrelated, pero en el último dataset han metido también 698 que son parientes de los 2504 originales. No sé si lo has hablado con David, pero imagino que habrá que eliminar estos individuos ya que lógicamente sus genotipos van a estar muy correlacionados con individuos ya incluidos en la muestra. Si, por ejemplo, estás calculando la homozigosidad, estarías metiendo secuencias muy correlacionadas que podrían inflar la homozigosidad por parentesco, no porque haya habido selección en la población y ha hecho esa haplotipo más frecuente.
-
-
-
-#WHEN PREPARING MAP FILE, REMEMBER THAT VCF IS 1 BASED!
-
-for index, variant in enumerate(VCF("data/1KGP_vcf_files/1kGP_high_coverage_Illumina."+selected_chromosome+".filtered.SNV_INDEL_SV_phased_panel.vcf.gz")): # or VCF('some.bcf')
-    if(index == 0):
-        print(len(variant)) # e.g. REF='A', ALT=['C', 'T']
-
-#each column is the genotype of a sample in the same order than in the pedigree?
-    #http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/20130606_g1k_3202_samples_ped_population.txt
-    #http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/1kGP.3202_samples.pedigree_info.txt
-    #http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/README_111822.pdf
-    #http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/README_1kGP_phased_panel_110722.pdf
-
-    import vcf
-    vcf_reader = vcf.Reader(open("data/1KGP_vcf_files/1kGP_high_coverage_Illumina."+selected_chromosome+".filtered.SNV_INDEL_SV_phased_panel.vcf.gz", 'r'))
-    for record in vcf_reader:
-        print record
-
-
-
-
-    #create temporary folder to save
-    import tempfile
-    temp_dir = tempfile.TemporaryDirectory()
-    #print(temp_dir.name)
-    
-    #to remove the dir
-    #temp_dir.cleanup()
-        #https://stackoverflow.com/questions/3223604/how-to-create-a-temporary-directory-and-get-its-path-file-name
-    
-    #read only the zip and get list of files in it
-    import zipfile
-    zipdata = zipfile.ZipFile("data/1KGP_vcf_files/1kGP_high_coverage_Illumina."+selected_chromosome+".filtered.SNV_INDEL_SV_phased_panel.vcf.gz")
-    zipinfos = zipdata.infolist()
-
-#get the name of each zip file
-names_files = [zipinfo.filename for zipinfo in zipinfos]
-
-#iterate across files and get only final reports
-print("\n#######################################\n#######################################")
-print("Unzipping data: ")
-print("#######################################\n#######################################")
-#we are using a loop because it is a bit faster than zipdata.extractall. Parallelizing does not seems to be a good solution for unzipping and I got problems with pool. This takes a few minutes anyways.
-    #parallel slower
-        #https://stackoverflow.com/questions/43313666/python-parallel-processing-to-unzip-files
-    #count time
-        #https://stackoverflow.com/questions/1557571/how-do-i-get-time-of-a-python-programs-execution
-import numpy as np
-#zipinfo=zipinfos[1]
-#zipinfo=zipinfos[np.where([element == zip_name + "/SNP_Map.txt" for element in names_files])[0][0]]
-#zipinfo=zipinfos[np.where([element == zip_name + "/Sample_Map.txt" for element in names_files])[0][0]]
-import os
-for zipinfo in zipinfos:
-
-    #fir the file name starts with the adequate zip (batch) name and FinalReport
-    if (zipinfo.filename.startswith(zip_name + "/" + zip_name + "_FinalReport")) | (zipinfo.filename.startswith(zip_name + "/SNP_Map.txt")) | (zipinfo.filename.startswith(zip_name + "/Sample_Map.txt")):
-
-        #rename by removing the name of the parent folder, so we only get the file not the parent folder
-        zipinfo.filename = zipinfo.filename.split(zip_name+"/")[1]
-        print(zipinfo.filename)
-
-        #extract the file in the temp dict
-        zipdata.extract(zipinfo, temp_dir.name)
-            #https://stackoverflow.com/questions/44079913/renaming-the-extracted-file-from-zipfile/56362289#56362289
-            #https://stackoverflow.com/questions/13765486/how-to-unzip-specific-folder-from-a-zip-with-python
-
-        #if the selected file is a FinalReport
-        if zipinfo.filename.startswith(zip_name + "_FinalReport"):
-
-            #remove the first 10 lines of the file, which is the head 
-            os.system("cd " + temp_dir.name + "; tail -n +11 " + zipinfo.filename + " > tmp.txt && mv tmp.txt " + zipinfo.filename)
-                #if you use tail with "+number_line" you can get all lines starting from the selected number of line
-                    #tail is faster than sed
-                #then save the result in a temporal file and overwrite the original file. The && will make sure that the file doesn't get overwritten when there is a problem.
-                    #https://stackoverflow.com/questions/339483/how-can-i-remove-the-first-line-of-a-text-file-using-bash-sed-script
-                    #https://www.baeldung.com/linux/remove-first-line-text-file
-
-
-
-#parse large vcf file?
-#https://www.biostars.org/p/101444/
-
-
-#ASK JESUS-DAVID
-    #remove unrelated samples
-        #we are going to use unrelated samples only. If we are calculating haplotype homozygosity by counting haplotypes, if a father and child have the same haplotype, this is not caused by selection but just by shared ancestry
-    #filters within population
-        #I have applied several filters like the number of alleles, being 2.
-        #I have done this within population, so if a SNPs has 3 alleles considering all populations of the panel but only 2 within the selected population, then that SNP is retained for the selected population.
-    #percentage of missing
-        #they select only variants with missingness < 5%
-        #I have additionally removed variants with any missing genotype, is that ok or I should retain all with missing<5%?
-            #If that is the case, you can just remove the --genotype filter, as they already filtered by missing<5%.
-    #accesibility masks
-        #The calculation of accessibility to short-reads NGS is based on the alignment of whole genome low coverage data of 2691 phase3 samples to GRCh38.
-        #it is worth it to use this when accesibility was calculated based on low-coverage data? it would be the same in high coverage data because it was also obtained with short-reads?
-            #http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/working/20160622_genome_mask_GRCh38/README.accessible_genome_mask.20160622
-            #bcftools filter --mask-file
-    #HWE within the population?
-        #they selected snps that passes HWE filter in at least one superpopulation, but it is possible that some of these snps violate HWE within a specific population.
-        #should I remove these snps?
-
+    #if you take the VCF file, filter and then count lines, you get 938126 records, but then say that total is 945919, as when writting the file. Maybe this is the total originally, CHECK
+    #938126
+    #Lines   total/split/realigned/skipped:  945919/0/0/0
+    #Lines   total/split/realigned/skipped:  945919/0/0/0
 
 
     #CHCK THIS!!!
         #5013617 records written, 745443 skipped: 0/0/745443 no-ALT/non-biallelic/filtered
 
-### 
-#finish hap and map files as soon as possible and send to elise
-#while she calculates flex sweep prob, you calculate predictors in non-overlapping windwos for hg38, ask david about non-overlapping. It can be good to explore the whole genome, have more data, reduce correlation between windows, and we can just add the number of interest genes in each window, but then who we do the enrichment test? maybe taking the closest non-overlapping window to the center of each gene?
 
-#this should be done in April, in may you could spend time doing modeling and get first results in hg38, ready for ambizione and conferences.
-
-#in these two months, maybe you could have ready the cleaning of combat genes data, and you can show just a preliminary manhantan plot for the change in fitness? 
-
-
-##update github key
-#they had a problem last week 
-#https://news.ycombinator.com/item?id=35285387
-#https://github.blog/2023-03-23-we-updated-our-rsa-ssh-host-key/
-
-
-#   - Two windows that are physically very close can share the same sweep even if you are using haplo-statistics in high recombination regions. You are considering two times the same sweep. This is something that happens in our MDR, but also in previous papers correlating genomic features across the genome. They consider recombination rate, but not physical position. I cannot think an obvious solution to this. Maybe adding the position (1 for the first base of the first chromosome and last for the last base of the 22 chromosome) to the model? You would need a flexible approach that can learn that some clusters of positions have sweeps and other not, but at the end this would reduce the power? You are just telling the model to predict the sweeps knowing its position... Maybe include in some way the cluster between windows....
+    #PROBLEMA!!
+        #He estado explorando un poco los diferentes pedigrees que hay. En la versión más actualizada (la del último dataset; link) me salen 2594 individuos no emparentados, es decir, solo 608 individuos tienen ID en la columna materna o paterna. Esto me cuadra con el número de trios+duos que dan en el paper (602+6), pero luego dicen varias veces que "we performed WGS of the original 2,504 1kGP unrelated samples and an additional 698 related samples". Entonces no entiendo muy bien qué está pasando aquí. Solo para clarificar, he considerado unrelated aquellos individuos que no tienen ID en ninguna de las columnas parentales del pedigree.
