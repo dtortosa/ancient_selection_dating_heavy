@@ -321,10 +321,12 @@ print("Do we have 2594 unrelated samples?")
 print("#######################################\n#######################################")
 print(unrelated_samples.shape[0] == 2594)
 print(unrelated_samples)
-    #They do not give an exact number of unrelated samples. I think it is ok if 3202-608 gives 2594 instead 2504. 2504 is the sample size of phase 3, but there are more samples in this new phase of the project.
+    #STRANGE THING HERE: They say "Using the Illumina NovaSeq 6000 System, we performed WGS of the original 2,504 1kGP unrelated samples and an additional 698 related samples". But we have 3202-608=2594 unrelated, instead of 2504. If they have 602+6 trios and duos, what other samples are related (Table S1 says there are 602 trios)? 2504 is the sample size of phase 3, so maybe they have added more unrelated samples?
+        #ASKING JESUS
         #https://www.cell.com/cell/fulltext/S0092-8674(22)00991-6?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867422009916%3Fshowall%3Dtrue#supplementaryMaterial
 
-#there is an older readme saying that the number of trios is 698 (http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/README_2504_plus_additional_698_related_samples.txt), but this comes from older data, a dataset released in 2020. In contrast, our data here matches with the paper of the latest release
+#there is an older readme saying that the number of trios is 698 (http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/README_2504_plus_additional_698_related_samples.txt), but this comes from older data, a dataset released in 2020. But they say these are samples mainly completing trios and they say there are only 602+8 trios+duos! so not sure what is happening here
+    #ASKING JESUS
 
 #we are going to use unrelated samples only. If we are calculating haplotype homozygosity by counting haplotypes, if a father and child have the same haplotype, this is not caused by selection but just by shared ancestry
 print("\n#######################################\n#######################################")
@@ -938,7 +940,7 @@ run_bash(" \
 
 #
 print("\n#######################################\n#######################################")
-print("chr " + selected_chromosome + " - " + selected_pop + ": see the header of the recently created dummy vcf file")
+print("see the header of the recently created dummy vcf file")
 print("#######################################\n#######################################")
 run_bash(" \
     bcftools head \
@@ -948,7 +950,7 @@ run_bash(" \
 
 #
 print("\n#######################################\n#######################################")
-print("chr " + selected_chromosome + " - " + selected_pop + ": see the genotypes of a few individuals from the recently created dummy vcf file")
+print("see the genotypes of a few individuals from the recently created dummy vcf file")
 print("#######################################\n#######################################")
 run_bash(" \
     bcftools view \
@@ -1725,20 +1727,53 @@ def master_processor(selected_chromosome, selected_pop):
 
     #WHEN PREPARING MAP FILE, REMEMBER THAT VCF IS 1 BASED!
 
+    #
+
+
+    #loading the position and chromosome of each snp, VCf file or better impute file
+
+    "./results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw"
+
+    run_bash(" \
+        bcftools view \
+            ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz | \
+        bcftools query \
+            --format '%ID %CHROM %POS\n' |\
+        head -5 > eso.txt; \
+        cat eso.txt")
+
+    snp_map_raw = pd.read_csv("eso.txt", sep=" ", header=None)
+    snp_map_raw
+
+    snp_map_raw.rename()
+
+
     #last conversion hap, I guess non-billalte and non-alt shoudl be removed to meet impute requeriments
     #Hap file: ./results/hap_map_files_raw/chr1_GBR_IMPUTE2_raw.hap.gz
     #Sample file: ./results/hap_map_files_raw/chr1_GBR_IMPUTE2_raw.samples
     #938126 records written, 0 skipped: 0/0/0 no-ALT/non-biallelic/filtered
+
+
+
+
 
     #if you take the VCF file, filter and then count lines, you get 938126 records, but then say that total is 945919, as when writting the file. Maybe this is the total originally, CHECK
     #938126
     #Lines   total/split/realigned/skipped:  945919/0/0/0
     #Lines   total/split/realigned/skipped:  945919/0/0/0
 
+    #
+    #In [4]: run_bash(" \
+    #...:     bcftools view \
+    #...:         " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+    #...:     wc -l")
+    #5759173
 
-    #CHCK THIS!!!
-        #5013617 records written, 745443 skipped: 0/0/745443 no-ALT/non-biallelic/filtered
 
-
-    #PROBLEMA!!
-        #He estado explorando un poco los diferentes pedigrees que hay. En la versión más actualizada (la del último dataset; link) me salen 2594 individuos no emparentados, es decir, solo 608 individuos tienen ID en la columna materna o paterna. Esto me cuadra con el número de trios+duos que dan en el paper (602+6), pero luego dicen varias veces que "we performed WGS of the original 2,504 1kGP unrelated samples and an additional 698 related samples". Entonces no entiendo muy bien qué está pasando aquí. Solo para clarificar, he considerado unrelated aquellos individuos que no tienen ID en ninguna de las columnas parentales del pedigree.
+    #In [5]: run_bash(" \
+    #...:     bcftools view \
+    #...:             --samples " + ",".join(selected_samples) + " \
+    #...:         " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+    #...:     wc -l")
+    #...: 
+    #5759173
