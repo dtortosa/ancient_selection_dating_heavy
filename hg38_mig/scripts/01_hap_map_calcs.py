@@ -175,9 +175,17 @@ run_bash(" \
 # pops prep #
 #############
 
+#load original 2504 unrelated samples from phase 3
+#http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/integrated_call_samples_v3.20130502.ALL.panel
+import pandas as pd
+original_unrel_ped = pd.read_csv(
+    "data/pedigrees/integrated_call_samples_v3.20130502.ALL.panel.txt", 
+    sep="\t", 
+    header=0, 
+    low_memory=False)
+
 #load pedigree of the latest version of the phased data that has sample IDs, sex and parents but no pop names. 
 #Downloaded from: http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/1kGP.3202_samples.pedigree_info.txt
-import pandas as pd
 samples_pedigree = pd.read_csv(
     "data/pedigrees/1kGP.3202_samples.pedigree_info.txt", 
     sep=" ", 
@@ -194,9 +202,58 @@ samples_pedigree_pop = pd.read_csv(
 
 #check
 print("\n#######################################\n#######################################")
-print("check that sample IDs in the pedigree of latest data are all included in the ped_sample_pop file of the general high coverage dataset")
+print("check that sample IDs in the original pedigree are all included in peds of the general high coverage dataset")
 print("#######################################\n#######################################")
-print(all(samples_pedigree["sampleID"].isin(samples_pedigree_pop["SampleID"])))
+print(all(original_unrel_ped["sample"].isin(samples_pedigree["sampleID"])))
+print(all(original_unrel_ped["sample"].isin(samples_pedigree_pop["SampleID"])))
+
+
+###POR AQUI
+
+samples_pedigree_unrel = samples_pedigree.loc[samples_pedigree["sampleID"].isin(original_unrel_ped["sample"]),:]
+samples_pedigree_rel = samples_pedigree.loc[~samples_pedigree["sampleID"].isin(original_unrel_ped["sample"]),:]
+
+samples_pedigree_pop_unrel = samples_pedigree_pop.loc[samples_pedigree_pop["SampleID"].isin(original_unrel_ped["sample"]),:]
+samples_pedigree_pop_rel = samples_pedigree_pop.loc[~samples_pedigree_pop["SampleID"].isin(original_unrel_ped["sample"]),:]
+
+import numpy as np
+np.unique(samples_pedigree_unrel.loc[samples_pedigree["sex"]==1, "sampleID"].reset_index(drop=True) == original_unrel_ped.loc[original_unrel_ped["gender"]=="male", "sample"].reset_index(drop=True))
+np.unique(samples_pedigree_unrel.loc[samples_pedigree["sex"]==2, "sampleID"].reset_index(drop=True) == original_unrel_ped.loc[original_unrel_ped["gender"]=="female", "sample"].reset_index(drop=True))
+
+np.unique(samples_pedigree_pop_unrel.loc[samples_pedigree_pop_unrel["Sex"]==1, "SampleID"].reset_index(drop=True) == original_unrel_ped.loc[original_unrel_ped["gender"]=="male", "sample"].reset_index(drop=True))
+np.unique(samples_pedigree_pop_unrel.loc[samples_pedigree_pop_unrel["Sex"]==2, "SampleID"].reset_index(drop=True) == original_unrel_ped.loc[original_unrel_ped["gender"]=="female", "sample"].reset_index(drop=True))
+
+
+
+
+
+
+for pop in original_unrel_ped["pop"].unique():
+
+    print(pop)
+
+    samples_new_ped = samples_pedigree_pop_unrel.\
+        loc[samples_pedigree_pop_unrel["Population"]==pop, "SampleID"].\
+        reset_index(drop=True) 
+
+    samples_old_ped = original_unrel_ped.\
+        loc[original_unrel_ped["pop"]==pop, "sample"]\
+        .reset_index(drop=True)
+
+    print(np.unique(samples_new_ped==samples_old_ped)[0])
+
+
+
+##all should be zero but this is not the CASE!!!
+samples_pedigree_unrel.loc[(samples_pedigree_unrel["fatherID"] != "0") | (samples_pedigree_unrel["motherID"] != "0")]
+samples_pedigree_pop_unrel.loc[(samples_pedigree_pop_unrel["FatherID"] != "0") | (samples_pedigree_pop_unrel["MotherID"] != "0")]
+
+
+original_unrel_ped.loc[original_unrel_ped["sample"].isin( samples_pedigree_unrel.loc[(samples_pedigree_unrel["fatherID"] != "0") | (samples_pedigree
+     ...: _unrel["motherID"] != "0"), "sampleID"])]
+
+#there are 9 samples that are included in the original 2504 unrelated, but they have father/mather ID in the last pedigree!!!
+
 
 #check
 print("\n#######################################\n#######################################")
@@ -1746,6 +1803,12 @@ def master_processor(selected_chromosome, selected_pop):
     snp_map_raw
 
     snp_map_raw.rename()
+
+
+    ###QUITA LOS 90!!!! QUE NO SON UNRELATED
+
+    #usa los 2504 originales como pone en el paper, estos son los unrelated
+        #http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/integrated_call_samples_v3.20130502.ALL.panel
 
 
     #last conversion hap, I guess non-billalte and non-alt shoudl be removed to meet impute requeriments
