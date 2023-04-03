@@ -459,8 +459,8 @@ from sklearn.model_selection import cross_val_score
 # In[62]:
 
 
-batch_sizes = [5, 10, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220]
-epoch_sizes = [10, 50, 100, 200, 400, 600, 810]
+batch_sizes = [5, 10, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300]
+epoch_sizes = [10, 50, 100, 200, 400, 600, 800, 910]
 
 
 # **Note**:
@@ -651,7 +651,7 @@ activations = ['softmax',
 
 
 dropout_rates = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-weight_constraints = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]
+weight_constraints = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
 
 
 # **Note**
@@ -703,8 +703,8 @@ weight_constraints = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]
 # In[68]:
 
 
-regu_L1_values=[1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8] #use log
-regu_L2_values=[1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8] #use log
+regu_L1_values=[1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8, 1e-9, 1e-10] #use log
+regu_L2_values=[1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8, 1e-9, 1e-10] #use log
 
 
 # **Note**
@@ -755,8 +755,8 @@ regu_L2_values=[1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8] #use log
 # In[69]:
 
 
-n_layers = np.arange(1, 21, 3)
-n_units = np.arange(1, 700, 20)
+n_layers = np.arange(1, 21, 1)
+n_units = np.arange(1, 1000, 20)
     #For the second run, we are extending the maximum number of nodes
     #the best number until now is between 300-400, but some trials
     #are also high close to 500, so maybe the optimum
@@ -948,7 +948,7 @@ def objective(trial):
     n_layersT =  trial.suggest_int('regressor__regressor__model__n_layers', 
                                       low=np.min(n_layers), 
                                       high=np.max(n_layers), 
-                                      step=2)
+                                      step=1)
     n_unitsT =  trial.suggest_int('regressor__regressor__model__n_units', 
                                       low=np.min(n_units), 
                                       high=np.max(n_units), 
