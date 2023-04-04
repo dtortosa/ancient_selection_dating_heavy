@@ -774,7 +774,7 @@ run_bash(" \
 
 #   
 print("\n#######################################\n#######################################")
-print("soft filter of regions low accessibility for sequencing")
+print("select only SNPs in regions with high accessibility")
 print("#######################################\n#######################################")
 #general info
     #The 1000 Genomes Project created what they defined as accessibilty masks for the pilot phase, phase one and phase three of the Project. Some other studies have similar files.
@@ -798,37 +798,85 @@ print("#######################################\n################################
     #The calculation of accessibility is based on the alignment of whole genome low coverage data of 2691 phase3 samples to GRCh38.
     #The masks are useful for (a) comparing accessibility using current technologies to accessibility in the pilot project, and (b) population genetic analysis (such as estimates of mutation rate) that must focus on genomic regions with very low false positive and false negative rates.
     #there are two masks
-        #the pilot masks that uses the definition of the pilot project and it is less stringent, accepting 95% of the genome. In other words, this maks was created during the pilot, the definition, and then applied to phase 3.
+        #the pilot masks that uses the definition of the pilot project and it is less stringent, accepting 95% of the genome. In other words, this mask was created during the pilot, the definition, and then applied to phase 3.
         #the strict mask that uses a more stringent definition and I think this is based on phase 3, accepting only 76% of the genome. This mask was defined during phase 3.
-    #filtering in bcftools
-        #You can do a soft filter of regions, this means that regions not passing the filter of the mask are indicated as such in the filter column using --mask-file
-            #this is a soft filter
-                #https://www.biostars.org/p/433062/
-        #you can also literally select only regions inside certains regions using --regions-overlap
-            #https://samtools.github.io/bcftools/bcftools.html#filter
-            #https://samtools.github.io/bcftools/bcftools.html#common_options
 #mask data here
     #http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/working/20160622_genome_mask_GRCh38/
     #we will use the bed files with the regions has to be retained
         #"In addition to masked fasta files, a bed file of all passed sites can be found in this directory."
-
 run_bash("\
-    bcftools filter \
-        --soft-filter \
-        --mask-file ./data/dummy_vcf_files/dummy_pilot_mask.bed \
-        data/dummy_vcf_files/dummy_example.vcf | \
     bcftools view \
-        --no-header")
-
-run_bash("\
-    bcftools filter \
-        --regions-overlap ./data/dummy_vcf_files/dummy_pilot_mask.bed \
-        data/dummy_vcf_files/dummy_example.vcf | \
+        --output-type z \
+        --compression-level 1 \
+        --output ./data/dummy_vcf_files/dummy_example.vcf.gz \
+        ./data/dummy_vcf_files/dummy_example.vcf; \
+    bcftools index \
+        --csi \
+        --force \
+        ./data/dummy_vcf_files/dummy_example.vcf.gz; \
     bcftools view \
-        --no-header")
+        --regions-file ./data/dummy_vcf_files/dummy_pilot_mask.bed \
+        ./data/dummy_vcf_files/dummy_example.vcf.gz |\
+    bcftools norm \
+        --multiallelic -snps | \
+    bcftools view \
+        --samples NA00001,NA00002 | \
+    bcftools view \
+        --types snps | \
+    bcftools view \
+        --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+    bcftools view \
+        --genotype ^miss |\
+    bcftools norm \
+        --rm-dup exact | \
+    bcftools norm \
+        --multiallelic +snps | \
+    bcftools view \
+        --max-alleles 2 \
+        --min-alleles 2 | \
+    bcftools view \
+        --phased | \
+    bcftools query \
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+        #compress the dummy vcf file because this is required in order to index the vcf file, and the indexing is turn required in order to select regions with --regions-file/--regions
+            #--output
+                #just the path and name of the file
+            #--output-type
+                #z for compressed VCF file
+            #--compression-level
+                #Compression level: 0 uncompressed, 1 best speed, 9 best compression
+        #index the compressed vcf file
+            #--csi
+                #generate CSI-format index for VCF/BCF files [default]
+                #one of the formats used by --regions
+            #--force
+                #overwrite index if it already exists
+            #https://github.com/samtools/bcftools/issues/668
+        #select variants inside interest regions
+            #--regions-file
+                #Regions can be specified either on command line or in a VCF, BED, or tab-delimited file (the default). 
+                    #The columns of the tab-delimited file can contain either positions (two-column format: CHROM, POS) or intervals (three-column format: CHROM, BEG, END), but not both. Positions are 1-based and inclusive. 
+                    #The columns of the tab-delimited BED file are also CHROM, POS and END (trailing columns [like pilot/strict] are ignored), BUT COORDINATES ARE 0-BASED, HALF-OPEN. To indicate that a file be treated as BED rather than the 1-based tab-delimited file, the file must have the ".bed" or ".bed.gz" suffix (case-insensitive).
+                        #THIS IS OUR CASE.
+                        #I have checked that a SNP at the starting coordinate of a interval is NOT included, which is congruent with the fact these are 0-based coordinates.
+                    #Uncompressed files are stored in memory, while bgzip-compressed and tabix-indexed region files are streamed.
+                    #Note that sequence names must match exactly, "chr20" is not the same as "20".
+                        #we have chrXX in both the bed and the VCF files
+                    #Also note that chromosome ordering in FILE will be respected, the VCF will be processed in the order in which chromosomes first appear in FILE. However, within chromosomes, the VCF will always be processed in ascending genomic coordinate order no matter what order they appear in FILE.
+                        #I have checked that adding intervals of chromosomes not present in the VCF file does NOT change anything. Therefore, bcftools is not including variants of one chromosome because that coordinate in other chromosome is accepted.
+                    #Note that overlapping regions in FILE can result in duplicated out of order positions in the output.
+                        #I AM GOING TO CHECK INTERVALS ARE NOT OVERLAPPED.
+                    #This option requires indexed VCF/BCF files. 
+                    #Note that -R cannot be used in combination with -r.
 
-###maybe use bcftools consensus? or fasta file? look for format required by bcftotols
-    #https://www.biostars.org/p/9498912/
+
+##por aquiii
+
+#checking the commands
+
+#check that the BED file real has non-overlapping intervals
+    #it should be zero based...
+#filtrar el BED file para el chr de interest with awk?
 
 
 #   
@@ -912,9 +960,20 @@ print("\n#######################################\n##############################
 print("remove all previous INFO and FORMAT fields except GT and create the fields you are interested in by using fill-tags but after applying all the filters")
 print("#######################################\n#######################################")
 run_bash(" \
+    bcftools view \
+        --output-type z \
+        --compression-level 1 \
+        --output ./data/dummy_vcf_files/dummy_example.vcf.gz \
+        ./data/dummy_vcf_files/dummy_example.vcf; \
+    bcftools index \
+        --csi \
+        --force \
+        ./data/dummy_vcf_files/dummy_example.vcf.gz; \
+    bcftools view \
+        --regions-file ./data/dummy_vcf_files/dummy_pilot_mask.bed \
+        ./data/dummy_vcf_files/dummy_example.vcf.gz |\
     bcftools norm \
-        --multiallelic -snps \
-        data/dummy_vcf_files/dummy_example.vcf | \
+        --multiallelic -snps | \
     bcftools view \
         --samples NA00001,NA00002 | \
     bcftools view \
@@ -954,9 +1013,20 @@ print("\n#######################################\n##############################
 print("compare GT between applying or not the +fill-tags commands and the removal of fields")
 print("#######################################\n#######################################")
 run_bash(" \
+    bcftools view \
+        --output-type z \
+        --compression-level 1 \
+        --output ./data/dummy_vcf_files/dummy_example.vcf.gz \
+        ./data/dummy_vcf_files/dummy_example.vcf; \
+    bcftools index \
+        --csi \
+        --force \
+        ./data/dummy_vcf_files/dummy_example.vcf.gz; \
+    bcftools view \
+        --regions-file ./data/dummy_vcf_files/dummy_pilot_mask.bed \
+        ./data/dummy_vcf_files/dummy_example.vcf.gz |\
     bcftools norm \
-        --multiallelic -snps \
-        data/dummy_vcf_files/dummy_example.vcf | \
+        --multiallelic -snps |\
     bcftools view \
         --samples NA00001,NA00002 | \
     bcftools view \
@@ -981,9 +1051,20 @@ run_bash(" \
     bcftools view \
         --no-header")
 run_bash(" \
+    bcftools view \
+        --output-type z \
+        --compression-level 1 \
+        --output ./data/dummy_vcf_files/dummy_example.vcf.gz \
+        ./data/dummy_vcf_files/dummy_example.vcf; \
+    bcftools index \
+        --csi \
+        --force \
+        ./data/dummy_vcf_files/dummy_example.vcf.gz; \
+    bcftools view \
+        --regions-file ./data/dummy_vcf_files/dummy_pilot_mask.bed \
+        ./data/dummy_vcf_files/dummy_example.vcf.gz |\
     bcftools norm \
-        --multiallelic -snps \
-        data/dummy_vcf_files/dummy_example.vcf | \
+        --multiallelic -snps |\
     bcftools view \
         --samples NA00001,NA00002 | \
     bcftools view \
@@ -1010,9 +1091,20 @@ print("\n#######################################\n##############################
 print("see the new header")
 print("#######################################\n#######################################")
 run_bash(" \
+    bcftools view \
+        --output-type z \
+        --compression-level 1 \
+        --output ./data/dummy_vcf_files/dummy_example.vcf.gz \
+        ./data/dummy_vcf_files/dummy_example.vcf; \
+    bcftools index \
+        --csi \
+        --force \
+        ./data/dummy_vcf_files/dummy_example.vcf.gz; \
+    bcftools view \
+        --regions-file ./data/dummy_vcf_files/dummy_pilot_mask.bed \
+        ./data/dummy_vcf_files/dummy_example.vcf.gz |\
     bcftools norm \
-        --multiallelic -snps \
-        data/dummy_vcf_files/dummy_example.vcf | \
+        --multiallelic -snps |\
     bcftools view \
         --samples NA00001,NA00002 | \
     bcftools view \
@@ -1047,9 +1139,20 @@ print("\n#######################################\n##############################
 print("save the cleaned vcf file")
 print("#######################################\n#######################################")
 run_bash(" \
+    bcftools view \
+        --output-type z \
+        --compression-level 1 \
+        --output ./data/dummy_vcf_files/dummy_example.vcf.gz \
+        ./data/dummy_vcf_files/dummy_example.vcf; \
+    bcftools index \
+        --csi \
+        --force \
+        ./data/dummy_vcf_files/dummy_example.vcf.gz; \
+    bcftools view \
+        --regions-file ./data/dummy_vcf_files/dummy_pilot_mask.bed \
+        ./data/dummy_vcf_files/dummy_example.vcf.gz |\
     bcftools norm \
-        --multiallelic -snps \
-        data/dummy_vcf_files/dummy_example.vcf | \
+        --multiallelic -snps |\
     bcftools view \
         --samples NA00001,NA00002 | \
     bcftools view \
@@ -1075,12 +1178,6 @@ run_bash(" \
         --output ./data/dummy_vcf_files/dummy_example_cleaned.vcf.gz \
         --output-type z \
         --compression-level 1")
-        #--output
-            #just the path and name of the file
-        #--output-type
-            #z for compressed VCF file
-        #--compression-level
-            #Compression level: 0 uncompressed, 1 best speed, 9 best compression
 
 #
 print("\n#######################################\n#######################################")
