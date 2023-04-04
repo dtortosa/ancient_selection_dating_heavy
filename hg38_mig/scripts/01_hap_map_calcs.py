@@ -175,7 +175,7 @@ run_bash(" \
 # pops prep #
 #############
 
-#load original 2504 unrelated samples from phase 3. This includes sample IDs and pop/superpop codes
+#load original 2504 unrelated samples from phase 3. This includes sample IDs and pop/superpop codes. This is the definitive ped we will use both for pop codes and sample IDs
 #http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/integrated_call_samples_v3.20130502.ALL.panel
 import pandas as pd
 original_unrel_ped = pd.read_csv(
@@ -184,7 +184,7 @@ original_unrel_ped = pd.read_csv(
     header=0, 
     low_memory=False)
 
-#load pedigree of the latest version of the phased data that has sample IDs, sex and parents but no pop names. 
+#load pedigree of the latest version of the phased data that has sample IDs, sex and parents but no pop names. We will use this to father/mother IDs
 #Downloaded from: http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/1kGP.3202_samples.pedigree_info.txt
 samples_pedigree = pd.read_csv(
     "data/pedigrees/1kGP.3202_samples.pedigree_info.txt", 
@@ -192,7 +192,7 @@ samples_pedigree = pd.read_csv(
     header=0, 
     low_memory=False)
 
-#load also a pedigree present in the main directory of the high coverage data. This has sample and pop IDs, but parents and sex are different with respect to the pedigree of the new sample
+#load also a pedigree present in the main directory of the high coverage data. This has sample and pop IDs, but parents and sex are different with respect to the pedigree of the new sample. We will use this to compare pop codes with the original ped.
 #downloaded from: http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/20130606_g1k_3202_samples_ped_population.txt
 samples_pedigree_pop = pd.read_csv(
     "data/pedigrees/20130606_g1k_3202_samples_ped_population.txt", 
@@ -218,130 +218,128 @@ samples_pedigree_pop_unrel = samples_pedigree_pop.\
 samples_pedigree_pop_rel = samples_pedigree_pop.\
     loc[~samples_pedigree_pop["SampleID"].isin(original_unrel_ped["sample"]),:]
 
+#
+print("\n#######################################\n#######################################")
+print("check that we have the same sex values in the three peds")
+print("#######################################\n#######################################")
+#sex="male"
+for sex in original_unrel_ped["gender"].unique():
 
+    #start with selected sex
+    print("###### " + sex + " ######")
 
+    #change the format of sex to that of the new peds
+    if sex == "male":
+        sex_new_peds=1
+    elif sex == "female":
+        sex_new_peds=2
 
-np.unique(samples_pedigree_unrel.loc[samples_pedigree["sex"]==1, "sampleID"].reset_index(drop=True) == original_unrel_ped.loc[original_unrel_ped["gender"]=="male", "sample"].reset_index(drop=True))
-np.unique(samples_pedigree_unrel.loc[samples_pedigree["sex"]==2, "sampleID"].reset_index(drop=True) == original_unrel_ped.loc[original_unrel_ped["gender"]=="female", "sample"].reset_index(drop=True))
+    #get IDs of the selected sex in the three peds and reset index to let us compare with the other peds
+    original_unrel_ped_sex_ids = original_unrel_ped.\
+        loc[original_unrel_ped["gender"]==sex, "sample"].\
+        reset_index(drop=True)
+    samples_pedigree_unrel_sex_ids = samples_pedigree_unrel.\
+        loc[samples_pedigree_unrel["sex"]==sex_new_peds, "sampleID"].\
+        reset_index(drop=True)
+    samples_pedigree_pop_unrel_sex_ids = samples_pedigree_pop_unrel.\
+        loc[samples_pedigree_pop_unrel["Sex"]==sex_new_peds, "SampleID"].\
+        reset_index(drop=True)
 
-np.unique(samples_pedigree_pop_unrel.loc[samples_pedigree_pop_unrel["Sex"]==1, "SampleID"].reset_index(drop=True) == original_unrel_ped.loc[original_unrel_ped["gender"]=="male", "sample"].reset_index(drop=True))
-np.unique(samples_pedigree_pop_unrel.loc[samples_pedigree_pop_unrel["Sex"]==2, "SampleID"].reset_index(drop=True) == original_unrel_ped.loc[original_unrel_ped["gender"]=="female", "sample"].reset_index(drop=True))
+    #compare
+    print(np.unique(original_unrel_ped_sex_ids == samples_pedigree_unrel_sex_ids))
+    print(np.unique(original_unrel_ped_sex_ids == samples_pedigree_pop_unrel_sex_ids))
 
-
-
-
-
-
+#
+print("\n#######################################\n#######################################")
+print("check that we have the same number of samples per pop")
+print("#######################################\n#######################################")
+#pop="GBR"
 for pop in original_unrel_ped["pop"].unique():
 
-    print(pop)
+    #start with selected sex
+    print("###### " + pop + " ######")
 
+    #get IDs of the sample for the selected pop in peds and reset index to let us compare with the other peds
+    samples_old_ped = original_unrel_ped.\
+        loc[original_unrel_ped["pop"]==pop, "sample"]\
+        .reset_index(drop=True)
     samples_new_ped = samples_pedigree_pop_unrel.\
         loc[samples_pedigree_pop_unrel["Population"]==pop, "SampleID"].\
         reset_index(drop=True) 
 
-    samples_old_ped = original_unrel_ped.\
-        loc[original_unrel_ped["pop"]==pop, "sample"]\
-        .reset_index(drop=True)
+    #compare
+    print(np.unique(samples_old_ped == samples_new_ped))
 
-    print(np.unique(samples_new_ped==samples_old_ped)[0])
-
-
-
-##all should be zero but this is not the CASE!!!
-samples_pedigree_unrel.loc[(samples_pedigree_unrel["fatherID"] != "0") | (samples_pedigree_unrel["motherID"] != "0")]
-samples_pedigree_pop_unrel.loc[(samples_pedigree_pop_unrel["FatherID"] != "0") | (samples_pedigree_pop_unrel["MotherID"] != "0")]
-
-
-original_unrel_ped.loc[original_unrel_ped["sample"].isin( samples_pedigree_unrel.loc[(samples_pedigree_unrel["fatherID"] != "0") | (samples_pedigree_unrel["motherID"] != "0"), "sampleID"])]
-
-
-
-
-#there are 9 samples that are included in the original 2504 unrelated, but they have father/mather ID in the last pedigree!!!
-
-
-#check
+#
 print("\n#######################################\n#######################################")
-print("explicitly test whether the columns of the two datasets are the same")
+print("check whether trios/duos from the last ped are included within the original 2504 set of samples")
 print("#######################################\n#######################################")
-print("sample ID: " + str(samples_pedigree["sampleID"].equals(samples_pedigree_pop["SampleID"])))
-print("father ID: " + str(samples_pedigree["fatherID"].equals(samples_pedigree_pop["FatherID"])))
-print("mother ID: " + str(samples_pedigree["motherID"].equals(samples_pedigree_pop["MotherID"])))
-print("sex ID: " + str(samples_pedigree["sex"].equals(samples_pedigree_pop["Sex"])))
-    #differneces in parents and sex, so we have to use the ped of the latest version
+#get samples included in trios/duos according to the latest ped
+samples_pedigree_duos_trios = samples_pedigree.\
+    loc[\
+        (samples_pedigree["fatherID"] != "0") |\
+        (samples_pedigree["motherID"] != "0"), :]
+#get the original samples that are included in duos/trios
+original_unrel_ped_duos_trios = original_unrel_ped.\
+    loc[original_unrel_ped["sample"].isin(samples_pedigree_duos_trios["sampleID"]), :]
+print(original_unrel_ped_duos_trios)
+print("## " + str(original_unrel_ped_duos_trios.shape[0]) + " trios/duos included in the original set of samples!! ##")
 
-#merge both datasets using the sample ID
-ped_merged = samples_pedigree.merge(
-    samples_pedigree_pop[["SampleID", "Population", "Superpopulation"]],
-    left_on="sampleID", #use the column with IDs in sample_map
-    right_on="SampleID", #use the column with IDs in pheno_data
-    suffixes=["_sample_ped", "_sample_ped_pop"], #set the suffix for repeated columns
-    how="inner") #only IDs included in both datasets
-
-#checks
-print("\n#######################################\n#######################################")
-print("the number of rows in the merged dataset using inner, i.e., shared rows, is equals to 3202?")
-print("#######################################\n#######################################")
-print(ped_merged.shape[0] == 3202)
-print("\n#######################################\n#######################################")
-print("the sampleID columns of both datasets are identical in the merged dataset?")
-print("#######################################\n#######################################")
-print(ped_merged["sampleID"].equals(ped_merged["SampleID"]))
-
-#remove the SampleID column from one of the merged datasets
-ped_merged = ped_merged.drop("SampleID", axis=1)
-
-#change some column names
-ped_merged = ped_merged.rename(columns={"Population": "population", "Superpopulation": "superpopulation"})
+#there are 9 samples that are included in the original 2504 unrelated, but they have father/mother ID in the last pedigree!!! We have to remove these samples
 
 
-##explore the pedigree in more detail
-#As part of this publication, we sequenced 3,202 lymphoblastoid cell line (LCL) samples from the 1kGP collection, including 1,598 males and 1,604 females.
+##explore these peds
+#"As part of this publication, we sequenced 3,202 lymphoblastoid cell line (LCL) samples from the 1kGP collection, including 1,598 males and 1,604 females."
     #https://www.cell.com/cell/fulltext/S0092-8674(22)00991-6?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867422009916%3Fshowall%3Dtrue
 #check
 print("\n#######################################\n#######################################")
-print("Do we have 1598 males?")
+print("Do we have 1598 males in the latest ped?")
 print("#######################################\n#######################################")
-male_samples = ped_merged.loc[ped_merged["sex"] == 1, :]
+male_samples = samples_pedigree.loc[samples_pedigree["sex"] == 1, :]
 print(male_samples.shape[0] == 1598)
 print(male_samples)
 print("\n#######################################\n#######################################")
-print("Do we have 1604 females?")
+print("Do we have 1604 females in the latest ped?")
 print("#######################################\n#######################################")
-female_samples = ped_merged.loc[ped_merged["sex"] == 2, :]
+female_samples = samples_pedigree.loc[samples_pedigree["sex"] == 2, :]
 print(female_samples.shape[0] == 1604)
 print(female_samples)
+    #Sex is the same in the latest ped and the original ped (for shared samples), so we are good with sex in the original ped.
 
 #see the number of samples per superpopulation
 #The 3,202 samples were drawn from 26 populations (listed in Table S1) across the following 5 continental ancestry groups: African (AFR, n = 893), European (EUR, n = 633), East Asian (EAS, n = 601), South Asian (SAS, n = 585), and American (AMR, n = 490)
     #https://www.cell.com/cell/fulltext/S0092-8674(22)00991-6?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867422009916%3Fshowall%3Dtrue
-afr_samples = ped_merged.loc[ped_merged["superpopulation"] == "AFR", :]
-eur_samples = ped_merged.loc[ped_merged["superpopulation"] == "EUR", :]
-eas_samples = ped_merged.loc[ped_merged["superpopulation"] == "EAS", :]
-sas_samples = ped_merged.loc[ped_merged["superpopulation"] == "SAS", :]
-amr_samples = ped_merged.loc[ped_merged["superpopulation"] == "AMR", :]
+afr_samples = samples_pedigree_pop.\
+    loc[samples_pedigree_pop["Superpopulation"] == "AFR", :]
+eur_samples = samples_pedigree_pop.\
+    loc[samples_pedigree_pop["Superpopulation"] == "EUR", :]
+eas_samples = samples_pedigree_pop.\
+    loc[samples_pedigree_pop["Superpopulation"] == "EAS", :]
+sas_samples = samples_pedigree_pop.\
+    loc[samples_pedigree_pop["Superpopulation"] == "SAS", :]
+amr_samples = samples_pedigree_pop.\
+    loc[samples_pedigree_pop["Superpopulation"] == "AMR", :]
 #check
 print("\n#######################################\n#######################################")
-print("Do we have the correct number of samples per superpopulation?")
+print("Do we have the correct number of samples per superpopulation in the high-coverage ped with pop names?")
 print("#######################################\n#######################################")
-print(afr_samples.shape[0] == 893)
-print(afr_samples)
-print(eur_samples.shape[0] == 633)
-print(eur_samples)
-print(eas_samples.shape[0] == 585)
-print(eas_samples)
-print(sas_samples.shape[0] == 601)
-print(sas_samples)
-print(amr_samples.shape[0] == 490)
-print(amr_samples)
-        #the number of samples of populations matches what I have except for the case of EAS and SAS. I think EAS and SAS are flipped, because i got the exact number but in the opposite way.
-        #indeed, I have sum the number of samples of EAS and SAS according to Table S1 of the paper and matches what I have
-            #EAS: 44+49+46+57+86+77+56+48+60+62=585
-            #SAS: 60+71+56+47+61+46+77+69+65+49=601
+print("## AFR: " + str(afr_samples.shape[0] == 893))
+print("## EUR: " + str(eur_samples.shape[0] == 633))
+print("## EAS: " + str(eas_samples.shape[0] == 585))
+print("## SAS: " + str(sas_samples.shape[0] == 601))
+print("## AMR: " + str(amr_samples.shape[0] == 490))
+    #the number of samples of populations matches what I have except for the case of EAS and SAS. I think EAS and SAS are flipped, because i got the exact number but in the opposite way.
+    #indeed, I have sum the number of samples of EAS and SAS according to Table S1 of the paper and matches what I have
+        #EAS: 44+49+46+57+86+77+56+48+60+62=585
+        #SAS: 60+71+56+47+61+46+77+69+65+49=601
         #https://www.cell.com/cms/10.1016/j.cell.2022.08.004/attachment/1e0ee9bf-5514-4660-8ff2-6d2c2be97687/mmc1.pdf
+    #sample IDs per pop are the same in the high-coverage ped with pop data and the original ped (for shared samples), so we are good with pops in the original ped.
+
 #Among the 3,202 samples, there are 602 father-mother-child trios
-trios = ped_merged.loc[(ped_merged["fatherID"] != '0') & (ped_merged["motherID"] != '0'), :]
+trios = samples_pedigree.\
+    loc[\
+        (samples_pedigree["fatherID"] != "0") &\
+        (samples_pedigree["motherID"] != "0"), :]
     #select samples with father and mother
     #This includes 
         #2 trios that are part of a multi-generational family, i.e., one sample is child of another sample but also is parent of another sample. This would be the case of HG00702.
@@ -349,15 +347,16 @@ trios = ped_merged.loc[(ped_merged["fatherID"] != '0') & (ped_merged["motherID"]
         #https://www.cell.com/cell/fulltext/S0092-8674(22)00991-6?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867422009916%3Fshowall%3Dtrue
 #check
 print("\n#######################################\n#######################################")
-print("Do we have 602 trios?")
+print("Do we have 602 trios in the latest ped?")
 print("#######################################\n#######################################")
 print(trios.shape[0] == 602)
 print(trios)
 
 #we also have duos
-duos = ped_merged.loc[
-    (ped_merged["fatherID"] == '0') & (ped_merged["motherID"] != '0') | 
-    (ped_merged["fatherID"] != '0') & (ped_merged["motherID"] == '0'), :]
+duos = samples_pedigree.\
+    loc[\
+        (samples_pedigree["fatherID"] == '0') & (samples_pedigree["motherID"] != '0') | 
+        (samples_pedigree["fatherID"] != '0') & (samples_pedigree["motherID"] == '0'), :]
     #select samples that
         #have mother but not father OR
         #have father but not mother
@@ -365,40 +364,63 @@ duos = ped_merged.loc[
         #https://www.cell.com/cell/fulltext/S0092-8674(22)00991-6?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867422009916%3Fshowall%3Dtrue
 #check
 print("\n#######################################\n#######################################")
-print("Do we have 6 duos?")
+print("Do we have 6 duos in the latest ped?")
 print("#######################################\n#######################################")
 print(duos.shape[0] == 6)
 print(duos)
 
 #the total number of trios and duos is 608, which matches the number of cases with parentID different from zero.
 print("\n#######################################\n#######################################")
-print("Do we have 608 duos and trios?")
+print("Do we have 608 duos and trios in the latest ped?")
 print("#######################################\n#######################################")
 print(duos.shape[0] + trios.shape[0] == 608)
 
-#The rest of samples are unrelated.
-unrelated_samples = ped_merged.loc[(ped_merged["fatherID"] == '0') & (ped_merged["motherID"] == '0'), :]
+#The rest of samples have no parental relationships.
+no_trios_duos = samples_pedigree.\
+    loc[\
+        (samples_pedigree["fatherID"] == '0') & (samples_pedigree["motherID"] == '0'), :]
 #check
 print("\n#######################################\n#######################################")
-print("Do we have 2594 unrelated samples?")
+print("Do we have 2594 samples with no trios/duos in the latest ped?")
 print("#######################################\n#######################################")
-print(unrelated_samples.shape[0] == 2594)
-print(unrelated_samples)
-    #STRANGE THING HERE: They say "Using the Illumina NovaSeq 6000 System, we performed WGS of the original 2,504 1kGP unrelated samples and an additional 698 related samples". But we have 3202-608=2594 unrelated, instead of 2504. If they have 602+6 trios and duos, what other samples are related (Table S1 says there are 602 trios)? 2504 is the sample size of phase 3, so maybe they have added more unrelated samples?
-        #ASKING JESUS
-        #https://www.cell.com/cell/fulltext/S0092-8674(22)00991-6?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867422009916%3Fshowall%3Dtrue#supplementaryMaterial
+print(no_trios_duos.shape[0] == 2594)
+print(no_trios_duos)
+print("\n#######################################\n#######################################")
+print("The 90 samples added on top of the original 2504 are related!! See script for details")
+print("#######################################")
+    #In the 2022 paper they say 
+        #"Using the Illumina NovaSeq 6000 System, we performed WGS of the original 2,504 1kGP unrelated samples and an additional 698 related samples".
+        #"Here, we present high-coverage WGS and comprehensive analyses of the original 2,504 1kGP samples, as well as of 698 additional related samples that now complete 602 trios in the 1kGP cohort"
+            #https://www.cell.com/cell/fulltext/S0092-8674(22)00991-6?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867422009916%3Fshowall%3Dtrue
+            #https://www.cell.com/cell/fulltext/S0092-8674(22)00991-6?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867422009916%3Fshowall%3Dtrue#supplementaryMaterial
+    #there is an older readme saying that the number of trios is 698 (http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/README_2504_plus_additional_698_related_samples.txt).
+    #There is also a INFO field in the VCF files that says "2504 unrelated"
+    #Jesus and I think that ALL the new samples are related, the 90 samples that are not included as trios/duos maybe are related like cousins or similar. We have to remove these.
 
-#there is an older readme saying that the number of trios is 698 (http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/README_2504_plus_additional_698_related_samples.txt), but this comes from older data, a dataset released in 2020. But they say these are samples mainly completing trios and they say there are only 602+8 trios+duos! so not sure what is happening here
-    #ASKING JESUS
-
+##summary
+#All the new samples added on top of the original 2504 are related in some degree to the previous one, so we should not use them.
+#In addition, I have found within the original set of 2504 that some samples are included in trios/duos in the last ped.
 #we are going to use unrelated samples only. If we are calculating haplotype homozygosity by counting haplotypes, if a father and child have the same haplotype, this is not caused by selection but just by shared ancestry
+#Therefore, we should use the original dataset, but also removing the samples included in new trios/duos, reducing the probability to include parents/sons.
+
+
+##remove trios/duos within the original 2504 set
+#select samples within trios/duos in the last ped
+samples_pedigree_duos_trios = samples_pedigree.\
+    loc[\
+        (samples_pedigree["fatherID"] != "0") |\
+        (samples_pedigree["motherID"] != "0"), :]
+#select those samples from the original 2504 set that are NOT included in these trios/duos
+unrelated_samples = original_unrel_ped.\
+    loc[\
+        ~original_unrel_ped["sample"].isin(samples_pedigree_duos_trios["sampleID"]), :]
 print("\n#######################################\n#######################################")
 print("see final pedigree data with only unrelated samples")
 print("#######################################\n#######################################")
 print(unrelated_samples)
 
 #extract the distinct population names
-pop_names = unrelated_samples["population"].unique()
+pop_names = unrelated_samples["pop"].unique()
 
 #check
 print("\n#######################################\n#######################################")
@@ -749,6 +771,65 @@ run_bash(" \
         #I separated phased from --max/min-allele filter to be completely sure that first we remove multiallelic snps, and then we remove those snps with unphased data for any sample.
         #I guess it is not mandatory to do it in this order because if a SNP that is multiallelic has also unphased data, will be removed anyways, and biallelic and phased SNPs will not be affected. 
         #The order is more important in the case of samples, as you could remove a SNP that has unphased data for some samples, but any of those samples are included in the subset, so you are removing it while it has complete phased data for the samples you selected.
+
+#   
+print("\n#######################################\n#######################################")
+print("soft filter of regions low accessibility for sequencing")
+print("#######################################\n#######################################")
+#general info
+    #The 1000 Genomes Project created what they defined as accessibilty masks for the pilot phase, phase one and phase three of the Project. Some other studies have similar files.
+    #In phase three of the 1000 Genomes Project, using the pilot criteria 95.9% of the genome was found to be accessible. For the stricter mask created during phase three, 76.9% was found to be accessible. A detailed description of the accessibility masks created during phase three, the final phase of the Project, can be found in section 9.2 of the supplementary material for the main publication. The percentages quoted are for non-N bases.
+    #While the above was generated on GRCh37, similar files were created on GRCh38 for the reanalysis of the 1000 Genomes Project data on GRCh38. HGSVC2 also have files listing regions of the genome that were not analysed.
+        #https://www.internationalgenome.org/faq/are-there-any-genomic-regions-that-have-not-been-studied/
+#directory
+    #http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/working/20160622_genome_mask_GRCh38/README.accessible_genome_mask.20160622
+    #This directory contains GRCh38 genomic masks that help identify regions of the genome that are more or less accessible to next generation sequencing methods using short reads.
+    #Each mask is summarized in a fasta file (one fasta file per chromosome), coded as follows:
+        #N - the base is an N in the reference genome GRCh37
+            #I guess these are regions not found in hg19
+        #L - depth of coverage is much lower than average
+        #H - depth of coverage is much higher than average
+        #Z - too many reads with zero mapping quality overlap this position
+        #Q - the average mapping quality at the position is too low
+        #P - the base passed all filters
+            #these are the regions accepted
+        #0 - an overlapping base was never observed in aligned reads
+    #Regions marked as L, H, Z or Q are less accessible to short reads. Although they can still be analyzed they are more prone to false positives. 
+    #The calculation of accessibility is based on the alignment of whole genome low coverage data of 2691 phase3 samples to GRCh38.
+    #The masks are useful for (a) comparing accessibility using current technologies to accessibility in the pilot project, and (b) population genetic analysis (such as estimates of mutation rate) that must focus on genomic regions with very low false positive and false negative rates.
+    #there are two masks
+        #the pilot masks that uses the definition of the pilot project and it is less stringent, accepting 95% of the genome. In other words, this maks was created during the pilot, the definition, and then applied to phase 3.
+        #the strict mask that uses a more stringent definition and I think this is based on phase 3, accepting only 76% of the genome. This mask was defined during phase 3.
+    #filtering in bcftools
+        #You can do a soft filter of regions, this means that regions not passing the filter of the mask are indicated as such in the filter column using --mask-file
+            #this is a soft filter
+                #https://www.biostars.org/p/433062/
+        #you can also literally select only regions inside certains regions using --regions-overlap
+            #https://samtools.github.io/bcftools/bcftools.html#filter
+            #https://samtools.github.io/bcftools/bcftools.html#common_options
+#mask data here
+    #http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/working/20160622_genome_mask_GRCh38/
+    #we will use the bed files with the regions has to be retained
+        #"In addition to masked fasta files, a bed file of all passed sites can be found in this directory."
+
+run_bash("\
+    bcftools filter \
+        --soft-filter \
+        --mask-file ./data/dummy_vcf_files/dummy_pilot_mask.bed \
+        data/dummy_vcf_files/dummy_example.vcf | \
+    bcftools view \
+        --no-header")
+
+run_bash("\
+    bcftools filter \
+        --regions-overlap ./data/dummy_vcf_files/dummy_pilot_mask.bed \
+        data/dummy_vcf_files/dummy_example.vcf | \
+    bcftools view \
+        --no-header")
+
+###maybe use bcftools consensus? or fasta file? look for format required by bcftotols
+    #https://www.biostars.org/p/9498912/
+
 
 #   
 print("\n#######################################\n#######################################")
@@ -1190,7 +1271,7 @@ def master_processor(selected_chromosome, selected_pop):
     #######################
 
     #select the sample IDs for the selected population
-    subset_pop = unrelated_samples.loc[unrelated_samples["population"] == selected_pop, :]
+    subset_pop = unrelated_samples.loc[unrelated_samples["pop"] == selected_pop, :]
 
     #reset index
     subset_pop = subset_pop.reset_index(
