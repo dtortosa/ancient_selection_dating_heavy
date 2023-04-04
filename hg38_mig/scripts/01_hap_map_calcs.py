@@ -175,7 +175,7 @@ run_bash(" \
 # pops prep #
 #############
 
-#load original 2504 unrelated samples from phase 3
+#load original 2504 unrelated samples from phase 3. This includes sample IDs and pop/superpop codes
 #http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/integrated_call_samples_v3.20130502.ALL.panel
 import pandas as pd
 original_unrel_ped = pd.read_csv(
@@ -202,21 +202,25 @@ samples_pedigree_pop = pd.read_csv(
 
 #check
 print("\n#######################################\n#######################################")
-print("check that sample IDs in the original pedigree are all included in peds of the general high coverage dataset")
+print("check that sample IDs in the original pedigree are all included in peds of high coverage dataset")
 print("#######################################\n#######################################")
-print(all(original_unrel_ped["sample"].isin(samples_pedigree["sampleID"])))
-print(all(original_unrel_ped["sample"].isin(samples_pedigree_pop["SampleID"])))
-
-
-###POR AQUI
-
-samples_pedigree_unrel = samples_pedigree.loc[samples_pedigree["sampleID"].isin(original_unrel_ped["sample"]),:]
-samples_pedigree_rel = samples_pedigree.loc[~samples_pedigree["sampleID"].isin(original_unrel_ped["sample"]),:]
-
-samples_pedigree_pop_unrel = samples_pedigree_pop.loc[samples_pedigree_pop["SampleID"].isin(original_unrel_ped["sample"]),:]
-samples_pedigree_pop_rel = samples_pedigree_pop.loc[~samples_pedigree_pop["SampleID"].isin(original_unrel_ped["sample"]),:]
-
 import numpy as np
+print(np.unique(original_unrel_ped["sample"].isin(samples_pedigree["sampleID"])))
+print(np.unique(original_unrel_ped["sample"].isin(samples_pedigree_pop["SampleID"])))
+
+#split the new peds between samples that are included in the original 2504 set and not included in it
+samples_pedigree_unrel = samples_pedigree.\
+    loc[samples_pedigree["sampleID"].isin(original_unrel_ped["sample"]),:]
+samples_pedigree_rel = samples_pedigree.\
+    loc[~samples_pedigree["sampleID"].isin(original_unrel_ped["sample"]),:]
+samples_pedigree_pop_unrel = samples_pedigree_pop.\
+    loc[samples_pedigree_pop["SampleID"].isin(original_unrel_ped["sample"]),:]
+samples_pedigree_pop_rel = samples_pedigree_pop.\
+    loc[~samples_pedigree_pop["SampleID"].isin(original_unrel_ped["sample"]),:]
+
+
+
+
 np.unique(samples_pedigree_unrel.loc[samples_pedigree["sex"]==1, "sampleID"].reset_index(drop=True) == original_unrel_ped.loc[original_unrel_ped["gender"]=="male", "sample"].reset_index(drop=True))
 np.unique(samples_pedigree_unrel.loc[samples_pedigree["sex"]==2, "sampleID"].reset_index(drop=True) == original_unrel_ped.loc[original_unrel_ped["gender"]=="female", "sample"].reset_index(drop=True))
 
@@ -249,8 +253,10 @@ samples_pedigree_unrel.loc[(samples_pedigree_unrel["fatherID"] != "0") | (sample
 samples_pedigree_pop_unrel.loc[(samples_pedigree_pop_unrel["FatherID"] != "0") | (samples_pedigree_pop_unrel["MotherID"] != "0")]
 
 
-original_unrel_ped.loc[original_unrel_ped["sample"].isin( samples_pedigree_unrel.loc[(samples_pedigree_unrel["fatherID"] != "0") | (samples_pedigree
-     ...: _unrel["motherID"] != "0"), "sampleID"])]
+original_unrel_ped.loc[original_unrel_ped["sample"].isin( samples_pedigree_unrel.loc[(samples_pedigree_unrel["fatherID"] != "0") | (samples_pedigree_unrel["motherID"] != "0"), "sampleID"])]
+
+
+
 
 #there are 9 samples that are included in the original 2504 unrelated, but they have father/mather ID in the last pedigree!!!
 
