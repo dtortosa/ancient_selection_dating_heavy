@@ -99,7 +99,7 @@ def run_bash(command, return_value=False):
         #return also the value if required
         if return_value==True:
             return complete_process.stdout
-    elif ("Lines   total/split/realigned/skipped" in complete_process.stderr):
+    elif ("Lines   total/split/realigned/skipped" in complete_process.stderr) | ("no-ALT/non-biallelic/filtered" in complete_process.stderr) | ("Parsing bcftools stats output" in complete_process.stderr):
 
         #print the standard output without "\n" and other characters
         print(complete_process.stdout)
@@ -110,17 +110,6 @@ def run_bash(command, return_value=False):
         #return also the value if required
         if return_value==True:
             return complete_process.stdout 
-    elif ("no-ALT/non-biallelic/filtered" in complete_process.stderr):
-        
-        #print the standard output without "\n" and other characters
-        print(complete_process.stdout)
-
-        #print the standard error, which is not an error
-        print(complete_process.stderr)
-
-        #return also the value if required
-        if return_value==True:
-            return complete_process.stdout
     else:
         #print the standard error and stop
         raise ValueError("ERROR: FALSE! WE HAVE A PROBLEM RUNNING COMMAND: " + complete_process.stderr)
@@ -804,21 +793,21 @@ print("#######################################\n################################
     #http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/working/20160622_genome_mask_GRCh38/
     #we will use the bed files with the regions has to be retained
         #"In addition to masked fasta files, a bed file of all passed sites can be found in this directory."
-run_bash("\
-    bcftools view \
-        --output-type z \
-        --compression-level 1 \
-        --output ./data/dummy_vcf_files/dummy_example.vcf.gz \
-        ./data/dummy_vcf_files/dummy_example.vcf; \
-    bcftools index \
-        --csi \
+#dummy mask here:
+    #/home/dftortosa/singularity/dating_climate_adaptation/hg38_mig/data/dummy_vcf_files/dummy_pilot_mask.bed
+#compress the dummy (mask) bed file to match what we will do with the real data. bcftools --targets-file can take a .bed.gz file as input (see below).
+run_bash(" \
+    gzip \
         --force \
-        ./data/dummy_vcf_files/dummy_example.vcf.gz; \
-    bcftools view \
-        --regions-file ./data/dummy_vcf_files/dummy_pilot_mask.bed \
-        ./data/dummy_vcf_files/dummy_example.vcf.gz |\
+        --keep \
+        ./data/dummy_vcf_files/dummy_pilot_mask.bed")
+    #--force: force overwrite of output file and compress links
+    #--keep: keep (don't delete) input files
+#apply the dummy mask
+run_bash(" \
     bcftools norm \
-        --multiallelic -snps | \
+        --multiallelic -snps \
+        ./data/dummy_vcf_files/dummy_example.vcf |\
     bcftools view \
         --samples NA00001,NA00002 | \
     bcftools view \
@@ -836,48 +825,56 @@ run_bash("\
         --min-alleles 2 | \
     bcftools view \
         --phased | \
+    bcftools view \
+        --targets-file ./data/dummy_vcf_files/dummy_pilot_mask.bed.gz | \
     bcftools query \
         -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
-        #compress the dummy vcf file because this is required in order to index the vcf file, and the indexing is turn required in order to select regions with --regions-file/--regions
-            #--output
-                #just the path and name of the file
-            #--output-type
-                #z for compressed VCF file
-            #--compression-level
-                #Compression level: 0 uncompressed, 1 best speed, 9 best compression
-        #index the compressed vcf file
-            #--csi
-                #generate CSI-format index for VCF/BCF files [default]
-                #one of the formats used by --regions
-            #--force
-                #overwrite index if it already exists
-            #https://github.com/samtools/bcftools/issues/668
-        #select variants inside interest regions
-            #--regions-file
+        #select variants inside interest regions. We can do this after applying the rest of filters because if some of the previous filters consider position, it is the same position. For example, you remove exact duplicates, i.e., SNPs with the same chromosome, position and REF/ALT. Therefore, if we have two rows with the same position, they will be both remove if they are outside the interest regions, it does not matter if remove them together or first the duplicate and then remaining non-duplicate row. The same goes for multiallelic....
+        #Also, no info field will be modified, we are just removing complete rows, i.e., SNPs, not samples or genotypes.
+            #--targets-file
+                #Similar as -r, --regions, but the next position is accessed by streaming the whole VCF/BCF rather than using the tbi/csi index.
+                    #Therefore, we do not need to compress the VCF file and create and index that bcftools can use to randomly access different positions.
                 #Regions can be specified either on command line or in a VCF, BED, or tab-delimited file (the default). 
                     #The columns of the tab-delimited file can contain either positions (two-column format: CHROM, POS) or intervals (three-column format: CHROM, BEG, END), but not both. Positions are 1-based and inclusive. 
                     #The columns of the tab-delimited BED file are also CHROM, POS and END (trailing columns [like pilot/strict] are ignored), BUT COORDINATES ARE 0-BASED, HALF-OPEN. To indicate that a file be treated as BED rather than the 1-based tab-delimited file, the file must have the ".bed" or ".bed.gz" suffix (case-insensitive).
                         #THIS IS OUR CASE.
-                        #I have checked that a SNP at the starting coordinate of a interval is NOT included, which is congruent with the fact these are 0-based coordinates.
+                        #0-based means that position 0 in the bed file is base 1 in a chromosome, while position 1 in the bed file is base 2 in the chromosome.
+                        #Half-open interval means that one of the extremes, the upper bound in this case, is not included.
+                        #https://en.wikipedia.org/wiki/BED_(file_format)
                     #Uncompressed files are stored in memory, while bgzip-compressed and tabix-indexed region files are streamed.
                     #Note that sequence names must match exactly, "chr20" is not the same as "20".
                         #we have chrXX in both the bed and the VCF files
                     #Also note that chromosome ordering in FILE will be respected, the VCF will be processed in the order in which chromosomes first appear in FILE. However, within chromosomes, the VCF will always be processed in ascending genomic coordinate order no matter what order they appear in FILE.
                         #I have checked that adding intervals of chromosomes not present in the VCF file does NOT change anything. Therefore, bcftools is not including variants of one chromosome because that coordinate in other chromosome is accepted.
-                    #Note that overlapping regions in FILE can result in duplicated out of order positions in the output.
-                        #I AM GOING TO CHECK INTERVALS ARE NOT OVERLAPPED.
-                    #This option requires indexed VCF/BCF files. 
-                    #Note that -R cannot be used in combination with -r.
-
-
-##por aquiii
-
-#checking the commands
-
-#check that the BED file real has non-overlapping intervals
-    #it should be zero based...
-#filtrar el BED file para el chr de interest with awk?
-
+                #Both -r and -t options can be applied simultaneously: -r uses the index to jump to a region and -t discards positions which are not in the targets.
+                #Note that sequence names must match exactly, "chr20" is not the same as "20".
+                #Note that -t cannot be used in combination with -T.
+                #Unlike -r, targets can be prefixed with "^" to request logical complement. For example, "^X,Y,MT" indicates that sequences X, Y and MT should be skipped.
+                #Another difference is that using --regions, the existence of overlapping regions within FILE can result in duplicated out of order positions in the output.
+                    #In other words, the resulting order of the vcf is compromised, but this does not seem to be the case for --targets.
+                    #https://github.com/samtools/bcftools/issues/57
+                #Yet another difference between the -t/-T and -r/-R is that -r/-R checks for proper overlaps and considers both POS and the end position of an indel, while -t/-T considers the POS coordinate only (by default; see also --regions-overlap and --targets-overlap).
+                    #This is the default behaviour that can be changed using --targets-overlap
+            #--targets-overlap: not used this time.
+                #This option controls how overlapping records are determined: 
+                    #set to pos or 0 if the VCF record has to have POS inside a region (this corresponds to the default behavior of -t/-T); 
+                        #This option does NOT consider INDELS with POS at the end of a region because their end coordinate is outside. It starts just at the end of the regions, thus at least 1 base is outside.
+                    #set to record or 1 if also overlapping records with POS outside a region should be included (this is the default behavior of -r/-R, and includes indels with POS at the end of a region, which are technically outside the region); 
+                    #or set to variant or 2 to include only true overlapping variation (compare the full VCF representation "TA>T-" vs the true sequence variation "A>-").
+            #Summary:
+                #If you have INDELS, you should use --targets-overlap records so the INDEL is included even if it ends outside of the interval.
+                #--targets is slower as it does not use index, but I avoid the indexing. I can just use it on my vcf file.
+        #the filtering works
+            #chr20:14369-14370
+                #This interval starts in the chromosome 20 at position 14370 (not 14369! BED files are 0-based so we start at 0!) and ends and position 14371, being the latter not included.
+                #rs6054257 (chr20:14370) falls fully within the interval (14370-14371), but rs6054255 (chr20:14371) is in the upper bound and it is not included.
+            #chr20:1110695-1110700
+                #rs6040356 (chr20:1110697) and rs6040358 (chr20:1110699) fully within.
+                #rs6040360 (chr20:1110701) is in the last base of an interval (1110700 in BED is 1110701 in genome), out.
+            #chr20:1110690-1110696
+                #this interval is overlapped with the previous one, but there is no impact on the results. I do not see duplicated positions, so it seems this method is not sensitive to that.
+            #chr1:14369-17330
+                #rs6040351 (chr20:17330) does not fall within this or the previous intervals. Note that this interval is in chr1 but this variant is in chr20. This means that --targets correctly selects only intervals of the corresponding chromosome.
 
 #   
 print("\n#######################################\n#######################################")
@@ -960,20 +957,9 @@ print("\n#######################################\n##############################
 print("remove all previous INFO and FORMAT fields except GT and create the fields you are interested in by using fill-tags but after applying all the filters")
 print("#######################################\n#######################################")
 run_bash(" \
-    bcftools view \
-        --output-type z \
-        --compression-level 1 \
-        --output ./data/dummy_vcf_files/dummy_example.vcf.gz \
-        ./data/dummy_vcf_files/dummy_example.vcf; \
-    bcftools index \
-        --csi \
-        --force \
-        ./data/dummy_vcf_files/dummy_example.vcf.gz; \
-    bcftools view \
-        --regions-file ./data/dummy_vcf_files/dummy_pilot_mask.bed \
-        ./data/dummy_vcf_files/dummy_example.vcf.gz |\
     bcftools norm \
-        --multiallelic -snps | \
+        --multiallelic -snps \
+        ./data/dummy_vcf_files/dummy_example.vcf |\
     bcftools view \
         --samples NA00001,NA00002 | \
     bcftools view \
@@ -991,6 +977,8 @@ run_bash(" \
         --min-alleles 2 | \
     bcftools view \
         --phased | \
+    bcftools view \
+        --targets-file ./data/dummy_vcf_files/dummy_pilot_mask.bed.gz | \
     bcftools annotate \
         --remove INFO,^FORMAT/GT | \
     bcftools +fill-tags \
@@ -1013,20 +1001,9 @@ print("\n#######################################\n##############################
 print("compare GT between applying or not the +fill-tags commands and the removal of fields")
 print("#######################################\n#######################################")
 run_bash(" \
-    bcftools view \
-        --output-type z \
-        --compression-level 1 \
-        --output ./data/dummy_vcf_files/dummy_example.vcf.gz \
-        ./data/dummy_vcf_files/dummy_example.vcf; \
-    bcftools index \
-        --csi \
-        --force \
-        ./data/dummy_vcf_files/dummy_example.vcf.gz; \
-    bcftools view \
-        --regions-file ./data/dummy_vcf_files/dummy_pilot_mask.bed \
-        ./data/dummy_vcf_files/dummy_example.vcf.gz |\
     bcftools norm \
-        --multiallelic -snps |\
+        --multiallelic -snps \
+        ./data/dummy_vcf_files/dummy_example.vcf |\
     bcftools view \
         --samples NA00001,NA00002 | \
     bcftools view \
@@ -1044,6 +1021,8 @@ run_bash(" \
         --min-alleles 2 | \
     bcftools view \
         --phased | \
+    bcftools view \
+        --targets-file ./data/dummy_vcf_files/dummy_pilot_mask.bed.gz | \
     bcftools annotate \
         --remove INFO,^FORMAT/GT | \
     bcftools +fill-tags \
@@ -1051,20 +1030,9 @@ run_bash(" \
     bcftools view \
         --no-header")
 run_bash(" \
-    bcftools view \
-        --output-type z \
-        --compression-level 1 \
-        --output ./data/dummy_vcf_files/dummy_example.vcf.gz \
-        ./data/dummy_vcf_files/dummy_example.vcf; \
-    bcftools index \
-        --csi \
-        --force \
-        ./data/dummy_vcf_files/dummy_example.vcf.gz; \
-    bcftools view \
-        --regions-file ./data/dummy_vcf_files/dummy_pilot_mask.bed \
-        ./data/dummy_vcf_files/dummy_example.vcf.gz |\
     bcftools norm \
-        --multiallelic -snps |\
+        --multiallelic -snps \
+        ./data/dummy_vcf_files/dummy_example.vcf |\
     bcftools view \
         --samples NA00001,NA00002 | \
     bcftools view \
@@ -1082,6 +1050,8 @@ run_bash(" \
         --min-alleles 2 | \
     bcftools view \
         --phased | \
+    bcftools view \
+        --targets-file ./data/dummy_vcf_files/dummy_pilot_mask.bed.gz | \
     bcftools view \
         --no-header")
     #I have checked that the genotypes remain the same despite removing all previous INFO fields and all FORMAT fields (except GT) and then adding new INFO fields, so we are good here.
@@ -1091,20 +1061,9 @@ print("\n#######################################\n##############################
 print("see the new header")
 print("#######################################\n#######################################")
 run_bash(" \
-    bcftools view \
-        --output-type z \
-        --compression-level 1 \
-        --output ./data/dummy_vcf_files/dummy_example.vcf.gz \
-        ./data/dummy_vcf_files/dummy_example.vcf; \
-    bcftools index \
-        --csi \
-        --force \
-        ./data/dummy_vcf_files/dummy_example.vcf.gz; \
-    bcftools view \
-        --regions-file ./data/dummy_vcf_files/dummy_pilot_mask.bed \
-        ./data/dummy_vcf_files/dummy_example.vcf.gz |\
     bcftools norm \
-        --multiallelic -snps |\
+        --multiallelic -snps \
+        ./data/dummy_vcf_files/dummy_example.vcf |\
     bcftools view \
         --samples NA00001,NA00002 | \
     bcftools view \
@@ -1122,6 +1081,8 @@ run_bash(" \
         --min-alleles 2 | \
     bcftools view \
         --phased | \
+    bcftools view \
+        --targets-file ./data/dummy_vcf_files/dummy_pilot_mask.bed.gz | \
     bcftools annotate \
         --remove INFO,^FORMAT/GT | \
     bcftools +fill-tags \
@@ -1139,20 +1100,9 @@ print("\n#######################################\n##############################
 print("save the cleaned vcf file")
 print("#######################################\n#######################################")
 run_bash(" \
-    bcftools view \
-        --output-type z \
-        --compression-level 1 \
-        --output ./data/dummy_vcf_files/dummy_example.vcf.gz \
-        ./data/dummy_vcf_files/dummy_example.vcf; \
-    bcftools index \
-        --csi \
-        --force \
-        ./data/dummy_vcf_files/dummy_example.vcf.gz; \
-    bcftools view \
-        --regions-file ./data/dummy_vcf_files/dummy_pilot_mask.bed \
-        ./data/dummy_vcf_files/dummy_example.vcf.gz |\
     bcftools norm \
-        --multiallelic -snps |\
+        --multiallelic -snps \
+        ./data/dummy_vcf_files/dummy_example.vcf |\
     bcftools view \
         --samples NA00001,NA00002 | \
     bcftools view \
@@ -1170,6 +1120,8 @@ run_bash(" \
         --min-alleles 2 | \
     bcftools view \
         --phased | \
+    bcftools view \
+        --targets-file ./data/dummy_vcf_files/dummy_pilot_mask.bed.gz | \
     bcftools annotate \
         --remove INFO,^FORMAT/GT | \
     bcftools +fill-tags \
@@ -1178,6 +1130,12 @@ run_bash(" \
         --output ./data/dummy_vcf_files/dummy_example_cleaned.vcf.gz \
         --output-type z \
         --compression-level 1")
+        #--output
+            #just the path and name of the file
+        #--output-type
+            #z for compressed VCF file
+        #--compression-level
+            #Compression level: 0 uncompressed, 1 best speed, 9 best compression
 
 #
 print("\n#######################################\n#######################################")
@@ -1198,8 +1156,29 @@ run_bash(" \
         ./data/dummy_vcf_files/dummy_example_cleaned.vcf.gz \
         --no-header")
 
+#
+print("\n#######################################\n#######################################")
+print("calculate stats of the VCF file, show them here and then use them to make summary plots")
+print("#######################################\n#######################################")
+run_bash(" \
+    bcftools stats \
+        --samples - \
+        ./data/dummy_vcf_files/dummy_example_cleaned.vcf.gz")
+        #Produce stats of a VCF file using bcftool stats
+            #Parses VCF or BCF and produces stats which can be plotted using plot-vcfstats. 
+                #When two files are given, the program generates separate stats for intersection and the complements. 
+                #By default only sites are compared, -s/-S must given to include also sample columns.
+                    #"-" to include all samples
+                    #this gives plots showing data with a datapoint per sample
+        #You can make plots of the output with plot-vcfstats
+            #just plot-vcfstats --prefix for the dir you want to save the plots and the input file (bcftools stats output with .vchk extension). I am not doing this because I have problems with plot-vcfstats in the container
+                #--prefix <dir>: Output directory.
+                #there are several plotting options, like title...
+        #The final looks can be customized by editing the generated outdir/plot.py' script and re-running manually
+            #cd outdir && python3 plot.py && pdflatex summary.tex
+
 #SUMMARY: 
-    #With all these commands, we have recreated the scenario we have in 1KGP data, with multiallelic SNPs separated into different lines, select some samples, we then select snps, remove those with missing genotypes, remove exact duplicates (this does not touch different lines of the same multiallelic snp because they have different REF/ALT), exclude those SNPs that have the same allele for all samples, and we can do that using RR (REF|REF) and AA (A|A), because there are no missing (.) genotypes, as they have been removed. Then we combine all lines of each multiallleic snp and now they have ALT column with several alleles, so we can filter them using --max-alleles 2. Add last filter for selecting phased data only. We can also use bcftools +fill-tags to update important fields for each SNP, so if a SNP was multiallelic, but it is not multiallelic in the subset population (i.e., only REF and 1 ALT), we no longer will have two allele frequencies, two counts.... for the remainder biallelic SNP in the subset.
+    #With all these commands, we have recreated the scenario we have in 1KGP data, with multiallelic SNPs separated into different lines, select some samples, we then select snps, remove those with missing genotypes, remove exact duplicates (this does not touch different lines of the same multiallelic snp because they have different REF/ALT), exclude those SNPs that have the same allele for all samples, and we can do that using RR (REF|REF) and AA (A|A), because there are no missing (.) genotypes, as they have been removed. Then we combine all lines of each multiallleic snp and now they have ALT column with several alleles, so we can filter them using --max-alleles 2. Add filter for selecting phased data only. Select only those variants included in interest regions. We can also use bcftools +fill-tags to update important fields for each SNP, so if a SNP was multiallelic, but it is not multiallelic in the subset population (i.e., only REF and 1 ALT), we no longer will have two allele frequencies, two counts.... for the remainder biallelic SNP in the subset.
 
 #Note about the update of the INFO fields
     #it is important to be sure that the fields you are using for filtering, are updated after subseting samples. Of course, type="snp" will be always "snp" irrespectively of the samples we select, but this is not the case of the number of alleles, because you can have SNPs with 3 alleles considering all 26 populations, but then in GBR they can have only 2 or 1. We are interested in SNPs that are biallelic within the selected population.
@@ -1377,13 +1356,12 @@ def master_processor(selected_chromosome, selected_pop):
 
     #check
     print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": check we only have the selected pop and unrelated samples")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": check we only have the selected pop")
     print("#######################################\n#######################################")
-    print(subset_pop["population"].unique()[0] == selected_pop)
-    print(all((subset_pop["fatherID"] == "0") & (subset_pop["motherID"] == "0")))
+    print(subset_pop["pop"].unique()[0] == selected_pop)
 
     #select the sample IDs
-    selected_samples = subset_pop["sampleID"]
+    selected_samples = subset_pop["sample"]
 
     #save as txt to use it later
     #it is redundant to do it in each chromosome of the same population (same samples) but I do it anyway to avoid confusion between chromosomes
@@ -1555,7 +1533,7 @@ def master_processor(selected_chromosome, selected_pop):
             --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | \
         head -7")
 
-    #show now only biallelic SNPs that are phased for all samples
+    #
     print("\n#######################################\n#######################################")
     print("chr " + selected_chromosome + " - " + selected_pop + ": show now only biallelic SNPs that are phased for all samples")
     print("#######################################\n#######################################")
@@ -1584,6 +1562,113 @@ def master_processor(selected_chromosome, selected_pop):
 
     #
     print("\n#######################################\n#######################################")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": select only regions that are accessible to sequencing according to the accessibility mask")
+    print("#######################################\n#######################################")
+    run_bash(" \
+        bcftools view \
+            --samples " + ",".join(selected_samples) + " \
+            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+        bcftools view \
+            --types snps | \
+        bcftools view \
+            --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+        bcftools view \
+            --genotype ^miss | \
+        bcftools norm \
+            --rm-dup exact | \
+        bcftools norm \
+            --multiallelic +snps | \
+        bcftools view \
+            --max-alleles 2  \
+            --min-alleles 2 | \
+        bcftools view \
+            --phased | \
+        bcftools view \
+            --targets-file ./data/masks/20160622.allChr.mask.bed.gz | \
+        bcftools query \
+            --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | \
+        head -7")
+            #Use --targets-file to only select SNPs within the intervals defined by a BED file generated by 1kGDP, which is an accessibility mask. Therefore, we select SNPs that are included in regions accessible to sequencing.
+            #see dummy example for further details.
+
+    #do some operations with the mask and the whole vcf file but just one time per chromosome
+    if selected_pop == pop_names[0]:
+        
+        #stats with and without mask
+        print("\n#######################################\n#######################################")
+        print("chr " + selected_chromosome + " - " + selected_pop + ": See the stats of the whole VCF file with and without selecting SNPs inside the regions that PASS in the pilot and the strict mask")
+        print("#######################################\n#######################################")
+        run_bash(" \
+            bcftools view \
+                --types snps \
+                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+            bcftools stats")
+        run_bash(" \
+            bcftools view \
+                --types snps \
+                --targets-file ./data/masks/20160622.allChr.pilot_mask.bed \
+                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+            bcftools stats")
+        run_bash(" \
+            bcftools view \
+                --types snps \
+                --targets-file ./data/masks/20160622.allChr.mask.bed.gz \
+                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+            bcftools stats")
+                #load the whole VCf file of the selected chromosome, select only SNPs and in one case select variants inside mask "PASS" regions, while in the second do nothing more. Then see the stats of the resulting BCF files. See dummy examples for further details.
+                #results
+                    #number of SNPs without any mask
+                        #5013617
+                    #number of SNPs with pilot mask
+                        #4616062
+                    #number of SNPs with strict mask
+                        #3576231
+        
+        #do the same but just counting number of lines after removing the header
+        run_bash(" \
+            bcftools view \
+                --no-header \
+                --types snps \
+                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+            wc -l")
+        run_bash(" \
+            bcftools view \
+                --no-header \
+                --types snps \
+                --targets-file ./data/masks/20160622.allChr.pilot_mask.bed \
+                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+            wc -l")
+        run_bash(" \
+            bcftools view \
+                --no-header \
+                --types snps \
+                --targets-file ./data/masks/20160622.allChr.mask.bed.gz \
+                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+            wc -l")
+                #results
+                    #number of SNPs without any mask
+                        #5013617
+                    #number of SNPs with pilot mask
+                    #number of SNPs with strict mask
+                        #3576231
+
+
+    ##por aquii
+    
+    #compara vcf file general con y sin la mascara, puedes usar multithreadthing
+        #compara summaries de ambos files
+        #SI TARDA MUCHO HAZ SIMPLEMENTE | wc -l
+
+    #check that the BED file real has non-overlapping intervals    
+    #filtrar el BED file para el chr de interest with awk?
+        #I already checked that having coordinates of other chromosomes does not have impact in the chromosome of interest for which we have data in the VCF file (see dummy examples for further details).
+
+    #Gazal, mira si están los 6 samples tuyos entre los que ellos encuentran como related.
+
+    
+    
+    #
+    print("\n#######################################\n#######################################")
     print("chr " + selected_chromosome + " - " + selected_pop + ": update and add some fields using fill-tags")
     print("#######################################\n#######################################")
     run_bash(" \
@@ -1605,6 +1690,8 @@ def master_processor(selected_chromosome, selected_pop):
             --min-alleles 2 | \
         bcftools view \
             --phased | \
+        bcftools view \
+            --targets-file ./data/masks/20160622.allChr.mask.bed.gz | \
         bcftools +fill-tags \
             -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
         bcftools query \
@@ -1637,6 +1724,8 @@ def master_processor(selected_chromosome, selected_pop):
             --min-alleles 2 | \
         bcftools view \
             --phased | \
+        bcftools view \
+            --targets-file ./data/masks/20160622.allChr.mask.bed.gz | \
         bcftools annotate \
             --remove INFO,^FORMAT/GT | \
         bcftools +fill-tags \
@@ -1671,6 +1760,8 @@ def master_processor(selected_chromosome, selected_pop):
             --min-alleles 2 | \
         bcftools view \
             --phased | \
+        bcftools view \
+            --targets-file ./data/masks/20160622.allChr.mask.bed.gz | \
         bcftools annotate \
             --remove INFO,^FORMAT/GT | \
         bcftools +fill-tags \
@@ -1703,6 +1794,8 @@ def master_processor(selected_chromosome, selected_pop):
             --min-alleles 2 | \
         bcftools view \
             --phased | \
+        bcftools view \
+            --targets-file ./data/masks/20160622.allChr.mask.bed.gz | \
         bcftools annotate \
             --remove INFO,^FORMAT/GT | \
         bcftools +fill-tags \

@@ -1,0 +1,77 @@
+[1] FALSE
+Warning message:
+In file.remove(".RData") :
+  cannot remove file '.RData', reason 'No such file or directory'
+         used (Mb) gc trigger (Mb) max used (Mb)
+Ncells 128503  6.9     350000 18.7   201028 10.8
+Vcells 248212  1.9    8388608 64.0  1025158  7.9
+Loading required package: colorout
+Loading required package: SystWrapper
+
+Attaching package: ‘SystWrapper’
+
+The following object is masked from ‘package:methods’:
+
+    show
+
+Loading required package: GenomicRanges
+Loading required package: stats4
+Loading required package: BiocGenerics
+
+Attaching package: ‘BiocGenerics’
+
+The following objects are masked from ‘package:stats’:
+
+    IQR, mad, sd, var, xtabs
+
+The following objects are masked from ‘package:base’:
+
+    anyDuplicated, append, as.data.frame, basename, cbind, colnames,
+    dirname, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
+    grepl, intersect, is.unsorted, lapply, Map, mapply, match, mget,
+    order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
+    rbind, Reduce, rownames, sapply, setdiff, sort, table, tapply,
+    union, unique, unsplit, which.max, which.min
+
+Loading required package: S4Vectors
+
+Attaching package: ‘S4Vectors’
+
+The following objects are masked from ‘package:base’:
+
+    expand.grid, I, unname
+
+Loading required package: IRanges
+Loading required package: GenomeInfoDb
+'data.frame':	562233 obs. of  4 variables:
+ $ chrom     : chr  "chr1" "chr1" "chr1" "chr1" ...
+ $ chromStart: int  13302 13973 13983 15885 16064 16270 16771 19770 30883 46654 ...
+ $ chromEnd  : int  13340 13977 13984 15936 16124 16308 16811 19786 30929 46690 ...
+ $ mask_type : chr  "pilot" "pilot" "pilot" "pilot" ...
+'data.frame':	4155228 obs. of  4 variables:
+ $ chrom     : chr  "chr1" "chr1" "chr1" "chr1" ...
+ $ chromStart: int  55319 85987 86327 87079 629060 778561 778564 778566 778740 779196 ...
+ $ chromEnd  : int  55330 86031 86345 87119 629081 778562 778565 778621 778765 779225 ...
+ $ mask_type : chr  "strict" "strict" "strict" "strict" ...
+[1] "######## STARTING pilot ########"
+[1] "Do we have the correct mask? TRUE"
+[1] "Do we have 24 chromosomes? TRUE"
+[1] "See the number of the intervals:"
+[1] 562233
+[1] "See the median number of bases of the intervals:"
+      Min.    1st Qu.     Median       Mean    3rd Qu.       Max. 
+     2.000     53.000    241.000   4889.694   5247.000 178728.000 
+[1] "Sum the total number of bases across all intervals:"
+[1] 2749147353
+[1] "pilot has NO intervals overlapped? TRUE"
+[1] "######## STARTING strict ########"
+[1] "Do we have the correct mask? TRUE"
+[1] "Do we have 24 chromosomes? TRUE"
+[1] "See the number of the intervals:"
+[1] 4155228
+[1] "See the median number of bases of the intervals:"
+      Min.    1st Qu.     Median       Mean    3rd Qu.       Max. 
+    2.0000    13.0000    80.0000   551.6446   559.0000 38329.0000 
+[1] "Sum the total number of bases across all intervals:"
+[1] 2292209017
+[1] "strict has NO intervals overlapped? TRUE"

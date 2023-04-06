@@ -52,9 +52,9 @@ cd $path_working_dir
 
 
 
-###########################
-# loop across chromosomes #
-###########################
+############################################
+# loop across chromosomes to get VCF files #
+############################################
 
 #define the URL where download the data
 path_hg38_data="http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/"
@@ -112,3 +112,19 @@ if [[ $n_files -eq $n_chrom ]]; then
 else
 	echo "FALSE, WE HAVE ${n_files} FILES"
 fi
+
+
+
+########################
+# get strict mask file #
+########################
+
+#download the strict accessibility mask to select variant in regions that are accessible to short-reads sequencing (see 01_hap_map_calcs.py for further details)
+wget -nv http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/working/20160622_genome_mask_GRCh38/StrictMask/20160622.allChr.mask.bed --directory-prefix=../masks/
+	#-nv: turn off verboseness, without being quiet, so you get only a bit of output
+	#https://linuxize.com/post/bash-concatenate-strings/
+
+#compress the file
+gzip --force --keep ../masks/20160622.allChr.mask.bed
+	#--force: force overwrite of output file and compress links
+	#--keep: keep (don't delete) input files
