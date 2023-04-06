@@ -386,10 +386,44 @@ print("#######################################")
     #There is also a INFO field in the VCF files that says "2504 unrelated"
     #Jesus and I think that ALL the new samples are related, the 90 samples that are not included as trios/duos maybe are related like cousins or similar. We have to remove these.
 
+##see data about inbreeding in Gazal et al. (2015).
+#This paper detect a high level of inbreeding within the phase 1000 genomes project. we propose two different panels of unrelated and outbred individuals to TGP users, such as previously proposed for HapMap III panel8,10. First, for both panels, we removed 7 individuals for quality reasons (Q-score≤50). Then, for the first panel, labeled TGP2457, we removed the 14 individuals involved in first and second degree relationships inferred by RELPAIR and 26 individuals inferred as avuncular offspring (AV) or double first-cousin offspring (2×1C) by FSuite. Finally for the second panel, labeled TGP2261, we removed individuals from 227 relationships up to first-cousins detected by RELPAIR (see Table S3) and the 94 individuals that have been inferred as first-cousin offspring or closer by FSuite. These filters mainly reduced the number of individuals in STU, PJL, ASW and LWK populations, with a sample size decrease of 35%, 31%, 26% and 23%, respectively (Table S5). These 2 lists are provided in Table S4.
+    #https://www.nature.com/articles/srep17453
+print("\n#######################################\n#######################################")
+print("exploring inmbreeding according to Gazal et al. (2015) in phase 3")
+print("#######################################")
+
+#I have downloaded Table S4 and convert it to csv in order to make some checks.
+gazal_imbreeding = pd.read_csv(
+    "./data/pedigrees/gazal_relatedness_phase3_data/41598_2015_BFsrep17453_MOESM3_ESM.csv",
+    sep=",",
+    header=0,
+    low_memory=False)
+
+#we have OUT for non-imbreeding, 2C for second cousins, 1C for first cousins, double first-cousin offspring (2x1C), AV for avuncular offspring (uncle-niece)
+print("types of inmbreeding according to Gazal et al. (2015): " + str(gazal_imbreeding.loc[:, "Mating type"].unique()))
+
+#select those samples from the original 2504 sample that have trios-duos according to the new high coverage panel
+duos_trios_origina_unrelated = original_unrel_ped.\
+    loc[\
+        original_unrel_ped["sample"].isin(samples_pedigree_duos_trios["sampleID"]), :]
+
+#
+print("see what type of mating have these samples according to gazal")
+gazal_imbreeding.loc[gazal_imbreeding["IID"].isin(duos_trios_origina_unrelated["sample"]), :]
+
+#According to Gazal data, the sample belonging to duos-trios according to the recent high coverage data are outbreed!!!!
+
+#I do think we can trust this data for the high coverage (it was done on low coverage), so I am not going to use it.
+
+###POR AQUI, check again the sex pop and write jesus
+
+
 ##summary
 #All the new samples added on top of the original 2504 are related in some degree to the previous one, so we should not use them.
 #In addition, I have found within the original set of 2504 that some samples are included in trios/duos in the last ped.
 #we are going to use unrelated samples only. If we are calculating haplotype homozygosity by counting haplotypes, if a father and child have the same haplotype, this is not caused by selection but just by shared ancestry
+#Gazal data does not match duos trios in high coverage, so we can use this data for high coverage.
 #Therefore, we should use the original dataset, but also removing the samples included in new trios/duos, reducing the probability to include parents/sons.
 
 
