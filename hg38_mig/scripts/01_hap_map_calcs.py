@@ -420,6 +420,14 @@ print(pop_names)
 
 
 
+
+###por aquii
+    #Gazal, mira si están los 6 samples tuyos entre los que ellos encuentran como related.
+
+
+
+
+
 #################
 # bcftools prep #
 #################
@@ -875,6 +883,50 @@ run_bash(" \
                 #this interval is overlapped with the previous one, but there is no impact on the results. I do not see duplicated positions, so it seems this method is not sensitive to that.
             #chr1:14369-17330
                 #rs6040351 (chr20:17330) does not fall within this or the previous intervals. Note that this interval is in chr1 but this variant is in chr20. This means that --targets correctly selects only intervals of the corresponding chromosome.
+
+#
+print("\n#######################################\n#######################################")
+print("check you can filter the BED file by chromosome using awk")
+print("#######################################\n#######################################")
+run_bash(" \
+    gunzip -c ./data/dummy_vcf_files/dummy_pilot_mask.bed.gz | \
+    awk \
+        -F '\t' \
+        '{if ($1 == \"chr20\") print $0}' \
+        > ./data/dummy_vcf_files/dummy_pilot_mask_chr20.bed; \
+    gzip --force ./data/dummy_vcf_files/dummy_pilot_mask_chr20.bed; \
+    gunzip -c ./data/dummy_vcf_files/dummy_pilot_mask_chr20.bed.gz")
+        #decompress the dummy bed file and sent it to stdout
+        #process it with awk
+            #-F is the delimiter, "\t" in this case
+            #for each row, if the first field (column) has a value of "chr20", print all fields and save into a file.
+            #compress the file even if a compressed file with the same name exists (--force).
+                #https://unix.stackexchange.com/questions/399560/using-awk-to-select-rows-with-specific-value-in-specific-column
+                #https://stackoverflow.com/questions/2961635/using-awk-to-print-all-columns-from-the-nth-to-the-last
+
+#
+print("\n#######################################\n#######################################")
+print("check the cleaning of the BED file with awk")
+print("#######################################\n#######################################")
+run_bash(" \
+    uniq_chrom=$(\
+        gunzip -c ./data/dummy_vcf_files/dummy_pilot_mask_chr20.bed.gz | \
+        awk \
+            -F '\t' \
+            '{print $1}' | \
+        uniq); \
+    if [[ $uniq_chrom == 'chr20' ]];then \
+        echo 'TRUE'; \
+    else \
+        echo 'FALSE'; \
+    fi")
+        #decompress the BED file and send it to stdout
+        #process with awk
+            #delimiter (-F) is tab
+            #print all rows for the first column (chromosome name)
+        #select the uniq cases
+        #save into a variable
+        #if the variable is "chr20", perfect
 
 #   
 print("\n#######################################\n#######################################")
@@ -1340,6 +1392,32 @@ def master_processor(selected_chromosome, selected_pop):
                 #select unique cases
                 #the unique cases should be a single string with a dot ("."), if yes, perfect.
 
+        #stats with and without accessibility mask. See dummy example about details of the masks
+        print("\n#######################################\n#######################################")
+        print("chr " + selected_chromosome + ": See the stats of the whole VCF file with and without selecting SNPs inside the regions that PASS in the pilot and the strict mask")
+        print("#######################################\n#######################################")
+        print("\n##### NO MASK ####")
+        run_bash(" \
+            bcftools view \
+                --types snps \
+                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+            bcftools stats")
+        print("\n##### PILOT MASK ####")
+        run_bash(" \
+            bcftools view \
+                --types snps \
+                --targets-file ./data/masks/20160622.allChr.pilot_mask.bed \
+                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+            bcftools stats")
+        print("\n##### STRICT MASK ####")
+        run_bash(" \
+            bcftools view \
+                --types snps \
+                --targets-file ./data/masks/20160622.allChr.mask.bed.gz \
+                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+            bcftools stats")
+                #load the whole VCf file of the selected chromosome, select only SNPs and in one case select variants inside mask "PASS" regions, while in the second do nothing more. Then see the stats of the resulting BCF files. See dummy examples for further details.
+
 
 
     #######################
@@ -1562,6 +1640,39 @@ def master_processor(selected_chromosome, selected_pop):
 
     #
     print("\n#######################################\n#######################################")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": clean BED file before applying the mask selecting only intervals in the selected chromosome")
+    print("#######################################\n#######################################")
+    run_bash(" \
+        gunzip -c ./data/masks/20160622.allChr.mask.bed.gz | \
+        awk \
+            -F '\t' \
+            '{if ($1 == \"chr" + selected_chromosome + "\") print $0}' \
+            > ./data/masks/20160622.chr" + selected_chromosome + ".strict_mask.bed; \
+        gzip --force ./data/masks/20160622.chr" + selected_chromosome + ".strict_mask.bed; \
+        gunzip -c ./data/masks/20160622.chr" + selected_chromosome + ".strict_mask.bed.gz | \
+        head -5")
+            #decompress bed file, and select those rows for which the chromosome name (first column) is the selected chromosome, printing all fields for these rows. Save as a file and then compress. See the first 5 lines. See dummy examples for further details.
+
+    #
+    print("\n#######################################\n#######################################")
+    print("check the cleaning of the BED file with awk")
+    print("#######################################\n#######################################")
+    run_bash(" \
+        uniq_chrom=$(\
+            gunzip -c ./data/masks/20160622.chr" + selected_chromosome + ".strict_mask.bed.gz | \
+            awk \
+                -F '\t' \
+                '{print $1}' | \
+            uniq); \
+        if [[ $uniq_chrom == 'chr" + selected_chromosome + "' ]];then \
+            echo 'TRUE'; \
+        else \
+            echo 'FALSE'; \
+        fi")
+            #decompress the bed file of the selected chromosome (previously created), then print the chromosome name (first column) for all intervals, i.e., rows, getting then the unique cases, then save as a variable. The variable should have only the name of the selected chromosome.
+
+    #
+    print("\n#######################################\n#######################################")
     print("chr " + selected_chromosome + " - " + selected_pop + ": select only regions that are accessible to sequencing according to the accessibility mask")
     print("#######################################\n#######################################")
     run_bash(" \
@@ -1584,88 +1695,12 @@ def master_processor(selected_chromosome, selected_pop):
         bcftools view \
             --phased | \
         bcftools view \
-            --targets-file ./data/masks/20160622.allChr.mask.bed.gz | \
+            --targets-file ./data/masks/20160622.chr" + selected_chromosome + ".strict_mask.bed.gz | \
         bcftools query \
             --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | \
         head -7")
             #Use --targets-file to only select SNPs within the intervals defined by a BED file generated by 1kGDP, which is an accessibility mask. Therefore, we select SNPs that are included in regions accessible to sequencing.
             #see dummy example for further details.
-
-    #do some operations with the mask and the whole vcf file but just one time per chromosome
-    if selected_pop == pop_names[0]:
-        
-        #stats with and without mask
-        print("\n#######################################\n#######################################")
-        print("chr " + selected_chromosome + " - " + selected_pop + ": See the stats of the whole VCF file with and without selecting SNPs inside the regions that PASS in the pilot and the strict mask")
-        print("#######################################\n#######################################")
-        run_bash(" \
-            bcftools view \
-                --types snps \
-                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-            bcftools stats")
-        run_bash(" \
-            bcftools view \
-                --types snps \
-                --targets-file ./data/masks/20160622.allChr.pilot_mask.bed \
-                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-            bcftools stats")
-        run_bash(" \
-            bcftools view \
-                --types snps \
-                --targets-file ./data/masks/20160622.allChr.mask.bed.gz \
-                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-            bcftools stats")
-                #load the whole VCf file of the selected chromosome, select only SNPs and in one case select variants inside mask "PASS" regions, while in the second do nothing more. Then see the stats of the resulting BCF files. See dummy examples for further details.
-                #results
-                    #number of SNPs without any mask
-                        #5013617
-                    #number of SNPs with pilot mask
-                        #4616062
-                    #number of SNPs with strict mask
-                        #3576231
-        
-        #do the same but just counting number of lines after removing the header
-        run_bash(" \
-            bcftools view \
-                --no-header \
-                --types snps \
-                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-            wc -l")
-        run_bash(" \
-            bcftools view \
-                --no-header \
-                --types snps \
-                --targets-file ./data/masks/20160622.allChr.pilot_mask.bed \
-                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-            wc -l")
-        run_bash(" \
-            bcftools view \
-                --no-header \
-                --types snps \
-                --targets-file ./data/masks/20160622.allChr.mask.bed.gz \
-                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-            wc -l")
-                #results
-                    #number of SNPs without any mask
-                        #5013617
-                    #number of SNPs with pilot mask
-                    #number of SNPs with strict mask
-                        #3576231
-
-
-    ##por aquii
-    
-    #compara vcf file general con y sin la mascara, puedes usar multithreadthing
-        #compara summaries de ambos files
-        #SI TARDA MUCHO HAZ SIMPLEMENTE | wc -l
-
-    #check that the BED file real has non-overlapping intervals    
-    #filtrar el BED file para el chr de interest with awk?
-        #I already checked that having coordinates of other chromosomes does not have impact in the chromosome of interest for which we have data in the VCF file (see dummy examples for further details).
-
-    #Gazal, mira si están los 6 samples tuyos entre los que ellos encuentran como related.
-
-    
     
     #
     print("\n#######################################\n#######################################")
@@ -1691,7 +1726,7 @@ def master_processor(selected_chromosome, selected_pop):
         bcftools view \
             --phased | \
         bcftools view \
-            --targets-file ./data/masks/20160622.allChr.mask.bed.gz | \
+            --targets-file ./data/masks/20160622.chr" + selected_chromosome + ".strict_mask.bed.gz | \
         bcftools +fill-tags \
             -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
         bcftools query \
@@ -1725,7 +1760,7 @@ def master_processor(selected_chromosome, selected_pop):
         bcftools view \
             --phased | \
         bcftools view \
-            --targets-file ./data/masks/20160622.allChr.mask.bed.gz | \
+            --targets-file ./data/masks/20160622.chr" + selected_chromosome + ".strict_mask.bed.gz | \
         bcftools annotate \
             --remove INFO,^FORMAT/GT | \
         bcftools +fill-tags \
@@ -1761,7 +1796,7 @@ def master_processor(selected_chromosome, selected_pop):
         bcftools view \
             --phased | \
         bcftools view \
-            --targets-file ./data/masks/20160622.allChr.mask.bed.gz | \
+            --targets-file ./data/masks/20160622.chr" + selected_chromosome + ".strict_mask.bed.gz | \
         bcftools annotate \
             --remove INFO,^FORMAT/GT | \
         bcftools +fill-tags \
@@ -1795,7 +1830,7 @@ def master_processor(selected_chromosome, selected_pop):
         bcftools view \
             --phased | \
         bcftools view \
-            --targets-file ./data/masks/20160622.allChr.mask.bed.gz | \
+            --targets-file ./data/masks/20160622.chr" + selected_chromosome + ".strict_mask.bed.gz | \
         bcftools annotate \
             --remove INFO,^FORMAT/GT | \
         bcftools +fill-tags \
