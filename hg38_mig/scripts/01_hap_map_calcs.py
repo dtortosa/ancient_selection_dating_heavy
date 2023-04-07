@@ -403,27 +403,57 @@ gazal_imbreeding = pd.read_csv(
 #we have OUT for non-imbreeding, 2C for second cousins, 1C for first cousins, double first-cousin offspring (2x1C), AV for avuncular offspring (uncle-niece)
 print("types of inmbreeding according to Gazal et al. (2015): " + str(gazal_imbreeding.loc[:, "Mating type"].unique()))
 
+#select samples within trios/duos in the last ped
+samples_pedigree_duos_trios = samples_pedigree.\
+    loc[\
+        (samples_pedigree["fatherID"] != "0") |\
+        (samples_pedigree["motherID"] != "0"), :]
+
 #select those samples from the original 2504 sample that have trios-duos according to the new high coverage panel
-duos_trios_origina_unrelated = original_unrel_ped.\
+duos_trios_original_unrelated = original_unrel_ped.\
     loc[\
         original_unrel_ped["sample"].isin(samples_pedigree_duos_trios["sampleID"]), :]
 
 #
 print("see what type of mating have these samples according to gazal")
-gazal_imbreeding.loc[gazal_imbreeding["IID"].isin(duos_trios_origina_unrelated["sample"]), :]
+gazal_imbreeding_duos_trios_original_unrelated = gazal_imbreeding.\
+    loc[gazal_imbreeding["IID"].isin(duos_trios_original_unrelated["sample"]), :]
+print(gazal_imbreeding_duos_trios_original_unrelated)
 
-#According to Gazal data, the sample belonging to duos-trios according to the recent high coverage data are outbreed!!!!
+#merge the data of Gazal with the samples of the original dataset that have duos-trios according to the high coverage data
+merged_gazal = pd.merge(
+    right=duos_trios_original_unrelated,
+    left=gazal_imbreeding_duos_trios_original_unrelated,
+    how="inner",
+    right_on="sample",
+    left_on="IID")
 
-#I do think we can trust this data for the high coverage (it was done on low coverage), so I am not going to use it.
+#
+print("\n#######################################\n#######################################")
+print("check the samples from the original 2504 set that are implicated in duos-trios are correctly present in Gazal data and that they are considered 'outbred'")
+print("#######################################")
+print(merged_gazal.shape[0] == duos_trios_original_unrelated.shape[0])
+print(merged_gazal["GENDER"].equals(merged_gazal["gender"]))
+print(merged_gazal["POP"].equals(merged_gazal["pop"]))
+print(merged_gazal["Mating type"].unique() == "OUT")
 
-###POR AQUI, check again the sex pop and write jesus
+#Gazal results consider as outbred the samples in the original dataset that belong to duos-trios according to the recent high coverage data!!!!
+    #yes, some of these samples are not included in the two subset they create, but still they considered them as outbred!!
+
+#I do NOT think we can trust this data for the high coverage (it was done on low coverage), so I am not going to use it.
+
+
+####POR AQUIII
+#Y SI LAS 9 SAMPLES SON OUT SI SOLO CONSIDERAMOS LOS 2504 PORQUE SUS PADRES HAN ENTRADO EN LAS NUEVAS 698? SIN SON HIJOS, PERO SUS PADRES NO ESTABAN AL PRINCIPIO, ENTONCES ERAN OUT! COMPRUEBA ESTO MIRANDO SI LAS IDS DE SUS PADRES ESTAN EN EL GRUPO OROGINAL DE 2504.
+    #esto va a servir para ver si nos quedamos con los 2504 y si los datos de gazal cuadran, aunuqe de todas, aunque cuadren no creo que use su subset y tire directamente con los 2504, aunque pregunta david.
+    #apunta en las preguntas a david la reduccion de SNPs y de longitud con las mascaras en el cromosoma 1, está en mail de jesus.
 
 
 ##summary
 #All the new samples added on top of the original 2504 are related in some degree to the previous one, so we should not use them.
 #In addition, I have found within the original set of 2504 that some samples are included in trios/duos in the last ped.
 #we are going to use unrelated samples only. If we are calculating haplotype homozygosity by counting haplotypes, if a father and child have the same haplotype, this is not caused by selection but just by shared ancestry
-#Gazal data does not match duos trios in high coverage, so we can use this data for high coverage.
+#Gazal data does not match duos trios in high coverage, so I do NOT think we can use this data for high coverage.
 #Therefore, we should use the original dataset, but also removing the samples included in new trios/duos, reducing the probability to include parents/sons.
 
 
@@ -451,14 +481,6 @@ print("Do we have 26 pops?")
 print("#######################################\n#######################################")
 print(len(pop_names) == 26)
 print(pop_names)
-
-
-
-
-###por aquii
-    #Gazal, mira si están los 6 samples tuyos entre los que ellos encuentran como related.
-
-
 
 
 
