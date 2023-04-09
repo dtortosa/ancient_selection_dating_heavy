@@ -386,6 +386,41 @@ print("#######################################")
     #There is also a INFO field in the VCF files that says "2504 unrelated"
     #Jesus and I think that ALL the new samples are related, the 90 samples that are not included as trios/duos maybe are related like cousins or similar. We have to remove these.
 
+
+##check in detail the duos/trios we have inside the original 2504 sample
+print("\n#######################################\n#######################################")
+print("check in detail the duos/trios we have inside the original 2504 sample")
+print("#######################################")
+#we are going to look for samples of the original 2504 set that are sons of samples already included in this dataset.
+#these are the problematic cases, we do not care if a sample is in the original set and then, in the high coverage, they add his parents. These parents are not in our original sample, so when we select for 2504 samples, they will be filtered out.
+
+#first merge the original set of samples and the last ped with new duos-trios
+merge_parents_original = pd.merge(
+    right=original_unrel_ped,
+    left=samples_pedigree,
+    how="inner",
+    right_on="sample",
+    left_on="sampleID")
+print("\nDo we have 2504 samples when merging the original 2504 sample and the new ped? If True, we have only the original 2504 unrelated samples")
+print(merge_parents_original.shape[0] == 2504)
+print(np.unique(merge_parents_original["sample"] == merge_parents_original["sampleID"]) == True)
+print("\nSee the merged file")
+print(merge_parents_original)
+
+#
+print("\nNow select those samples of the original dataset whose parents are included that original dataset")
+original_unrelated_parents_inside = merge_parents_original.loc[ \
+    (\
+        (merge_parents_original["motherID"].isin(merge_parents_original["sample"])) | \
+        (merge_parents_original["fatherID"].isin(merge_parents_original["sample"]))) & \
+    (\
+        (merge_parents_original["motherID"] != "0") | \
+        (merge_parents_original["fatherID"] != "0")), \
+    :]
+        #select samples with mother/father ID different from zero and that these parental IDs are included in the sample column, i.e., they are already included as samples in the original 2504 dataset
+print(original_unrelated_parents_inside)
+
+
 ##see data about inbreeding in Gazal et al. (2015).
 #This paper detect a high level of inbreeding within the phase 1000 genomes project. we propose two different panels of unrelated and outbred individuals to TGP users, such as previously proposed for HapMap III panel8,10. First, for both panels, we removed 7 individuals for quality reasons (Q-score≤50). Then, for the first panel, labeled TGP2457, we removed the 14 individuals involved in first and second degree relationships inferred by RELPAIR and 26 individuals inferred as avuncular offspring (AV) or double first-cousin offspring (2×1C) by FSuite. Finally for the second panel, labeled TGP2261, we removed individuals from 227 relationships up to first-cousins detected by RELPAIR (see Table S3) and the 94 individuals that have been inferred as first-cousin offspring or closer by FSuite. These filters mainly reduced the number of individuals in STU, PJL, ASW and LWK populations, with a sample size decrease of 35%, 31%, 26% and 23%, respectively (Table S5). These 2 lists are provided in Table S4.
     #https://www.nature.com/articles/srep17453
@@ -403,50 +438,18 @@ gazal_imbreeding = pd.read_csv(
 #we have OUT for non-imbreeding, 2C for second cousins, 1C for first cousins, double first-cousin offspring (2x1C), AV for avuncular offspring (uncle-niece)
 print("types of inmbreeding according to Gazal et al. (2015): " + str(gazal_imbreeding.loc[:, "Mating type"].unique()))
 
-#select samples within trios/duos in the last ped
-samples_pedigree_duos_trios = samples_pedigree.\
-    loc[\
-        (samples_pedigree["fatherID"] != "0") |\
-        (samples_pedigree["motherID"] != "0"), :]
-
-#select those samples from the original 2504 sample that have trios-duos according to the new high coverage panel
-duos_trios_original_unrelated = original_unrel_ped.\
-    loc[\
-        original_unrel_ped["sample"].isin(samples_pedigree_duos_trios["sampleID"]), :]
-
 #
-print("see what type of mating have these samples according to gazal")
-gazal_imbreeding_duos_trios_original_unrelated = gazal_imbreeding.\
-    loc[gazal_imbreeding["IID"].isin(duos_trios_original_unrelated["sample"]), :]
-print(gazal_imbreeding_duos_trios_original_unrelated)
-
-#merge the data of Gazal with the samples of the original dataset that have duos-trios according to the high coverage data
-merged_gazal = pd.merge(
-    right=duos_trios_original_unrelated,
-    left=gazal_imbreeding_duos_trios_original_unrelated,
-    how="inner",
-    right_on="sample",
-    left_on="IID")
-
-#
-print("\n#######################################\n#######################################")
-print("check the samples from the original 2504 set that are implicated in duos-trios are correctly present in Gazal data and that they are considered 'outbred'")
-print("#######################################")
-print(merged_gazal.shape[0] == duos_trios_original_unrelated.shape[0])
-print(merged_gazal["GENDER"].equals(merged_gazal["gender"]))
-print(merged_gazal["POP"].equals(merged_gazal["pop"]))
-print(merged_gazal["Mating type"].unique() == "OUT")
-
-#Gazal results consider as outbred the samples in the original dataset that belong to duos-trios according to the recent high coverage data!!!!
-    #yes, some of these samples are not included in the two subset they create, but still they considered them as outbred!!
-
-#I do NOT think we can trust this data for the high coverage (it was done on low coverage), so I am not going to use it.
-
-
-####POR AQUIII
-#Y SI LAS 9 SAMPLES SON OUT SI SOLO CONSIDERAMOS LOS 2504 PORQUE SUS PADRES HAN ENTRADO EN LAS NUEVAS 698? SIN SON HIJOS, PERO SUS PADRES NO ESTABAN AL PRINCIPIO, ENTONCES ERAN OUT! COMPRUEBA ESTO MIRANDO SI LAS IDS DE SUS PADRES ESTAN EN EL GRUPO OROGINAL DE 2504.
-    #esto va a servir para ver si nos quedamos con los 2504 y si los datos de gazal cuadran, aunuqe de todas, aunque cuadren no creo que use su subset y tire directamente con los 2504, aunque pregunta david.
-    #apunta en las preguntas a david la reduccion de SNPs y de longitud con las mascaras en el cromosoma 1, está en mail de jesus.
+print("\nSee Gazal data for the 4 samples with parents insides the original unrealted 2504 dataset")
+print("\nSee the data of these samples in the new ped")
+print(original_unrelated_parents_inside)
+print("\nSamples with parents inside the original 2504 unrelated dataset")
+print(gazal_imbreeding.loc[ \
+    gazal_imbreeding["IID"].isin(original_unrelated_parents_inside["sample"])])
+print("\nSee their parents")
+print(gazal_imbreeding.loc[ \
+    gazal_imbreeding["IID"].isin(original_unrelated_parents_inside["fatherID"]) | \
+    gazal_imbreeding["IID"].isin(original_unrelated_parents_inside["motherID"])])
+    #Table S3 from Gazal (41598_2015_BFsrep17453_MOESM2_ESM.xls) shows that these 4 relations (PO) are included, correctly showing the corresponding duos.
 
 
 ##summary
