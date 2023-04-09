@@ -259,23 +259,6 @@ for pop in original_unrel_ped["pop"].unique():
     #compare
     print(np.unique(samples_old_ped == samples_new_ped))
 
-#
-print("\n#######################################\n#######################################")
-print("check whether trios/duos from the last ped are included within the original 2504 set of samples")
-print("#######################################\n#######################################")
-#get samples included in trios/duos according to the latest ped
-samples_pedigree_duos_trios = samples_pedigree.\
-    loc[\
-        (samples_pedigree["fatherID"] != "0") |\
-        (samples_pedigree["motherID"] != "0"), :]
-#get the original samples that are included in duos/trios
-original_unrel_ped_duos_trios = original_unrel_ped.\
-    loc[original_unrel_ped["sample"].isin(samples_pedigree_duos_trios["sampleID"]), :]
-print(original_unrel_ped_duos_trios)
-print("## " + str(original_unrel_ped_duos_trios.shape[0]) + " trios/duos included in the original set of samples!! ##")
-
-#there are 9 samples that are included in the original 2504 unrelated, but they have father/mother ID in the last pedigree!!! We have to remove these samples
-
 
 ##explore these peds
 #"As part of this publication, we sequenced 3,202 lymphoblastoid cell line (LCL) samples from the 1kGP collection, including 1,598 males and 1,604 females."
@@ -387,9 +370,9 @@ print("#######################################")
     #Jesus and I think that ALL the new samples are related, the 90 samples that are not included as trios/duos maybe are related like cousins or similar. We have to remove these.
 
 
-##check in detail the duos/trios we have inside the original 2504 sample
+##check in detail if we have duos/trios inside the original 2504 sample
 print("\n#######################################\n#######################################")
-print("check in detail the duos/trios we have inside the original 2504 sample")
+print("check in detail if we have duos/trios inside the original 2504 sample")
 print("#######################################")
 #we are going to look for samples of the original 2504 set that are sons of samples already included in this dataset.
 #these are the problematic cases, we do not care if a sample is in the original set and then, in the high coverage, they add his parents. These parents are not in our original sample, so when we select for 2504 samples, they will be filtered out.
@@ -461,15 +444,10 @@ print(gazal_imbreeding.loc[ \
 
 
 ##remove trios/duos within the original 2504 set
-#select samples within trios/duos in the last ped
-samples_pedigree_duos_trios = samples_pedigree.\
-    loc[\
-        (samples_pedigree["fatherID"] != "0") |\
-        (samples_pedigree["motherID"] != "0"), :]
-#select those samples from the original 2504 set that are NOT included in these trios/duos
+#select those samples from the original 2504 set that are NOT included in known duos/trios according to last ped
 unrelated_samples = original_unrel_ped.\
     loc[\
-        ~original_unrel_ped["sample"].isin(samples_pedigree_duos_trios["sampleID"]), :]
+        ~original_unrel_ped["sample"].isin(original_unrelated_parents_inside["sample"]), :]
 print("\n#######################################\n#######################################")
 print("see final pedigree data with only unrelated samples")
 print("#######################################\n#######################################")
