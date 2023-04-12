@@ -544,6 +544,10 @@ run_bash(" \
         #Fourth scenario: rs6040358
             #we could also have a scenario similar where the second ALT is not present in the subset, and we also have missing data.
 
+#note about the output of bcftools norm
+    #Lines   total/split/realigned/skipped: 12/5/0/0
+    #12 is the total number of snps, while 5 is the number of snps that are multiallelic so have been splitted
+
 #
 print("\n#######################################\n#######################################")
 print("select only two samples to check whether AC, AN and AF changes")
@@ -1225,6 +1229,7 @@ run_bash(" \
             #z for compressed VCF file
         #--compression-level
             #Compression level: 0 uncompressed, 1 best speed, 9 best compression
+        #you can see in stdout that in total lines we get 12, which is the total number of variants we have before filtering, instead of the final number of variants (3), see below.
 
 #
 print("\n#######################################\n#######################################")
@@ -1265,6 +1270,25 @@ run_bash(" \
                 #there are several plotting options, like title...
         #The final looks can be customized by editing the generated outdir/plot.py' script and re-running manually
             #cd outdir && python3 plot.py && pdflatex summary.tex
+
+#
+print("\n#######################################\n#######################################")
+print("convert VCF file to hap file")
+print("#######################################\n#######################################")
+print("First convert the raw dummy VCF file but adding a filter for SNPs in the same line, i.e. removing the microsatellite. The output shows 0/5/1 no-ALT/non-biallelic/filtered indicating that we lose 5 variants that are not biallelic and 1 due to the filter we applied, i.e., removal of non-snps, the microsatellite. Also, the number of records written is 6, which is the result of subtracting 5+1 from 12, the total number of variants")
+run_bash(" \
+    bcftools convert \
+        --include 'TYPE == \"SNP\"' \
+        ./data/dummy_vcf_files/dummy_example.vcf \
+        --hapsample ./data/dummy_vcf_files/dummy_example_IMPUTE2_raw; \
+    gunzip -c ./data/dummy_vcf_files/dummy_example_IMPUTE2_raw.hap.gz")
+print("Then convert the cleaned dummy VCF file. The output shows 0/0/0 because no variant has been removed, they were filtered in previous lines. The number of written records is 3. The input had 3 and no filter was applied, nor variant lose due to lack of alt or non-biallelic, thus we save a hap file with 3 variants")
+run_bash(" \
+    bcftools convert \
+        ./data/dummy_vcf_files/dummy_example_cleaned.vcf.gz \
+        --hapsample ./data/dummy_vcf_files/dummy_example_IMPUTE2_raw; \
+    gunzip -c ./data/dummy_vcf_files/dummy_example_IMPUTE2_raw.hap.gz")
+        #see hap file calculation of the real data to see details about hap format.
 
 #SUMMARY: 
     #With all these commands, we have recreated the scenario we have in 1KGP data, with multiallelic SNPs separated into different lines, select some samples, we then select snps, remove those with missing genotypes, remove exact duplicates (this does not touch different lines of the same multiallelic snp because they have different REF/ALT), exclude those SNPs that have the same allele for all samples, and we can do that using RR (REF|REF) and AA (A|A), because there are no missing (.) genotypes, as they have been removed. Then we combine all lines of each multiallleic snp and now they have ALT column with several alleles, so we can filter them using --max-alleles 2. Add filter for selecting phased data only. Select only those variants included in interest regions. We can also use bcftools +fill-tags to update important fields for each SNP, so if a SNP was multiallelic, but it is not multiallelic in the subset population (i.e., only REF and 1 ALT), we no longer will have two allele frequencies, two counts.... for the remainder biallelic SNP in the subset.
@@ -1942,6 +1966,22 @@ def master_processor(selected_chromosome, selected_pop):
                 #In addition, hap files in yoruba folder of flexsweep are just our hap files for iHS, i.e., ONLY THE HAPLOTYPE COLUMNS.
                     #/xdisk/denard/lauterbur/yoruba/hapmap_YRI_hg19_decode2019/
 
+    #note about the output of hap conversion
+        #I get an output like this
+            #Hap file: ./results/hap_map_files_raw/chr1_GBR_IMPUTE2_raw.hap.gz
+            #Sample file: ./results/hap_map_files_raw/chr1_GBR_IMPUTE2_raw.samples
+            #938126 records written, 0 skipped: 0/0/0 no-ALT/non-biallelic/filtered
+        
+        #I guess non-biallelic and non-alt should be removed to meet impute requirements, but in our case we already selected those SNPs with 2 alleles only. This explains why we get 0/0/0. This is the number of SNPs with no-ALT, no-biallelic and filtered. All the filters were previously applied.
+            #I have checked this in the dummy example.
+        
+        #if you take the VCF file, filter and then count lines, you get 938126 records, but then say that total is 945919, as when writting the file. "Lines   total/split/realigned/skipped" is produced for some commands like bcftools norm and I have seen in the dummy example that total is the total number of SNPs, while split are those splitting due to multiallelic is the multiallelic flag is used.
+            #938126
+            #Lines   total/split/realigned/skipped:  945919/0/0/0
+            #Lines   total/split/realigned/skipped:  945919/0/0/0
+
+        #the total number of snps in the raw vcf file of chr1 is 5759173, instead of 945919. What it can be happening here is that bcftools norm (the command generating the line output) is run after some filters have been applied, thus the input number of SNPs is smaller. Indeed, if you apply these previous filters, you get 945919 variants, so it makes sense that bcftools norm, which is run after these filters, gives 945919 as total number of snps.
+
     #see first variants
     print("\n#######################################\n#######################################")
     print("chr " + selected_chromosome + " - " + selected_pop + ": see first variants of the hap file")
@@ -2131,58 +2171,249 @@ def master_processor(selected_chromosome, selected_pop):
     # calculate map file within selected pop #
     ##########################################
 
-    #WHEN PREPARING MAP FILE, REMEMBER THAT VCF IS 1 BASED!
+    print("\n#######################################\n#######################################")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": STARTING MAP FILE CALCULATION")
+    print("#######################################\n#######################################")
 
-    #
+    ##extract the SNP positions
+    #first extract from the raw hap file, the clean hap file only have genotypes
+    run_bash(" \
+        gunzip \
+            --stdout \
+            ./results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
+        awk \
+            -F ' ' \
+            '{print $1,$2,$3,$4,$5}' | \
+        gzip \
+            --force \
+        > ./results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_raw.map.gz")
+            #decompress raw hap file, select first columns with position data, IDs, and allele names, then compress and save as a file
 
-
-    #loading the position and chromosome of each snp, VCf file or better impute file
-
-    "./results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw"
-
+    #then from the cleaned VCF file
     run_bash(" \
         bcftools view \
             ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz | \
         bcftools query \
-            --format '%ID %CHROM %POS\n' |\
-        head -5 > eso.txt; \
-        cat eso.txt")
-
-    snp_map_raw = pd.read_csv("eso.txt", sep=" ", header=None)
-    snp_map_raw
-
-    snp_map_raw.rename()
-
-
-
-
-
-    #last conversion hap, I guess non-billalte and non-alt shoudl be removed to meet impute requeriments
-    #Hap file: ./results/hap_map_files_raw/chr1_GBR_IMPUTE2_raw.hap.gz
-    #Sample file: ./results/hap_map_files_raw/chr1_GBR_IMPUTE2_raw.samples
-    #938126 records written, 0 skipped: 0/0/0 no-ALT/non-biallelic/filtered
-
-
-
-
-
-    #if you take the VCF file, filter and then count lines, you get 938126 records, but then say that total is 945919, as when writting the file. Maybe this is the total originally, CHECK
-    #938126
-    #Lines   total/split/realigned/skipped:  945919/0/0/0
-    #Lines   total/split/realigned/skipped:  945919/0/0/0
+            --format '%CHROM %POS %REF %ALT\n' | \
+        gzip \
+            --force \
+        > ./results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_raw_check.map.gz")
+            #from the cleaned VCF file, extract the chromosome, position, REF/ALT to compare with the positions in the raw hap file (see below), compress and save as a file
 
     #
-    #In [4]: run_bash(" \
-    #...:     bcftools view \
-    #...:         " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-    #...:     wc -l")
-    #5759173
+    print("\n#######################################\n#######################################")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": check that the two raw map files obtained from hap_raw and vcf_clean are the same")
+    print("#######################################\n#######################################")
+    run_bash("\
+        cd ./results/hap_map_files_raw/; \
+        gunzip \
+            --stdout \
+            ./chr" + selected_chromosome + "_" + selected_pop + "_raw.map.gz | \
+        awk \
+            -F ' ' \
+            '{print $1,$3,$4,$5}' > \
+        ./chr" + selected_chromosome + "_" + selected_pop + "_raw.map; \
+        gunzip \
+            --force \
+            ./chr" + selected_chromosome + "_" + selected_pop + "_raw_check.map.gz; \
+        status=$(\
+            cmp \
+                --silent \
+                ./chr" + selected_chromosome + "_" + selected_pop + "_raw.map \
+                ./chr" + selected_chromosome + "_" + selected_pop + "_raw_check.map;\
+            echo $?); \
+        if [[ $status -eq 0 ]]; then \
+            echo 'TRUE'; \
+        else \
+            echo 'FALSE'; \
+        fi; \
+        rm ./chr" + selected_chromosome + "_" + selected_pop + "_raw.map; \
+        rm ./chr" + selected_chromosome + "_" + selected_pop + "_raw_check.map")
+            #get chromosome, position and REF/ALT for each SNP from the raw hap file 
+                #We are not using ID because it is complicated to match the format of VCF and hap files. Importantly, we do not need that because the ID of the hap file follows the format CHROM:POS_REF_ALT, i.e., it is based in chromosome, position and REF/ALT, which is the data we are comparing.
+                #decompress the map file and send to standard output, select the corresponding columns and save as a file
+            #decompress the map file obtained from the VCF file, and do not keep the compressed file because that is only for the check
+            #check byte by byte whether the two files are the same
+                #cmp takes two files and compare them until 1 byte is different
+                #we make it silent and get the final status
+                #remember that "$?" gives the return value of the last run command.
+                    #For example, 
+                        #ls somefile
+                        #echo $?
+                        #If somefile exists (regardless whether it is a file or directory), you will get the return value thrown by the ls command, which should be 0 (default "success" return value). If it doesn't exist, you should get a number other then 0. The exact number depends on the program.
+                    #https://stackoverflow.com/a/6834572/12772630
+                #the return value of cmp will be 0 if the two files are identical, if not, then we have differences between the files
+                    #https://stackoverflow.com/a/53529649/12772630
+            #if status is zero (both files are the same), perfect
+    print("\n#######################################\n#######################################")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": This check also tell us that the coordinates in hap file are 1 based. Hap and VCF file have the same positions, and the pos in VCF files v4.2 is 1-based according to the specification file (this is the format of 1KGP data)")
+    print("#######################################\n#######################################")
+        #POS - position: The reference position, with the 1st base having position 1. Positions are sorted numerically, in increasing order, within each reference sequence CHROM. It is permitted to have multiple records with the same POS. Telomeres are indicated by using positions 0 or N+1, where N is the length of the corresponding chromosome or contig. (Integer, Required)
+            #https://samtools.github.io/hts-specs/VCFv4.2.pdf
+
+    #required format according to hapbin
+        #The map files (--map) should be in the same format as used by Selscan with one row per variant and four space-separated columns specifiying 
+            #chromosome, 
+            #locus ID, 
+            #genetic position
+            #physical position.
+        #therefore, we still need to 
+            #include the genetic position
+            #remove the allele names
 
 
-    #In [5]: run_bash(" \
-    #...:     bcftools view \
-    #...:             --samples " + ",".join(selected_samples) + " \
-    #...:         " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-    #...:     wc -l")
-    #...: 
-    #5759173
+    ##calculate the genetic position
+    #load the raw_map file
+    snp_map_raw = pd.read_csv(\
+        "./results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_raw.map.gz", \
+        sep=" ", \
+        header=None)
+    print("See raw map file loaded in python")
+    print(snp_map_raw)
+
+    #
+    print("\n#######################################\n#######################################")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": check we have the correct number of SNPs in the map file loaded in python")
+    print("#######################################\n#######################################")
+    run_bash(" \
+        n_snps=$(\
+            bcftools view \
+                --no-header \
+                ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz | \
+            wc -l); \
+        if [[ $n_snps -eq " + str(snp_map_raw.shape[0]) + " ]]; then \
+            echo 'TRUE'; \
+        else \
+            echo 'FALSE'; \
+        fi")
+            #count the number of lines in the cleaned VCF file without the header, and check that number is equal to the number of SNPs we have in the map file loaded in python 
+
+    #rename the columns
+    snp_map_raw = snp_map_raw.rename(\
+        {0: "chr", 1: "id", 2: "pos", 3: "ref", 4: "alt"}, \
+        axis=1)
+            #use a dict with old and new column names. indicated we are renaming columns (axis=1)
+    print("see map file with renamed columns")
+    print(snp_map_raw)
+
+    #
+    print("\n#######################################\n#######################################")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": check that the ID column in the raw map file is exactly the combination of chromosome, pos, ref, alt")
+    print("#######################################\n#######################################")
+    check_id = snp_map_raw["chr"] + ":" + snp_map_raw["pos"].astype("str") + "_" + snp_map_raw["ref"] + "_" + snp_map_raw["alt"]
+        #make a series combining chromosome, pos, ref and alt, and using the corresponding separators
+    print(check_id.equals(snp_map_raw["id"]))
+        #check it is identical to id
+
+    #
+    print("remove the ref/alt columns as we have this information already included in the ID")
+    snp_map_raw = snp_map_raw.drop(["ref", "alt"], axis=1)
+    print(snp_map_raw)
+
+
+    ##load and explore the decode2019 map
+
+    #I know that the original 2019 decode map is alligned to hg38. Also, I assume that the decode2019 map is 1-based because they do not specify is 0-based
+        #Data S3.genetic.map.final.sexavg.gor.gz:
+            #average genetic map computed from the paternal and maternal genetic maps, which were in turn computed from the paternal and maternal crossover, respectively. The data columns are as follows: Chr (chromosome), Begin (start point position of interval in GRCh38 coordinates), End (end point position of interval in GRCh38 coordinates), cMperMb (recombination rate in interval), cM (centiMorgan location of end point of interval)
+            #Page 85 of "aau1043-halldorsson-sm-revision1.pdf"
+
+    #1KGP is aligned to hg38 (see paper) and coordinates are 1-based as VCF format 4.2 has 1-based coordinates.
+
+    #therefore, we have the same position format in both datasets, so we can just use the decode 2019 map to calculate the genetic position of each SNP.
+
+    # 
+    print("\n#######################################\n#######################################")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": see first lines of the Data S3 of decode paper, which is the sex average map (see above). The file has header")
+    print("#######################################\n#######################################")
+    run_bash("\
+        gunzip \
+            --stdout \
+            ./data/decode_2019/aau1043_datas3.gz | \
+        head -20")
+
+    #
+    print("\n#######################################\n#######################################")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": remove the header and save")
+    print("#######################################\n#######################################")
+    run_bash("\
+        gunzip \
+            --stdout \
+            ./data/decode_2019/aau1043_datas3.gz | \
+        awk \
+            'NR>7' | \
+        gzip \
+            --force > \
+        ./data/decode_2019/aau1043_datas3_no_header.gz; \
+        gunzip \
+            --stdout \
+            ./data/decode_2019/aau1043_datas3_no_header.gz | \
+        head -5")
+            #decompress, send to stdout
+            #then select any row whose number is larger than 7, i.e., from 8th row and forward.
+                #https://www.baeldung.com/linux/remove-first-line-text-file 
+            #compress and save
+            #decompress and see first lines
+
+    #
+    print("\n#######################################\n#######################################")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": load decode 2019 map into python")
+    print("#######################################\n#######################################") 
+    decode2019_map = pd.read_csv(\
+        "./data/decode_2019/aau1043_datas3_no_header.gz", \
+        sep="\t", \
+        header=0, \
+        low_memory=False)
+    #rename columns in lower case
+    decode2019_map=decode2019_map.rename({"Chr":"chr", "Begin":"begin", "End":"end", "cMperMb":"cM_Mb", "cM":"cM"}, axis=1)
+    print(decode2019_map)
+        #Average genetic map computed from the paternal and maternal genetic maps.
+        #The data columns are as follows:
+        #Chr (chromosome)
+        #Begin (start point position of interval in GRCh38 coordinates)
+        #End (end point position of interval in GRCh38 coordinates)
+        #cMperMb (recombination rate in interval)
+        #cM (centiMorgan location of END POINT of interval)
+
+        #I did a lot of checks on this map regarding overlapping of the intervals etc, check recomb_v3.R in method_deep paper for further details.
+
+
+    #selected_snp=snp_map_raw.iloc[0,:]
+    def gen_pos(selected_snp):
+
+        #select snp id
+        selected_snp_id = selected_snp["id"]
+
+        #selected chromosome
+        selected_chrom = selected_snp["chr"]
+
+        #extract position of the selected snp
+        selected_snp_physical_pos = selected_snp["pos"]
+
+        decode2019_map_subset = decode2019_map.loc[decode2019_map["chr"] == selected_chrom,:]
+
+        np.unique(decode2019_map_subset["chr"]) == selected_chrom
+        
+        decode2019_map_subset
+
+
+        #it makes sense to repeat this for each populations? maybe do it per chromosome and then select those snps included in each pop?
+            #maybe you can calculate the maps in a different script run before this and then run this, selecting snps of the corresponid chromosome map that are included in the vcf file of the pop,
+            #remember that remove filter snps wihitn pop, so each pop will have different snps
+
+        #cM (centiMorgan location of END POINT of interval)
+
+
+
+
+
+
+
+
+
+#############
+# ask enard #
+#############
+
+#as i filter within pop, each pop can have different snps.
+#in the map file we can use the format "CHROM:POS_REF_ALT" for the ID? I think remember that the map files I originally got from you in the previous project (before decode2019 conversion) used as ID just the physical position. Not sure if there is any specific reason for doing that.
