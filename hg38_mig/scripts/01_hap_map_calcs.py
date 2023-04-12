@@ -1368,7 +1368,7 @@ def master_processor(selected_chromosome, selected_pop):
                     --list-samples \
                     " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
                     wc -l); \
-            if [[ $n_samples -eq " + str(ped_merged.shape[0]) + " ]]; then \
+            if [[ $n_samples -eq " + str(samples_pedigree.shape[0]) + " ]]; then \
                 echo 'TRUE'; \
             else \
                 echo 'FALSE'; \
@@ -2040,7 +2040,7 @@ def master_processor(selected_chromosome, selected_pop):
             gunzip \
                 -c results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap.gz | \
             wc -l); \
-        if [[ $n_snps_vcf == $n_snps_hap ]];then \
+        if [[ $n_snps_vcf -eq $n_snps_hap ]];then \
             echo 'TRUE'; \
         else \
             echo 'FALSE'; \
@@ -2075,12 +2075,12 @@ def master_processor(selected_chromosome, selected_pop):
         nfields_hap_nlines=$( \
             echo -n $nfields_hap | \
             grep -c '^'); \
-        if [[ $nfields_hap_nlines == 1 ]]; then \
+        if [[ $nfields_hap_nlines -eq 1 ]]; then \
             nsamples_hap=$(($nfields_hap/2)); \
             nsamples_bcftools=$( \
                 cat results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_samples_to_bcftools.txt | \
                 grep -c '^'); \
-            if [[ $nsamples_hap == $nsamples_bcftools ]]; then \
+            if [[ $nsamples_hap -eq $nsamples_bcftools ]]; then \
                 echo 'TRUE'; \
             else \
                 echo 'FALSE'; \
@@ -2154,10 +2154,7 @@ def master_processor(selected_chromosome, selected_pop):
     snp_map_raw.rename()
 
 
-    ###QUITA LOS 90!!!! QUE NO SON UNRELATED
 
-    #usa los 2504 originales como pone en el paper, estos son los unrelated
-        #http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/integrated_call_samples_v3.20130502.ALL.panel
 
 
     #last conversion hap, I guess non-billalte and non-alt shoudl be removed to meet impute requeriments
