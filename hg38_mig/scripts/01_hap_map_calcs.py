@@ -497,6 +497,7 @@ run_bash(" \
         -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
         #We have variants with different characteristics
             #Biallelic SNPs:
+                #SNP rs6054251 chr20 14320 C A 5 1 0.2 GTs: 0|0 0|0 1|1
                 #SNP rs6054252 chr20 14350 C A 4 2 0.5 GTs: 1|0 1|0 .|.
                 #SNP rs6054257 chr20 14370 G A 6 3 0.5 GTs: 1|0 1|1 0|0
                 #SNP rs6054255 chr20 14371 G C 6 3 0.667 GTs: 0|1 1|1 1|0
@@ -505,8 +506,8 @@ run_bash(" \
                 #SNP rs6040355 chr20 1110696 A G,T 6 2,2 0.333,0.333 GTs: 1|1 2|2 0|0
                 #SNP rs6040356 chr20 1110697 A G,T 6 2,1 0.333,0 GTs: 1|1 0|0 0|0
                 #SNP rs6040357 chr20 1110698 A G,T 6 3,3 0.5,0.5 GTs: 1|1 2|2 1|2
-                #SNP rs6040358 chr20 1110699 A G,T 6 2,0 0.333,0 GTs: 1|1 0|0 0|.
-                #SNP rs6040359 chr20 1110700 A G,T 5 0,3 0,0.6 GTs: 2|2 2|2 .|2
+                #SNP rs6040358 chr20 1110699 A G,T 6 2,0 0.333,0 GTs: 1|1 0|0 .|.
+                #SNP rs6040359 chr20 1110700 A G,T 5 0,3 0,0.6 GTs: 2|2 2|2 .|.
             #Exact duplicate SNPs, i.e., pos, chr, REF, alt
                 #SNP rs6040360 chr20 1110701 A G 6 3 0.5 GTs: 1|1 0|0 0|1
                 #SNP rs6040360_copy chr20 1110701 A G 6 3 0.5 GTs: 1|1 1|0 0|1
@@ -565,6 +566,9 @@ run_bash(" \
         #you can see how AN and AC are updated but not AF. 
             #For example, rs6040357 has three copies of the two ALT alleles (AC=3,3) and a total number of 6 alleles (AN=6), but after removing the third sample (1|2), AC becomes 2,2 and AN becomes 4. 
             #Similarly, rs6040351 has AN=6, 2 copies of the allele and frequency of 2/6=0.33, but after removing the third sample (1|0), AN becomes 4, AC is 1, BUT AF remains 0.333, when it should be 0.25.
+        #Also note that REF/ALT are NOT updated
+            #rs6054251 has "0|0 0|0 1|1", being REF=C and ALT=A. Therefore, when the third sample is filtered out, the SNP has "0|0 0|0", there is only C. 
+            #However, the REF and ALT columns remain the same.
         #Indeed, there is a command (--no-update) to avoid (re)calculating INFO fields for the subset, currently including only INFO/AC and INFO/AN. Therefore, they are clearly saying that AN and AC are the only INFO fields updated for the subset.
             #You can update other fields using bcftools +fill
         #SUMMARY: AC and AN are updated after subsetting, but not AF.
@@ -647,9 +651,32 @@ run_bash(" \
     bcftools query \
         -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
 
+#do some operations regarding missing
+#Important note about missing:
+    #missing genotypes in diploids a VCF file is indicated with ".|.", not "1|." or ".|1". 
+    #If a call cannot be made for a sample at a given locus, ‘.’ should be specified for each missing allele in the GT field (for example ‘./.’ for a diploid genotype and ‘.’ for haploid genotype).
+        #https://samtools.github.io/hts-specs/VCFv4.2.pdf
+    #I have not seen in any place that you can have one allele missing but not the other in the same genotype ("1|.")
+        #https://gatk.broadinstitute.org/hc/en-us/articles/6012243429531-GenotypeGVCFs-and-the-death-of-the-dot
+    #Therefore, I made a mistake in the early versions of my dummy examples, where I added genotypes like "0|0 0|0 1|." and this gave problems
+        #monomorphic
+            #count(GT=R|R | GT=A|A)=N_SAMPLES would be True, because the 2 first genotypes are R|R, while the third one is considered miss.
+            #Therefore, we would consider this as monomorphic. I guess this is not so bad because I would not be confident with an allele if the other copy is missing, so I would be prefer to discard the whole genotype, thus leaving the SNP with only 0|0.
+            #In the worst case scenario of having strange genotypes like "1|.", we would be ok, because that genotype would be correctly count as missing.
+        #freq missing genotypes
+            #when calculating F_MISSING, 1|. is not considered as missing. 
+            #To me this is an error, because why would you trust the allele "1" when the other copy for the same sample is missing?
+            #in the worst case scenario, we could use the alternative approach: COUNT(GT="mis")/N_SAMPLES. This will count ANY sample with "." (even ".|1"), so we can effectively filter missing considering all missing cases.
+
+###por aquiiii
+    #NO FUNCIONA BIEN EL REMOVAL DE MONOMORPHIC PORQUE 0|0 0|0 1|. is considered monomprohic as GT="mis" considers that last genotype as missing. It is possible to have 1|., you have to add "." for EACH missing allele, and they say that in the specification file.
+    #the solution is to do all the cleaning, update the AC fields, and then you can filter with C1 or similar like MIN_AC, counting the number of non-ref, see biostarts
+        #you will lose snps that are multiallelic and one of alleles is not present in the selected pop, i.e., is bi-alleliec within pop
+        #think
+
 #
 print("\n#######################################\n#######################################")
-print("create a new tag with the 'Fraction of missing genotypes'. If you have 3 genotypes (i.e., 3 samples) and 1 is .|., you have 33% (1/3) of missing like for rs6054252. In contrast, if you have only 1 genotype as 1|., missing percentage is 0 because that genotype still has 1 allele")
+print("create a new tag with the 'Fraction of missing genotypes'. If you have 3 genotypes (i.e., 3 samples) and 1 is .|., you have 33% (1/3) of missing like for rs6054252. This is also the case for rs6040358. ")
 print("#######################################\n#######################################")
 run_bash(" \
     bcftools norm \
@@ -756,6 +783,50 @@ run_bash(" \
         '{if (NR == 1) max = $1} \
         {if (NR > 1 && $1 > max) max = $1} \
         END {print max}'")
+
+#
+print("\n#######################################\n#######################################")
+print("filter by frequency of missing using another approach. This approach counts the number of missing genotypes with GT='mis' and divided by the number of samples, so you get the proportion of samples with missing genotypes. The strength of this approach over the previous is that you are counting anything with '.', so even an hypothetical wrong genotype like '1|.' would be considered missing, so it would not influence our data ")
+print("#######################################\n#######################################")
+print("SNPs with 1/3 or more of missing: we have snps with 1 out of 3 missing genotypes (e.g., rs6040358) and variants with 2 out of 3 missing (rs6054250)")
+run_bash(" \
+    bcftools norm \
+        --multiallelic -snps \
+        data/dummy_vcf_files/dummy_example.vcf | \
+    bcftools view \
+        --types snps | \
+    bcftools view \
+        --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' | \
+    bcftools view \
+        --include 'COUNT(GT=\"mis\")/N_SAMPLES >= 1/3' | \
+    bcftools query \
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+print("SNPs with 2/3 of missing: We get a variant with 2 out of 3 missing (rs6054250)")
+run_bash(" \
+    bcftools norm \
+        --multiallelic -snps \
+        data/dummy_vcf_files/dummy_example.vcf | \
+    bcftools view \
+        --types snps | \
+    bcftools view \
+        --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' | \
+    bcftools view \
+        --include 'COUNT(GT=\"mis\")/N_SAMPLES = 2/3' | \
+    bcftools query \
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+print("select variants with less than 1/3 of missing: We have lost all variants with missing because we only have variants 2/3 and 1/3 of missing")
+run_bash(" \
+    bcftools norm \
+        --multiallelic -snps \
+        data/dummy_vcf_files/dummy_example.vcf | \
+    bcftools view \
+        --types snps | \
+    bcftools view \
+        --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' | \
+    bcftools view \
+        --include 'COUNT(GT=\"mis\")/N_SAMPLES < 1/3' | \
+    bcftools query \
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
 
 #
 print("\n#######################################\n#######################################")
@@ -2479,8 +2550,16 @@ def master_processor(selected_chromosome, selected_pop):
 
 
         ##por aquii,
+            #IMPORTANT, ERROR, 
+                #dummy snp rs6054251 has "0|0 0|0 1|." and it is considered mono with out filter, because GT="mis" considers anything with ".", i.e., "1|." is missing...
+                #maybe -c/C, --min-ac/--max-ac?
+                    #but you need updated AC field, and you could have problems with multiallelic...
+                    #https://www.biostars.org/p/360620/
             #put remove duplicate first just in case, because maybe you could remove a monorphic in a pop, that mono is duplicate, so the second is no duplicated and you remove a different row than if you did it first?
                 #not very relevant, but just in case...
+                #i have checked that --samples does not update REF/ALT, and we are using --rm-dup exact, which looks for snps with the same chrom, pos, REF and ALT. Therefore, subseting before filtering by dup should noy affect
+                #the same goes for type snps
+                #think a bit more.
             #select missing < 5%
             #use pilot mask
             #use 2504 samples less 4 related. 
