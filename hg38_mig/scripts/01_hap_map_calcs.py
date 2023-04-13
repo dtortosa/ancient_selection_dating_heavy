@@ -648,6 +648,120 @@ run_bash(" \
 
 #
 print("\n#######################################\n#######################################")
+print("create a new tag with the 'Fraction of missing genotypes'. If you have 3 genotypes and 1 is .|., you have 33% of missing like for rs6054252. In contrast, if you have only 1 genotype as 1|., missing percentage is 0.")
+print("#######################################\n#######################################")
+run_bash(" \
+    bcftools norm \
+        --multiallelic -snps \
+        data/dummy_vcf_files/dummy_example.vcf | \
+    bcftools view \
+        --types snps | \
+    bcftools view \
+        --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' | \
+    bcftools +fill-tags \
+        -- --tags 'F_MISSING' | \
+    bcftools view \
+        --no-header")
+
+#
+print("\n#######################################\n#######################################")
+print("use the new INFO field to select only those SNPs missing % below 30%. This remove the first SNP with 1 genotype missing but rs6040358 remains because it only lacks 1 allele of 1 genotype, but the other allele of that genotype is present")
+print("#######################################\n#######################################")
+run_bash(" \
+    bcftools norm \
+        --multiallelic -snps \
+        data/dummy_vcf_files/dummy_example.vcf | \
+    bcftools view \
+        --types snps | \
+    bcftools view \
+        --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' | \
+    bcftools +fill-tags \
+        -- --tags 'F_MISSING' | \
+    bcftools view \
+        --include 'F_MISSING<0.3' \
+        --no-header")
+
+#
+print("\n#######################################\n#######################################")
+print("select those variants with less than 30% of genotype as missing, but after selecting the two first samples. Given the snp with 33% missing has missing for the third sample, now it has 0%. Therefore, missing is calculated using the sample received as input.")
+print("#######################################\n#######################################")
+run_bash(" \
+    bcftools view \
+        --samples NA00001,NA00002 \
+        data/dummy_vcf_files/dummy_example.vcf | \
+    bcftools norm \
+        --multiallelic -snps | \
+    bcftools view \
+        --types snps | \
+    bcftools view \
+        --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' | \
+    bcftools +fill-tags \
+        -- --tags 'F_MISSING' | \
+    bcftools view \
+        --include 'F_MISSING<0.3' \
+        --no-header")
+
+#
+print("\n#######################################\n#######################################")
+print("select those variants with less than 50% of genotype as missing, then extract the missing % and calculate its max. We get 33.33%, the snp with more missing but still below 50%")
+print("#######################################\n#######################################")
+run_bash(" \
+    bcftools norm \
+        --multiallelic -snps \
+        data/dummy_vcf_files/dummy_example.vcf | \
+    bcftools view \
+        --types snps | \
+    bcftools view \
+        --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' | \
+    bcftools +fill-tags \
+        -- --tags 'F_MISSING' | \
+    bcftools view \
+        --include 'F_MISSING<0.5' | \
+    bcftools query \
+        --format '%F_MISSING\n' | \
+    awk \
+        '{if (NR == 1) max = $1} \
+        {if (NR > 1 && $1 > max) max = $1} \
+        END {print max}'")
+        #extract the min missing freq using awk
+            #if we are in the first row, extract the value of the first field (we only have 1 column) and save it as "max"
+            #if the we have passed the first row and the value of field 1 for that row is higher than "max", then update "max" with this value. It will be always updated if it finds a larger value
+            #at the end of the script, print the final value, which is the larger across rows
+                #https://stackoverflow.com/a/13100039/12772630
+
+#
+print("\n#######################################\n#######################################")
+print("select those variants with less than 33% of genotype as missing, then extract the missing % and calculate its max. We get 0% because now the SNP with 33% of missing is filtered out")
+print("#######################################\n#######################################")
+run_bash(" \
+    bcftools norm \
+        --multiallelic -snps \
+        data/dummy_vcf_files/dummy_example.vcf | \
+    bcftools view \
+        --types snps | \
+    bcftools view \
+        --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' | \
+    bcftools +fill-tags \
+        -- --tags 'F_MISSING' | \
+    bcftools view \
+        --include 'F_MISSING<0.3' | \
+    bcftools query \
+        --format '%F_MISSING\n' | \
+    awk \
+        '{if (NR == 1) max = $1} \
+        {if (NR > 1 && $1 > max) max = $1} \
+        END {print max}'")
+
+
+#por aquuii
+    #use this to ensure you have less than 5% missing in the original VCF file, maybe not needed to add an additional filter.
+        #missing percentage should be calculated within population?
+    #check the impact of the new dummy snp in the first lines of dummy checks
+
+
+
+#
+print("\n#######################################\n#######################################")
 print("remove SNPs with missing")
 print("#######################################\n#######################################")
 run_bash(" \
@@ -2400,12 +2514,20 @@ def master_processor(selected_chromosome, selected_pop):
         #it makes sense to repeat this for each populations? maybe do it per chromosome and then select those snps included in each pop?
             #maybe you can calculate the maps in a different script run before this and then run this, selecting snps of the corresponid chromosome map that are included in the vcf file of the pop,
             #remember that remove filter snps wihitn pop, so each pop will have different snps
+            #the ID would be different because REF/ALT are included in the ID in order to avoid strand flips
+            #if it is not very slow, we could just do it per popuatilion-chrom is we did for iHS
 
         #cM (centiMorgan location of END POINT of interval)
 
 
+        ##por aquii,
+            #put remove duplicate first just in case, because maybe you could remove a monorphic in a pop, that mono is duplicate, so the second is no duplicated and you remove a different row than if you did it first?
+                #not very relevant, but just in case...
+            #select missing < 5%
+            #use pilot mask
+            #use 2504 samples less 4 related. 
 
-
+            #You should apply the filter with less than 5% missing just as the 1KGP authors. For HWE you should also only apply what the 1KGP authors did and not filter further for specific populations. Biallelic SNPs per specific population are ok. Masks based on low coverage are ok, you should use the less stringent masks. You can use the 2,504 individuals and remove the four related individuals yes. And you are right for MAF, the filtering at MAF>5% is done by the scripts for summary statistics. It is only for the focal SNPs methods like iHS still use the SNPs with lowe MAF around the focal SNPs so it would be an error to remove all SNPs with MAF<5%.
 
 
 
