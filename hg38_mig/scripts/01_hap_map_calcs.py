@@ -497,22 +497,23 @@ run_bash(" \
         -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
         #We have variants with different characteristics
             #Biallelic SNPs:
-                #SNP rs6054257 20 14370 G A 6 3 0.5 GTs: 1|0 1|1 0|0
-                #SNP rs6054255 20 14371 G C 6 3 0.667 GTs: 0|1 1|1 1|0
-                #SNP rs6040351 20 17330 T A 6 2 0.333 GTs: 0|0 1|0 1|0
+                #SNP rs6054252 chr20 14350 C A 4 2 0.5 GTs: 1|0 1|0 .|.
+                #SNP rs6054257 chr20 14370 G A 6 3 0.5 GTs: 1|0 1|1 0|0
+                #SNP rs6054255 chr20 14371 G C 6 3 0.667 GTs: 0|1 1|1 1|0
+                #SNP rs6040351 chr20 17330 T A 6 2 0.333 GTs: 0|0 1|0 1|0
             #Multiallelic SNPs:
-                #SNP rs6040355 20 1110696 A G,T 6 2,2 0.333,0.333 GTs: 1|1 2|2 0|0
-                #SNP rs6040356 20 1110697 A G,T 6 2,1 0.333,0 GTs: 1|1 0|0 0|0
-                #SNP rs6040357 20 1110698 A G,T 6 3,3 0.5,0.5 GTs: 1|1 2|2 1|2
-                #SNP rs6040358 20 1110699 A G,T 6 2,0 0.333,0 GTs: 1|1 0|0 0|.
-                #SNP rs6040359 20 1110700 A G,T 5 0,3 0,0.6 GTs: 2|2 2|2 .|2
+                #SNP rs6040355 chr20 1110696 A G,T 6 2,2 0.333,0.333 GTs: 1|1 2|2 0|0
+                #SNP rs6040356 chr20 1110697 A G,T 6 2,1 0.333,0 GTs: 1|1 0|0 0|0
+                #SNP rs6040357 chr20 1110698 A G,T 6 3,3 0.5,0.5 GTs: 1|1 2|2 1|2
+                #SNP rs6040358 chr20 1110699 A G,T 6 2,0 0.333,0 GTs: 1|1 0|0 0|.
+                #SNP rs6040359 chr20 1110700 A G,T 5 0,3 0,0.6 GTs: 2|2 2|2 .|2
             #Exact duplicate SNPs, i.e., pos, chr, REF, alt
-                #SNP rs6040360 20 1110701 A G 6 3 0.5 GTs: 1|1 0|0 0|1
-                #SNP rs6040360_copy 20 1110701 A G 6 3 0.5 GTs: 1|1 1|0 0|1
+                #SNP rs6040360 chr20 1110701 A G 6 3 0.5 GTs: 1|1 0|0 0|1
+                #SNP rs6040360_copy chr20 1110701 A G 6 3 0.5 GTs: 1|1 1|0 0|1
             #SNP with unphased data
-                #SNP rs6040361 20 1110702 A G 6 3 0.5 GTs: 1|1 0/0 0|1
+                #SNP rs6040361 chr20 1110702 A G 6 3 0.5 GTs: 1|1 0/0 0|1
             #microsatellite (indel)
-                #INDEL microsat1 20 1110703 GTC G,GTCT . . . GTs: 0/1 0/2 1/1
+                #INDEL microsat1 chr20 1110703 GTC G,GTCT . . . GTs: 0/1 0/2 1/1
 
 #
 print("\n#######################################\n#######################################")
@@ -648,7 +649,7 @@ run_bash(" \
 
 #
 print("\n#######################################\n#######################################")
-print("create a new tag with the 'Fraction of missing genotypes'. If you have 3 genotypes and 1 is .|., you have 33% of missing like for rs6054252. In contrast, if you have only 1 genotype as 1|., missing percentage is 0.")
+print("create a new tag with the 'Fraction of missing genotypes'. If you have 3 genotypes (i.e., 3 samples) and 1 is .|., you have 33% (1/3) of missing like for rs6054252. In contrast, if you have only 1 genotype as 1|., missing percentage is 0 because that genotype still has 1 allele")
 print("#######################################\n#######################################")
 run_bash(" \
     bcftools norm \
@@ -662,10 +663,12 @@ run_bash(" \
         -- --tags 'F_MISSING' | \
     bcftools view \
         --no-header")
+        #see below for further details about adding new fields to the VCF file
+        #https://samtools.github.io/bcftools/howtos/plugin.fill-tags.html
 
 #
 print("\n#######################################\n#######################################")
-print("use the new INFO field to select only those SNPs missing % below 30%. This remove the first SNP with 1 genotype missing but rs6040358 remains because it only lacks 1 allele of 1 genotype, but the other allele of that genotype is present")
+print("use the new INFO field to select only those SNPs missing % below 30%. This remove the first SNP with 1 genotype missing (rs6054252) but rs6040358 remains because it only lacks 1 allele of 1 genotype, but the other allele of that genotype is present. I understand this is the missing definition used by 1KGP because in the readme they talk about 'genotype missingness' instead of 'allele missingness'")
 print("#######################################\n#######################################")
 run_bash(" \
     bcftools norm \
@@ -680,10 +683,11 @@ run_bash(" \
     bcftools view \
         --include 'F_MISSING<0.3' \
         --no-header")
+        #https://bioinformatics.stackexchange.com/questions/20054/bcftools-1-16-able-to-add-f-missing-tag
 
 #
 print("\n#######################################\n#######################################")
-print("select those variants with less than 30% of genotype as missing, but after selecting the two first samples. Given the snp with 33% missing has missing for the third sample, now it has 0%. Therefore, missing is calculated using the sample received as input.")
+print("select those variants with less than 30% of genotype as missing, but after selecting the two first samples. Given the snp with 33% missing (rs6054252) has missing only for the third sample, now it has 0% missing. Therefore, missing is calculated using the samples received as input.")
 print("#######################################\n#######################################")
 run_bash(" \
     bcftools view \
@@ -703,7 +707,7 @@ run_bash(" \
 
 #
 print("\n#######################################\n#######################################")
-print("select those variants with less than 50% of genotype as missing, then extract the missing % and calculate its max. We get 33.33%, the snp with more missing but still below 50%")
+print("select those variants with less than 50% of genotype as missing, then extract the missing % and calculate its max. We get 33.33%, the snp with more missing (rs6054252) but still below 50%")
 print("#######################################\n#######################################")
 run_bash(" \
     bcftools norm \
@@ -723,7 +727,8 @@ run_bash(" \
         '{if (NR == 1) max = $1} \
         {if (NR > 1 && $1 > max) max = $1} \
         END {print max}'")
-        #extract the min missing freq using awk
+        #after filtering by missing, get the F_MISSING for each SNP, each in a different line
+        #extract the max missing freq using awk
             #if we are in the first row, extract the value of the first field (we only have 1 column) and save it as "max"
             #if the we have passed the first row and the value of field 1 for that row is higher than "max", then update "max" with this value. It will be always updated if it finds a larger value
             #at the end of the script, print the final value, which is the larger across rows
@@ -731,7 +736,7 @@ run_bash(" \
 
 #
 print("\n#######################################\n#######################################")
-print("select those variants with less than 33% of genotype as missing, then extract the missing % and calculate its max. We get 0% because now the SNP with 33% of missing is filtered out")
+print("select those variants with less than 33% of genotype as missing, then extract the missing % and calculate its max. We get 0% because now the SNP with 33% of missing (rs6054252) is filtered out")
 print("#######################################\n#######################################")
 run_bash(" \
     bcftools norm \
@@ -752,17 +757,9 @@ run_bash(" \
         {if (NR > 1 && $1 > max) max = $1} \
         END {print max}'")
 
-
-#por aquuii
-    #use this to ensure you have less than 5% missing in the original VCF file, maybe not needed to add an additional filter.
-        #missing percentage should be calculated within population?
-    #check the impact of the new dummy snp in the first lines of dummy checks
-
-
-
 #
 print("\n#######################################\n#######################################")
-print("remove SNPs with missing")
+print("remove SNPs with ANY missing")
 print("#######################################\n#######################################")
 run_bash(" \
     bcftools norm \
@@ -1695,27 +1692,6 @@ def master_processor(selected_chromosome, selected_pop):
 
     #
     print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": remove SNPs with missing")
-    print("#######################################\n#######################################")
-    run_bash(" \
-        bcftools view \
-            --samples " + ",".join(selected_samples) + " \
-            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-        bcftools view \
-            --types snps | \
-        bcftools view \
-            --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
-        bcftools view \
-            --genotype ^miss | \
-        bcftools query \
-            --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | \
-        head -7")
-            #exclude (^) those genotypes with missing. See dummy example to check behaviour.
-                #there are multiple ways to filter by missing
-                    #https://www.biostars.org/p/362060/
-
-    #
-    print("\n#######################################\n#######################################")
     print("chr " + selected_chromosome + " - " + selected_pop + ": remove also exact duplicates")
     print("#######################################\n#######################################")
     run_bash(" \
@@ -1726,8 +1702,6 @@ def master_processor(selected_chromosome, selected_pop):
             --types snps | \
         bcftools view \
             --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
-        bcftools view \
-            --genotype ^miss | \
         bcftools norm \
             --rm-dup exact | \
         bcftools query \
@@ -1747,8 +1721,6 @@ def master_processor(selected_chromosome, selected_pop):
             --types snps | \
         bcftools view \
             --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
-        bcftools view \
-            --genotype ^miss | \
         bcftools norm \
             --rm-dup exact | \
         bcftools norm \
@@ -1773,8 +1745,6 @@ def master_processor(selected_chromosome, selected_pop):
             --types snps | \
         bcftools view \
             --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
-        bcftools view \
-            --genotype ^miss | \
         bcftools norm \
             --rm-dup exact | \
         bcftools norm \
@@ -1798,8 +1768,6 @@ def master_processor(selected_chromosome, selected_pop):
             --types snps | \
         bcftools view \
             --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
-        bcftools view \
-            --genotype ^miss | \
         bcftools norm \
             --rm-dup exact | \
         bcftools norm \
@@ -1858,8 +1826,6 @@ def master_processor(selected_chromosome, selected_pop):
             --types snps | \
         bcftools view \
             --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
-        bcftools view \
-            --genotype ^miss | \
         bcftools norm \
             --rm-dup exact | \
         bcftools norm \
@@ -1889,8 +1855,6 @@ def master_processor(selected_chromosome, selected_pop):
             --types snps | \
         bcftools view \
             --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
-        bcftools view \
-            --genotype ^miss | \
         bcftools norm \
             --rm-dup exact | \
         bcftools norm \
@@ -1923,8 +1887,6 @@ def master_processor(selected_chromosome, selected_pop):
             --types snps | \
         bcftools view \
             --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
-        bcftools view \
-            --genotype ^miss | \
         bcftools norm \
             --rm-dup exact | \
         bcftools norm \
@@ -1959,8 +1921,6 @@ def master_processor(selected_chromosome, selected_pop):
             --types snps | \
         bcftools view \
             --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
-        bcftools view \
-            --genotype ^miss | \
         bcftools norm \
             --rm-dup exact | \
         bcftools norm \
@@ -1993,8 +1953,6 @@ def master_processor(selected_chromosome, selected_pop):
             --types snps | \
         bcftools view \
             --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
-        bcftools view \
-            --genotype ^miss | \
         bcftools norm \
             --rm-dup exact | \
         bcftools norm \
