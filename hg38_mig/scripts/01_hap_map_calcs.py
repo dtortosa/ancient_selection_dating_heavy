@@ -617,7 +617,8 @@ run_bash(" \
         #first update the AN and AC fields so we have the current number of non-ref alleles for each SNP and we avoid two allele counts for multiallelic because they are now separated in different lines (--multiallelic -snps) as found in the 1KGP data. 
             #remember that AC is "allele count in genotypes, for each ALT allele" while AN is "total number of alleles in called genotypes".
             #therefore
-                #it is important that you do NOT have multiallelic SNPs, so we do not have INFO/AC with several numbers 
+                #it is IMPORTANT that you do NOT have multiallelic SNPs, so we do not have INFO/AC with several numbers
+                    #--samples does NOT remove the allele count of the other ALT! see below
                 #also key to have this updated after selecting samples, so we have the number of alleles in the subset
             #see below for further details about "+fill-tags"
         #then include those variants whose allele count
@@ -728,16 +729,27 @@ run_bash(" \
         --include 'COUNT(GT=\"mis\")/N_SAMPLES < 1/3' | \
     bcftools query \
         -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
-        #1/2 would be 0.5, i.e., 50%. Therefore, 5% would be 0.05 (i.e., 0.5/10).
         #Lines of multiallelic rs6040358 have been removed because the last sample has a missing genotype. Note that rs6040358 has not been excluded as monomorphic as it has 1 and 0, but because it has missing.
-
-##por aquii
-#adding the new monomorphic and missing filters
-
+print("#### select variants with less than 0.05 of missing: We have lost all variants with missing because we only have variants 2/3 and 1/3 of missing ####")
+run_bash(" \
+    bcftools norm \
+        --multiallelic -snps \
+        data/dummy_vcf_files/dummy_example.vcf | \
+    bcftools view \
+        --types snps | \
+    bcftools +fill-tags \
+        -- --tags AN,AC | \
+    bcftools view \
+        --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
+    bcftools view \
+        --include 'COUNT(GT=\"mis\")/N_SAMPLES < 0.05' | \
+    bcftools query \
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+        #1/2 would be 0.5, i.e., 50%. Therefore, 5% would be 0.05 (i.e., 0.5/10).
 
 #
 print("\n#######################################\n#######################################")
-print("remove now the exact duplicates: it does not matter if we remove duplicates before or after subsetting samples. Subseting does not update chrom, pos and REF/ALT, which are the fields used by '--rm-dup exact' to remove exact duplicates. In an hypothetically scenario where we have two duplicated SNPs and one of them is monomorphic, we would remove first the monomorphic due to the previous filters and then retain the second. If you use --rm-dup before, you would select the SNP that appears first, that could be the monomorphic or the other one. Removnig mono first force to select always the second, while removing duplicates before makes possible to select one or the other. I do not think this is relevant")
+print("remove now the exact duplicates: it does not matter if we remove duplicates before or after subsetting samples. Subseting does not update chrom, pos and REF/ALT, which are the fields used by '--rm-dup exact' to remove exact duplicates. In an hypothetically scenario where we have two duplicated SNPs and one of them is monomorphic, we would remove first the monomorphic due to the previous filters and then retain the second. If you use --rm-dup before, you would select the SNP that appears first, that could be the monomorphic or the other one. Removing mono first force to select always the second, while removing duplicates before makes possible to select one or the other. I do not think this is relevant")
 print("#######################################\n#######################################")
 run_bash(" \
     bcftools norm \
@@ -770,10 +782,12 @@ run_bash(" \
         data/dummy_vcf_files/dummy_example.vcf | \
     bcftools view \
         --types snps | \
+    bcftools +fill-tags \
+        -- --tags AN,AC | \
     bcftools view \
-        --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+        --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
     bcftools view \
-        --genotype ^miss |\
+        --include 'COUNT(GT=\"mis\")/N_SAMPLES < 0.05' | \
     bcftools norm \
         --rm-dup exact | \
     bcftools norm \
@@ -785,7 +799,7 @@ run_bash(" \
             #split multiallelic sites into biallelic records (-) or join biallelic sites into multiallelic records (+). An optional type string can follow which controls variant types which should be split or merged together: If only SNP records should be split or merged, specify snps
                 #https://samtools.github.io/bcftools/bcftools.html#norm
         #this combines snps with the same position and at least equal REF or ALT
-            #the normal scenario is to have same REF and different ALTs, so it just add the different ALTs as different field in ALT column.
+            #the normal scenario is to have same REF and different ALTs, so it just add the different ALTs in the ALT column.
                 #this will be removed when filtering by max-alleles.
             #I have checked that it also merge when REF is different but ALT is the same, in that case it takes the REF of the first SNP.
                 #We should NOT have two SNPs with the same position, same ALT but different REF.
@@ -794,14 +808,14 @@ run_bash(" \
                 #According to the 2022 1KGP project, "BCFtools v1.9 (Li, 2011) was used to split multiallelic variants into multiple rows". Therefore, it is NOT possible that they could load SNPs with 2 REFs into bcftools, so there is no two SNPs with the same pos, ALT and different REF. It is not possible.
                 #In summary, we should not worry about this scenario because it is unlikely to be present in our current data.
             #If merges when REF and ALT are the same.
-                #If we have SNPs with the same REF and ALT and position, these will be removed with dup (see below), so no problem.
+                #If we have SNPs with the same REF and ALT and position, these will be removed with dup (see above), so no problem.
             #when REF and ALT are different, no merging is done and get an error.
                 #if REF and ALT are different, we get error and we will see.
         #some genotypes appear as not phased within the new fused multiallelic SNPs, but that is not a problem because these will be removed anyway.
 
 #
 print("\n#######################################\n#######################################")
-print("check what happens if we remove the third sample and then rs6040355 have no REF anymore, only two ALTs, thus it is not monomorphic")
+print("check what happens if we remove the third sample and then rs6040355 have no REF anymore, only two ALTs: Despite losing the REF, both lines of rs6040355 are merged into a multiallelic SNP, thus it can be removed with --max-alleles 2. This makes sense because --multiallelics +snps looks for snps with the same position and same REF or ALT")
 print("#######################################\n#######################################")
 run_bash(" \
     bcftools norm \
@@ -811,21 +825,23 @@ run_bash(" \
         --samples NA00001,NA00002 | \
     bcftools view \
         --types snps | \
+    bcftools +fill-tags \
+        -- --tags AN,AC | \
     bcftools view \
-        --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+        --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
     bcftools view \
-        --genotype ^miss |\
+        --include 'COUNT(GT=\"mis\")/N_SAMPLES < 0.05' | \
     bcftools norm \
         --rm-dup exact | \
     bcftools norm \
         --multiallelic +snps | \
     bcftools query \
         -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
-        #Despite losing the REF, both lines of rs6040355 are merged into a multiallelic SNP, thus it can be removed with --max-alleles 2. This makes sense because --multiallelics +snps looks for snps with the same position and same REF or ALT.
+        #.
 
 #
 print("\n#######################################\n#######################################")
-print("now we can remove those SNPs with more than 1 allele in ALT")
+print("now we can remove those SNPs with more than 1 allele in ALT. rs6040358 is now included because the second ALT is not present, only REF and ALT, having no missing (it has missing for the last sample that is filtered out)")
 print("#######################################\n#######################################")
 run_bash(" \
     bcftools norm \
@@ -835,10 +851,12 @@ run_bash(" \
         --samples NA00001,NA00002 | \
     bcftools view \
         --types snps | \
+    bcftools +fill-tags \
+        -- --tags AN,AC | \
     bcftools view \
-        --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+        --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
     bcftools view \
-        --genotype ^miss |\
+        --include 'COUNT(GT=\"mis\")/N_SAMPLES < 0.05' | \
     bcftools norm \
         --rm-dup exact | \
     bcftools norm \
@@ -864,10 +882,12 @@ run_bash(" \
         --samples NA00001,NA00002 | \
     bcftools view \
         --types snps | \
+    bcftools +fill-tags \
+        -- --tags AN,AC | \
     bcftools view \
-        --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+        --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
     bcftools view \
-        --genotype ^miss |\
+        --include 'COUNT(GT=\"mis\")/N_SAMPLES < 0.05' | \
     bcftools norm \
         --rm-dup exact | \
     bcftools norm \
@@ -936,10 +956,12 @@ run_bash(" \
         --samples NA00001,NA00002 | \
     bcftools view \
         --types snps | \
+    bcftools +fill-tags \
+        -- --tags AN,AC | \
     bcftools view \
-        --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+        --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
     bcftools view \
-        --genotype ^miss |\
+        --include 'COUNT(GT=\"mis\")/N_SAMPLES < 0.05' | \
     bcftools norm \
         --rm-dup exact | \
     bcftools norm \
@@ -1132,10 +1154,12 @@ run_bash(" \
         --samples NA00001,NA00002 | \
     bcftools view \
         --types snps | \
+    bcftools +fill-tags \
+        -- --tags AN,AC | \
     bcftools view \
-        --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+        --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
     bcftools view \
-        --genotype ^miss |\
+        --include 'COUNT(GT=\"mis\")/N_SAMPLES < 0.05' | \
     bcftools norm \
         --rm-dup exact | \
     bcftools norm \
@@ -1176,10 +1200,12 @@ run_bash(" \
         --samples NA00001,NA00002 | \
     bcftools view \
         --types snps | \
+    bcftools +fill-tags \
+        -- --tags AN,AC | \
     bcftools view \
-        --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+        --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
     bcftools view \
-        --genotype ^miss |\
+        --include 'COUNT(GT=\"mis\")/N_SAMPLES < 0.05' | \
     bcftools norm \
         --rm-dup exact | \
     bcftools norm \
@@ -1205,10 +1231,12 @@ run_bash(" \
         --samples NA00001,NA00002 | \
     bcftools view \
         --types snps | \
+    bcftools +fill-tags \
+        -- --tags AN,AC | \
     bcftools view \
-        --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+        --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
     bcftools view \
-        --genotype ^miss |\
+        --include 'COUNT(GT=\"mis\")/N_SAMPLES < 0.05' | \
     bcftools norm \
         --rm-dup exact | \
     bcftools norm \
@@ -1222,7 +1250,7 @@ run_bash(" \
         --targets-file ./data/dummy_vcf_files/dummy_pilot_mask.bed.gz | \
     bcftools view \
         --no-header")
-    #I have checked that the genotypes remain the same despite removing all previous INFO fields and all FORMAT fields (except GT) and then adding new INFO fields, so we are good here.
+        #I have checked that the genotypes remain the same despite removing all previous INFO fields and all FORMAT fields (except GT) and then adding new INFO fields, so we are good here.
 
 #
 print("\n#######################################\n#######################################")
@@ -1236,10 +1264,12 @@ run_bash(" \
         --samples NA00001,NA00002 | \
     bcftools view \
         --types snps | \
+    bcftools +fill-tags \
+        -- --tags AN,AC | \
     bcftools view \
-        --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+        --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
     bcftools view \
-        --genotype ^miss |\
+        --include 'COUNT(GT=\"mis\")/N_SAMPLES < 0.05' | \
     bcftools norm \
         --rm-dup exact | \
     bcftools norm \
@@ -1275,10 +1305,12 @@ run_bash(" \
         --samples NA00001,NA00002 | \
     bcftools view \
         --types snps | \
+    bcftools +fill-tags \
+        -- --tags AN,AC | \
     bcftools view \
-        --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+        --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
     bcftools view \
-        --genotype ^miss |\
+        --include 'COUNT(GT=\"mis\")/N_SAMPLES < 0.05' | \
     bcftools norm \
         --rm-dup exact | \
     bcftools norm \
@@ -1366,7 +1398,7 @@ run_bash(" \
         #see hap file calculation of the real data to see details about hap format.
 
 #SUMMARY: 
-    #With all these commands, we have recreated the scenario we have in 1KGP data, with multiallelic SNPs separated into different lines, select some samples, we then select snps, remove those with missing genotypes, remove exact duplicates (this does not touch different lines of the same multiallelic snp because they have different REF/ALT), exclude those SNPs that have the same allele for all samples, and we can do that using RR (REF|REF) and AA (A|A), because there are no missing (.) genotypes, as they have been removed. Then we combine all lines of each multiallleic snp and now they have ALT column with several alleles, so we can filter them using --max-alleles 2. Add filter for selecting phased data only. Select only those variants included in interest regions. We can also use bcftools +fill-tags to update important fields for each SNP, so if a SNP was multiallelic, but it is not multiallelic in the subset population (i.e., only REF and 1 ALT), we no longer will have two allele frequencies, two counts.... for the remainder biallelic SNP in the subset.
+    #With all these commands, we have recreated the scenario we have in 1KGP data, with multiallelic SNPs separated into different lines, select some samples, we then select snps, remove those with genotype missingness < 5%, remove exact duplicates (this does not touch different lines of the same multiallelic snp because they have different ALT), exclude those SNPs that have the same allele for all samples (considering alleles in genotypes with missing, e.g., 0|.). Then we combine all lines of each multiallelic snp and now they have ALT column with several alleles, so we can filter them using --max-alleles 2. Add filter for selecting phased data only. Select only those variants included in interest regions. We can also use bcftools +fill-tags to update important fields for each SNP, so if a SNP was multiallelic, but it is not multiallelic in the subset population (i.e., only REF and 1 ALT), we no longer will have two allele frequencies, two allele counts.... for the remainder biallelic SNP in the subset.
 
 #Note about the update of the INFO fields
     #it is important to be sure that the fields you are using for filtering, are updated after subseting samples. Of course, type="snp" will be always "snp" irrespectively of the samples we select, but this is not the case of the number of alleles, because you can have SNPs with 3 alleles considering all 26 populations, but then in GBR they can have only 2 or 1. We are interested in SNPs that are biallelic within the selected population.
