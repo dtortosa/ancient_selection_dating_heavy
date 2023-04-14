@@ -591,7 +591,35 @@ run_bash(" \
 
 #
 print("\n#######################################\n#######################################")
-print("see monomorphic snps")
+print("see monomorphic snps: rs6054249 (0|0 0|0 1|.) is not considered as monomorphic which is right, given that the last genotype not only has missing but also an ALT allele. rs6054248 (0|0 0|0 1|.) is not included even having AC erronously set as zero, thanks we update AC field with +fill-tags. The cases considered as monomorphic are those with all REF (e.g., rs6040358) or all ALT (e.g., rs6040359) irrespectively if they have missing")
+print("#######################################\n#######################################")
+run_bash(" \
+    bcftools norm \
+        --multiallelic -snps \
+        data/dummy_vcf_files/dummy_example.vcf | \
+    bcftools view \
+        --types snps | \
+    bcftools +fill-tags \
+        -- --tags AN,AC | \
+    bcftools view \
+        --include 'INFO/AC=INFO/AN || INFO/AC=0' | \
+    bcftools query \
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+        #first update the AN and AC fields so we have the current number of non-ref alleles for each SNP and we avoid two allele counts for multiallelic because they are now separated in different lines (--multiallelic -snps) as found in the 1KGP data. 
+            #CHECK THIS
+            #remember that AC is "allele count in genotypes, for each ALT allele" while AN is "total number of alleles in called genotypes".
+            #therefore
+                #it is important that you do NOT have multiallelic SNPs, so we do not have INFO/AC with several numbers 
+                #also key to have this updated after selecting samples, so we have the number of alleles in the subset
+            #see below for further details about "+fill-tags"
+        #then include those variants whose allele count
+            #is equal to the total number of alleles, i.e., all alleles are ALT
+            #is equal to zero, i.e., there is no ALT so all alleles are REF 
+        #https://www.biostars.org/p/360620/
+
+#
+print("\n#######################################\n#######################################")
+print("see monomorphic snps after subseting two first samples: rs6054249 is now considered monomorphic because it has 0|0 0|0 1|., but the third one is removes after selecting the two first samples")
 print("#######################################\n#######################################")
 run_bash(" \
     bcftools norm \
@@ -600,9 +628,29 @@ run_bash(" \
     bcftools view \
         --types snps | \
     bcftools view \
-        --include 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+        --samples NA00001,NA00002 | \
+    bcftools +fill-tags \
+        -- --tags AN,AC | \
+    bcftools view \
+        --include 'INFO/AC=INFO/AN || INFO/AC=0' | \
     bcftools query \
         -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+
+
+##IMPORTANTE
+    #MIRA QUE PASA CON LOS MULTIALLELIC
+        #AHORA TIENEN AC, AN UPDATED
+        #SE ACTUALIZA REF/ALT?
+        #QUE SE USABA PARA JUNTAR MULTIALLELIC? ONLY POS AND REF/ALT??
+
+
+###por aquiiii
+    #NO FUNCIONA BIEN EL REMOVAL DE MONOMORPHIC PORQUE 0|0 0|0 1|. is considered monomprohic as GT="mis" considers that last genotype as missing. It is possible to have 1|., you have to add "." for EACH missing allele, and they say that in the specification file.
+    #the solution is to do all the cleaning, update the AC fields, and then you can filter with C1 or similar like MIN_AC, counting the number of non-ref, see biostarts
+        #you will lose snps that are multiallelic and one of alleles is not present in the selected pop, i.e., is bi-alleliec within pop
+        #think
+
+
         #select those variants for which the number of ALT|ALT or REF|REF is equal to the number of samples (3 in this case), so there is no variability.
             #we use count() to count the number of homozygous AA and RR
                 #count is a function that gives you the number of cases, it can be used on FORMAT tags (over samples) and INFO tags (over vector fields).
@@ -646,10 +694,14 @@ run_bash(" \
         data/dummy_vcf_files/dummy_example.vcf | \
     bcftools view \
         --types snps | \
+    bcftools +fill-tags \
+        -- --tags AN,AC | \
     bcftools view \
-        --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+        --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
     bcftools query \
         -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+
+
 
 #do some operations regarding missing
 #Important note about missing:
@@ -668,11 +720,9 @@ run_bash(" \
             #To me this is an error, because why would you trust the allele "1" when the other copy for the same sample is missing?
             #in the worst case scenario, we could use the alternative approach: COUNT(GT="mis")/N_SAMPLES. This will count ANY sample with "." (even ".|1"), so we can effectively filter missing considering all missing cases.
 
-###por aquiiii
-    #NO FUNCIONA BIEN EL REMOVAL DE MONOMORPHIC PORQUE 0|0 0|0 1|. is considered monomprohic as GT="mis" considers that last genotype as missing. It is possible to have 1|., you have to add "." for EACH missing allele, and they say that in the specification file.
-    #the solution is to do all the cleaning, update the AC fields, and then you can filter with C1 or similar like MIN_AC, counting the number of non-ref, see biostarts
-        #you will lose snps that are multiallelic and one of alleles is not present in the selected pop, i.e., is bi-alleliec within pop
-        #think
+#POR AQUII
+    #CHECK EXPLANATIONS OF MISSING AFTER YOUR NEW APPROACH FOR MONOMORPHIC
+
 
 #
 print("\n#######################################\n#######################################")
