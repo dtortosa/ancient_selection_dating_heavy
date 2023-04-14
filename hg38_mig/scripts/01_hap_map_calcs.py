@@ -1663,12 +1663,16 @@ def master_processor(selected_chromosome, selected_pop):
             " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
         bcftools view \
             --types snps | \
+        bcftools +fill-tags \
+            -- --tags AN,AC | \
         bcftools view \
-            --include 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+            --include 'INFO/AC=INFO/AN || INFO/AC=0' | \
         bcftools query \
             --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | \
         head -7")
-            #select those variants for which the number of ALT|ALT or REF|REF is equal to the number of samples, so there is no variability. All ALT + missing or all REF + missing are also considered. See dummy example for further details.
+            #update the INFO/AC and INFO/AN fields so we avoid two allele counts in the different lines of multiallelic snps. --samples update AC but maintaining the connection between the different lines of the same multialllelic SNP.
+            #select those variants for which the number of ALT alleles (allele count) is equal to 0 (no ALT at all) or equal to the total number of alleles (AN), i.e., all alleles are ALT.
+            #See dummy example for further details.
 
     #
     print("\n#######################################\n#######################################")
@@ -1680,11 +1684,44 @@ def master_processor(selected_chromosome, selected_pop):
             " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
         bcftools view \
             --types snps | \
+        bcftools +fill-tags \
+            -- --tags AN,AC | \
         bcftools view \
-            --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+            --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
         bcftools query \
             --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | \
         head -7")
+
+
+    ##por aqui
+    #updating monomorphic filter
+    #check genotype missingness
+
+
+
+    #adding genotype missingned
+    print("\n#######################################\n#######################################")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": ensuring we do not have SNPs with genotype missingness > 0.05")
+    print("#######################################\n#######################################")
+    run_bash(" \
+        bcftools view \
+            --samples " + ",".join(selected_samples) + " \
+            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+        bcftools view \
+            --types snps | \
+        bcftools +fill-tags \
+            -- --tags AN,AC | \
+        bcftools view \
+            --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
+        bcftools view \
+            --include 'COUNT(GT=\"mis\")/N_SAMPLES < 0.05' | \
+        bcftools query \
+            --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | \
+        head -7")
+
+    #count the number of snps with and without the filter and check they are the same?
+
+
 
     #
     print("\n#######################################\n#######################################")
@@ -1696,8 +1733,10 @@ def master_processor(selected_chromosome, selected_pop):
             " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
         bcftools view \
             --types snps | \
+        bcftools +fill-tags \
+            -- --tags AN,AC | \
         bcftools view \
-            --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+            --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
         bcftools norm \
             --rm-dup exact | \
         bcftools query \
@@ -1715,8 +1754,10 @@ def master_processor(selected_chromosome, selected_pop):
             " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
         bcftools view \
             --types snps | \
+        bcftools +fill-tags \
+            -- --tags AN,AC | \
         bcftools view \
-            --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+            --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
         bcftools norm \
             --rm-dup exact | \
         bcftools norm \
@@ -1739,8 +1780,10 @@ def master_processor(selected_chromosome, selected_pop):
             " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
         bcftools view \
             --types snps | \
+        bcftools +fill-tags \
+            -- --tags AN,AC | \
         bcftools view \
-            --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+            --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
         bcftools norm \
             --rm-dup exact | \
         bcftools norm \
@@ -1762,8 +1805,10 @@ def master_processor(selected_chromosome, selected_pop):
             " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
         bcftools view \
             --types snps | \
+        bcftools +fill-tags \
+            -- --tags AN,AC | \
         bcftools view \
-            --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+            --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
         bcftools norm \
             --rm-dup exact | \
         bcftools norm \
@@ -1820,8 +1865,10 @@ def master_processor(selected_chromosome, selected_pop):
             " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
         bcftools view \
             --types snps | \
+        bcftools +fill-tags \
+            -- --tags AN,AC | \
         bcftools view \
-            --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+            --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
         bcftools norm \
             --rm-dup exact | \
         bcftools norm \
@@ -1849,8 +1896,10 @@ def master_processor(selected_chromosome, selected_pop):
             " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
         bcftools view \
             --types snps | \
+        bcftools +fill-tags \
+            -- --tags AN,AC | \
         bcftools view \
-            --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+            --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
         bcftools norm \
             --rm-dup exact | \
         bcftools norm \
@@ -1881,8 +1930,10 @@ def master_processor(selected_chromosome, selected_pop):
             " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
         bcftools view \
             --types snps | \
+        bcftools +fill-tags \
+            -- --tags AN,AC | \
         bcftools view \
-            --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+            --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
         bcftools norm \
             --rm-dup exact | \
         bcftools norm \
@@ -1915,8 +1966,10 @@ def master_processor(selected_chromosome, selected_pop):
             " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
         bcftools view \
             --types snps | \
+        bcftools +fill-tags \
+            -- --tags AN,AC | \
         bcftools view \
-            --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+            --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
         bcftools norm \
             --rm-dup exact | \
         bcftools norm \
@@ -1947,8 +2000,10 @@ def master_processor(selected_chromosome, selected_pop):
             " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
         bcftools view \
             --types snps | \
+        bcftools +fill-tags \
+            -- --tags AN,AC | \
         bcftools view \
-            --exclude 'COUNT(GT=\"AA\" | GT=\"mis\")=N_SAMPLES || COUNT(GT=\"RR\" | GT=\"mis\")=N_SAMPLES' |\
+            --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
         bcftools norm \
             --rm-dup exact | \
         bcftools norm \
@@ -2475,6 +2530,7 @@ def master_processor(selected_chromosome, selected_pop):
 
 
         ##por aquii,
+            #use new monomorphic filter
             #select missing < 5%
             #use pilot mask
             #use 2504 samples less 4 related. 
