@@ -1692,36 +1692,45 @@ def master_processor(selected_chromosome, selected_pop):
             --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | \
         head -7")
 
-
-    ##por aqui
-    #updating monomorphic filter
-    #check genotype missingness
-
-
-
-    #adding genotype missingned
+    #
     print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": ensuring we do not have SNPs with genotype missingness > 0.05")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": check we do not have SNPs with genotype missingness > 0.05. If TRUE, then we do not have to apply further filters about missing genotypes")
     print("#######################################\n#######################################")
     run_bash(" \
-        bcftools view \
-            --samples " + ",".join(selected_samples) + " \
-            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-        bcftools view \
-            --types snps | \
-        bcftools +fill-tags \
-            -- --tags AN,AC | \
-        bcftools view \
-            --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
-        bcftools view \
-            --include 'COUNT(GT=\"mis\")/N_SAMPLES < 0.05' | \
-        bcftools query \
-            --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | \
-        head -7")
-
-    #count the number of snps with and without the filter and check they are the same?
-
-
+        n_snps_with_filter=$( \
+            bcftools view \
+                --samples " + ",".join(selected_samples) + " \
+                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+            bcftools view \
+                --types snps | \
+            bcftools +fill-tags \
+                -- --tags AN,AC | \
+            bcftools view \
+                --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
+            bcftools view \
+                --include 'COUNT(GT=\"mis\")/N_SAMPLES < 0.05' | \
+            bcftools query \
+                --format '%ID\n' | \
+            wc -l); \
+        n_snps_without_filter=$( \
+            bcftools view \
+                --samples " + ",".join(selected_samples) + " \
+                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+            bcftools view \
+                --types snps | \
+            bcftools +fill-tags \
+                -- --tags AN,AC | \
+            bcftools view \
+                --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
+            bcftools query \
+                --format '%ID\n' | \
+            wc -l); \
+        if [[ $n_snps_with_filter -eq $n_snps_without_filter ]];then \
+            echo 'TRUE'; \
+        else \
+            echo 'FALSE'; \
+        fi")
+            #obtain the ID of all variants after applying or not the filter for genotype missingness < 0.05, then check the numbers are the same
 
     #
     print("\n#######################################\n#######################################")
@@ -1743,6 +1752,12 @@ def master_processor(selected_chromosome, selected_pop):
             --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | \
         head -7")
             #remove those snps that are exact duplicates, meaning identical chr, pos, ref, and alt. See dummy example for behaviour.
+
+    ##por aqui
+    #updating monomorphic filter
+    #check genotype missingness
+        #run :  check we do not have SNPs with genotype missingness > 0.05.
+
 
     #combine multiallelic SNPs in one line and select them
     print("\n#######################################\n#######################################")
@@ -1769,6 +1784,7 @@ def master_processor(selected_chromosome, selected_pop):
         head -7")
             #we have SNPs with the same position and chromosome but different ALT alleles. According to the 1KGP paper, they split multiallelic SNPs in different lines, so this makes sense. See dummy for further details.
             #combine the different lines of each multiallelic SNP into one line and update the ALT column to include the different ALT alleles and we can filter with --max-alleles
+                #two snps in position 10452 with same REF but different ALT in chromosome 1. They get combined into one line. These are the first multiallelic that appear in the previous command, but they were separated.
 
     #now show only biallelic snps
     print("\n#######################################\n#######################################")
