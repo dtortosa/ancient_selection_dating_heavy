@@ -165,7 +165,10 @@ run_bash(" \
 #############
 
 #load original 2504 unrelated samples from phase 3. This includes sample IDs and pop/superpop codes. This is the definitive ped we will use both for pop codes and sample IDs
-#http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/integrated_call_samples_v3.20130502.ALL.panel
+#Data:
+    #http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/integrated_call_samples_v3.20130502.ALL.panel
+#Readme
+    #http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/README_phase3_callset_20150220
 import pandas as pd
 original_unrel_ped = pd.read_csv(
     "data/pedigrees/integrated_call_samples_v3.20130502.ALL.panel.txt", 
@@ -391,7 +394,8 @@ print("\nSee the merged file")
 print(merge_parents_original)
 
 #
-print("\nNow select those samples of the original dataset whose parents are included that original dataset")
+print("\nNow select those samples of the original dataset whose parents are included that original dataset. One of the cases (NA20318) is mentioned in known-issues of phase 3")
+#known issues: http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/README_known_issues_20200731
 original_unrelated_parents_inside = merge_parents_original.loc[ \
     (\
         (merge_parents_original["motherID"].isin(merge_parents_original["sample"])) | \
@@ -453,15 +457,47 @@ print("see final pedigree data with only unrelated samples")
 print("#######################################\n#######################################")
 print(unrelated_samples)
 
+#
+print("\n#######################################\n#######################################")
+print("check that final pedigree does NOT have any previously known related individual according to phase 3 data. These should be out from the original 2504 dataset")
+print("#######################################\n#######################################")
+#load the data
+#these are samples known to be related in phase 3. These should be out from the 2504 samples. Indeed, they say in the readme file of phase 3 that "We have removed the genotypes for 31 individuals who have blood relationship with the 2504 samples in the main release. This was done to ensure we do not over estimate allele frequency. The 31 related samples are listed in 20140625_related_individuals.txt. This has resulted in a small number of AC=0 sites from rare alleles only present in one or more of these 31 individuals."
+    #http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/README_phase3_callset_20150220
+#I downloaded from the same folder than the original pedigree (2504 samples): http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/20140625_related_individuals.txt
+known_related_in_original_dataset = pd.read_csv(\
+    "./data/pedigrees/20140625_related_individuals.txt", \
+    sep="\t", \
+    header=0, \
+    low_memory=False)
+#solve a problem in Sample column name
+known_related_in_original_dataset = known_related_in_original_dataset.rename({"Sample ": "Sample"}, axis=1)
+#
+print("known related samples in the original dataset")
+print(known_related_in_original_dataset)
+#see if no sample in the original dataset is included in the dataset with known related samples 
+print("Do the check:")
+unrelated_samples.loc[unrelated_samples["sample"].isin(known_related_in_original_dataset["Sample"]), :].shape[0] == 0
+
+#
+print("\n#######################################\n#######################################")
+print("Do we have 26 pops in the final pedigree?")
+print("#######################################\n#######################################")
 #extract the distinct population names
 pop_names = unrelated_samples["pop"].unique()
-
 #check
-print("\n#######################################\n#######################################")
-print("Do we have 26 pops?")
-print("#######################################\n#######################################")
 print(len(pop_names) == 26)
 print(pop_names)
+
+
+##Note about phase 3 pedigree of 2020
+#In the folder of phase 3, there is a pedegree more recent than "integrated_call_samples_v3.20130502.ALL.panel", which is the ped I have used to obtain the original 2504 samples and the one that Jesus recommended me to use.
+    #http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/integrated_call_samples_v3.20200731.ALL.ped
+#This more recent ped has strange stuff
+    #there are 3691 samples in total!
+    #samples label as unrelated are only 1181
+    #samples with parental and maternal ID equal to zero are 2927
+#I am not going to use this pedigree for anything.
 
 
 
@@ -1855,14 +1891,6 @@ def master_processor(selected_chromosome, selected_pop):
             --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | \
         head -7")
 
-
-    ##por aqui
-    #check genotype missingness
-        #run :  check we do not have SNPs with genotype missingness > 0.05.
-    #use pilot mask
-        #check all the lines where pilot has been added
-
-
     #
     print("\n#######################################\n#######################################")
     print("chr " + selected_chromosome + " - " + selected_pop + ": clean BED file before applying the mask selecting only intervals in the selected chromosome")
@@ -1873,28 +1901,42 @@ def master_processor(selected_chromosome, selected_pop):
             '{if ($1 == \"chr" + selected_chromosome + "\") print $0}' \
             ./data/masks/20160622.allChr.pilot_mask.bed \
             > ./data/masks/20160622.chr" + selected_chromosome + ".pilot_mask.bed; \
-        gzip --force ./data/masks/20160622.chr" + selected_chromosome + ".pilot_mask.bed; \
-        gunzip -c ./data/masks/20160622.chr" + selected_chromosome + ".pilot_mask.bed.gz | \
+        gzip \
+            --force \
+            ./data/masks/20160622.chr" + selected_chromosome + ".pilot_mask.bed; \
+        gunzip \
+            -c \
+            ./data/masks/20160622.chr" + selected_chromosome + ".pilot_mask.bed.gz | \
         head -5")
             #in the bed file, select those rows for which the chromosome name (first column) is the selected chromosome, printing all fields for these rows. Save as a file and then compress. See the first 5 lines. See dummy examples for further details.
 
     #
     print("\n#######################################\n#######################################")
-    print("check the cleaning of the BED file with awk")
+    print("check we have selected the correct chromosome and mask type")
     print("#######################################\n#######################################")
     run_bash(" \
         uniq_chrom=$(\
-            gunzip -c ./data/masks/20160622.chr" + selected_chromosome + ".pilot_mask.bed.gz | \
+            gunzip \
+                -c \
+                ./data/masks/20160622.chr" + selected_chromosome + ".pilot_mask.bed.gz | \
             awk \
                 -F '\t' \
                 '{print $1}' | \
             uniq); \
-        if [[ $uniq_chrom == 'chr" + selected_chromosome + "' ]];then \
+        uniq_mask_type=$(\
+            gunzip \
+                -c \
+                ./data/masks/20160622.chr" + selected_chromosome + ".pilot_mask.bed.gz | \
+            awk \
+                -F '\t' \
+                '{print $4}' | \
+            uniq); \
+        if [[ $uniq_chrom == 'chr" + selected_chromosome + "' && $uniq_mask_type == 'pilot' ]];then \
             echo 'TRUE'; \
         else \
             echo 'FALSE'; \
         fi")
-            #decompress the bed file of the selected chromosome (previously created), then print the chromosome name (first column) for all intervals, i.e., rows, getting then the unique cases, then save as a variable. The variable should have only the name of the selected chromosome.
+            #decompress the bed file of the selected chromosome (previously created), then print the chromosome name (first column) for all intervals, i.e., rows, getting then the unique cases, then save as a variable. Do the same with the 4th column, i.e., the mask type. The first variable should be the selected chromosome and the second the select mask type, i.e., pilot.
 
     #
     print("\n#######################################\n#######################################")
@@ -1926,7 +1968,8 @@ def master_processor(selected_chromosome, selected_pop):
         head -7")
             #Use --targets-file to only select SNPs within the intervals defined by a BED file generated by 1kGDP, which is an accessibility mask. Therefore, we select SNPs that are included in regions accessible to sequencing.
             #see dummy example for further details.
-    
+            #I have visually inspected the first 120 SNPs without mask and then check what SNPs are retained after applying the mask and if that makes sense with the first intervals in the BED file for the pilot mask. This works PERFECTLY, selecting only SNPs within the range.
+
     #
     print("\n#######################################\n#######################################")
     print("chr " + selected_chromosome + " - " + selected_pop + ": update and add some fields using fill-tags")
@@ -1958,7 +2001,7 @@ def master_processor(selected_chromosome, selected_pop):
         --format '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AC_Hom %AC_Het %AF %MAF %ExcHet %HWE %NS GTs:[ %GT]\n' | \
         head -7")
             #we sue +fill-tags to update fields that are not updated after subsetting like frequency of alternative allele and create some additional fields.
-            #I understand that when using --multiallelic + or -, there is no update because the genotypes should not change, you are just spliting or merging the different ALT alleles. If AC/AN has changed sue to the subset, this is updated in the AC/AN fields and these are used to do the combine/split AC/AN fields. The problem is that only AC/AN are updated, not the rest of fields.
+            #I understand that when using --multiallelic + or -, there is no update because the genotypes should not change, you are just spliting or merging the different ALT alleles. If AC/AN has changed sue to the subset, this is updated in the AC/AN fields and these are used to do the combine/split AC/AN fields. The problem is that only AC/AN are updated, not the rest of fields. In addition, --samples maintains 2 allele counts in each line of a splitted multiallelic SNP. In  the dummy example we had to update these fields with +fill-tags to have only 1 count and be able to use this count to filter out monomorphic SNPs. I have checked that splitted multiallelic SNPs in the 1KGP have only 1 count, so I guess the authors updated with fill-tags, but I update before the monomorphc check just in case. See above.
             #see dummy example for further details.
 
     #
@@ -2065,6 +2108,20 @@ def master_processor(selected_chromosome, selected_pop):
             --output-type z \
             --compression-level 1")
             #after subseting and filtering, save as a compressed VCF file, selecting the option for best speed (see dummy example for further details)
+            #Some instructions from David about the filtering
+                #You should apply the filter with less than 5% missing just as the 1KGP authors. 
+                    #Not add any filter about missing, because the data is already filtered for less 5% of missing.
+                #For HWE you should also only apply what the 1KGP authors did and not filter further for specific populations.
+                    #Not apply any filter about HWE, because the authors already did at the superpopulation level.
+                #Biallelic SNPs per specific population are ok.
+                    #so I can discard SNPs with less than 2 alleles and more than 2 alleles within each specific population.
+                    #I understand this includes remove monomorphic. For what reason do you want a SNP that is fixed within your population?
+                #Masks based on low coverage are ok, you should use the less stringent masks.
+                    #The less stringent is the pilot.
+                #You can use the 2,504 individuals and remove the four related individuals yes.
+                #And you are right for MAF, the filtering at MAF>5% is done by the scripts for summary statistics. It is only for the focal SNPs methods like iHS still use the SNPs with lowe MAF around the focal SNPs so it would be an error to remove all SNPs with MAF<5%.
+                    #I understand that not all summary statistics use the SNP with lower MAF, so we would lose information for these statistics.
+                    #It is better to specifically filter for that when calculating iHS.
 
     #
     print("\n#######################################\n#######################################")
@@ -2134,17 +2191,19 @@ def master_processor(selected_chromosome, selected_pop):
         #I get an output like this
             #Hap file: ./results/hap_map_files_raw/chr1_GBR_IMPUTE2_raw.hap.gz
             #Sample file: ./results/hap_map_files_raw/chr1_GBR_IMPUTE2_raw.samples
-            #938126 records written, 0 skipped: 0/0/0 no-ALT/non-biallelic/filtered
-        
+            #852072 records written, 0 skipped: 0/0/0 no-ALT/non-biallelic/filtered
+
         #I guess non-biallelic and non-alt should be removed to meet impute requirements, but in our case we already selected those SNPs with 2 alleles only. This explains why we get 0/0/0. This is the number of SNPs with no-ALT, no-biallelic and filtered. All the filters were previously applied.
             #I have checked this in the dummy example.
         
-        #if you take the VCF file, filter and then count lines, you get 938126 records, but then say that total is 945919, as when writting the file. "Lines   total/split/realigned/skipped" is produced for some commands like bcftools norm and I have seen in the dummy example that total is the total number of SNPs, while split are those splitting due to multiallelic is the multiallelic flag is used.
-            #938126
+        #if you take the VCF file, filter and then count lines, you get 852072 records, but then say that total is 945919, as when writting the file. "Lines   total/split/realigned/skipped" is produced for some commands like bcftools norm and I have seen in the dummy example that total is the total number of SNPs, while split are those splitting due to multiallelic is the multiallelic flag is used.
+            #852072
             #Lines   total/split/realigned/skipped:  945919/0/0/0
             #Lines   total/split/realigned/skipped:  945919/0/0/0
 
-        #the total number of snps in the raw vcf file of chr1 is 5759173, instead of 945919. What it can be happening here is that bcftools norm (the command generating the line output) is run after some filters have been applied, thus the input number of SNPs is smaller. Indeed, if you apply these previous filters, you get 945919 variants, so it makes sense that bcftools norm, which is run after these filters, gives 945919 as total number of snps.
+        #the total number of snps in the raw vcf file of chr1 is 5759173, instead of 945919. What it can be happening here is that bcftools norm (the command generating the line output) is run after some (but not all) filters have been applied, thus the input number of SNPs is smaller but the final number (852072). Indeed, if you apply these filters applied before norm, you get 945919 variants, so it makes sense that bcftools norm, which is run after these filters, gives 945919 as total number of snps.
+
+        #The smallest number (852072) is the number of SNPs after we have completely cleaned the vcf file, including the accesibility mask. I have checked that.
 
     #see first variants
     print("\n#######################################\n#######################################")
@@ -2571,12 +2630,7 @@ def master_processor(selected_chromosome, selected_pop):
 
 
         ##por aquii,
-            #use new monomorphic filter
-            #select missing < 5%
-            #use pilot mask
-            #use 2504 samples less 4 related. 
 
-            #You should apply the filter with less than 5% missing just as the 1KGP authors. For HWE you should also only apply what the 1KGP authors did and not filter further for specific populations. Biallelic SNPs per specific population are ok. Masks based on low coverage are ok, you should use the less stringent masks. You can use the 2,504 individuals and remove the four related individuals yes. And you are right for MAF, the filtering at MAF>5% is done by the scripts for summary statistics. It is only for the focal SNPs methods like iHS still use the SNPs with lowe MAF around the focal SNPs so it would be an error to remove all SNPs with MAF<5%.
 
 
 
