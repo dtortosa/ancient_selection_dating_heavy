@@ -2107,21 +2107,36 @@ def master_processor(selected_chromosome, selected_pop):
             --output ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz \
             --output-type z \
             --compression-level 1")
-            #after subseting and filtering, save as a compressed VCF file, selecting the option for best speed (see dummy example for further details)
-            #Some instructions from David about the filtering
-                #You should apply the filter with less than 5% missing just as the 1KGP authors. 
-                    #Not add any filter about missing, because the data is already filtered for less 5% of missing.
-                #For HWE you should also only apply what the 1KGP authors did and not filter further for specific populations.
-                    #Not apply any filter about HWE, because the authors already did at the superpopulation level.
-                #Biallelic SNPs per specific population are ok.
-                    #so I can discard SNPs with less than 2 alleles and more than 2 alleles within each specific population.
-                    #I understand this includes remove monomorphic. For what reason do you want a SNP that is fixed within your population?
-                #Masks based on low coverage are ok, you should use the less stringent masks.
-                    #The less stringent is the pilot.
-                #You can use the 2,504 individuals and remove the four related individuals yes.
-                #And you are right for MAF, the filtering at MAF>5% is done by the scripts for summary statistics. It is only for the focal SNPs methods like iHS still use the SNPs with lowe MAF around the focal SNPs so it would be an error to remove all SNPs with MAF<5%.
-                    #I understand that not all summary statistics use the SNP with lower MAF, so we would lose information for these statistics.
-                    #It is better to specifically filter for that when calculating iHS.
+                #after subseting and filtering, save as a compressed VCF file, selecting the option for best speed (see dummy example for further details)
+
+    #summary of the filters applied with vcftools in vcf files from slim simulations
+        #--max-alleles 2 --min-alleles 2 --max-missing 1 --phased
+            #https://vcftools.sourceforge.net/man_latest.html
+        #--max-alleles / --min-alleles
+            #Include only sites with a number of alleles greater than or equal to the "--min-alleles" value and less than or equal to the "--max-alleles" value. One of these options may be used without the other.
+                #For example, to include only bi-allelic sites, one could use: vcftools --vcf file1.vcf --min-alleles 2 --max-alleles 2
+        #--phased
+            #Excludes all sites that contain unphased genotypes
+        #--max-missing 1
+            #Exclude sites on the basis of the proportion of missing data (defined to be between 0 and 1, where 0 allows sites that are completely missing and 1 indicates no missing data allowed).
+            #we used 1 because we were working with simulations, we have for sure data for all samples and snps. Ask David what to do in this case.
+
+    #instructions of David
+        #You should apply the filter with less than 5% missing just as the 1KGP authors.
+            #Not add any filter about missing, because the data is already filtered for less 5% of missing.
+        #For HWE you should also only apply what the 1KGP authors did and not filter further for specific populations.
+            #Not apply any filter about HWE, because the authors already did at the superpopulation level.
+        #Biallelic SNPs per specific population are ok.
+            #so I can discard SNPs with less than 2 alleles and more than 2 alleles within each specific population.
+            #I understand this includes remove monomorphic. For what reason do you want a SNP that is fixed within your population?
+            #Also I guess I can remove SNPs that all their genotypes are phased within the selected population.
+        #Masks based on low coverage are ok, you should use the less stringent masks.
+            #The less stringent is the pilot.
+        #You can use the 2,504 individuals and remove the four related individuals yes.
+            #We left 2500 samples.
+        #And you are right for MAF, the filtering at MAF>5% is done by the scripts for summary statistics. It is only for the focal SNPs methods like iHS still use the SNPs with lowe MAF around the focal SNPs so it would be an error to remove all SNPs with MAF<5%.
+            #I understand that not all summary statistics use the SNP with lower MAF, so we would lose information for these statistics.
+            #It is better to specifically filter for MAF when calculating iHS.
 
     #
     print("\n#######################################\n#######################################")
@@ -2210,7 +2225,7 @@ def master_processor(selected_chromosome, selected_pop):
     print("chr " + selected_chromosome + " - " + selected_pop + ": see first variants of the hap file")
     print("#######################################\n#######################################")
     run_bash(
-        "gunzip -c results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
+        "gunzip -c ./results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
         head -3")
             #decompress the hap file and show in stdout 
     
@@ -2311,18 +2326,6 @@ def master_processor(selected_chromosome, selected_pop):
             #load the cleaned vcf file with bcftools and show only the snps, with no header, then count the number of lines and save the result
             #decompress the hap file and count the number of line
             #check both numbers are the same
-
-    #summary of the filters applied with vcftools in vcf files from slim simulations
-        #--max-alleles 2 --min-alleles 2 --max-missing 1 --phased
-            #https://vcftools.sourceforge.net/man_latest.html
-        #--max-alleles / --min-alleles
-            #Include only sites with a number of alleles greater than or equal to the "--min-alleles" value and less than or equal to the "--max-alleles" value. One of these options may be used without the other.
-                #For example, to include only bi-allelic sites, one could use: vcftools --vcf file1.vcf --min-alleles 2 --max-alleles 2
-        #--phased
-            #Excludes all sites that contain unphased genotypes
-        #--max-missing 1
-            #Exclude sites on the basis of the proportion of missing data (defined to be between 0 and 1, where 0 allows sites that are completely missing and 1 indicates no missing data allowed).
-            #we used 1 because we were working with simulations, we have for sure data for all samples and snps. Ask David what to do in this case.
 
     #
     print("\n#######################################\n#######################################")
