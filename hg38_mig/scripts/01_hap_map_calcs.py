@@ -1604,7 +1604,7 @@ def master_processor(selected_chromosome, selected_pop):
     print("\n#######################################\n#######################################")
     print("chr " + selected_chromosome + " - " + selected_pop + ": check we only have the selected pop")
     print("#######################################\n#######################################")
-    print(subset_pop["pop"].unique()[0] == selected_pop)
+    print(subset_pop["pop"].unique() == selected_pop)
 
     #select the sample IDs
     selected_samples = subset_pop["sample"]
@@ -1655,6 +1655,26 @@ def master_processor(selected_chromosome, selected_pop):
 
     #
     print("\n#######################################\n#######################################")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": see more SNPs and their allele count to see how this data is presented for multiallelic SNPs")
+    print("#######################################\n#######################################")
+    run_bash(" \
+        bcftools view \
+            --samples " + ",".join(selected_samples) + " \
+            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+        bcftools view \
+            --types snps | \
+        bcftools query \
+            --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AN %INFO/AC %INFO/AF GTs:[ %GT]\n' | \
+        head -12")
+            #IMPORTANT:
+                #It seems that multiallelic variants separated in different lines have already updated the AC field. Therefore, each line does not have two allele counts, but one.
+                #For example, 1:10453:A:C and 1:10452:A:C are both in the same position (10452) and have the same reference allele. They seem to be multiallelic, but each one has only one allele count, which is 1. 
+                #This count is correctly updated for the subset of samples, but remember that --samples does not remove the second count. As we saw in the dummy example, we have to update the field with +fill-tags.
+                #My hypothesis is that they updated this field using +fill-tags because they indeed say in the paper that they used bcftools to split the multiallelic SNPs in different lines.
+                #Note that AF has also 1 value but it is not correct because we subset samples with --samples, and this command only updates AC and AN.
+
+    #
+    print("\n#######################################\n#######################################")
     print("chr " + selected_chromosome + " - " + selected_pop + ": see monomorphic")
     print("#######################################\n#######################################")
     run_bash(" \
@@ -1671,6 +1691,9 @@ def master_processor(selected_chromosome, selected_pop):
             --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | \
         head -7")
             #update the INFO/AC and INFO/AN fields so we avoid two allele counts in the different lines of multiallelic snps. --samples update AC but maintaining the connection between the different lines of the same multialllelic SNP.
+                #it seems that 1KGP data has already updated the AC field for each line separated line of a multiallelic SNP.
+                #Therefore, this line would not be necessary, but we are applying just in case, to ensure we have only 1 allele count per line.
+                #updating again the AC fields would not do anything wrong, just adding the same value that is was.
             #select those variants for which the number of ALT alleles (allele count) is equal to 0 (no ALT at all) or equal to the total number of alleles (AN), i.e., all alleles are ALT.
             #See dummy example for further details.
 
@@ -1753,12 +1776,6 @@ def master_processor(selected_chromosome, selected_pop):
         head -7")
             #remove those snps that are exact duplicates, meaning identical chr, pos, ref, and alt. See dummy example for behaviour.
 
-    ##por aqui
-    #updating monomorphic filter
-    #check genotype missingness
-        #run :  check we do not have SNPs with genotype missingness > 0.05.
-
-
     #combine multiallelic SNPs in one line and select them
     print("\n#######################################\n#######################################")
     print("chr " + selected_chromosome + " - " + selected_pop + ": combine multiallelic SNPs in one line and select them")
@@ -1838,20 +1855,28 @@ def master_processor(selected_chromosome, selected_pop):
             --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | \
         head -7")
 
+
+    ##por aqui
+    #check genotype missingness
+        #run :  check we do not have SNPs with genotype missingness > 0.05.
+    #use pilot mask
+        #check all the lines where pilot has been added
+
+
     #
     print("\n#######################################\n#######################################")
     print("chr " + selected_chromosome + " - " + selected_pop + ": clean BED file before applying the mask selecting only intervals in the selected chromosome")
     print("#######################################\n#######################################")
     run_bash(" \
-        gunzip -c ./data/masks/20160622.allChr.mask.bed.gz | \
         awk \
             -F '\t' \
             '{if ($1 == \"chr" + selected_chromosome + "\") print $0}' \
-            > ./data/masks/20160622.chr" + selected_chromosome + ".strict_mask.bed; \
-        gzip --force ./data/masks/20160622.chr" + selected_chromosome + ".strict_mask.bed; \
-        gunzip -c ./data/masks/20160622.chr" + selected_chromosome + ".strict_mask.bed.gz | \
+            ./data/masks/20160622.allChr.pilot_mask.bed \
+            > ./data/masks/20160622.chr" + selected_chromosome + ".pilot_mask.bed; \
+        gzip --force ./data/masks/20160622.chr" + selected_chromosome + ".pilot_mask.bed; \
+        gunzip -c ./data/masks/20160622.chr" + selected_chromosome + ".pilot_mask.bed.gz | \
         head -5")
-            #decompress bed file, and select those rows for which the chromosome name (first column) is the selected chromosome, printing all fields for these rows. Save as a file and then compress. See the first 5 lines. See dummy examples for further details.
+            #in the bed file, select those rows for which the chromosome name (first column) is the selected chromosome, printing all fields for these rows. Save as a file and then compress. See the first 5 lines. See dummy examples for further details.
 
     #
     print("\n#######################################\n#######################################")
@@ -1859,7 +1884,7 @@ def master_processor(selected_chromosome, selected_pop):
     print("#######################################\n#######################################")
     run_bash(" \
         uniq_chrom=$(\
-            gunzip -c ./data/masks/20160622.chr" + selected_chromosome + ".strict_mask.bed.gz | \
+            gunzip -c ./data/masks/20160622.chr" + selected_chromosome + ".pilot_mask.bed.gz | \
             awk \
                 -F '\t' \
                 '{print $1}' | \
@@ -1895,7 +1920,7 @@ def master_processor(selected_chromosome, selected_pop):
         bcftools view \
             --phased | \
         bcftools view \
-            --targets-file ./data/masks/20160622.chr" + selected_chromosome + ".strict_mask.bed.gz | \
+            --targets-file ./data/masks/20160622.chr" + selected_chromosome + ".pilot_mask.bed.gz | \
         bcftools query \
             --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | \
         head -7")
@@ -1926,7 +1951,7 @@ def master_processor(selected_chromosome, selected_pop):
         bcftools view \
             --phased | \
         bcftools view \
-            --targets-file ./data/masks/20160622.chr" + selected_chromosome + ".strict_mask.bed.gz | \
+            --targets-file ./data/masks/20160622.chr" + selected_chromosome + ".pilot_mask.bed.gz | \
         bcftools +fill-tags \
             -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
         bcftools query \
@@ -1960,7 +1985,7 @@ def master_processor(selected_chromosome, selected_pop):
         bcftools view \
             --phased | \
         bcftools view \
-            --targets-file ./data/masks/20160622.chr" + selected_chromosome + ".strict_mask.bed.gz | \
+            --targets-file ./data/masks/20160622.chr" + selected_chromosome + ".pilot_mask.bed.gz | \
         bcftools annotate \
             --remove INFO,^FORMAT/GT | \
         bcftools +fill-tags \
@@ -1996,7 +2021,7 @@ def master_processor(selected_chromosome, selected_pop):
         bcftools view \
             --phased | \
         bcftools view \
-            --targets-file ./data/masks/20160622.chr" + selected_chromosome + ".strict_mask.bed.gz | \
+            --targets-file ./data/masks/20160622.chr" + selected_chromosome + ".pilot_mask.bed.gz | \
         bcftools annotate \
             --remove INFO,^FORMAT/GT | \
         bcftools +fill-tags \
@@ -2030,7 +2055,7 @@ def master_processor(selected_chromosome, selected_pop):
         bcftools view \
             --phased | \
         bcftools view \
-            --targets-file ./data/masks/20160622.chr" + selected_chromosome + ".strict_mask.bed.gz | \
+            --targets-file ./data/masks/20160622.chr" + selected_chromosome + ".pilot_mask.bed.gz | \
         bcftools annotate \
             --remove INFO,^FORMAT/GT | \
         bcftools +fill-tags \
