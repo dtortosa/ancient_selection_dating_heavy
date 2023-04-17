@@ -2401,6 +2401,7 @@ def master_processor(selected_chromosome, selected_pop):
     print("chr " + selected_chromosome + " - " + selected_pop + ": STARTING MAP FILE CALCULATION")
     print("#######################################\n#######################################")
 
+
     ##extract the SNP positions
     #first extract from the raw hap file, the clean hap file only have genotypes
     run_bash(" \
@@ -2623,16 +2624,16 @@ def master_processor(selected_chromosome, selected_pop):
         decode2019_map_subset
 
 
-        #it makes sense to repeat this for each populations? maybe do it per chromosome and then select those snps included in each pop?
-            #maybe you can calculate the maps in a different script run before this and then run this, selecting snps of the corresponid chromosome map that are included in the vcf file of the pop,
-            #remember that remove filter snps wihitn pop, so each pop will have different snps
-            #the ID would be different because REF/ALT are included in the ID in order to avoid strand flips
-            #if it is not very slow, we could just do it per popuatilion-chrom is we did for iHS
-
-        #cM (centiMorgan location of END POINT of interval)
-
-
         ##por aquii,
+            #it makes sense to repeat this for each populations? maybe do it per chromosome and then select those snps included in each pop?
+                #maybe you can calculate the maps in a different script run before this and then run this, selecting snps of the corresponid chromosome map that are included in the vcf file of the pop,
+                #remember that remove filter snps wihitn pop, so each pop will have different snps
+                #the ID would be different because REF/ALT are included in the ID in order to avoid strand flips
+                #if it is not very slow, we could just do it per popuatilion-chrom is we did for iHS
+
+            #cM (centiMorgan location of END POINT of interval)
+
+
 
 
 
