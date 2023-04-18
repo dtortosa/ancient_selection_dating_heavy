@@ -531,8 +531,9 @@ run_bash(" \
         data/dummy_vcf_files/dummy_example.vcf | \
     bcftools query \
         -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
-        #We have variants with different characteristics
+        #We have variants with different characteristics. In some cases, the AN, AC fields are not correct, but we use this to check whether the different commands we use can correctly update these fields.
             #Biallelic SNPs:
+                #SNP rs6054247 chr20 14280 T A 5 0 0.2 GTs: 0|0 0|0 1|1
                 #SNP rs6054248 chr20 14290 C A 5 0 0.2 GTs: 0|0 0|0 1|.
                 #SNP rs6054249 chr20 14300 C A 5 1 0.2 GTs: 0|0 0|0 1|.
                 #SNP rs6054250 chr20 14310 C A 3 0 0 GTs: 1|0 .|. .|.
@@ -695,6 +696,23 @@ run_bash(" \
         -- --tags AN,AC | \
     bcftools view \
         --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
+    bcftools query \
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+
+#
+print("\n#######################################\n#######################################")
+print("check that subseting and the updating AN, AC, AF fields does not change REF/AF: I select only the third sample. For rs6054247, the genotype is 0|0 0|0 1|1, being the third sample the only one with ALT. Thus, after subseting, the genotype is 1|1. AN and AC are both 2 now, while AF is 1. In other words, the ALT is the most frequent, but this alleles remains as the ALT. REF and ALT are not switched")
+print("#######################################\n#######################################")
+run_bash(" \
+    bcftools norm \
+        --multiallelic -snps \
+        data/dummy_vcf_files/dummy_example.vcf | \
+    bcftools view \
+        --types snps | \
+    bcftools view \
+        --samples NA00003 | \
+    bcftools +fill-tags \
+        -- --tags AN,AC,AF | \
     bcftools query \
         -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
 
@@ -2137,6 +2155,11 @@ def master_processor(selected_chromosome, selected_pop):
         #And you are right for MAF, the filtering at MAF>5% is done by the scripts for summary statistics. It is only for the focal SNPs methods like iHS still use the SNPs with lowe MAF around the focal SNPs so it would be an error to remove all SNPs with MAF<5%.
             #I understand that not all summary statistics use the SNP with lower MAF, so we would lose information for these statistics.
             #It is better to specifically filter for MAF when calculating iHS.
+        #my follow-up questions
+            #When you said "You should apply the filter with less than 5% missing just as the 1KGP authors", you mean that I should not add any further filter about missingness within each population and just use what they already did, i.e., < 5% missing considering all pops, right? Because this filter was already applied in the data I downloaded. 
+            #The same would go for HWE. The filter across superpopulations is already applied in the data, so I will just leave it as it is in that regard.
+            #Just to double check, I remove a SNP that is monomorphic within a given population, even if it is not monomorphic considering the whole panel. The same goes for phasing, I select SNPs with all genotypes being phased for the specific population, irrespectively of the phasing in other pops.
+            #david answered YES to all this.
 
     #
     print("\n#######################################\n#######################################")
@@ -2400,6 +2423,11 @@ def master_processor(selected_chromosome, selected_pop):
     print("\n#######################################\n#######################################")
     print("chr " + selected_chromosome + " - " + selected_pop + ": STARTING MAP FILE CALCULATION")
     print("#######################################\n#######################################")
+        #we are going to calculate the map of each population directly using the SNPs in its hap file.
+        #an alternative would be just take all the SNPs in the raw VCF file and calculate their genetic position.
+            #it should be ok regarding the ID of the SNPs because REF/ALT are split when using multiallelics, and these fields are NOT switched based on the frequency of the SNPs in specific subsets.
+        #I am going for the first option just to be completely sure I am using the SNPs (and positions) of the selected population.
+            #If it is too slow this option, think about the other one.
 
 
     ##extract the SNP positions
@@ -2540,9 +2568,9 @@ def master_processor(selected_chromosome, selected_pop):
 
     ##load and explore the decode2019 map
 
-    #I know that the original 2019 decode map is alligned to hg38. Also, I assume that the decode2019 map is 1-based because they do not specify is 0-based
+    #I know that the original 2019 decode map is alligned to hg38. Also, I assume that the decode2019 map is 1-based because they do not specify is 0-based. I assume that if you say anything, base 1 in your coordinates is base 1 in the genome. I assume this is the default.
         #Data S3.genetic.map.final.sexavg.gor.gz:
-            #average genetic map computed from the paternal and maternal genetic maps, which were in turn computed from the paternal and maternal crossover, respectively. The data columns are as follows: Chr (chromosome), Begin (start point position of interval in GRCh38 coordinates), End (end point position of interval in GRCh38 coordinates), cMperMb (recombination rate in interval), cM (centiMorgan location of end point of interval)
+            #average genetic map computed from the paternal and maternal genetic maps, which were in turn computed from the paternal and maternal crossover, respectively. The data columns are as follows: Chr (chromosome), Begin (start point position of interval in GRCh38 coordinates), End (end point position of interval in GRCh38 coordinates), cMperMb (recombination rate in interval), cM (centiMorgan location of END POINT of interval)
             #Page 85 of "aau1043-halldorsson-sm-revision1.pdf"
 
     #1KGP is aligned to hg38 (see paper) and coordinates are 1-based as VCF format 4.2 has 1-based coordinates.
@@ -2604,6 +2632,14 @@ def master_processor(selected_chromosome, selected_pop):
 
         #I did a lot of checks on this map regarding overlapping of the intervals etc, check recomb_v3.R in method_deep paper for further details.
 
+    #
+    print("\n#######################################\n#######################################")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": subset decode map for the selected chromosome")
+    print("#######################################\n#######################################") 
+    decode2019_map_subset = decode2019_map.loc[decode2019_map["chr"] == "chr"+str(selected_chromosome),:]
+    print(decode2019_map_subset)
+    print("Do we selected the correct chromosome?")
+    print(decode2019_map_subset["chr"].unique() == "chr"+str(selected_chromosome))
 
     #selected_snp=snp_map_raw.iloc[0,:]
     def gen_pos(selected_snp):
@@ -2611,27 +2647,23 @@ def master_processor(selected_chromosome, selected_pop):
         #select snp id
         selected_snp_id = selected_snp["id"]
 
-        #selected chromosome
-        selected_chrom = selected_snp["chr"]
-
         #extract position of the selected snp
         selected_snp_physical_pos = selected_snp["pos"]
 
-        decode2019_map_subset = decode2019_map.loc[decode2019_map["chr"] == selected_chrom,:]
 
-        np.unique(decode2019_map_subset["chr"]) == selected_chrom
+        ##calculate the genetic position of the snp
+        #select those deCODE intervals that are at least 1 MB close to the selected SNP: I have search for genetic position data around each SNP of each population, 1MB at each side. I think remember you told me that if we do not find data points at both side of the SNP, we can safely remove it. In that way, we include areas with low recombination (possible haplotypes) but not areas with a lot of missing data.
+
+            subset_recomb_data = decode2019_hg19_selected_chunk[which(decode2019_hg19_selected_chunk$new_end >= (selected_snp_physical_pos - 1000000) & decode2019_hg19_selected_chunk$new_end <= (selected_snp_physical_pos + 1000000)),] 
+                #we are only interested in the end coordinate because the cM data of each interval came from the end of the interval. Indeed, the start coordinate of the next interval is the same of the end of the previous one. Therefore, we focus on end coordinate.
+                #Note that we are using 1000000 directly. If a SNP is at 1000001, then 1000001-1000000=1, length(1:1000001) is equal to 1000001, which is not exactly 1MB, but this is only 1 base of difference. This is not important. 
+
+
         
         decode2019_map_subset
 
 
-        ##por aquii,
-            #it makes sense to repeat this for each populations? maybe do it per chromosome and then select those snps included in each pop?
-                #maybe you can calculate the maps in a different script run before this and then run this, selecting snps of the corresponid chromosome map that are included in the vcf file of the pop,
-                #remember that remove filter snps wihitn pop, so each pop will have different snps
-                #the ID would be different because REF/ALT are included in the ID in order to avoid strand flips
-                #if it is not very slow, we could just do it per popuatilion-chrom is we did for iHS
-
-            #cM (centiMorgan location of END POINT of interval)
+        #cM (centiMorgan location of END POINT of interval)
 
 
 
@@ -2644,5 +2676,21 @@ def master_processor(selected_chromosome, selected_pop):
 # ask enard #
 #############
 
-#as i filter within pop, each pop can have different snps.
-#in the map file we can use the format "CHROM:POS_REF_ALT" for the ID? I think remember that the map files I originally got from you in the previous project (before decode2019 conversion) used as ID just the physical position. Not sure if there is any specific reason for doing that.
+#hap files
+    #reduction in the number of SNPs after applying filters
+        #For example
+            #chromosome 1 has 5,013,617 SNPs
+            #removing monomorphic SNPs within the british reduces the number to 4,067,698 SNPs.
+            #after applying the rest of filters I get 852,072 SNPs for the british.
+        #Is this ok? or it is too much?
+    #as i filter within pop, each pop will have different snps
+        #is this ok?
+
+#map files
+    #format of ID
+        #in the map file can I use the format "CHROM:POS_REF_ALT" for the ID? 
+        #I think remember that the map files I originally got from you in the previous project (before decode2019 conversion) used as ID just the physical position. Not sure if there is any specific reason for doing that.
+    #data format decode map
+        #in the decode map, they say clearly that the data is aligned to hg38. Also they do not specify if the coordinates are 1 or 0-based so I assume they are 1-based, base 1 in the map is base 1 in the genome, to me this should be the default. 
+        #1KGP data is also aligned to hg38 and is 1-based.
+        #Therefore I can just use the position of the SNPs in 1KGP to calculate their genetic position in the decode map, right?
