@@ -2641,22 +2641,25 @@ def master_processor(selected_chromosome, selected_pop):
     print("Do we selected the correct chromosome?")
     print(decode2019_map_subset["chr"].unique() == "chr"+str(selected_chromosome))
 
-    #selected_snp=snp_map_raw.iloc[10000,:] #snp with cM value just in its position
-    #selected_snp=snp_map_raw.iloc[5000,:] #snp with cM values at both sides
-    def gen_pos(selected_snp):
-
-        #select snp id
-        selected_snp_id = selected_snp["id"]
+    #
+    print("\n#######################################\n#######################################")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": define function to calculate genetic position per SNP")
+    print("#######################################\n#######################################") 
+    #raw_map=snp_map_raw
+    #decode_map=decode2019_map_subset
+    #selected_snp_id=snp_map_raw.iloc[10000]["id"] #snp with cM value just in its position
+    #selected_snp=snp_map_raw.iloc[5000]["id"] #snp with cM values at both sides
+    def gen_pos(raw_map, decode_map, selected_snp_id):
 
         #extract position of the selected snp
-        selected_snp_physical_pos = selected_snp["pos"]
+        selected_snp_physical_pos = raw_map.loc[raw_map["id"] == selected_snp_id, "pos"].to_numpy()[0]
 
 
         ##calculate the genetic position of the snp
         #select those deCODE intervals that are at least 1 MB close to the selected SNP: I have search for genetic position data around each SNP of each population, 1MB at each side. I think remember you told me that if we do not find data points at both side of the SNP, we can safely remove it. In that way, we include areas with low recombination (possible haplotypes) but not areas with a lot of missing data.
-        decode2019_map_subset_around_snp = decode2019_map_subset.loc[\
-            (decode2019_map_subset["end"] >= (selected_snp_physical_pos - 1000000)) & \
-            (decode2019_map_subset["end"] <= (selected_snp_physical_pos + 1000000)), :]
+        decode2019_map_subset_around_snp = decode_map.loc[\
+            (decode_map["end"] >= (selected_snp_physical_pos - 1000000)) & \
+            (decode_map["end"] <= (selected_snp_physical_pos + 1000000)), :]
                 #we are only interested in the END coordinate because the cM data of each interval came from the end of the interval. Indeed, the start coordinate of the next interval is the same of the end of the previous one. Therefore, we focus on end coordinate.
                 #Note that we are using 1000000 directly. If a SNP is at 1000001, then 1000001-1000000=1, length(1:1000001) is equal to 1000001, which is not exactly 1MB, but this is only 1 base of difference. This is not important.
                 #Also note that for SNPs between base 0 and 1000kb, the difference between SNP position and 1000kb will be negative, but this is OK:
@@ -2679,12 +2682,9 @@ def master_processor(selected_chromosome, selected_pop):
                         #More important, there are NO decode interval below base 500kb, so we will discard any SNP before that base because no cM value will be available to the left in order to interpolate. Therefore, the importance of this issue is very limited.       
 
         #
-        print("\n#######################################\n#######################################")
-        print("chr " + selected_chromosome + " - " + selected_pop + ": check that the end of the selected decode intervals are inside the interest window around the selected snp")
-        print("#######################################\n#######################################")
         check_1=np.unique(\
             (decode2019_map_subset_around_snp["end"] >= (selected_snp_physical_pos - 10**6)) & \
-            (decode2019_map_subset_around_snp["end"] <= (selected_snp_physical_pos + 10**6)))
+            (decode2019_map_subset_around_snp["end"] <= (selected_snp_physical_pos + 10**6)))[0]
         
         #if we have deCODE intervals 1MB around the selected SNP, i.e., we have intervals at both sides, intervals ending before and after the selected SNP OR we have a deCODE interval ending exactly at the SNP. In the second case if you have cM value in the exact position of the selected SNP, then you do not need intervals at both sides.
         
@@ -2694,8 +2694,8 @@ def master_processor(selected_chromosome, selected_pop):
         intervals_upper_end = decode2019_map_subset_around_snp.loc[(decode2019_map_subset_around_snp["end"] > selected_snp_physical_pos), :]
 
         #check the subset
-        check_2 = np.unique(intervals_lower_end["end"] < selected_snp_physical_pos)
-        check_3 = np.unique(intervals_upper_end["end"] > selected_snp_physical_pos)
+        check_2 = np.unique(intervals_lower_end["end"] < selected_snp_physical_pos)[0]
+        check_3 = np.unique(intervals_upper_end["end"] > selected_snp_physical_pos)[0]
 
         #select those decode intervals with the same position than the selected SNP
         interval_same_pos = decode2019_map_subset_around_snp.loc[decode2019_map_subset_around_snp["end"] == selected_snp_physical_pos, :]
@@ -2715,14 +2715,14 @@ def master_processor(selected_chromosome, selected_pop):
                     #we cannot have two cases with the same value because the coordinates are in increasing order, the coordinate of an interval is bigger than the previous one.
 
                 #check that the end coordinate with lowest difference respect the SNP is the selected in the previous step both for the lower and higher intervals
-                check_4a = intervals_lower_end.loc[\
+                check_4a = (intervals_lower_end.loc[\
                     np.abs(intervals_lower_end["end"]-selected_snp_physical_pos) == \
                     np.min(np.abs(intervals_lower_end["end"]-selected_snp_physical_pos)), \
-                    "end"] == lowest_interval["end"]
-                check_4b = intervals_upper_end.loc[\
+                    "end"] == lowest_interval["end"]).to_numpy()[0]
+                check_4b = (intervals_upper_end.loc[\
                     np.abs(intervals_upper_end["end"]-selected_snp_physical_pos) == \
                     np.min(np.abs(intervals_upper_end["end"]-selected_snp_physical_pos)), \
-                    "end"] == highest_interval["end"]
+                    "end"] == highest_interval["end"]).to_numpy()[0]
 
 
                 ##calculate cM value of the snp
@@ -2736,8 +2736,8 @@ def master_processor(selected_chromosome, selected_pop):
                     #We do not need to include both extremes, we want the distance from one point to another. Imagine the window begins at 1 and ends at 3. Including both extremes, the size of the window is 3, you have 3 bases. However, the distance from the point 1 to 3 is 2 (3-1=2). We want the distance between two points with centiMorgan values.
 
                 #check that calculating the distance with abs and changing order gives the same result
-                check_5a = distance_left_end == abs(lowest_interval["end"] - selected_snp_physical_pos)
-                check_5b = distance_right_end == abs(highest_interval["end"] - selected_snp_physical_pos)
+                check_5a = distance_left_end == abs(lowest_interval["end"] - selected_snp_physical_pos).to_numpy()[0]
+                check_5b = distance_right_end == abs(highest_interval["end"] - selected_snp_physical_pos).to_numpy()[0]
 
                 #check that the sum of the physical distance of each deCODE end point to the SNP is the same than the total distance between the deCODE end points
                 check_6 = distance_left_end + distance_right_end == np.abs(lowest_interval["end"].to_numpy()[0] - highest_interval["end"].to_numpy()[0])
@@ -2783,15 +2783,67 @@ def master_processor(selected_chromosome, selected_pop):
         #save results
         return(tuple([selected_chromosome, selected_snp_id, selected_snp_physical_pos, check_1,check_2, check_3, check_4a, check_4b, check_5a, check_5b, check_6, genetic_distance, left_cM, right_cM, distance_left_end, distance_right_end]))
 
+    #
+    print("Run the function on just one snp")
+    print(gen_pos(snp_map_raw, decode2019_map_subset, snp_map_raw.iloc[5000]["id"]))
+
+    #use partial to add a fixed parameter to the function so we can have several arguments in map
+    from functools import partial
+    gen_pos_fixed = partial(gen_pos, snp_map_raw, decode2019_map_subset)
+        #first you have the function
+        #then you have the arguments that will be fixed
+            #https://stackoverflow.com/questions/25553919/passing-multiple-parameters-to-pool-map-function-in-python
+
+    #open the pool with 1 core, we will parallelize at the chromosome level
+    import multiprocessing as mp
+    pool_gen_pos = mp.Pool(1)
+    
+    #run function across pandas rows
+    final_genetic_pos = pool_gen_pos.map(gen_pos_fixed, snp_map_raw.iloc[5000:5100]["id"])
+        #https://stackoverflow.com/questions/64763867/parallel-processing-of-each-row-in-pandas-iteration
+
+    #close the pool
+    pool_gen_pos.close()
+
+    #convert the tuple to DF and add the column anmes
+    final_genetic_pos_df = pd.DataFrame(final_genetic_pos, columns=["selected_chromosome", "selected_snp_id", "selected_snp_physical_pos", "check_1", "check_2", "check_3", "check_4a", "check_4b", "check_5a", "check_5b", "check_6", "genetic_distance", "left_cM", "right_cM", "distance_left_end", "distance_right_end"])
+    print("see results:")
+    print(final_genetic_pos_df)
+
+    #
+    print("\n#######################################\n#######################################")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": all checks of genetic position calculation are True?")
+    print("#######################################\n#######################################") 
+    print(final_genetic_pos_df[["check_1", "check_2", "check_3", "check_4a", "check_4b", "check_5a", "check_5b", "check_6"]].all())
+
+    #
+    print("\n#######################################\n#######################################")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": check we have the correct number of SNPs in the calculation of genetic position")
+    print("#######################################\n#######################################")
+    run_bash(" \
+        n_snps=$(\
+            bcftools view \
+                --no-header \
+                ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz | \
+            wc -l); \
+        if [[ $n_snps -eq " + str(final_genetic_pos_df.shape[0]) + " ]]; then \
+            echo 'TRUE'; \
+        else \
+            echo 'FALSE'; \
+        fi")
+            #count the number of lines in the cleaned VCF file without the header, and check that number is equal to the number of SNPs we have in the map file loaded in python 
+
+    #CHECK THAT WE HAVE THE EXACT SAME SNPS THAN IN THE RAW MAP
+    np.array_equal(
+        snp_map_raw["chr"].to_numpy(),
+        ("chr" + final_genetic_pos_df["selected_chromosome"]).to_numpy())
 
 
-        #cM (centiMorgan location of END POINT of interval)
 
 
 
 
-    gen_pos(snp_map_raw.iloc[5000,:])
-    #we need to remove arrays, series and get just the value
+
 
 
 #############
