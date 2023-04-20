@@ -3097,6 +3097,10 @@ print(\
         #https://docs.python.org/3/library/itertools.html#itertools.product
 
 
+#por aquiii
+    #check again combinations
+    #you could run a pop that is not GBR tot avoid initial commands that are slow
+
 ##run parallel analyses
 #open the pool
 import multiprocessing as mp
