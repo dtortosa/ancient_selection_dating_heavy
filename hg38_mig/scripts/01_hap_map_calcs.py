@@ -2160,6 +2160,16 @@ def master_processor(selected_chromosome, selected_pop):
             #The same would go for HWE. The filter across superpopulations is already applied in the data, so I will just leave it as it is in that regard.
             #Just to double check, I remove a SNP that is monomorphic within a given population, even if it is not monomorphic considering the whole panel. The same goes for phasing, I select SNPs with all genotypes being phased for the specific population, irrespectively of the phasing in other pops.
             #david answered YES to all this.
+        #reduction in the number of SNPs after applying filters
+            #For example
+                #chromosome 1 has 5,013,617 SNPs
+                #removing monomorphic SNPs within the british reduces the number to 4,067,698 SNPs.
+                #after applying the rest of filters I get 852,072 SNPs for the british, i.e., 4 million of SNPs lost.
+            #Is this ok? or it is too much?
+                #ok 
+        #as I am filtering within pop, each pop will have different snps
+            #is this ok?
+                #ok
 
     #
     print("\n#######################################\n#######################################")
@@ -2205,10 +2215,17 @@ def master_processor(selected_chromosome, selected_pop):
         #I am going for the first option just to be completely sure I am using the SNPs (and positions) of the selected population.
             #If it is too slow this option, think about the other one.
 
-
-
-    #por aquiii 
-    #obtaining snp map raw from clean vcf file
+    #Instructions david
+        #I understand that SNPs with genetic position are NO useful for any summary statistic, right? So I can safely remove these SNPs from the VCF and hap files right?
+            #ok
+        #format of ID
+            #in the map file can I use the format "CHROM:POS_REF_ALT" for the ID? 
+            #I think remember that the map files I originally got from you in the previous project (before decode2019 conversion) used as ID just the physical position. Not sure if there is any specific reason for doing that.
+            #not asked, by irrelevant question
+        #data format decode map
+            #in the decode map, they say clearly that the data is aligned to hg38. Also they do not specify if the coordinates are 1 or 0-based so I assume they are 1-based, base 1 in the map is base 1 in the genome, to me this should be the default. 
+            #1KGP data is also aligned to hg38 and is 1-based.
+            #Therefore I can just use the position of the SNPs in 1KGP to calculate their genetic position in the decode map, right?
 
 
     ##extract the SNP positions
@@ -2224,7 +2241,7 @@ def master_processor(selected_chromosome, selected_pop):
             #from the cleaned VCF file, extract the chromosome, position, REF/ALT to compare with the positions in the raw hap file (see below), compress and save as a file
 
     #Note about the format of the positions
-    #pos in VCF files v4.2 is 1-based according to the specification file (this is the format of 1KGP data)"). Therefore, we have here 1-based coordinates.
+    #pos in VCF files v4.2 is 1-based according to the specification file (this is the format of 1KGP data). Therefore, we have here 1-based coordinates.
         #POS - position: The reference position, with the 1st base having position 1. Positions are sorted numerically, in increasing order, within each reference sequence CHROM. It is permitted to have multiple records with the same POS. Telomeres are indicated by using positions 0 or N+1, where N is the length of the corresponding chromosome or contig. (Integer, Required)
             #https://samtools.github.io/hts-specs/VCFv4.2.pdf
 
@@ -2266,23 +2283,33 @@ def master_processor(selected_chromosome, selected_pop):
 
     #rename the columns
     snp_map_raw = snp_map_raw.rename(\
-        {0: "chr", 1: "id", 2: "pos", 3: "ref", 4: "alt"}, \
+        {0: "chr", 1: "id_old", 2: "pos", 3: "ref", 4: "alt"}, \
         axis=1)
+            #we name ID as old because this is the ID coming from the VCF file, which we need for selecting those variants in the VCF file with genetic position. The final ID will be in plink format, see below.
             #use a dict with old and new column names. indicated we are renaming columns (axis=1)
     print("see map file with renamed columns")
     print(snp_map_raw)
 
     #
     print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": check that the ID column in the raw map file is exactly the combination of chromosome, pos, ref, alt")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": create a new ID variable following plink 2.0 format and check it was correctly created")
     print("#######################################\n#######################################")
+    #the original ID column is in the format "CHR:POS:REF:ALT" but the problem is that some SNPs have their position indicated in the ID is shifted. 1KGP authors separated multiallelic SNPs in different lines with bcftools norm and then shifted their position so they could be phased, combing back to the original position afterwards (see next line). I guess during that process, they updated the IDs using chrom and the shifted position was used in the ID. Therefore, even POS comes back to the original position, the ID remains with the shifted position. I have checked several multiallelic SNPs, and they have all the same issue with the position in the ID.
+        #From README ("http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/README_1kGP_phased_panel_110722.pdf"): "SHAPEIT2 does not handle multiallelic variant phasing. To phase both biallelic and multiallelic variants we first split the multiallelics into separate rows while left-aligning and normalizing INDELs using bcftools norm tool (Li, 2011). Next, we shifted the position of multiallelic variants (2nd, 3rd, etc ALT alleles) by 1 or more bp (depending on how many ALT alleles there are at a given position) to ensure a unique start position for all variants, which is required for SHAPEIT2. We shifted the positions back to the original ones after phasing".
+    #This is not very convenient because when later we create the hap files, SNPs will have the plink format for ID to avoid avoid strand flips (CHR:POS_REF_ALT), so we are going to have different IDs between hap and map files, making more difficult to do checks.
+    #Therefore, we are going to update the ID of each SNP using plink format, and ensuring in this way SNPs will be names the same in hap and map files.
+    snp_map_raw["id"] = snp_map_raw["chr"] + ":" + snp_map_raw["pos"].astype("str") + "_" + snp_map_raw["ref"] + "_" + snp_map_raw["alt"]
+    #check
     check_id = snp_map_raw["chr"] + ":" + snp_map_raw["pos"].astype("str") + "_" + snp_map_raw["ref"] + "_" + snp_map_raw["alt"]
         #make a series combining chromosome, pos, ref and alt, and using the corresponding separators
     print(check_id.equals(snp_map_raw["id"]))
         #check it is identical to id
+    print(snp_map_raw)
 
     #
-    print("remove the ref/alt columns as we have this information already included in the ID")
+    print("\n#######################################\n#######################################")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": remove the ref/alt columns as we have this information already included in the ID")
+    print("#######################################\n#######################################")
     snp_map_raw = snp_map_raw.drop(["ref", "alt"], axis=1)
     print(snp_map_raw)
 
@@ -2361,6 +2388,11 @@ def master_processor(selected_chromosome, selected_pop):
     print(decode2019_map_subset)
     print("Do we selected the correct chromosome?")
     print(decode2019_map_subset["chr"].unique() == "chr"+str(selected_chromosome))
+    #
+    print("remove the full decode map")
+    del(decode2019_map)
+    import gc
+    gc.collect()
 
     #
     print("\n#######################################\n#######################################")
@@ -2379,6 +2411,9 @@ def master_processor(selected_chromosome, selected_pop):
 
         #extract position of the selected snp
         selected_snp_physical_pos = selected_snp_row["pos"].to_numpy()[0]
+
+        #extract old ID (this follows VFP file format so we can use them to filter it)
+        selected_snp_old_id = selected_snp_row["id_old"].to_numpy()[0]
 
         #select those deCODE intervals that are at least 1 MB close to the selected SNP: I have search for genetic position data around each SNP of each population, 1MB at each side. I think remember you told me that if we do not find data points at both side of the SNP, we can safely remove it. In that way, we include areas with low recombination (possible haplotypes) but not areas with a lot of missing data.
         decode2019_map_subset_around_snp = decode2019_map_subset.loc[\
@@ -2508,7 +2543,7 @@ def master_processor(selected_chromosome, selected_pop):
             distance_right_end = np.nan
 
         #save results
-        return(tuple([selected_chromosome, selected_snp_id, selected_snp_physical_pos, check_0, check_1, check_2, check_3, check_4a, check_4b, check_5a, check_5b, check_6, genetic_distance, left_cM, right_cM, distance_left_end, distance_right_end]))
+        return(tuple([selected_chromosome, selected_snp_id, selected_snp_old_id, selected_snp_physical_pos, check_0, check_1, check_2, check_3, check_4a, check_4b, check_5a, check_5b, check_6, genetic_distance, left_cM, right_cM, distance_left_end, distance_right_end]))
 
     #
     print("\n#######################################\n#######################################")
@@ -2527,7 +2562,7 @@ def master_processor(selected_chromosome, selected_pop):
     #final_genetic_pos = list(map(gen_pos, snp_map_raw.iloc[5000:5100]["id"]))
 
     #convert the tuple to DF and add the column names
-    final_genetic_pos_df = pd.DataFrame(final_genetic_pos, columns=["selected_chromosome", "selected_snp_id", "selected_snp_physical_pos", "check_0", "check_1", "check_2", "check_3", "check_4a", "check_4b", "check_5a", "check_5b", "check_6", "genetic_distance", "left_cM", "right_cM", "distance_left_end", "distance_right_end"])
+    final_genetic_pos_df = pd.DataFrame(final_genetic_pos, columns=["selected_chromosome", "selected_snp_id", "selected_snp_old_id", "selected_snp_physical_pos", "check_0", "check_1", "check_2", "check_3", "check_4a", "check_4b", "check_5a", "check_5b", "check_6", "genetic_distance", "left_cM", "right_cM", "distance_left_end", "distance_right_end"])
     print("see results:")
     print(final_genetic_pos_df)
 
@@ -2567,6 +2602,9 @@ def master_processor(selected_chromosome, selected_pop):
     print(np.array_equal(
         snp_map_raw["id"].to_numpy(),
         final_genetic_pos_df["selected_snp_id"].to_numpy()))
+    print(np.array_equal(
+        snp_map_raw["id_old"].to_numpy(),
+        final_genetic_pos_df["selected_snp_old_id"].to_numpy()))
     print(np.array_equal(
         snp_map_raw["pos"].to_numpy(),
         final_genetic_pos_df["selected_snp_physical_pos"].to_numpy()))
@@ -2617,7 +2655,7 @@ def master_processor(selected_chromosome, selected_pop):
     print("chr " + selected_chromosome + " - " + selected_pop + ": prepare final map file")
     print("#######################################\n#######################################")
     #subset only the columns for map files
-    final_genetic_pos_map_file = final_genetic_pos_df[["selected_chromosome", "selected_snp_id", "genetic_distance", "selected_snp_physical_pos"]]
+    final_genetic_pos_map_file = final_genetic_pos_df[["selected_chromosome", "selected_snp_id", "selected_snp_old_id", "genetic_distance", "selected_snp_physical_pos"]]
         
     #add chrom
     final_genetic_pos_map_file["selected_chromosome"] = "chr"+final_genetic_pos_map_file["selected_chromosome"]
@@ -2626,68 +2664,102 @@ def master_processor(selected_chromosome, selected_pop):
         #save the chromosome, ID, genetic position and physical position. This is the format expected by hapbin
             #https://github.com/evotools/hapbin
 
-    ##
+    #
     print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": remove the SNPs without genetic position from the hap file")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": remove the SNPs without genetic position from the VCF file")
     print("#######################################\n#######################################")
 
-
-    #weights a lot in memory, better to select lines with awk
-        #https://www.unix.com/shell-programming-and-scripting/41734-how-print-specific-lines-awk.html
-
-
-
-
-    index_interest_rows_raw = final_genetic_pos_map_file.loc[~final_genetic_pos_map_file["genetic_distance"].isna(), :].index + 1
-        #CHECK THE INDEX OF THE ORIGINAL FILE IS RESETED!
-
-    index_interest_rows = "".join(
-        ["NR == " + str(index_interest_rows_raw[i]) + " || " if i != len(index_interest_rows_raw)-1 else "NR == " + str(index_interest_rows_raw[i]) for i in range(0, len(index_interest_rows_raw), 1)])
-
-
-    run_bash("\
-        gunzip \
-            -c \
-            ./results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap.gz | \
-        head -100 | \
-        awk \
-            -F ' ' \
-            ' " + index_interest_rows + "'")
-
-
-    #rows_no_na = which(!is.na(final_genetic_pos_map_file$genetic_distance))
-
-
-
-
-    snps_id_with_gen_pos = final_genetic_pos_map_file.loc[~final_genetic_pos_map_file["genetic_distance"].isna(), "selected_snp_id"]
+    #select old_id from the map that have genetic position
+    #this ID is the original retained from the VCF file, so we can use it to subset the VCF file
+    snps_id_with_gen_pos = final_genetic_pos_map_file.loc[\
+        ~final_genetic_pos_map_file["genetic_distance"].isna(), \
+        "selected_snp_old_id"]
 
     #save the names in a txt file
-    with open(r"./results/cleaned_vcf_files/list_snps_with_pos.txt", "w") as fp:
+    with open(r"./results/cleaned_vcf_files/list_snps_with_gen_pos.txt", "w") as fp:
         fp.write("\n".join(snps_id_with_gen_pos))
             #each name in a different line so we have to add "\n" to the name
             #https://pynative.com/python-write-list-to-file/
+        fp.write("\n")
+            #add empty line at the end
 
+    #
+    print("\n#######################################\n#######################################")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": filter the already cleaned VCF with bcftools")
+    print("#######################################\n#######################################")
+    #this file is cleaned regarding biallelic snps, duplicates... but need to retain only SNPs with genetic position
+    #We could do this by just creating before the hap file, extract snp positions from there, calculate genetic position and then remove from the hap those rows of SNPs without genetic position. The problem is that we would do that by row index instead of SNP ID, at least if we use the final hap file, so we are going for this option better. In addition, we would have snps that cannot be used in the VCF file because they do not have genetic position. With the other approach we would have a VCF with all SNPs filtered and another one with only snps with genetic position.
+    
+    #filter
     run_bash("\
         bcftools view \
-            --include ID==@./results/cleaned_vcf_files/list_snps_with_pos.txt\
-            --no-header \
-            ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz")
-        #https://www.biostars.org/p/373852/
+            --include ID==@./results/cleaned_vcf_files/list_snps_with_gen_pos.txt\
+            ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz | \
+        bcftools view \
+            --output ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + "_only_snps_gen_pos.vcf.gz \
+            --output-type z \
+            --compression-level 1")
+            #include those SNPs for which ID is included in the list of SNPs with genetic position and save the resulting VCF file
+                #https://www.biostars.org/p/373852/
 
-    #I do now feel confident to use just the index of the row, i prefer to first clean vcf file, then create map file, then filter vcf file withe ID of snps having genetic position  and then conver to hap
+    #
+    print("see header of the fully filtered VCF file and some genotypes")
+    run_bash(" \
+        bcftools head \
+            ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + "_only_snps_gen_pos.vcf.gz")
+    run_bash(" \
+        bcftools view \
+            ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + "_only_snps_gen_pos.vcf.gz \
+            --no-header | \
+        head -5")
+
+    #
+    print("check that IDs in the filtered VCF file are the same than the ones in the list of IDs used as input to filter")
+    run_bash(" \
+        bcftools query \
+            ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + "_only_snps_gen_pos.vcf.gz \
+            --format '%ID\n' \
+        > ./results/cleaned_vcf_files/ids_vcf_after_filter.txt; \
+        file1='./results/cleaned_vcf_files/list_snps_with_gen_pos.txt'; \
+        file2='./results/cleaned_vcf_files/ids_vcf_after_filter.txt'; \
+        STATUS=$(cmp --silent $file1 $file2; echo $?); \
+        if [[ $STATUS -eq 0 ]]; then \
+            echo 'TRUE'; \
+        else \
+            echo 'FALSE'; \
+        fi; \
+        rm $file2")
+        #get the IDs in the finally filtered VCF file and save the file
+        #create two variables with the names of this file and also the name of the file with the list of IDs used as input to filter        
+        #check byte by byte whether the two files are the same
+            #cmp takes two files and compare them until 1 byte is different
+            #we make it silent and get the final status
+            #remember that "$?" gives the return value of the last run command.
+                #For example, 
+                    #ls somefile
+                    #echo $?
+                    #If somefile exists (regardless whether it is a file or directory), you will get the return value thrown by the ls command, which should be 0 (default "success" return value). If it doesn't exist, you should get a number other then 0. The exact number depends on the program.
+                #https://stackoverflow.com/a/6834572/12772630
+            #the return value of cmp will be 0 if the two files are identical, if not, then we have differences between the files
+                #https://stackoverflow.com/a/53529649/12772630
+        #remove the file created for this check
+
+
+    #remove also the SNPs without genetic position from the map file
+    final_genetic_pos_map_file = final_genetic_pos_map_file.loc[\
+        ~final_genetic_pos_map_file["genetic_distance"].isna(),:]
+
+    
+
+    
+    #remove old ID as we have already filtered the VCF file
+    final_genetic_pos_map_file = final_genetic_pos_map_file.drop(["selected_snp_old_id"], axis=1)
+
+    #check
+    print(final_genetic_pos_map_file["selected_snp_old_id"].equals(snps_id_with_gen_pos))
+    print(final_genetic_pos_map_file.columns == ["selected_chromosome", "selected_snp_id", "genetic_distance", "selected_snp_physical_pos"])
+
         
-
-
-    #load the hap files
-    impute_hap = pd.read_csv(\
-        "./results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap.gz", \
-        sep=" ", \
-        header=None, \
-        low_memory=False)
-        
-        #ANNOTATE THIS LINE.. THIS IS ONLY FOR DEBUGGING, TO HAVE THE SAME NUMBER OF ROWS IN HAP AND THE TESTING MAP FILE, WHICH WAS SUBSETTED
-        #impute_hap = impute_hap[1:nrow(final_genetic_pos_map_file),]
 
 
 '''
@@ -2746,6 +2818,7 @@ def master_processor(selected_chromosome, selected_pop):
 '''
 
     
+
 
     ##CHECK THESE LINES, THIS IS FOR CREATING HAP FILE, BUT THIS WAS DONE BEFORE THE MAP FILES, NOW GOES AFTER 
 
@@ -2999,34 +3072,3 @@ final_genetic_pos = pool_gen_pos.map(gen_pos_fixed, snp_map_raw.iloc[5000:5100][
 
 #close the pool
 pool_gen_pos.close()
-
-
-
-
-
-
-
-
-#############
-# ask enard #
-#############
-
-#hap files
-    #reduction in the number of SNPs after applying filters
-        #For example
-            #chromosome 1 has 5,013,617 SNPs
-            #removing monomorphic SNPs within the british reduces the number to 4,067,698 SNPs.
-            #after applying the rest of filters I get 852,072 SNPs for the british.
-        #Is this ok? or it is too much?
-    #as i filter within pop, each pop will have different snps
-        #is this ok?
-
-#map files
-    #format of ID
-        #in the map file can I use the format "CHROM:POS_REF_ALT" for the ID? 
-        #I think remember that the map files I originally got from you in the previous project (before decode2019 conversion) used as ID just the physical position. Not sure if there is any specific reason for doing that.
-    #data format decode map
-        #in the decode map, they say clearly that the data is aligned to hg38. Also they do not specify if the coordinates are 1 or 0-based so I assume they are 1-based, base 1 in the map is base 1 in the genome, to me this should be the default. 
-        #1KGP data is also aligned to hg38 and is 1-based.
-        #Therefore I can just use the position of the SNPs in 1KGP to calculate their genetic position in the decode map, right?
-    #I understand that SNPs with genetic position are NO useful for any summary statistic, right? So I can safely remove these SNPs from the VCF and hap files right?
