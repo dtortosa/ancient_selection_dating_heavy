@@ -1465,8 +1465,12 @@ run_bash(" \
 #### function to clean vcf files and create hap - map files ####
 ################################################################
 
-#selected_chromosome="1"; selected_pop = "GBR"
-def master_processor(selected_chromosome, selected_pop):
+#chr_pop_combination="GBR_1"
+def master_processor(chr_pop_combination):
+
+    #extract selected population and chromosome
+    selected_pop = chr_pop_combination.split("_")[0]
+    selected_chromosome = chr_pop_combination.split("_")[1]
 
 
 
@@ -2139,7 +2143,29 @@ def master_processor(selected_chromosome, selected_pop):
             #Exclude sites on the basis of the proportion of missing data (defined to be between 0 and 1, where 0 allows sites that are completely missing and 1 indicates no missing data allowed).
             #we used 1 because we were working with simulations, we have for sure data for all samples and snps. Ask David what to do in this case.
 
-    #instructions of David
+    #my questions to David about SNP filters
+        #Inbreeding in 1KGP
+            #The new dataset has 3202 samples instead of 2504. It is not obvious if all the new 698 samples (3202-2504=698) are related. Only 600 are implicated in duos/trios, but both Jesús and I think that the other 90 have some degree of inbreeding. They repeat several times in the paper that they added 698 samples related to the original 2504 samples.
+            #Within the original set of 2504 samples, I have detected something confusing. According to the new pedigree, 4 samples have their mother/father within the same 2504 samples. In other words, we have 4 duos within the original set of 2504 unrelated samples. This is not new, as Jesús told me, there is a 2015 scientific report ([link](https://www.nature.com/articles/srep17453 "‌")) showing cryptic relatedness in phase 3. The strange thing is that they generate a new pedigree showing duos within the original dataset, but they continue referring to that original dataset as the 2504 unrelated samples.
+            #I think we should avoid all the new samples and focus on the original 2504 dataset. Within that original dataset, we could use it in full or remove the 4 samples that are related according to the new pedigree leaving only the parent of each duo. What do you think?
+        #Filtering of variants within populations
+            #I am using bcftools to select **biallelic** **SNPs that are not monorphic, no duplicates** (i.e., exact same position and REF-ALT alleles) and phased. Importantly, I am doing this within each population, so if a SNP has 3 alleles considering all populations of the panel but only 2 alleles within the selected population, then that SNP is retained for the selected population. This is what we want, right?
+            #I have also filtered by percentage of **missing**
+                #1KGP authors selected only variants with missingness < 5%.
+                #I have additionally removed variants with **any missing genotype**. Is that ok or should I retain all SNPs with missing<5%?
+            #Filter by accessibility
+                #I am also using the accessibility masks. Jesus told me that it could be relevant to use the mask if we are going to use data from the whole genome. This is the case at least for the climate project because we were thinking of using non-overlapping across the whole genome, not only centered around genes.
+                #It is important to note that these masks select regions that are accessible based on the alignment of whole genome **low coverage** data of 2691 phase3 samples to hg38. Do you think it is ok if the masks are based on low instead of high coverage data?
+                #Also, one of the filters they apply to consider a region accessible or not is if "_base is an N in the reference genome GRCh37_".
+                #Finally, I have checked how many SNPs are lost in chromosome 1 as an example. The VCF file without any filter has 5,013,617 SNPs, with the less stringent mask this number decreases to 4,616,062, while with the more stringent mask it gets reduced to 3,576,231. Therefore, we lose 1.5 million SNPs.
+                #I am not sure whether we should use these masks given they are based in the low-coverage genomes and they seem to reduce the number of SNPs a lot. What do you think?
+            #filter by MAF?
+                #At least for iHS, we usually remove SNPs with MAF<0.05 directly in hapbin.
+                #I guess I should **not** apply a MAF filter right now in the vcf files, but then Elise will apply the required MAF filters when calculating the different summary statistics, right?
+            #filter by HWE within the population?
+                #1KGP authors selected SNPs that pass HWE filter (p-value>1e-10) in at least one superpopulation, but it is possible that some of these SNPs violate HWE within a specific population.
+                #Should I also filter by HWE within each specific population?
+    #answer of David
         #You should apply the filter with less than 5% missing just as the 1KGP authors.
             #Not add any filter about missing, because the data is already filtered for less 5% of missing.
         #For HWE you should also only apply what the 1KGP authors did and not filter further for specific populations.
@@ -2226,6 +2252,8 @@ def master_processor(selected_chromosome, selected_pop):
             #in the decode map, they say clearly that the data is aligned to hg38. Also they do not specify if the coordinates are 1 or 0-based so I assume they are 1-based, base 1 in the map is base 1 in the genome, to me this should be the default. 
             #1KGP data is also aligned to hg38 and is 1-based.
             #Therefore I can just use the position of the SNPs in 1KGP to calculate their genetic position in the decode map, right?
+                #David said that there is not problem if the map and hap files are in the same format. 
+                #that is the case because the map file is calculated with decode map, and hap file with 1KGP VCF file, and as I said, I have no reason to think that the decode map is not 1-based.
 
 
     ##extract the SNP positions
@@ -2675,6 +2703,10 @@ def master_processor(selected_chromosome, selected_pop):
         ~final_genetic_pos_map_file["genetic_distance"].isna(), \
         "selected_snp_old_id"]
 
+    #
+    print("see the number of SNPs removed due to the lack of genetic position")
+    print(final_genetic_pos_map_file.shape[0] - len(snps_id_with_gen_pos))
+
     #save the names in a txt file
     with open(r"./results/cleaned_vcf_files/list_snps_with_gen_pos.txt", "w") as fp:
         fp.write("\n".join(snps_id_with_gen_pos))
@@ -2744,92 +2776,65 @@ def master_processor(selected_chromosome, selected_pop):
                 #https://stackoverflow.com/a/53529649/12772630
         #remove the file created for this check
 
-
-    #remove also the SNPs without genetic position from the map file
+    #
+    print("remove also the SNPs without genetic position from the map file and check")
     final_genetic_pos_map_file = final_genetic_pos_map_file.loc[\
         ~final_genetic_pos_map_file["genetic_distance"].isna(),:]
-
-    
-
-    
-    #remove old ID as we have already filtered the VCF file
-    final_genetic_pos_map_file = final_genetic_pos_map_file.drop(["selected_snp_old_id"], axis=1)
-
-    #check
     print(final_genetic_pos_map_file["selected_snp_old_id"].equals(snps_id_with_gen_pos))
+
+    #
+    print("remove old ID as we have already filtered the VCF file and check")
+    final_genetic_pos_map_file = final_genetic_pos_map_file.drop(["selected_snp_old_id"], axis=1)
     print(final_genetic_pos_map_file.columns == ["selected_chromosome", "selected_snp_id", "genetic_distance", "selected_snp_physical_pos"])
 
-        
+    #
+    print("see final map and save")
+    print(final_genetic_pos_map_file)
+        #required format according to hapbin
+            #The map files (--map) should be in the same format as used by Selscan with one row per variant and four space-separated columns specifiying 
+                #chromosome, 
+                #locus ID, 
+                #genetic position
+                #physical position.
+    final_genetic_pos_map_file.to_csv(\
+        "./results/hap_map_files/chr_" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz", \
+        sep=" ", \
+        header=False, \
+        index=False)
+
+    #
+    run_bash("\
+        n_rows=$( \
+            gunzip \
+                --stdout \
+                ./results/hap_map_files/chr_" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz | \
+            awk \
+                -F ' ' \
+                'END {print NR}'); \
+        n_cols=$( \
+            gunzip \
+                --stdout \
+                ./results/hap_map_files/chr_" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz | \
+            awk \
+                -F ' ' \
+                'END {print NF}'); \
+        if [[ $n_cols -eq 4 && $n_rows -eq " + str(final_genetic_pos_map_file.shape[0]) + " ]];then \
+            echo 'TRUE'; \
+        else \
+            echo 'FALSE'; \
+        fi")
+            #decompress map file to stdout and then calculate the number of rows (NR) and fields (NF). Do that only after the whole file has been read (END)
+                #https://www.gnu.org/software/gawk/manual/html_node/Using-BEGIN_002fEND.html
+            #the number of columns (fields) should be 4 following salescan format, while the number of rows should be equal to the number of snps we have in the map file loaded in python, which was indeed used to write this .map file.
 
 
-'''
-        
-        
-        
-        
-
-
-        #remove all snps with NA for genetic distance
-
-        #load the hap files
-        #head(impute_hap)
-        
-        #ANNOTATE THIS LINE.. THIS IS ONLY FOR DEBUGGING, TO HAVE THE SAME NUMBER OF ROWS IN HAP AND THE TESTING MAP FILE, WHICH WAS SUBSETTED
-        #impute_hap = impute_hap[1:nrow(final_genetic_pos_map_file),]
-
-        #check we have the same number of rows in the hap and map files
-        print("##########################################################")
-        print(paste("CHUNK GROUP ", input_index_chunk_list, " - CHUNK ", chunk_id, ": MAP AND HAP FILES HAVE THE SAME NUMBER OF ROWS", sep=""))
-        print(nrow(impute_hap) == nrow(final_genetic_pos_map_file))
-        print("##########################################################"); 
-
-        #select rows to remove: select those rows that DO NOT have NA for the genetic distance 
-        rows_no_na = which(!is.na(final_genetic_pos_map_file$genetic_distance))
-        #show the number of rows removed because of lack of genetic distance or recombination rate
-        print("##########################################################")
-        print(paste("CHUNK GROUP ", input_index_chunk_list, " - CHUNK ", chunk_id, ": SHOW THE NUMBER OF ROWS REMOVED BECAUSE OF LACK OF GENETIC DISTANCE", sep=""))
-        print(nrow(final_genetic_pos_map_file) - length(rows_no_na))
-        print("##########################################################")
-
-        #select these rows with genetic position data from the hap file
-        impute_hap_final = impute_hap[rows_no_na,]
-        #take a look
-        #str(impute_hap_final)
-
-        #select these cases without NA for the genetic position in the final map file
-        final_genetic_pos_map_file = final_genetic_pos_map_file[rows_no_na,]
-        #take a look
-        #str(final_genetic_pos_map_file)
-
-        #check we removed the correct snps from the map
-        print("######################")
-        print(paste("CHUNK GROUP ", input_index_chunk_list, " - CHUNK ", chunk_id, ": WE REMOVED THE CORRECT SNPS FROM THE MAP", sep=""))
-        print(summary(final_genetic_pos[which(!is.na(final_genetic_pos$genetic_distance)),]$ID == final_genetic_pos_map_file$ID)) #Snps with NA for genetic position in final_genetic_pos and with NA for recombination rate in final_recomb
-        print("######################")
-
-        #check we have the same number of rows in the new hap and map files
-        print("##########################################################")
-        print(paste("CHUNK GROUP ", input_index_chunk_list, " - CHUNK ", chunk_id, ": NEW MAP AND HAP FILES HAVE THE SAME NUMBER OF ROWS", sep=""))
-        print(nrow(impute_hap_final) == nrow(final_genetic_pos_map_file))
-        print("##########################################################")
-
-
-
-'''
-
-    
-
-
-    ##CHECK THESE LINES, THIS IS FOR CREATING HAP FILE, BUT THIS WAS DONE BEFORE THE MAP FILES, NOW GOES AFTER 
-
-
-    #    
+    ##convert to hap 
     print("\n#######################################\n#######################################")
     print("chr " + selected_chromosome + " - " + selected_pop + ": convert to hap file")
     print("#######################################\n#######################################")
     run_bash(" \
         bcftools convert \
-            ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz \
+            ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + "_only_snps_gen_pos.vcf.gz \
             --hapsample ./results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw")
             #load the cleaned vcf file
             #--vcf-ids 
@@ -2963,19 +2968,23 @@ def master_processor(selected_chromosome, selected_pop):
 
     #
     print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": check we have the same number of rows (variants) in the cleaned vcf and hap files")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": check we have the same number of rows (variants) in the cleaned vcf, hap and map files")
     print("#######################################\n#######################################")
     run_bash(" \
         n_snps_vcf=$( \
             bcftools view \
-                ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz \
+                ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + "_only_snps_gen_pos.vcf.gz \
                 --no-header | \
+            wc -l); \
+        n_snps_map=$( \
+            gunzip \
+                -c ./results/hap_map_files/chr_" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz | \
             wc -l); \
         n_snps_hap=$( \
             gunzip \
                 -c results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap.gz | \
             wc -l); \
-        if [[ $n_snps_vcf -eq $n_snps_hap ]];then \
+        if [[ $n_snps_vcf -eq $n_snps_hap && $n_snps_vcf -eq $n_snps_map ]];then \
             echo 'TRUE'; \
         else \
             echo 'FALSE'; \
@@ -3050,25 +3059,51 @@ def master_processor(selected_chromosome, selected_pop):
 
 
 
+#####################
+#### paralellize ####
+#####################
+
+##create array with all combinations of pops and chromosomes
+#get pop and chromosome names
+pop_names
+chromosomes = [i for i in range(1, 23, 1)]
+#
+print("we are going to analyze 26 pops and 22 chromosomes?")
+print(len(pop_names) == 26)
+print(len(chromosomes) == 22)
+
+#get all the combinations but first make a dummy example
+import itertools
+#create two dummy lists, one with strings and other with integers
+print("dummy example to get all possible combinations of two lists")
+dummy_x = ["marbella", "cuzco", "granada"]
+dummy_y = [1, 2, 3]
+#product get all possible combinations between the two lists
+[x+"_"+str(y) for x in dummy_x for y in dummy_y]
+    #first for each each value of X, and then for each value of Y, combine X and Y, so combine X1 with Y1, X1 with Y2, .... X2 with Y1, X2 with Y2 and so on...
+    #y has to be converted to string with it is integer
+print("Do we have all dummy combinations?")
+print(len([ x+"_"+str(y) for x in dummy_x for y in dummy_y]) == 3*3)
+#get all combinations from the actual pops and chromosomes
+full_combinations_pop_chroms = [x+"_"+str(y) for x in pop_names for y in chromosomes]
+print("Do we have all combinations of chromosomes and populations?")
+print(len(full_combinations_pop_chroms) == len(pop_names) * len(chromosomes))
+print("is this equivalent to itertools.product?")
+print(\
+    full_combinations_pop_chroms == \
+    [i[0]+"_"+str(i[1]) for i in list(itertools.product(pop_names, chromosomes))])
+    #itertools.product gives a tuple for each combination, so you can extract both elements and bind them with join.
+        #https://stackoverflow.com/a/34032549/12772630
+        #https://docs.python.org/3/library/itertools.html#itertools.product
 
 
-
-##for parallelizing across pandas
-#http://localhost:8888/notebooks/calculation_new_selective_pressures_variables.ipynb
-#use partial to add a fixed parameter to the function so we can have several arguments in map
-from functools import partial
-gen_pos_fixed = partial(gen_pos, snp_map_raw, decode2019_map_subset)
-    #first you have the function
-    #then you have the arguments that will be fixed
-        #https://stackoverflow.com/questions/25553919/passing-multiple-parameters-to-pool-map-function-in-python
-
-#open the pool with 1 core, we will parallelize at the chromosome level
+##run parallel analyses
+#open the pool
 import multiprocessing as mp
-pool_gen_pos = mp.Pool(1)
+pool = mp.Pool(len(full_combinations_pop_chroms)/2)
 
 #run function across pandas rows
-final_genetic_pos = pool_gen_pos.map(gen_pos_fixed, snp_map_raw.iloc[5000:5100]["id"])
-    #https://stackoverflow.com/questions/64763867/parallel-processing-of-each-row-in-pandas-iteration
+pool.map(master_processor, full_combinations_pop_chroms)
 
 #close the pool
-pool_gen_pos.close()
+pool.close()
