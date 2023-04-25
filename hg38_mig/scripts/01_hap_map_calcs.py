@@ -68,48 +68,41 @@ def run_bash(command, return_value=False):
         #stdout: The standard output of the subprocess, as a bytes object.
         #stderr: The standard error of the subprocess, as a bytes object.
 
-    #if stderr is empty
-    if complete_process.stderr=="":
+    #if the return code is 0, i.e., success 
+        #https://askubuntu.com/a/892605
+    if complete_process.returncode==0:
 
-        #print the standard output without "\n" and other characters
-        print(complete_process.stdout)
+        #if stderr is empty
+        if complete_process.stderr=="":
 
-        #return also the value if required
-        if return_value==True:
-            return complete_process.stdout
-    elif ("[W::bcf_calc_ac] Incorrect number of AC fields at" in complete_process.stderr):
+            #print the standard output without "\n" and other characters
+            print(complete_process.stdout)
 
-        #print the standard output without "\n" and other characters
-        print(complete_process.stdout)
+            #return also the value if required
+            if return_value==True:
+                return complete_process.stdout
+        elif ("[W::bcf_calc_ac] Incorrect number of AC fields at" in complete_process.stderr):
 
-        #print the standard error without stopping
-        print("WARNING: THIS WARNING SHOULD BE ONLY IN DUMMY DATA NOT IN 1KGP DATA as AC field should have only 1 value per line in the data. " + complete_process.stderr)
+            #print the standard output without "\n" and other characters
+            print(complete_process.stdout)
 
-        #return also the value if required
-        if return_value==True:
-            return complete_process.stdout
-    elif ("Warning" in complete_process.stderr) | ("warning" in complete_process.stderr) | ("W:" in complete_process.stderr):
+            #print the standard error without stopping
+            print("THIS WARNING SHOULD BE ONLY IN DUMMY DATA NOT IN 1KGP DATA as AC field should have only 1 value per line in the data. " + complete_process.stderr)
 
-        #print the standard output without "\n" and other characters
-        print(complete_process.stdout)
+            #return also the value if required
+            if return_value==True:
+                return complete_process.stdout
+        else:
 
-        #print the standard error without stopping
-        print("WARNING: " + complete_process.stderr)
+            #print the standard output without "\n" and other characters
+            print(complete_process.stdout)
 
-        #return also the value if required
-        if return_value==True:
-            return complete_process.stdout
-    elif ("Lines   total/split/realigned/skipped" in complete_process.stderr) | ("no-ALT/non-biallelic/filtered" in complete_process.stderr) | ("Parsing bcftools stats output" in complete_process.stderr):
+            #print the standard error without stopping
+            print(complete_process.stderr)
 
-        #print the standard output without "\n" and other characters
-        print(complete_process.stdout)
-
-        #print the standard error, which is not an error
-        print(complete_process.stderr)
-
-        #return also the value if required
-        if return_value==True:
-            return complete_process.stdout 
+            #return also the value if required
+            if return_value==True:
+                return complete_process.stdout
     else:
         #print the standard error and stop
         raise ValueError("ERROR: FALSE! WE HAVE A PROBLEM RUNNING COMMAND: " + complete_process.stderr)
@@ -155,7 +148,9 @@ run_bash(" \
     mkdir \
         -p ./results/hap_map_files; \
     mkdir \
-        -p ./results/cleaned_vcf_files")
+        -p ./results/cleaned_vcf_files; \
+    mkdir \
+        -p ./scripts/01_hap_map_calcs_outputs")
     #-p: no error if the folder already exists, make parent directories as needed
 
 
@@ -395,7 +390,7 @@ print(merge_parents_original)
 
 #
 print("\nNow select those samples of the original dataset whose parents are included that original dataset. One of the cases (NA20318) is mentioned in known-issues of phase 3")
-#known issues: http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/README_known_issues_20200731
+    #known issues: http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/README_known_issues_20200731
 original_unrelated_parents_inside = merge_parents_original.loc[ \
     (\
         (merge_parents_original["motherID"].isin(merge_parents_original["sample"])) | \
@@ -571,6 +566,9 @@ run_bash(" \
         #--multiallelic -snps
             #split multiallelic sites into biallelic records (-) or join biallelic sites into multiallelic records (+).
             #https://samtools.github.io/bcftools/bcftools.html#norm
+    #output
+        #"Lines   total/split/realigned/skipped: 18/5/0/0"
+            #as we are splitting multiallelics and we have 5 multi, 5 lines are split.
     #when a multiallelic snp (e.g., REF=A, ALT=G,T) is split in several lines, these lines have the same position and REF allele, but different ALT. This was done in 1000 genomes data. They also add 1 to the position of each new line to do the phasing, but then they put all lines back in the same position.
     #In these new lines, the ALT is now only one, but the AC still has two fields, i.e., count for both ALTs in both lines. the 1000 genomes project SNPs that are multiallelic have their AC field just with one value so I guess they used +fill-tags to update these fields (see below).
             #http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/README_1kGP_phased_panel_110722.pdf 
@@ -1436,7 +1434,7 @@ run_bash(" \
 print("\n#######################################\n#######################################")
 print("convert VCF file to hap file")
 print("#######################################\n#######################################")
-print("First convert the raw dummy VCF file but adding a filter for SNPs in the same line, i.e. removing the microsatellite. The output shows 0/5/1 no-ALT/non-biallelic/filtered indicating that we lose 5 variants that are not biallelic and 1 due to the filter we applied, i.e., removal of non-snps, the microsatellite. Also, the number of records written is 6, which is the result of subtracting 5+1 from 12, the total number of variants")
+print("First convert the raw dummy VCF file but adding a filter for SNPs in the same line, i.e. removing the microsatellite. The output shows 0/5/1 no-ALT/non-biallelic/filtered indicating that we lose 5 variants that are not biallelic and 1 due to the filter we applied, i.e., removal of non-snps, the microsatellite. Also, the number of records written is 6, which is the result of subtracting 5+1 from 12, the total number of variants. We have included missing alleles, which are shown as '?', while non-phased alleles are shown as '*'")
 run_bash(" \
     bcftools convert \
         --include 'TYPE == \"SNP\"' \
@@ -1451,8 +1449,189 @@ run_bash(" \
     gunzip -c ./data/dummy_vcf_files/dummy_example_IMPUTE2_raw.hap.gz")
         #see hap file calculation of the real data to see details about hap format.
 
+#
+print("\n#######################################\n#######################################")
+print("polarize alleles")
+print("#######################################\n#######################################")
+#REF/ALT in 1000 genomes project is not referring to Ancestral/Derived, so we need to polarize the alleles according to Jesus. I have checked the README and the README and the paper and there is no informatin about ancestral, so it seems to be the case. According to Jesus, I have to use a combination of VEP and bcftools to update the VCF files.
+#VEP (Variant Effect Predictor) and AncestralAllele plugin (https://useast.ensembl.org/info/docs/tools/vep/script/vep_plugins.html#ancestralallele):
+    #VEP plugin that retrieves ancestral allele sequences from a FASTA file.
+    #Ensembl produces FASTA file dumps of the ancestral sequences of key species, including humans
+        #Data files for GRCh37 are available from https://ftp.ensembl.org/pub/release-75/fasta/ancestral_alleles/
+        #Data files for GRCh38 are available from https://ftp.ensembl.org/pub/current_fasta/ancestral_alleles/
+    #Indeed, in the supplementary file of the paper for 1KGP phase 3 (section 8), they say they polarized alleles using ensembl data from "ftp://ftp.ensembl.org/pub/release-74/fasta/ancestral_alleles/homo_sapiens_ancestor_GRCh37_e71.tar.bz2", which is an old version of the data indicated in VEP webpage.
+        #https://static-content.springer.com/esm/art%3A10.1038%2Fnature15393/MediaObjects/41586_2015_BFnature15393_MOESM86_ESM.pdf
+    #In both, the supplementary and the README of hg19, they say these ancestral alleles are obtained using the EPO pipeline:
+        #In the EPO (Enredo-Pecan-Ortheus) pipeline, Ortheus infers ancestral states from the Pecan alignments. The confidence in the ancestral call is determined by comparing the call to the ancestor of the ancestral sequence as well as the 'sister' sequence of the query species. For instance, using a human-chimp- macaque alignment to get the ancestral state of human, the human-chimp ancestor sequence is compared to the chimp and to the human-chimp-macaque ancestor. A high-confidence call is made when all three sequences agree. If the ancestral sequence agrees with one of the other two sequences only, we tag the call as a low-confidence call. If there is more disagreement, the call is not made.
+        #The convention for the sequence is:
+            #ACTG: high-confidence call, ancestral state supported by the other two sequences
+            #actg: low-confidence call, ancestral state supported by one sequence only
+            #N: failure, the ancestral state is not supported by any other sequence
+            #-: the extant species contains an insertion at this postion
+            #.: no coverage in the alignment
+
+#install VEP
+    #https://useast.ensembl.org/info/docs/tools/vep/script/vep_download.html
+    #install HTSLib (from SAMtools)
+        #download the last version in March 2023
+            #wget https://github.com/samtools/htslib/releases/download/1.17/htslib-1.17.tar.bz2
+        #decompress
+            #tar -xf htslib-1.17.tar.bz2
+                #https://linuxize.com/post/how-to-extract-unzip-tar-bz2-file/
+        #go to the new folder
+            #cd htslib-1.17
+        #indicate where to install the executable program
+            #./configure --prefix=/usr/local
+                #if not /usr/bin, add the path to bashrc in laptop or %environment in the singularity
+                #export PATH=/opt/htslib-1.17:$PATH
+        #compile
+            #make
+            #sudo make install
+    #install required perl modules
+        #tool for easily installing modules
+            #sudo cpan App::cpanminus
+                #you have to answer some questions here, so maybe this is problematic for container
+                #http://www.cpan.org/modules/INSTALL.html
+        #create folder to save modules
+            #mkdir -p $HOME/cpanm
+            #echo -e "export PERL5LIB=$PERL5LIB:$HOME/cpanm/lib/perl5\n" >> $HOME/.bashrc
+                #indicate path where to install the perl modules
+                #https://superuser.com/questions/154936/echo-text-with-new-line-in-bash
+        #modules required for VEP
+            #cpanm --local-lib $HOME/cpanm DBI
+            #cpanm --local-lib $HOME/cpanm DBD::mysql
+            #cpanm --local-lib $HOME/cpanm Archive::Zip
+        #modules maybe useful for AncestralAllele plugin
+            #sudo cpanm --local-lib $HOME/cpanm Bio::DB::HTS
+            #sudo cpanm --local-lib $HOME/cpanm Bio::DB::Fasta
+            #sudo cpanm --local-lib $HOME/cpanm Bio::DB::HTS::Faidx
+            #sudo cpanm --local-lib $HOME/cpanm PerlIO::gzip
+                #indicate the local lib where to install
+    #install VEP (https://useast.ensembl.org/info/docs/tools/vep/script/vep_download.html#installer):
+        #git clone https://github.com/Ensembl/ensembl-vep.git
+        #cd ensembl-vep
+        #perl INSTALL.pl --AUTO ap --PLUGINS AncestralAllele --ASSEMBLY GRCh38 --SPECIES "homo_sapiens"
+            #--AUTO acp
+                #Run installer without prompts
+                #install also
+                    #a: API + perl module Bio::DB::HTS/htslib
+                    #c: download cache, do not needed because we will just use a fasta file downloaded with ancestral alleles for human in hg38
+                        #Using a cache (--cache) is the fastest and most efficient way to use VEP, as in most cases only a single initial network connection is made and most data is read from local disk. Use offline mode to eliminate all network connections for speed and/or privacy.
+                        #By default the installer will download the latest version of VEP caches and FASTA files (currently 109).
+                        #We strongly recommend that you download/use the VEP Cache version which corresponds to your Ensembl VEP installation, i.e. the VEP Cache version 109 should be used with the Ensembl VEP tool version 109.
+                        #SO INSTALL CACHE EACH TIME YOU INSTALL VEP
+                            #https://useast.ensembl.org/info/docs/tools/vep/script/vep_cache.html#cache
+                    #f: download fasta files
+                        #I do not think I have to download all fasta files as we are only going to use ancestral alleles, which are in a specific fasta file.
+                        #https://useast.ensembl.org/info/docs/tools/vep/script/vep_cache.html#fasta
+                    #p: install plugins indicated with --PLUGINS
+            #--ASSEMBLY GRCh38
+                #If using the --AUTO functionality to install without prompts, remember to add the assembly version required using e.g. "--ASSEMBLY GRCh38"
+                        #https://useast.ensembl.org/info/docs/tools/vep/script/vep_other.html#assembly
+            #--PLUGINS AncestralAllele
+            #--SPECIES "homo_sapiens"
+
+#download the fasta files with the ancestral alleles
+#https://useast.ensembl.org/info/docs/tools/vep/script/vep_plugins.html#ancestralallele
+run_bash("\
+    mkdir -p ./data/fasta_ancestral; \
+    cd ./data/fasta_ancestral; \
+    wget https://ftp.ensembl.org/pub/current_fasta/ancestral_alleles/homo_sapiens_ancestor_GRCh38.tar.gz")
+
+#list the files in the compressed file
+run_bash("\
+    tar \
+        --gunzip \
+        --list \
+        --file \
+        ./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38.tar.gz")
+
+#see fasta file of the second chromosome
+#you can extract one specific file but typing its path and name within the compressed file
+run_bash("\
+    gunzip \
+        --stdout \
+        ./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38_final.fa.gz homo_sapiens_ancestor_GRCh38/homo_sapiens_ancestor_2.fa | \
+    head -1000")
+    #fasta file format (https://en.wikipedia.org/wiki/FASTA_format):
+        #A sequence begins with a greater-than character (">") followed by a description of the sequence (all in a single line).
+            #in our case is ">ANCESTOR_for_chromosome:GRCh38:10:1:133797422:1" 
+        #The next lines immediately following the description line are the sequence representation, with one letter per amino acid or nucleic acid, and are typically no more than 80 characters in length.
+            #In our case, shows support for considering a base as ancestral, based on the comparison with the human-chimp-macaque ancestor (see above).
+                #ACTG: high-confidence call, ancestral state supported by the other two sequences
+                #actg: low-confidence call, ancestral state supported by one sequence only
+                #N: failure, the ancestral state is not supported by any other sequence
+                #-: the extant species contains an insertion at this postion
+                #.: no coverage in the alignment
+
+#For optimal retrieval speed, you should pre-process the FASTA files into a single bgzipped file that can be accessed via the perl module Bio::DB::HTS::Faidx (installed by VEP's INSTALL.pl):
+run_bash("\
+    cd ./data/fasta_ancestral/; \
+    tar \
+        --extract \
+        --gunzip \
+        --file ./homo_sapiens_ancestor_GRCh38.tar.gz; \
+    cat ./homo_sapiens_ancestor_GRCh38/*.fa | \
+    bgzip \
+        --stdout \
+    > ./homo_sapiens_ancestor_GRCh38_final.fa.gz; \
+    rm \
+        --recursive \
+        --force \
+        ./homo_sapiens_ancestor_GRCh38/")
+        #use tar to unzip a tar.gz file generating a folder with all the fasta files
+        #print all fasta files and bgzipped them sending to standard output, save as a file
+        #remove the folder with all the fasta files
+
+#run VEP's plugin ancestral allele on the cleaned VCF file
+run_bash("\
+    $HOME/ensembl-vep/./vep \
+        --input_file ./home/dftortosa/Desktop/chr1_TSI.vcf.gz \
+        --plugin AncestralAllele,./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38_final.fa.gz \
+        --format vcf \
+        --output_file STDOUT | \
+    head -50")
+        #--format
+            #Input file format - one of "ensembl", "vcf", "hgvs", "id", "region", "spdi". By default, VEP auto-detects the input file format. Using this option you can specify the input file is Ensembl, VCF, IDs, HGVS, SPDI or region format. Can use compressed version (gzipped) of any file format listed above. Auto-detects format by default
+        #--output-file
+            #Output file name. Results can write to STDOUT by specifying 'STDOUT' as the output file name - this will force quiet mode. Default = "variant_effect_output.txt"   
+
+#check usage of vep
+    #https://useast.ensembl.org/info/docs/tools/vep/script/vep_options.html
+    #there is no output
+
+
+
+
+#finish checking options of vep installing
+    #https://useast.ensembl.org/info/docs/tools/vep/script/vep_download.html
+
+    #WHERE THE CACHE IS BEING INSTALLED?
+        #.vep folder
+        #26 GB!! too much, we should do this without cache, or just do it locally, not in the container
+        #remove cache
+        #I ahve a variant_effect file in ensembl-vep, but just one and not alqways updated...
+
+
+
+#check if we really need Bio::DB::HTS, it just mentioned in the page of AncestralAllele
+    #https://useast.ensembl.org/info/docs/tools/vep/script/vep_plugins.html#ancestralallele
+    #trying to stop the container so I get the log file with details about the error
+        #cpanm --local-lib /opt/cpanm Bio::DB::HTS &
+        #sleep 60 
+        #cat /root/.cpanm/work/1682462531.14977/build.log
+        #thisdoes not work becausr the folder number changes
+            #cat: /root/.cpanm/work/1682462531.14977/build.log: No such file or directory
+            #baybe force to open with widlcard ?
+
+
+    #https://github.com/Ensembl/Bio-DB-HTS/issues/91
+
+
+
+
 #SUMMARY: 
-    #With all these commands, we have recreated the scenario we have in 1KGP data, with multiallelic SNPs separated into different lines, select some samples, we then select snps, remove those with genotype missingness < 5%, remove exact duplicates (this does not touch different lines of the same multiallelic snp because they have different ALT), exclude those SNPs that have the same allele for all samples (considering alleles in genotypes with missing, e.g., 0|.). Then we combine all lines of each multiallelic snp and now they have ALT column with several alleles, so we can filter them using --max-alleles 2. Add filter for selecting phased data only. Select only those variants included in interest regions. We can also use bcftools +fill-tags to update important fields for each SNP, so if a SNP was multiallelic, but it is not multiallelic in the subset population (i.e., only REF and 1 ALT), we no longer will have two allele frequencies, two allele counts.... for the remainder biallelic SNP in the subset.
+    #With all these commands, we have recreated the scenario we have in 1KGP data, with multiallelic SNPs separated into different lines, select some samples, we then select snps, exclude those SNPs that have the same allele for all samples (considering alleles in genotypes with missing, e.g., 0|.), remove those with genotype missingness < 5%, remove exact duplicates (this does not touch different lines of the same multiallelic snp because they have different ALT). Then we combine all lines of each multiallelic snp and now they have ALT column with several alleles, so we can filter them using --max-alleles 2. Add filter for selecting phased data only. Select only those variants included in interest regions (mask). We also use bcftools +fill-tags to update important fields for each SNP, so if a SNP was multiallelic, but it is not multiallelic in the subset population (i.e., only REF and 1 ALT), we no longer will have two allele frequencies, two allele counts.... for the remainder biallelic SNP in the subset. although in 1KGP data, multiallelic SNPs are already separated and have only 1 value for these fields (see below).
 
 #Note about the update of the INFO fields
     #it is important to be sure that the fields you are using for filtering, are updated after subseting samples. Of course, type="snp" will be always "snp" irrespectively of the samples we select, but this is not the case of the number of alleles, because you can have SNPs with 3 alleles considering all 26 populations, but then in GBR they can have only 2 or 1. We are interested in SNPs that are biallelic within the selected population.
@@ -1472,6 +1651,12 @@ def master_processor(chr_pop_combination):
     selected_pop = chr_pop_combination.split("_")[0]
     selected_chromosome = chr_pop_combination.split("_")[1]
 
+    #redirect standard output
+    import sys
+    original_stdout = sys.stdout
+        #save off a reference to sys.stdout so we can restore it at the end of the function with "sys.stdout = original_stdout"
+    sys.stdout = open("./scripts/01_hap_map_calcs_outputs/chr" + selected_chromosome + "_" + selected_pop + ".out", "w")
+        #https://www.blog.pythonlibrary.org/2016/06/16/python-101-redirecting-stdout/
 
 
     #######################
@@ -1479,7 +1664,7 @@ def master_processor(chr_pop_combination):
     #######################
 
     #do first some operations that need to be done just one time per chromosome
-    if selected_pop == pop_names[0]:
+    if selected_pop == "GBR":
         
         #see file format
         print("\n#######################################\n#######################################")
@@ -1642,7 +1827,7 @@ def master_processor(chr_pop_combination):
                 --targets-file ./data/masks/20160622.allChr.mask.bed.gz \
                 " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
             bcftools stats")
-                #load the whole VCf file of the selected chromosome, select only SNPs and in one case select variants inside mask "PASS" regions, while in the second do nothing more. Then see the stats of the resulting BCF files. See dummy examples for further details.
+                #load the whole VCf file of the selected chromosome, select only SNPs and in one case select variants inside mask "PASS" regions (pilot and strict), while in the second do nothing more. Then see the stats of the resulting BCF files. See dummy examples for further details.
 
 
 
@@ -1663,6 +1848,9 @@ def master_processor(chr_pop_combination):
     print("chr " + selected_chromosome + " - " + selected_pop + ": check we only have the selected pop")
     print("#######################################\n#######################################")
     print(subset_pop["pop"].unique() == selected_pop)
+    #stop if False in this check
+    if subset_pop["pop"].unique() != selected_pop:
+        raise ValueError("SERIOUS ERROR! WE HAVE NOT CORRECTLY SELECTED THE SAMPLES OF POP '" + selected_pop + "' in chromosome '" + selected_chromosome + "'")
 
     #select the sample IDs
     selected_samples = subset_pop["sample"]
@@ -1777,7 +1965,7 @@ def master_processor(chr_pop_combination):
     print("\n#######################################\n#######################################")
     print("chr " + selected_chromosome + " - " + selected_pop + ": check we do not have SNPs with genotype missingness > 0.05. If TRUE, then we do not have to apply further filters about missing genotypes")
     print("#######################################\n#######################################")
-    run_bash(" \
+    check_missing = run_bash(" \
         n_snps_with_filter=$( \
             bcftools view \
                 --samples " + ",".join(selected_samples) + " \
@@ -1810,8 +1998,13 @@ def master_processor(chr_pop_combination):
             echo 'TRUE'; \
         else \
             echo 'FALSE'; \
-        fi")
+        fi", return_value=True)
             #obtain the ID of all variants after applying or not the filter for genotype missingness < 0.05, then check the numbers are the same
+            #return the value to do an explicit check
+    #if the check is not TRUE, stop because this is important
+    if check_missing.strip() != "TRUE":
+        #use strip() to remove "\n" at the end of the string
+        raise ValueError("ERROR: FALSE! The filter of < 5% of missingness does not seem to be applied in chr '" + selected_chromosome + "' for pop '" + selected_pop + "'")
 
     #
     print("\n#######################################\n#######################################")
@@ -1913,6 +2106,12 @@ def master_processor(chr_pop_combination):
             --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | \
         head -7")
 
+    ##por aqui checking the code
+    #added pop name to bed file cleaned, check that the mask is correctly called in the next lines
+    #error with "list_snps_with_gen_pos.txt"
+        #this should have the chromosome and pop name to avoid interefernece
+        #check that all files are correctly named
+
     #
     print("\n#######################################\n#######################################")
     print("chr " + selected_chromosome + " - " + selected_pop + ": clean BED file before applying the mask selecting only intervals in the selected chromosome")
@@ -1922,13 +2121,13 @@ def master_processor(chr_pop_combination):
             -F '\t' \
             '{if ($1 == \"chr" + selected_chromosome + "\") print $0}' \
             ./data/masks/20160622.allChr.pilot_mask.bed \
-            > ./data/masks/20160622.chr" + selected_chromosome + ".pilot_mask.bed; \
+            > ./data/masks/20160622.chr" + selected_chromosome + "_" + selected_pop + ".pilot_mask.bed; \
         gzip \
             --force \
-            ./data/masks/20160622.chr" + selected_chromosome + ".pilot_mask.bed; \
+            ./data/masks/20160622.chr" + selected_chromosome + "_" + selected_pop + ".pilot_mask.bed; \
         gunzip \
             -c \
-            ./data/masks/20160622.chr" + selected_chromosome + ".pilot_mask.bed.gz | \
+            ./data/masks/20160622.chr" + selected_chromosome + "_" + selected_pop + ".pilot_mask.bed.gz | \
         head -5")
             #in the bed file, select those rows for which the chromosome name (first column) is the selected chromosome, printing all fields for these rows. Save as a file and then compress. See the first 5 lines. See dummy examples for further details.
 
@@ -1940,7 +2139,7 @@ def master_processor(chr_pop_combination):
         uniq_chrom=$(\
             gunzip \
                 -c \
-                ./data/masks/20160622.chr" + selected_chromosome + ".pilot_mask.bed.gz | \
+                ./data/masks/20160622.chr" + selected_chromosome + "_" + selected_pop + ".pilot_mask.bed.gz | \
             awk \
                 -F '\t' \
                 '{print $1}' | \
@@ -1948,7 +2147,7 @@ def master_processor(chr_pop_combination):
         uniq_mask_type=$(\
             gunzip \
                 -c \
-                ./data/masks/20160622.chr" + selected_chromosome + ".pilot_mask.bed.gz | \
+                ./data/masks/20160622.chr" + selected_chromosome + "_" + selected_pop + ".pilot_mask.bed.gz | \
             awk \
                 -F '\t' \
                 '{print $4}' | \
@@ -1984,7 +2183,7 @@ def master_processor(chr_pop_combination):
         bcftools view \
             --phased | \
         bcftools view \
-            --targets-file ./data/masks/20160622.chr" + selected_chromosome + ".pilot_mask.bed.gz | \
+            --targets-file ./data/masks/20160622.chr" + selected_chromosome + "_" + selected_pop + ".pilot_mask.bed.gz | \
         bcftools query \
             --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | \
         head -7")
@@ -2016,7 +2215,7 @@ def master_processor(chr_pop_combination):
         bcftools view \
             --phased | \
         bcftools view \
-            --targets-file ./data/masks/20160622.chr" + selected_chromosome + ".pilot_mask.bed.gz | \
+            --targets-file ./data/masks/20160622.chr" + selected_chromosome + "_" + selected_pop + ".pilot_mask.bed.gz | \
         bcftools +fill-tags \
             -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
         bcftools query \
@@ -2050,7 +2249,7 @@ def master_processor(chr_pop_combination):
         bcftools view \
             --phased | \
         bcftools view \
-            --targets-file ./data/masks/20160622.chr" + selected_chromosome + ".pilot_mask.bed.gz | \
+            --targets-file ./data/masks/20160622.chr" + selected_chromosome + "_" + selected_pop + ".pilot_mask.bed.gz | \
         bcftools annotate \
             --remove INFO,^FORMAT/GT | \
         bcftools +fill-tags \
@@ -2086,7 +2285,7 @@ def master_processor(chr_pop_combination):
         bcftools view \
             --phased | \
         bcftools view \
-            --targets-file ./data/masks/20160622.chr" + selected_chromosome + ".pilot_mask.bed.gz | \
+            --targets-file ./data/masks/20160622.chr" + selected_chromosome + "_" + selected_pop + ".pilot_mask.bed.gz | \
         bcftools annotate \
             --remove INFO,^FORMAT/GT | \
         bcftools +fill-tags \
@@ -2120,7 +2319,7 @@ def master_processor(chr_pop_combination):
         bcftools view \
             --phased | \
         bcftools view \
-            --targets-file ./data/masks/20160622.chr" + selected_chromosome + ".pilot_mask.bed.gz | \
+            --targets-file ./data/masks/20160622.chr" + selected_chromosome + "_" + selected_pop + ".pilot_mask.bed.gz | \
         bcftools annotate \
             --remove INFO,^FORMAT/GT | \
         bcftools +fill-tags \
@@ -2224,6 +2423,13 @@ def master_processor(chr_pop_combination):
                 #FILTER (empty)
                 #INFO (with the fields I specifically created)
                 #FORMAT (only GT)
+
+
+
+    ##ANCESTRAL/DERIVED...
+
+    #por aquiii
+
 
 
 
@@ -2797,7 +3003,7 @@ def master_processor(chr_pop_combination):
                 #genetic position
                 #physical position.
     final_genetic_pos_map_file.to_csv(\
-        "./results/hap_map_files/chr_" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz", \
+        "./results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz", \
         sep=" ", \
         header=False, \
         index=False)
@@ -2807,14 +3013,14 @@ def master_processor(chr_pop_combination):
         n_rows=$( \
             gunzip \
                 --stdout \
-                ./results/hap_map_files/chr_" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz | \
+                ./results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz | \
             awk \
                 -F ' ' \
                 'END {print NR}'); \
         n_cols=$( \
             gunzip \
                 --stdout \
-                ./results/hap_map_files/chr_" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz | \
+                ./results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz | \
             awk \
                 -F ' ' \
                 'END {print NF}'); \
@@ -2978,7 +3184,7 @@ def master_processor(chr_pop_combination):
             wc -l); \
         n_snps_map=$( \
             gunzip \
-                -c ./results/hap_map_files/chr_" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz | \
+                -c ./results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz | \
             wc -l); \
         n_snps_hap=$( \
             gunzip \
@@ -3057,20 +3263,29 @@ def master_processor(chr_pop_combination):
     print(sample_list_from_hap_clean["ID_1"].equals(selected_samples))
     print(sample_list_from_hap_clean["ID_2"].equals(selected_samples))
 
+    #restore sys.stdout using the previously saved reference to it
+    #This is useful if you intend to use stdout for other things
+    sys.stdout = original_stdout
+        #https://www.blog.pythonlibrary.org/2016/06/16/python-101-redirecting-stdout/
+
 
 
 #####################
 #### paralellize ####
 #####################
 
-##create array with all combinations of pops and chromosomes
+##
+print("\n#######################################\n#######################################")
+print("create array with all combinations of pops and chromosomes")
+print("#######################################\n#######################################")
 #get pop and chromosome names
 pop_names
 chromosomes = [i for i in range(1, 23, 1)]
-#
 print("we are going to analyze 26 pops and 22 chromosomes?")
-print(len(pop_names) == 26)
-print(len(chromosomes) == 22)
+print((len(pop_names) == 26) & (len(chromosomes) == 22))
+print("See them")
+print(pop_names)
+print(chromosomes)
 
 #get all the combinations but first make a dummy example
 import itertools
@@ -3079,13 +3294,14 @@ print("dummy example to get all possible combinations of two lists")
 dummy_x = ["marbella", "cuzco", "granada"]
 dummy_y = [1, 2, 3]
 #product get all possible combinations between the two lists
-[x+"_"+str(y) for x in dummy_x for y in dummy_y]
+dumm_combinations = [x+"_"+str(y) for x in dummy_x for y in dummy_y]
+print(dumm_combinations)
     #first for each each value of X, and then for each value of Y, combine X and Y, so combine X1 with Y1, X1 with Y2, .... X2 with Y1, X2 with Y2 and so on...
     #y has to be converted to string with it is integer
 print("Do we have all dummy combinations?")
-print(len([ x+"_"+str(y) for x in dummy_x for y in dummy_y]) == 3*3)
+print(len(dumm_combinations) == len(dummy_x)*len(dummy_y))
 #get all combinations from the actual pops and chromosomes
-full_combinations_pop_chroms = [x+"_"+str(y) for x in pop_names for y in chromosomes]
+full_combinations_pop_chroms = [pop+"_"+str(chrom) for pop in pop_names for chrom in chromosomes]
 print("Do we have all combinations of chromosomes and populations?")
 print(len(full_combinations_pop_chroms) == len(pop_names) * len(chromosomes))
 print("is this equivalent to itertools.product?")
@@ -3097,10 +3313,6 @@ print(\
         #https://docs.python.org/3/library/itertools.html#itertools.product
 
 
-#por aquiii
-    #check again combinations
-    #you could run a pop that is not GBR tot avoid initial commands that are slow
-
 ##run parallel analyses
 #open the pool
 import multiprocessing as mp
@@ -3111,3 +3323,8 @@ pool.map(master_processor, full_combinations_pop_chroms)
 
 #close the pool
 pool.close()
+
+#por aquiii
+    #run the script 
+    #check the redirection of stdout
+    #check the whole script in the meantime
