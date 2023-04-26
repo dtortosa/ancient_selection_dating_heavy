@@ -216,13 +216,7 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
     cpanm --local-lib /opt/cpanm DBI
     cpanm --local-lib /opt/cpanm DBD::mysql
     cpanm --local-lib /opt/cpanm Archive::Zip
-    #modules maybe useful for AncestralAllele plugin
-    cpanm --local-lib /opt/cpanm Bio::DB::HTS &
-    sleep 60 
-    cat /root/.cpanm/work/1682462531.14977/build.log
-    cpanm --local-lib /opt/cpanm Bio::DB::Fasta
-    cpanm --local-lib /opt/cpanm Bio::DB::HTS::Faidx
-    cpanm --local-lib /opt/cpanm PerlIO::gzip
+	cpanm --local-lib /opt/cpanm Bio::DB::Fasta
     	#indicate the local lib where to install
 	#go out of this directory to the directories outside the container
 	cd
@@ -233,8 +227,13 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
     #https://useast.ensembl.org/info/docs/tools/vep/script/vep_download.html#installer
 	#go to opt to save there
 	cd /opt
+	#install git
+	apt -y install git
+	#download the git repo
 	git clone https://github.com/Ensembl/ensembl-vep.git
+	#go to the repo
 	cd ensembl-vep
+	#install vep
 	perl INSTALL.pl --AUTO ap --PLUGINS AncestralAllele --ASSEMBLY GRCh38 --SPECIES "homo_sapiens"
 	    #--AUTO acp
 	        #Run installer without prompts
@@ -296,6 +295,8 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
     export PERL5LIB=$PERL5LIB:/opt/cpanm/lib/perl5 #indicate path where to install perl modules
 
     export HTSLIB_DIR=/opt/htslib-1.17 #indicate where HTSLib is installed to avoid errors installing the perl module "Bio::DB::HTS"
+
+	export PATH=$PATH:/opt/ensembl-vep #set path where VEP will be installed
 
 
 

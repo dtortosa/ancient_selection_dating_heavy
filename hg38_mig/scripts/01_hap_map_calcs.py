@@ -1575,6 +1575,10 @@ run_bash("\
     bgzip \
         --stdout \
     > ./homo_sapiens_ancestor_GRCh38_final.fa.gz; \
+    gunzip \
+        --keep \
+        --force \
+        ./homo_sapiens_ancestor_GRCh38_final.fa.gz; \
     rm \
         --recursive \
         --force \
@@ -1583,18 +1587,187 @@ run_bash("\
         #print all fasta files and bgzipped them sending to standard output, save as a file
         #remove the folder with all the fasta files
 
-#run VEP's plugin ancestral allele on the cleaned VCF file
+
 run_bash("\
-    $HOME/ensembl-vep/./vep \
-        --input_file ./home/dftortosa/Desktop/chr1_TSI.vcf.gz \
-        --plugin AncestralAllele,./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38_final.fa.gz \
-        --format vcf \
-        --output_file STDOUT | \
+    bcftools view \
+        --no-header \
+        /home/dftortosa/Desktop/chr1_TSI.vcf.gz | \
+    head -10")
+
+run_bash("\
+    gunzip \
+        --stdout ./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38_final.fa.gz | \
     head -50")
+
+
+run_bash("\
+    cd ./data/fasta_ancestral/; \
+    gunzip \
+        --force \
+        --keep \
+        homo_sapiens_ancestor_GRCh38_final.fa.gz")
+
+
+#run VEP's plugin ancestral allele on the cleaned VCF file
+
+
+run_bash("\
+    vep \
+        --cache \
+        --plugin AncestralAllele,./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38_final.fa \
+        --input_file ./data/dummy_vcf_files/dummy_example_cleaned.vcf.gz \
+        --output_file eso.txt")
+    
+    #WARNING: Failed to instantiate plugin AncestralAllele: ERROR: Bio::DB::HTS required to access compressed FASTA file ./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38.fa.gz
+        #not in the format the program wants 
+
+    #if not compressed, works! this is used by Bio::DB::Fasta, while Bio::DB::HTS uses compressed fasta files
+
+    #I have removed these perl modules from container
+    #modules maybe useful for AncestralAllele plugin
+    #cpanm --local-lib /opt/cpanm Bio::DB::HTS &
+    #sleep 60
+    #find /root/.cpanm/work/ -type f -name "build.log" -execdir cat "{}" \;
+    #    #https://superuser.com/questions/566198/linux-command-find-files-and-run-command-on-them
+    #cpanm --local-lib /opt/cpanm Bio::DB::Fasta
+    #cpanm --local-lib /opt/cpanm Bio::DB::HTS::Faidx
+    #cpanm --local-lib /opt/cpanm PerlIO::gzip
+
+
+
+run_bash("\
+    vep \
+        --input_file ./data/dummy_vcf_files/dummy_example_cleaned.vcf.gz \
+        --format vcf \
+        --cache \
+        --plugin AncestralAllele,./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38_final.fa \
+        --vcf \
+        --fields 'Uploaded_variation,Location,Allele,Gene,Feature,Feature_type,Consequence,STRAND,AA' \
+        --output_file 'eso.vcf' \
+        --dir_plugins '/home/dftortosa/.vep/Plugins' \
+        --force_overwrite")
+        #set the input file, which can be a compressed VCF file or a tab separated file (each field including ancestral allele in different columns)
         #--format
             #Input file format - one of "ensembl", "vcf", "hgvs", "id", "region", "spdi". By default, VEP auto-detects the input file format. Using this option you can specify the input file is Ensembl, VCF, IDs, HGVS, SPDI or region format. Can use compressed version (gzipped) of any file format listed above. Auto-detects format by default
         #--output-file
             #Output file name. Results can write to STDOUT by specifying 'STDOUT' as the output file name - this will force quiet mode. Default = "variant_effect_output.txt"   
+
+        #--vcf
+            #Writes output in VCF format. Consequences are added in the INFO field of the VCF file, using the key "CSQ". Data fields are encoded separated by "|"; the order of fields is written in the VCF header. Output fields in the "CSQ" INFO field can be selected by using --fields.
+            #IF THE INPUT FORMAT WAS VCF, THE FILE WILL REMAIN UNCHANGED SAVE FOR THE ADDITION OF THE CSQ FIELD (unless using any filtering).
+        #--fields
+            #Configure the output format using a comma separated list of fields. Can only be used with tab (--tab) or VCF format (--vcf) output. For the tab format output, the selected fields may be those present in the default output columns, or any of those that appear in the Extra column (including those added by plugins or custom annotations) if the appropriate output is available (e.g. use --show_ref_allele to access 'REF_ALLELE'). Output remains tab-delimited. For the VCF format output, the selected fields are those present within the "CSQ" INFO field.
+                #https://useast.ensembl.org/info/docs/tools/vep/script/vep_options.html
+        #--force_overwrite
+            #to force saving the new summary
+
+        #we get different transcripts for each SNP
+            #VEP me da para cada SNP información de la strand, alelo ancestral, e impacto para diferentes transcritos de un mismo gen en los que "cae" dicho SNP. Así, algunas filas pone protein coding, nonsense... y tienen diferentes strands (1/-1). Para los casos que he mirado, todas las filas del mismo SNP tienen el mismo alelo Ancestral, así que entiendo que podría coger cualquier
+
+
+run_bash("\
+    bcftools +split-vep \
+        eso.vcf \
+        --list | \
+    head")
+
+run_bash("\
+    bcftools +split-vep \
+        eso.vcf \
+        --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n' | \
+    head")
+
+run_bash("\
+    bcftools +split-vep \
+        eso.vcf \
+        --exclude 'REF=AA'\
+        --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n' | \
+    head")
+
+run_bash("\
+    bcftools +split-vep \
+        eso.vcf \
+        --include 'REF=AA'\
+        --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n' | \
+    head")
+    #we can just filter by the ancestral allele using AA, it does not consider C, C, C.... but only C, see below
+        #CHECK
+
+run_bash("\
+    bcftools +split-vep \
+        eso.vcf \
+        --exclude 'AA=\"A\" || AA=\"C\" || AA=\"T\" || AA=\"G\" || AA=\"a\" || AA=\"c\" || AA=\"t\" || AA=\"g\"'\
+        --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n' | \
+    head")
+    #only the case with no ancestral allele "."
+
+run_bash("\
+    bcftools +split-vep \
+        eso.vcf \
+        --include AA=\"A\" || AA=\"C\" || AA=\"T\" || AA=\"G\" || AA=\"a\" || AA=\"c\" || AA=\"t\" || AA=\"g\"\
+        --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n' | \
+    head")
+    #Remember that the convention for the sequence in ancestral allele determination is (see above):
+        #ACTG: high-confidence call, ancestral state supported by the other two sequences
+        #actg: low-confidence call, ancestral state supported by one sequence only
+        #N: failure, the ancestral state is not supported by any other sequence
+        #-: the extant species contains an insertion at this postion
+        #.: no coverage in the alignment
+    #In addition, the plugin AncestralAllele has two special conditions:
+        #"-" represents an insertion
+        #"?" indicates the chromosome could not be looked up in the FASTA
+    #Therefore, we only want to consider cases for which the ancestral allele is infered.
+
+
+
+
+
+run_bash("\
+    bcftools +split-vep \
+        eso.vcf \
+        --include '(AA=\"A\" || AA=\"C\" || AA=\"T\" || AA=\"G\" || AA=\"a\" || AA=\"c\" || AA=\"t\" || AA=\"g\") && (REF!=AA)' \
+        --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n' | \
+    head")
+    #if we have actual ancetral allele infered, not "N", "."...
+    #then select those snps for which REF is not equal to ancestral
+
+    #check options this plugin, you can select specific data from CSQ...
+        #https://samtools.github.io/bcftools/howtos/plugin.split-vep.html
+
+
+#POR AQUII
+#atcg is not considered using ACTG, so we I had to add actg
+#do checks about the use of the plugin on VEP data
+    #maybe change AA for ancestral? it can be confusing with AA (ALT | ALT)
+#generate a list of SNPs with different REF - ancestral
+#then use fixref to switch REF/ALT using that list
+
+
+
+
+#with bcftools
+    #--include those SNPs for which R != INFO/AA
+        #you have to find a way to create INFO/AA because that information is right now, and ask for chr, pos, REF ALT, and export as vcf
+    #alternatively, you can directly export chrom, pos, REF, ALT, for all SNPs, then select rows with different REF than Ancestral using awk and generate a BED file, which is also accpeted by annotate
+        #http://www.htslib.org/doc/bcftools.html#annotate
+    #use +fixref to switch REF/ALT for these SNPs
+        #bcftools +fixref file.bcf -Ob -o out.bcf -- -i List_of_1.vcf.gz 
+            #https://www.biostars.org/p/411202/
+            #https://samtools.github.io/bcftools/howtos/plugin.fixref.html
+        #fixref ES PELIGROSO!!
+
+
+
+    #WHERE THE CACHE IS BEING INSTALLED?
+        #.vep folder
+    #WE HAVE TO USE CACHE
+        #the question is if we do this step at the end, so we need to upload the whole cache to the HPC, with the risk that you have to be sure you are using the correct version of the cache respect to the version of VEP
+        #the alternative is doing locally with the raw VCF files, and then clean the resulting VCF files.
+
+
+##STRAND, SOME CASES 1 AND OTHER -1!!!!
+    #check if you get the same strand in the output non-VCF than in the VCF
+
 
 #check usage of vep
     #https://useast.ensembl.org/info/docs/tools/vep/script/vep_options.html
@@ -1606,12 +1779,11 @@ run_bash("\
 #finish checking options of vep installing
     #https://useast.ensembl.org/info/docs/tools/vep/script/vep_download.html
 
-    #WHERE THE CACHE IS BEING INSTALLED?
-        #.vep folder
-        #26 GB!! too much, we should do this without cache, or just do it locally, not in the container
-        #remove cache
-        #I ahve a variant_effect file in ensembl-vep, but just one and not alqways updated...
 
+
+#dbi is installed in the container but I get 
+    #ERROR: DBI module not found. VEP requires the DBI perl module to function
+    #maybe environmental variables is the problem? check your bashrc to check if folder of modules is indicated
 
 
 #check if we really need Bio::DB::HTS, it just mentioned in the page of AncestralAllele
@@ -1626,6 +1798,10 @@ run_bash("\
 
 
     #https://github.com/Ensembl/Bio-DB-HTS/issues/91
+
+
+
+
 
 
 
