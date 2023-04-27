@@ -1459,9 +1459,12 @@ print("#######################################\n################################
     #Ensembl produces FASTA file dumps of the ancestral sequences of key species, including humans
         #Data files for GRCh37 are available from https://ftp.ensembl.org/pub/release-75/fasta/ancestral_alleles/
         #Data files for GRCh38 are available from https://ftp.ensembl.org/pub/current_fasta/ancestral_alleles/
+    #In the VEP paper
+        #they say "In Ensembl, we infer genome-wide ancestral sequences (Paten et al., 2008) for different groups of species. Select the “Ancestral Allele” option (Figure 5) to obtain the ancestral ALLELE PREDICTED FROM THE ALIGNMENT OF 12 PRIMATE SPECIES, INCLUDING HOMO SAPIENS."
+            #https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7613081/
     #Indeed, in the supplementary file of the paper for 1KGP phase 3 (section 8), they say they polarized alleles using ensembl data from "ftp://ftp.ensembl.org/pub/release-74/fasta/ancestral_alleles/homo_sapiens_ancestor_GRCh37_e71.tar.bz2", which is an old version of the data indicated in VEP webpage.
         #https://static-content.springer.com/esm/art%3A10.1038%2Fnature15393/MediaObjects/41586_2015_BFnature15393_MOESM86_ESM.pdf
-    #In both, the supplementary and the README of hg19, they say these ancestral alleles are obtained using the EPO pipeline:
+    #In both, the supplementary and the README of hg19 (https://ftp.ensembl.org/pub/release-75/fasta/ancestral_alleles/homo_sapiens_ancestor_GRCh37_e71.README), they say these ancestral alleles are obtained using the EPO pipeline:
         #In the EPO (Enredo-Pecan-Ortheus) pipeline, Ortheus infers ancestral states from the Pecan alignments. The confidence in the ancestral call is determined by comparing the call to the ancestor of the ancestral sequence as well as the 'sister' sequence of the query species. For instance, using a human-chimp- macaque alignment to get the ancestral state of human, the human-chimp ancestor sequence is compared to the chimp and to the human-chimp-macaque ancestor. A high-confidence call is made when all three sequences agree. If the ancestral sequence agrees with one of the other two sequences only, we tag the call as a low-confidence call. If there is more disagreement, the call is not made.
         #The convention for the sequence is:
             #ACTG: high-confidence call, ancestral state supported by the other two sequences
@@ -1642,9 +1645,9 @@ run_bash("\
         --cache \
         --plugin AncestralAllele,./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38_final.fa \
         --vcf \
-        --fields 'Uploaded_variation,Location,Allele,Gene,Feature,Feature_type,Consequence,STRAND,AA' \
-        --output_file 'eso.vcf' \
-        --dir_plugins '/home/dftortosa/.vep/Plugins' \
+        --fields Uploaded_variation,Location,Allele,Gene,Feature,Feature_type,Consequence,STRAND,AA \
+        --output_file ./data/dummy_vcf_files/dummy_example_cleaned_vep.vcf \
+        --dir_plugins /home/dftortosa/.vep/Plugins \
         --force_overwrite")
         #set the input file, which can be a compressed VCF file or a tab separated file (each field including ancestral allele in different columns)
         #--format
@@ -1665,74 +1668,325 @@ run_bash("\
             #VEP me da para cada SNP información de la strand, alelo ancestral, e impacto para diferentes transcritos de un mismo gen en los que "cae" dicho SNP. Así, algunas filas pone protein coding, nonsense... y tienen diferentes strands (1/-1). Para los casos que he mirado, todas las filas del mismo SNP tienen el mismo alelo Ancestral, así que entiendo que podría coger cualquier
 
 
-run_bash("\
-    bcftools +split-vep \
-        eso.vcf \
-        --list | \
-    head")
+
+
 
 run_bash("\
     bcftools +split-vep \
-        eso.vcf \
-        --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n' | \
-    head")
+        ./data/dummy_vcf_files/dummy_example_cleaned_vep.vcf \
+        --list")
+
+run_bash("\
+    bcftools head \
+        ./data/dummy_vcf_files/dummy_example_cleaned_vep.vcf")
 
 run_bash("\
     bcftools +split-vep \
-        eso.vcf \
+        ./data/dummy_vcf_files/dummy_example_cleaned_vep.vcf \
+        --annotation CSQ \
+        --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n'")
+        #--annotation
+            #INFO annotation to parse, being CSQ the default
+        #you now can directly ask for AA and other tags added by VEP in the CSQ field
+
+
+run_bash("\
+    bcftools +split-vep \
+        ./data/dummy_vcf_files/dummy_example_cleaned_vep.vcf \
+        --annotation CSQ \
+        --columns AA:String | \
+    bcftools annotate \
+        --remove INFO/CSQ | \
+    bcftools view")
+
+    #you create a INFO field called AA, that is no longer inside CSQ!!
+    #then you can remove the INFO/CSQ field
+
+run_bash("\
+    bcftools +split-vep \
+        ./data/dummy_vcf_files/dummy_example_cleaned_vep.vcf \
+        --annotation CSQ \
         --exclude 'REF=AA'\
-        --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n' | \
-    head")
+        --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n'")
 
 run_bash("\
     bcftools +split-vep \
-        eso.vcf \
+        ./data/dummy_vcf_files/dummy_example_cleaned_vep.vcf \
+        --annotation CSQ \
         --include 'REF=AA'\
-        --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n' | \
-    head")
+        --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n'")
     #we can just filter by the ancestral allele using AA, it does not consider C, C, C.... but only C, see below
         #CHECK
 
+
+
+
+
+
+
+#select SNPs for which the ancestral allele is ACGT or acgt
 run_bash("\
     bcftools +split-vep \
-        eso.vcf \
-        --exclude 'AA=\"A\" || AA=\"C\" || AA=\"T\" || AA=\"G\" || AA=\"a\" || AA=\"c\" || AA=\"t\" || AA=\"g\"'\
-        --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n' | \
-    head")
-    #only the case with no ancestral allele "."
+        ./data/dummy_vcf_files/dummy_example_cleaned_vep.vcf \
+        --annotation CSQ \
+        --include 'AA=\"A,C,G,T,a,c,g,t\"'\
+        --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n'")
+        #we get rid of the SNP with AA="."
+        #Comma in strings is interpreted as a separator and when multiple values are compared, the OR logic is used. Consequently, the following two expressions are equivalent but not the third:
+            #-i 'TAG="hello,world"'
+            #-i 'TAG="hello" || TAG="world"'
+            #-i 'TAG="hello" && TAG="world"'
+                #https://samtools.github.io/bcftools/bcftools.html#expressions
+        #This is exactly what we want, check that our TAG ("AA") has ACGT both in upper (ACGT) and lower (acgt) case. See next line to understand why we need lower case.
+        #Remember that the convention for the sequence in ancestral allele determination is:
+            #ACTG: high-confidence call, ancestral state supported by the other two sequences
+            #actg: low-confidence call, ancestral state supported by one sequence only
+            #N: failure, the ancestral state is not supported by any other sequence
+            #-: the extant species contains an insertion at this postion
+            #.: no coverage in the alignment
+                #supplementary file of the paper for 1KGP phase 3 (section 8)
+                    #https://static-content.springer.com/esm/art%3A10.1038%2Fnature15393/MediaObjects/41586_2015_BFnature15393_MOESM86_ESM.pdf
+                #README ancestral fasta file for hg19
+                    #https://ftp.ensembl.org/pub/release-75/fasta/ancestral_alleles/homo_sapiens_ancestor_GRCh37_e71.README
+        #In addition, the plugin AncestralAllele has two special conditions:
+            #"-" represents an insertion
+            #"?" indicates the chromosome could not be looked up in the FASTA
+                #https://useast.ensembl.org/info/docs/tools/vep/script/vep_plugins.html#ancestralallele
+        #Therefore, we only want to consider cases for which the ancestral allele is inferred.
 
+#
+print("\n#######################################\n#######################################")
+print("now manually change ancestral of the first SNP from "." to "c,c,c" to check whether our expression catch it: We can see how the first SNP now with AA=c is included by the expression AA='ACTGactg', so we are targeting ancestral alleles with high and low confidence")
+print("#######################################\n#######################################")
+#find and replace
+run_bash(" \
+    sed \
+        --in-place \
+        --expression 's/chr20:14370|A||||intergenic_variant||./chr20:14370|A||||intergenic_variant||c/g' \
+        ./data/dummy_vcf_files/dummy_example_cleaned_vep.vcf")
+        #change "." by "c,c,c" in a specific SNP, modify in place
+        #https://stackoverflow.com/questions/525592/find-and-replace-inside-a-text-file-from-a-bash-command
+#filter
 run_bash("\
     bcftools +split-vep \
-        eso.vcf \
-        --include AA=\"A\" || AA=\"C\" || AA=\"T\" || AA=\"G\" || AA=\"a\" || AA=\"c\" || AA=\"t\" || AA=\"g\"\
-        --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n' | \
-    head")
-    #Remember that the convention for the sequence in ancestral allele determination is (see above):
-        #ACTG: high-confidence call, ancestral state supported by the other two sequences
-        #actg: low-confidence call, ancestral state supported by one sequence only
-        #N: failure, the ancestral state is not supported by any other sequence
-        #-: the extant species contains an insertion at this postion
-        #.: no coverage in the alignment
-    #In addition, the plugin AncestralAllele has two special conditions:
-        #"-" represents an insertion
-        #"?" indicates the chromosome could not be looked up in the FASTA
-    #Therefore, we only want to consider cases for which the ancestral allele is infered.
+        ./data/dummy_vcf_files/dummy_example_cleaned_vep.vcf \
+        --annotation CSQ \
+        --include 'AA=\"A,C,G,T,a,c,g,t\"'\
+        --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n'")
+#reverse the modification of the VCF file
+run_bash(" \
+    sed \
+        --in-place \
+        --expression 's/chr20:14370|A||||intergenic_variant||c/chr20:14370|A||||intergenic_variant||./g' \
+        ./data/dummy_vcf_files/dummy_example_cleaned_vep.vcf")
 
-
-
-
-
+#
+print("\n#######################################\n#######################################")
+print("exclude SNPs whose ancestral allele is ACGT or acgt: We get a SNP with ancestral = '.'")
+print("#######################################\n#######################################")
 run_bash("\
     bcftools +split-vep \
-        eso.vcf \
-        --include '(AA=\"A\" || AA=\"C\" || AA=\"T\" || AA=\"G\" || AA=\"a\" || AA=\"c\" || AA=\"t\" || AA=\"g\") && (REF!=AA)' \
-        --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n' | \
-    head")
-    #if we have actual ancetral allele infered, not "N", "."...
-    #then select those snps for which REF is not equal to ancestral
+        ./data/dummy_vcf_files/dummy_example_cleaned_vep.vcf \
+        --annotation CSQ \
+        --exclude 'AA=\"A,C,G,T,a,c,g,t\"'\
+        --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n'")
+
+#
+print("\n#######################################\n#######################################")
+print("after selecting SNPs with ACGT-acgt ancestral allele, select those whose REF is not equal to ancestral")
+print("#######################################\n#######################################")
+run_bash("\
+    bcftools +split-vep \
+        ./data/dummy_vcf_files/dummy_example_cleaned_vep.vcf \
+        --annotation CSQ \
+        --include 'AA=\"A,C,G,T,a,c,g,t\" && REF!=AA && ALT=AA' \
+        --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n'")
+    #select those SNPs for which 
+        #we have actual ancestral allele infered ("N", "."...) AND 
+        #the REF is different from that ancestral allele AND 
+        #the ALT is the ancestral. These are the SNPs we have to switch.
+    #I use && instead of & because only one & looks for variants satisfying the condition within sample.
+        #For example, say our VCF contains the per-sample depth and genotype quality annotations per SNP and we want to include only sites where ONE OR MORE samples have big enough coverage (DP>10) and genotype quality (GQ>20). The expression -i 'FMT/DP>10 & FMT/GQ>20'. This would select variants for which at least one sample has good coverage and genotype quality.  
+        #but we do not want this. We want to select SNPs that fullfill certain requirements across all samples, not just within at least one sample. We want to match the whole record, using features that are similar across samples, like REF, ALT and AA.
+            #http://samtools.github.io/bcftools/howtos/filtering.html
+
+
+
+
+
+
+##por aqui
+    #we have a problem with case sensitive: if ALT=C and AA=c, ALT is NOT equal to AA
+    #so I am creating a new AA field with all alleles as upper case, so we avoid this problem.
+    #check what to do with cases like "." because they are not updated in the new AA field, but this should not be a problem, right? They would be out after selecting for ACTG
+    #check the new field is the same with case insensitive
+    #then you should update the previous code with the new options like extracting AA from CSQ and then remove CSQ
+    #then create the list of SNPs for which REF is not AA
+    #then you can go to -fixref and use it to switch these snps in the original VCF file
+    #check and then go to the real data
+
+#create a tab separated file with the position info and ancestral allele in upper case of each SNP. Then create an index for this tab-delimited file using tabix.
+run_bash(" \
+    bcftools +split-vep \
+        ./data/dummy_vcf_files/dummy_example_cleaned_vep.vcf \
+        --annotation CSQ \
+        --columns AA:String | \
+    bcftools annotate \
+        --remove INFO/CSQ | \
+    bcftools view \
+        --drop-genotypes \
+        --no-header | \
+    awk \
+        'BEGIN{ \
+            FS=\"\t|;|=\"; \
+            OFS=\"\t\"}; \
+        { \
+            for(i=1;i<=NF;i++){ \
+                if($i==\"AA\"){ \
+                    $(i+1) = toupper($(i+1)); \
+                    print $1, $2, $(i+1); \
+                    next \
+                } \
+            } \
+        }' \
+    > ./data/dummy_vcf_files/anc_alleles_uppercase.tsv; \
+    sed  \
+        --in-place \
+        --expression '1i #CHROM\tPOS\tAA_upcase' \
+        ./data/dummy_vcf_files/anc_alleles_uppercase.tsv; \
+    bgzip \
+        --force \
+        --keep \
+        ./data/dummy_vcf_files/anc_alleles_uppercase.tsv; \
+    echo 'See the tab file with upper case ancestral alleles'; \
+    gunzip \
+        --stdout \
+        ./data/dummy_vcf_files/anc_alleles_uppercase.tsv.gz; \
+    tabix \
+        --sequence 1 \
+        --begin 2 \
+        --end 2 \
+        --force \
+        --comment '#' \
+        ./data/dummy_vcf_files/anc_alleles_uppercase.tsv.gz; \
+    echo 'See the tab file with upper case ancestral alleles after creating the index'; \
+    gunzip \
+        --keep \
+        --stdout \
+        ./data/dummy_vcf_files/anc_alleles_uppercase.tsv.gz")
+        #convert to upper case the ancestral alleles using awk
+            #Based on "#https://www.biostars.org/p/304979/"
+            #start and set 
+                #the field separator
+                    #"\t", ";" and "=" so we separate the fields like POS, CHROM... and the tags we have inside INFO that are in the format AC=3;AF=1... so we have the tag and its value as a different field
+                        #https://www.gnu.org/software/gawk/manual/html_node/Field-Separators.html
+                    #you can have sevaral delimiters separated with "|"
+                        #https://stackoverflow.com/questions/12204192/using-multiple-delimiters-in-awk
+                #the output field separator
+                    #"\t" because we want a tsv
+            #for i to the number of delimited fields
+                #if the field the ancestral allele (AA)
+                    #update the next field (value of AA) with the same string that was present but in upper case.
+                    #then print the fields 1 (chrom), 2 (pos), i+1 (AA value)
+                        #this is the format required by bcftools annotate to create a new field based on a tab delimited file
+                            #--annotations: VCF file or tabix-indexed FILE with annotations: CHR\tPOS[\tVALUE]
+                    #go to next row
+        #save the result as a file
+        #add a header to that file (tab separated names) but annotating that new line with "#" to avoid problems with tabix
+            #https://unix.stackexchange.com/a/401673
+        #compress using bgzip (from samtools) so the file is recognised by tabix, see below
+            #https://github.com/samtools/bcftools/issues/668
+        #create index of the tab delimited file with SNP positions and upper ancestral alleles
+            #Tabix indexes a TAB-delimited genome position file in.tab.bgz and creates an index file (in.tab.bgz.tbi or in.tab.bgz.csi) when region is absent from the command-line. The input data file must be position sorted and compressed by bgzip which has a gzip(1) like interface.
+            #After indexing, tabix is able to quickly retrieve data lines overlapping regions specified in the format "chr:beginPos-endPos". (Coordinates specified in this region format are 1-based and inclusive.)
+            #tabix
+                #--sequence: column number for sequence names
+                    #chromosome in our case (first column)
+                #--begin: column number for region start
+                    #position of the SNP in our case (second column)
+                #--end: column number for region end (if no end, set INT to -b)
+                    #again the SNP position in our case (second column)
+                #--force: overwrite existing index without asking
+                #--comment: skip comment lines starting with CHAR
+                    #in our case we use "#" to comment the first line with the header
+                #http://www.htslib.org/doc/tabix.html
+
+#take the indexed and tab-delimited file with the ancestral alleles in upper case and the position to create a new field with upper ancestral alleles
+run_bash(" \
+    bcftools +split-vep \
+        ./data/dummy_vcf_files/dummy_example_cleaned_vep.vcf \
+        --annotation CSQ \
+        --columns AA:String | \
+    bcftools annotate \
+        --remove INFO/CSQ \
+        --annotations ./data/dummy_vcf_files/anc_alleles_uppercase.tsv.gz \
+        --header-line '##INFO=<ID=AA_upcase,Number=.,Type=String,Description=\"The AA field from INFO/CSQ after converting alleles to uppercase\">'\
+        --columns CHROM,POS,AA_upcase")
+
+        #then extract AA tag from the CSQ field 
+        #using annotate
+            #remove the CSQ field
+            #add the new AA_upcase field using the tab delimited file including also a header to be appended to the VCF file about the new field
+                #--annotations: VCF file or tabix-indexed FILE with annotations: CHR\tPOS[\tVALUE]
+                    #this command can be used to transfer values from a tab-delimited file into a new INFO/TAG annotation. Note that if the TAG is not defined in the VCF header, a header fragment with the definition must be provided via the -h option.
+                #--header-line: Header line which should be appended to the VCF header, can be given multiple times.
+                #--columns: List of columns in the annotation file, e.g. CHROM,POS,REF,ALT,-,INFO/TAG. See man page for details
+
+                #https://samtools.github.io/bcftools/howtos/annotate.html
+
+    #the first snp with "." does not get AA_upcase
+
+    #check more tabix
+        #maybe add more examples to check behaviour
+
+    #replace value with awk?
+        #https://stackoverflow.com/questions/51258235/replace-particular-column-value-using-awk-if-found
+
+    #the original script with awk used next. It is used to go to the next line once you ahve fullfill the condition. It makes things faster if you have another if after, because if you already satisifed the condition, you do not need to do more stuff there.
+        #https://www.tecmint.com/use-next-command-with-awk-in-linux/
+        #https://www.biostars.org/p/304979/
+
+
+    #mete en los codigos previos y en los siguientes lo de sacar AA y quitar CSQ
+
+
+    #check AA and AA_upcase are the same with case insensitive
+
+
+
+
+#
+print("\n#######################################\n#######################################")
+print("now manually change ancestral of the first SNP from "." to "c,c,c" to check whether our expression catch it: We can see how the first SNP now with AA=c is included by the expression AA='ACTGactg', so we are targeting ancestral alleles with high and low confidence")
+print("#######################################\n#######################################")
+#find and replace
+run_bash(" \
+    sed \
+        --in-place \
+        --expression 's/chr20:14370|A||||intergenic_variant||./chr20:14370|A||||intergenic_variant||c/g' \
+        ./data/dummy_vcf_files/dummy_example_cleaned_vep.vcf")
+        #change "." by "c,c,c" in a specific SNP, modify in place
+        #https://stackoverflow.com/questions/525592/find-and-replace-inside-a-text-file-from-a-bash-command
+#filter
+run_bash("\
+    bcftools +split-vep \
+        ./data/dummy_vcf_files/dummy_example_cleaned_vep.vcf \
+        --annotation CSQ \
+        --include 'AA=\"A,C,G,T,a,c,g,t\" && REF!=AA && ALT=AA' \
+        --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n'")
+#reverse the modification of the VCF file
+run_bash(" \
+    sed \
+        --in-place \
+        --expression 's/chr20:14370|A||||intergenic_variant||c/chr20:14370|A||||intergenic_variant||./g' \
+        ./data/dummy_vcf_files/dummy_example_cleaned_vep.vcf")
+
+
+
 
     #check options this plugin, you can select specific data from CSQ...
         #https://samtools.github.io/bcftools/howtos/plugin.split-vep.html
+
 
 
 #POR AQUII
