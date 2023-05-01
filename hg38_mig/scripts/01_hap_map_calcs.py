@@ -1813,6 +1813,7 @@ run_bash("\
 
 
 
+#ANSWER JESUS WHEN FINISHED THIS PART
 
 
 ##por aqui
@@ -1824,6 +1825,8 @@ run_bash("\
     #then create the list of SNPs for which REF is not AA
     #then you can go to -fixref and use it to switch these snps in the original VCF file
     #check and then go to the real data
+
+
 
 #create a tab separated file with the position info and ancestral allele in upper case of each SNP. Then create an index for this tab-delimited file using tabix.
 run_bash(" \
@@ -1911,7 +1914,7 @@ run_bash(" \
                     #in our case we use "#" to comment the first line with the header
                 #http://www.htslib.org/doc/tabix.html
 
-#take the indexed and tab-delimited file with the ancestral alleles in upper case and the position to create a new field with upper ancestral alleles
+#take the indexed and tab-delimited file with the ancestral alleles in upper case and the position to create a new field with upper ancestral alleles, save the new VCF file
 run_bash(" \
     bcftools +split-vep \
         ./data/dummy_vcf_files/dummy_example_cleaned_vep.vcf \
@@ -1920,8 +1923,98 @@ run_bash(" \
     bcftools annotate \
         --remove INFO/CSQ \
         --annotations ./data/dummy_vcf_files/anc_alleles_uppercase.tsv.gz \
-        --header-line '##INFO=<ID=AA_upcase,Number=.,Type=String,Description=\"The AA field from INFO/CSQ after converting alleles to uppercase\">'\
-        --columns CHROM,POS,AA_upcase")
+        --columns CHROM,POS,AA_upcase \
+        --header-line '##INFO=<ID=AA_upcase,Number=.,Type=String,Description=\"The AA field from INFO/CSQ after converting alleles to uppercase\">' > \
+    ./data/dummy_vcf_files/dummy_example_cleaned_vep_anc_up.vcf")
+        #From the CSQ field added by VEP, extract the tag "AA" as a string, which is the ancestral state.
+        #remove the CSQ field
+        #add a new INFO/Tag using the tab delimited file previously created
+        #select the columns from the tab file in which we are interested
+        #add the header line for this new tag
+        #save as a new file
+
+#
+print("\n#######################################\n#######################################")
+print("check that the new INFO/TAG with ancestral alleles in upper case is exactly the same than the original AA tag but in uppercase always")
+print("#######################################\n#######################################")
+count_aa_no_upper = run_bash(" \
+    bcftools view \
+        ./data/dummy_vcf_files/dummy_example_cleaned_vep_anc_up.vcf \
+        --drop-genotypes \
+        --no-header | \
+    awk \
+        'BEGIN{ \
+            FS=\"\t|;|=\"; \
+            OFS=\"\t\"}; \
+        { \
+            for(i=1;i<=NF;i++){ \
+                if($i==\"AA\"){ \
+                    if(toupper($(i+1))== \"A\" || toupper($(i+1))== \"C\" || toupper($(i+1))== \"T\" || toupper($(i+1))== \"G\" && toupper($(i+1))!=$(i+3)){ \
+                        count++; \
+                        next \
+                    } \
+                } \
+            } \
+        }; \
+        END{ \
+            print count\
+            }'", return_value=True).strip()
+
+if (count_aa_no_upper == ""):
+    print("TRUE")
+else:
+    raise ValueError("SERIOUS ERROR! We have not correctly converted to upper case all ancestral alleles")
+
+#
+print("\n#######################################\n#######################################")
+print("check that REF and ALT are always in upper case")
+print("#######################################\n#######################################")
+count_ref_alt_no_upper = run_bash(" \
+    bcftools view \
+        ./data/dummy_vcf_files/dummy_example_cleaned_vep_anc_up.vcf \
+        --drop-genotypes \
+        --no-header | \
+    awk \
+        'BEGIN{ \
+            FS=\"\t|;|=\"; \
+            OFS=\"\t\"}; \
+        { \
+            if(toupper($4)!=$4 || toupper($5)!=$5){ \
+                count++; \
+                next \
+            } \
+        }; \
+        END{ \
+            print count \
+        }'", return_value=True).strip()
+        #remove genotypes and header
+        #process with awk
+            #begin by defining the delimiter of the input and the output. In the input we have a the different fields separated with "\t". The INFO field with tag separated by ";" and each tag name followed by "=" and its value.
+            #if in a given row, the fourth OR fifth fields (REF and ALT, respectively), do not have the value in upper case, add 1 to the count
+                #I understand that 4 and 5 columns should be always REF and ALT
+                #https://stackoverflow.com/questions/13067532/awk-and-operator
+                #https://stackoverflow.com/questions/12809909/efficient-way-to-count-the-amount-lines-obeying-some-condition
+            #go to the next row because we have already checked the fields we are interested in
+            #when done, print the count
+        #save the count as an object in python without "\n" and the end of the line (using strip for that)
+
+#if the count is not empty, then we have a problem
+if (count_ref_alt_no_upper == ""):
+    print("TRUE")
+else:
+    raise ValueError("SERIOUS ERROR! We do not have the all REF and ALT alleles in upper case so we cannot correctly select those SNPs whose REF is not AA, because our ancestral allele data is always upper case")
+
+
+
+
+
+
+
+
+
+
+
+
 
         #then extract AA tag from the CSQ field 
         #using annotate
@@ -1933,6 +2026,10 @@ run_bash(" \
                 #--columns: List of columns in the annotation file, e.g. CHROM,POS,REF,ALT,-,INFO/TAG. See man page for details
 
                 #https://samtools.github.io/bcftools/howtos/annotate.html
+
+
+            #https://stackoverflow.com/a/44932064/12772630
+
 
     #the first snp with "." does not get AA_upcase
 
@@ -1955,31 +2052,17 @@ run_bash(" \
 
 
 
-#
-print("\n#######################################\n#######################################")
-print("now manually change ancestral of the first SNP from "." to "c,c,c" to check whether our expression catch it: We can see how the first SNP now with AA=c is included by the expression AA='ACTGactg', so we are targeting ancestral alleles with high and low confidence")
-print("#######################################\n#######################################")
-#find and replace
-run_bash(" \
-    sed \
-        --in-place \
-        --expression 's/chr20:14370|A||||intergenic_variant||./chr20:14370|A||||intergenic_variant||c/g' \
-        ./data/dummy_vcf_files/dummy_example_cleaned_vep.vcf")
-        #change "." by "c,c,c" in a specific SNP, modify in place
-        #https://stackoverflow.com/questions/525592/find-and-replace-inside-a-text-file-from-a-bash-command
 #filter
 run_bash("\
-    bcftools +split-vep \
-        ./data/dummy_vcf_files/dummy_example_cleaned_vep.vcf \
-        --annotation CSQ \
-        --include 'AA=\"A,C,G,T,a,c,g,t\" && REF!=AA && ALT=AA' \
-        --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n'")
-#reverse the modification of the VCF file
-run_bash(" \
-    sed \
-        --in-place \
-        --expression 's/chr20:14370|A||||intergenic_variant||c/chr20:14370|A||||intergenic_variant||./g' \
-        ./data/dummy_vcf_files/dummy_example_cleaned_vep.vcf")
+    bcftools query \
+        ./data/dummy_vcf_files/dummy_example_cleaned_vep_anc_up.vcf \
+        --include 'AA_upcase=\"A,C,G,T\" && REF!=AA_upcase && ALT=AA_upcase' \
+        --format '%TYPE %ID %CHROM %POS %REF %ALT %AA_upcase\n'")
+
+    #check different scenarios
+        #just change dummy_example_cleaned_vep_anc_up.vcf
+        #check "count_aa_no_upper" fails when setting "." to "a" or "c"
+            #it seems awk does not cosnider "A"=="A"
 
 
 
