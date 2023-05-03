@@ -185,7 +185,7 @@ tf_set_seed(tf_seed)
 
 from sklearn.model_selection import KFold
 
-shuffle_split = KFold(n_splits=10, shuffle=True, random_state=23)
+shuffle_split = KFold(n_splits=5, shuffle=True, random_state=23)
 
 #set also the number of jobs as only 2
 #we will use 100GB per core
@@ -1095,3 +1095,5 @@ n_trials = np.int64(args.n_trials)
 #n_trials=2
 main_optuna(optuna_seed=optuna_seed, n_trials=n_trials) 
     #https://stackoverflow.com/questions/73569369/optuna-hyperparameter-search-repeats-hyperparameters-across-studies-with-paralle
+
+#we are going to use 5 kfold for now to seep up things and explore more hyperparameter combinations, then when we get good architecutres could narrow the search
