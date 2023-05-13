@@ -185,11 +185,12 @@ tf_set_seed(tf_seed)
 
 from sklearn.model_selection import KFold
 
-shuffle_split = KFold(n_splits=5, shuffle=True, random_state=61)
+shuffle_split = KFold(n_splits=3, shuffle=True, random_state=61)
+    #IMPORTANT, 3 SPLITS ONLY FOR EXPLORATION, THEN INCREASE TO 5 OR 10
 
-#set also the number of jobs as only 5
-#we will use 180GB per core
-number_jobs = 5
+#set also the number of jobs as only 4: 4*10 optuna processes=40 cores, while have 50
+#we will use 80GB per core
+number_jobs = 3
     #Using as many jobs as folds, we get
     #"The exit codes of the workers are {SIGABRT(-6)}"
     #A lot of people is having the same problem even RAM seems to be ok. Some solve it by decreasing n_jobs and others by increase RAM usage.    
