@@ -39,3 +39,4 @@ sweep_enrichments/david_pipeline/original_files
 data/
 flex_sweep_modeling/results
 hg38_mig/results
+hg38_mig/scripts/scripts_jesus/

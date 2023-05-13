@@ -1756,7 +1756,7 @@ run_bash("\
 
 #
 print("\n#######################################\n#######################################")
-print("now manually change ancestral of the first SNP from "." to "c,c,c" to check whether our expression catch it: We can see how the first SNP now with AA=c is included by the expression AA='ACTGactg', so we are targeting ancestral alleles with high and low confidence")
+print("now manually change ancestral of the first SNP from '.' to 'c,c,c' to check whether our expression catch it: We can see how the first SNP now with AA=c is included by the expression AA='ACTGactg', so we are targeting ancestral alleles with high and low confidence")
 print("#######################################\n#######################################")
 #find and replace
 run_bash(" \

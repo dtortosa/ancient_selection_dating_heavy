@@ -25,7 +25,7 @@
 ### REQUIRED. Set the memory required for this job. I will set 40GC per each of the 100 cores=4000GB; https://public.confluence.arizona.edu/display/UAHPC/Allocation+and+Limits
 ###SBATCH --mem=400gb
 ### REQUIRED. Set the gb per core. YOU HAVE TO SELECT --mem or --mem-per-cpu but NOT BOTH.
-#SBATCH --mem-per-cpu=40gb
+#SBATCH --mem-per-cpu=180gb
 ### set the constraint for high memory nodes in case you use a lot of memory per node
 ###SBATCH --constraint=hi_mem
 ### REQUIRED. Specify the time required for this job, hhh:mm:ss
