@@ -186,17 +186,17 @@ tf_set_seed(tf_seed)
 from sklearn.model_selection import KFold
 
 shuffle_split = KFold(n_splits=3, shuffle=True, random_state=61)
-    #IMPORTANT, 3 SPLITS ONLY FOR EXPLORATION, THEN INCREASE TO 5 OR 10
+    #IMPORTANT, 3 SPLITS ONLY FOR EXPLORATION and explore more parametric space, THEN INCREASE TO 5 OR 10
 
-#set also the number of jobs as only 4: 4*10 optuna processes=40 cores, while have 50
-#we will use 80GB per core
-number_jobs = 3
-    #Using as many jobs as folds, we get
+#set also the number of jobs as only 2 due to memory usage errors (see below)
+number_jobs = 2
+    #Using more jobs we get
     #"The exit codes of the workers are {SIGABRT(-6)}"
     #A lot of people is having the same problem even RAM seems to be ok. Some solve it by decreasing n_jobs and others by increase RAM usage.    
     #"Turns out allocating all CPUs can be unstable, specially when there are other independent programs running that can suddenly have an uncontrolled spike in memory usage."
     #it seems a problem of memory usage with scikit
         #https://github.com/scikit-learn-contrib/skope-rules/issues/18
+    #I have detected that the decreasing the number of cores reduces the usage of memory even having the same number_jobs and optuna processes. Using for example 20 cores, I can run 10 optuna processes with number_jobs=2 using just 200GB per core. If I increase the number of cores to 40, things seems to seed up, but I get the workers error. So we are keeping things conservative with just 20 cores.
 
 
 # ## Preparing Deep Learning
