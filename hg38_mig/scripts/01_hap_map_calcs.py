@@ -1449,6 +1449,13 @@ run_bash(" \
     gunzip -c ./data/dummy_vcf_files/dummy_example_IMPUTE2_raw.hap.gz")
         #see hap file calculation of the real data to see details about hap format.
 
+
+###POR AQUI, several months ago I started the pollarization of the alleles. I installed VEP and used one of its plugins to estimate the ancestral allele of each SNP within a new VCF file. Then, I started working with AWK to convert to upper case the new column with the ancestral allele, so we have high and low-confidence ancestral alleles and they can be used in conditions. In other words, I am selecting those snps for which REF is not Ancestral in bcftools, and for that I need the same case, as the conditions of bcftools are case sensitive.
+
+#see email from Jesus about VEP installation, and answer once you have solved the upper case problem
+    #https://mail.google.com/mail/u/0/?tab=rm&ogbl#drafts/QgrcJHsHpDRJdfjndBxlCjQHdCNBwJJqNSl 
+
+#then you should go to the actual data
 #
 print("\n#######################################\n#######################################")
 print("polarize alleles")
