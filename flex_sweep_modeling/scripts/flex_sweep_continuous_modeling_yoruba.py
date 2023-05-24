@@ -757,11 +757,12 @@ regu_L2_values=[1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8, 1e-9, 1e-10] #us
 
 
 n_layers = np.arange(1, 21, 1)
-n_units = np.arange(1, 1000, 20)
+n_units = np.arange(1, 1500, 20)
     #For the second run, we are extending the maximum number of nodes
     #the best number until now is between 300-400, but some trials
     #are also high close to 500, so maybe the optimum
     #is bigger.
+    #in the 10th run we have a lot of good runs around 1000, so we are extending the upper limit a lot.
 
 
 # **Note**
