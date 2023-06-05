@@ -117,7 +117,8 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
 	
 	#give rights to run the bash script
 	chmod +x opt/scripts/bash_optuna_processes.sh
-	
+
+
 
 #############################
 ########## TEST #############
@@ -155,6 +156,14 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
 #The contents of the %runscript section are written to a file within the container that is executed when the container image is run (either via the singularity run command or by executing the container directly as a command). When the container is invoked, arguments following the container name are passed to the runscript. This means that you can (and should) process arguments within your runscript.
 
 %runscript
+
+	#upgrade the optuna database
+	optuna storage upgrade --storage 'sqlite:///results/optuna_optimization/yoruba_flex_sweep_closest_window_center_optimization.db'
+		#I got the following error one time after building the container again and then, likely, getting a newer version of optuna, which seems to be in conflict with the version of the database that was created with a previous optuna version
+			#"RuntimeError: The runtime optuna version 3.2.0 is no longer compatible with the table schema (set up by optuna 3.1.1). Please execute `$ optuna storage upgrade --stora ge $STORAGE_URL` for upgrading the storage."
+		#this is solved updating the database using optuna from the command line as suggested by the error.
+		#this has to be done once the container is in the HPC and ready to run the script. So just before run it, update the database.
+		#if the DB has already the latest version, you just get a confirmation message: "This storage is up-to-date."
 
 	#run scripts. NOT USE "&", each script have to be run after the previous one have been run
 	/./opt/scripts/bash_optuna_processes.sh > bash_optuna_processes.out 2>&1
