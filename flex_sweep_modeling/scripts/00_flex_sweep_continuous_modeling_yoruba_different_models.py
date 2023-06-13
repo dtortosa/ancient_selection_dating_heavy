@@ -125,6 +125,18 @@ run_bash("ls")
 
 
 ####################
+# prepare folder structure #
+####################
+print_text("prepare folder structure", header=1)
+run_bash(" \
+    mkdir \
+        --parents \
+        ./results/model_comparison; \
+    ls -l ./results")
+
+
+
+####################
 # data preparation #
 ####################
 print_text("data preparation", header=1)
@@ -144,6 +156,44 @@ final_data_yoruba = pd.read_csv( \
     compression="gzip")
 print(final_data_yoruba)
 
+
+
+#print_text("clean predicted class", header=3)
+#if you want to do classification, you have to calculate the number of sweeps based on the probability and then convert "predicted_class" to 0-1 integer
+#final_data_yoruba["predicted_class"] = ["neutral" if prob < 0.5 else "sweep" for prob in final_data_yoruba["prob(sweep)"]]
+#decode_response = {"predicted_class": {"neutral": 0, "sweep": 1}}
+#final_data_yoruba = final_data_yoruba.replace(decode_response)
+    #https://pbpython.com/categorical-encoding.html
+#final_data_yoruba["predicted_class"]=final_data_yoruba["predicted_class"].astype("int")
+    #https://stackoverflow.com/questions/41925157/logisticregression-unknown-label-type-continuous-using-sklearn-in-python
+#discrete is not bad! but regression seems to work better and we avoid issues related to dicomitize a continuous variable and using an arbitrary threshold.
+    #results RandomForestRegressor in CV - 5 fold
+        #accuracy: array([0.80921584, 0.81601294, 0.82531338, 0.82248281, 0.82207845]),
+        #precision: array([0.78202677, 0.80529301, 0.82278481, 0.77163904, 0.81785714]),
+        #recall: array([0.53324641, 0.54755784, 0.57667934, 0.57084469, 0.57537688]),
+        #f1: array([0.63410853, 0.65187452, 0.6780924 , 0.65622553, 0.67551622])}
+    #results RandomForestRegressor in the test set
+        #accuracy = 0.8479948253557568
+        #precision = 0.8280346820809249
+        #recall = 0.6201298701298701
+        #f1 = 0.7091584158415841
+    #explanation about metrics
+        #accuracy does not work very well for imbalanced datasets like ours, we have 1/3 of sweeps compared to non-sweeps.
+        #precision minimice false positives
+        #recall minimize false negative
+        #f1 is the harmomic average of precision and recall, so if any of the two parameters is low, the average will be much lower than it was an aritmetic or geometric average. 
+            #this is useful if you want to minimize both false negatives and positives
+            #https://towardsdatascience.com/essential-things-you-need-to-know-about-f1-score-dbd973bf1a3
+            #https://stephenallwright.com/good-f1-score/
+    #Interpretation
+        #Overall we are OK: f1 value around 0.6 is OK but not good (pasable)! 
+            #https://stephenallwright.com/good-f1-score/
+        #we do not have a higher f1 because recall is lower than precision, i.e., we are not minimizing false negatives as much as false positives.
+        #in other words, we have more sweeps that are classified as non-sweeps than neutral classified as sweep.
+            #you can also see this with the continuous variable because there is more error in the prediction of strong sweeps candidates (log probability equal to zero).
+    #setting the threshold at 0.75 make recall worse. Also not sure if using the prediciton improvement is a good a idea to select the threshold.
+        #https://stats.stackexchange.com/a/94044
+    #this is not too bad, but regression gets better results and we avoid the use of arbitrary thresholds for classification
 
 
 print_text("clean the data", header=3)
@@ -172,9 +222,11 @@ print(modeling_data_array)
 
 print_text("Apply log transformation to the target variable", header=4)
 import numpy as np
-modeling_data_array[:, 0] = np.log(modeling_data_array[:, 0])
+#modeling_data_array[:, 0] = np.log(modeling_data_array[:, 0])
     #It is should be ok to apply the log before splitting the dataset. There is a problem if you use a transformation that requires learn something from the rest of the data. For example, if you scale the whole dataset, you are using the mean and sd of the whole dataset, influencing data that will be used for test. In other words, there is room for a data leak. In this case, however, log(1.5) is always 0.4, independently of the rest of the data, so I think no data leak is possible. You could do a pipeline with log but it is a little bit more complicated (see [link](https://stats.stackexchange.com/questions/402470/how-can-i-use-scaling-and-log-transforming-together)), so we leave it for now.
     #From all these follow that if you use other transformations like preprocessing.PowerTransformer or QuantileTransformer ([link](https://yashowardhanshinde.medium.com/what-is-skewness-in-data-how-to-fix-skewed-data-in-python-a792e98c0fa6)), it is possible to have data leaks, so be careful.
+
+    #In previous versions I was not using scaling or log transform for deep learning, because I assumed that the DNNs can deal with that, but maybe that was too much and in any case, we are going to use here also more simpler models that can be helped by scaling
 
 
 
@@ -252,6 +304,7 @@ shuffle_split = KFold( \
     n_splits=5,  \
     shuffle=True,  \
     random_state=61)
+print(shuffle_split)
 
 
 print_text("set also the number of jobs as only 2 due to memory usage errors (see below)", header=4)
@@ -267,12 +320,178 @@ number_jobs = 2
 
 
 
+print_text("Explanations about scaling", header=2)
+#We could apply the preprocessing to the initial dataset and then split into training and test but this is problematic. As previously explained, the scaling is done using the mean and sd of the sample, so if you do it in the whole dataset, the part will be used for test will be also influenced but training data. If you included your test data in the scaling, that means that your new data is treated differently from the training set, which defeats the purpose of the training set. In practice, this is unlikely to have a large impact, as computing mean and standard deviation is relatively stable on well-behaved datasets. However, I recommend to adhere to best practices, and split off the test set before doing any processing ([more info](https://amueller.github.io/aml/01-ml-workflow/03-preprocessing.html)).
+
+#In other words, when you fit the standard scaler on the whole dataset, information from the test set is used to normalize the training set. This is a common case of "data leakage", which means that information from the test set is used while training the model. This often results in overestimates of the model's performance ([link](https://stackoverflow.com/questions/63037248/is-it-correct-to-use-a-single-standardscaler-before-splitting-data?noredirect=1&lq=1)).
+
+#standard.scaler() is similar to preprocessing.scale(). In both cases, scaling means standardizing by removing the mean and scaling to unit variance. The standard score of a sample x is calculated as: z = (x - u) / s, where u is the mean of the training samples or zero if with_mean=False, and s is the standard deviation of the training samples or one if with_std=False.
+
+#Instead of using preprocessing.scale, we will use preprocessing.StandardScaler(), which is a transformer. You can open an instance of this transformer, call the method fit to learn the mean and sd from the data and then apply the trasfomation
+from sklearn import preprocessing
+dummy_sample = np.array([1,1,2,2])
+
+scaler = preprocessing.StandardScaler()
+scaler.fit(dummy_sample.reshape(-1,1))
+print(f"See result with preprocessing.StandardScaler")
+print(scaler.transform(dummy_sample.reshape(-1,1)))
+print("We get the exactly the same if we use preprocessing.scale")
+print(preprocessing.scale(dummy_sample))
+
+#The great adventage of StandardScaler() is that we can call an instance and use it within a pipeline that will be feed into a gridsearch. Internally, gridsearch scale the training dataset using the training mean-sd, fit the data and then predict in evaluation dataset but after scaling that evaluation dataset with the mean sd of the training set. In the next iteration (next training-eval set) the processes is repeated ([link](https://stackoverflow.com/questions/51459406/how-to-apply-standardscaler-in-pipeline-in-scikit-learn-sklearn)).
+
+#In previous versions I was not using scaling or log transform for deep learning, because I assumed that the DNNs can deal with that, but maybe that was too much and in any case, we are going to use here also more simpler models that can be helped by scaling
+
+
+
+print_text("comparison of multiple models", header=2)
 
 
 
 
 
 
+#Create a pipe that includes the tranformer to do the scaling so it is fit (get mean and SD) to the training sets and not evaluation/validation sets. When using grid search ([link](https://stackoverflow.com/questions/51459406/how-to-apply-standardscaler-in-pipeline-in-scikit-learn-sklearn)) and cross_val_score ([link](https://stackoverflow.com/questions/44446501/how-to-standardize-data-with-sklearns-cross-val-score)), it uses the mean and SD of the training set of a given iteration and apply the transformation to the test set, then in the next iteration does the same but with the new training and test set.
+
+
+#We need to first create a pipeline ([link](https://stackoverflow.com/questions/33091376/what-is-exactly-sklearn-pipeline-pipeline)) including scaling of predictors and the regressor. Then add it to the transformer of the response using TransformedTargetRegressor. We cannot just use StandardScaling on the response ([link](https://stackoverflow.com/questions/67824676/how-to-scale-both-x-and-y-data-in-sklearn-pipeline)).
+
+
+from sklearn.pipeline import Pipeline
+from sklearn.compose import TransformedTargetRegressor
+from sklearn import preprocessing
+
+from sklearn.ensemble import RandomForestRegressor
+
+
+import xgboost as xgb
+model = xgb.XGBRegressor(random_state=23534, n_estimators=500, booster="gbtree")
+    #booster: gbtree, gblinear or dart.
+
+
+
+model = RandomForestRegressor(random_state=23534, n_estimators=100)
+model_name = "random_forest"
+    #RF is 0.52 for VC and 0.86 for whole dataset
+
+trans = QuantileTransformer(n_quantiles=5000, output_distribution='uniform')
+
+from sklearn.preprocessing import PowerTransformer, QuantileTransformer
+
+
+estim = TransformedTargetRegressor( \
+    regressor=Pipeline([ \
+        ('scale', preprocessing.StandardScaler()), \
+        ('regressor', model)]), \
+    transformer=preprocessing.StandardScaler())
+estim
+
+    #we can trandofm only y, the R2 is lowet in CV, but fit in the hist is good
+        #Sometimes it can be beneficial to transform a highly exponential or multi-modal distribution to have a uniform distribution. This is especially useful for data with a large and sparse range of values, e.g. outliers that are common rather than rare.
+            #https://machinelearningmastery.com/quantile-transforms-for-machine-learning/
+
+
+
+
+#QuantileTransformer().fit(modeling_data_array[:, 0].reshape(-1, 1)).transform(modeling_data_array[:, 0].reshape(-1, 1))
+
+#modeling_data_array[:, 0] = QuantileTransformer(n_quantiles=100, output_distribution="uniform").fit(modeling_data_array[:, 0].reshape(-1, 1)).transform(modeling_data_array[:, 0].reshape(-1, 1)).reshape(15458)
+    #DATA LEAKAGE!!! if use this, you have to do the transformation of Y in the pipeline
+
+
+#See the keys, you can see how you need to write two times regressor to reach alpha parameter of Ridge ("regressor__regressor__alpha"). Ridge is a regressor of the pipeline, but the pipeline is in turn a regressor of TransformedTargetRegressor.
+
+#Fit and predict the model using the input data
+
+
+estim.fit(X_train, y_train)
+prediction = estim.predict(X)
+
+#See R2 in the whole dataset and in CV-subsets
+from sklearn.metrics import r2_score
+from sklearn.model_selection import cross_val_score
+
+print("R2 in the whole dataset:")
+r2_whole_dataset = r2_score(y, prediction)
+print(r2_whole_dataset)
+
+print("R2 across CV folds:")
+r2_cv = np.mean(cross_val_score(estimator=estim, 
+    X=X_train, \
+    y=y_train, \
+    cv=shuffle_split, \
+    scoring="r2", \
+    n_jobs=shuffle_split.n_splits))
+print(r2_cv)
+
+
+print("R2 in the test dataset:")
+r2_test_dataset = r2_score(y_test, estim.predict(X_test))
+print(r2_test_dataset)
+
+
+#Plot the observed sweep probability and the prediction in the whole dataset
+import matplotlib.pyplot as plt
+
+plt.hist(y, bins=50, color="green", alpha=0.4, label="Observed sweep probability")
+plt.hist(prediction, bins=50, color="blue", alpha=0.4, label="Prediction")
+plt.annotate("R2 whole dataset: " + str(np.round(r2_whole_dataset, 4)), 
+             xy=(0.05, 0.7),
+             xycoords='axes fraction')
+plt.annotate("R2 CV: " + str(np.round(r2_cv, 4)), 
+             xy=(0.05, 0.6),
+             xycoords='axes fraction')
+plt.annotate("R2 CV: " + str(np.round(r2_test_dataset, 4)), 
+             xy=(0.05, 0.5),
+             xycoords='axes fraction')
+plt.legend(loc='upper left')
+plt.savefig( \
+    fname="./results/model_comparison/" + model_name + "_hist_pred_observed.png")
+plt.close()
+
+
+#When interpreting the R-Squared it is almost always a good idea to plot the data. That is, create a plot of the observed data and the predicted values of the data. This can reveal situations where R-Squared is highly misleading. For example, if the observed and predicted values do not appear as a cloud formed around a straight line, then the R-Squared, and the model itself, will be misleading. Similarly, outliers can make the R-Squared statistic be exaggerated or be much smaller than is appropriate to describe the overall pattern in the data.
+    #https://www.displayr.com/8-tips-for-interpreting-r-squared/#:~:text=Don't%20use%20R%2DSquared%20to%20compare%20models&text=There%20are%20two%20different%20reasons,the%20variables%20are%20being%20transformed.
+plt.scatter(y, prediction, s=0.5)
+plt.annotate("R2 whole dataset: " + str(np.round(r2_whole_dataset, 4)), 
+             xy=(0.05, 0.7),
+             xycoords='axes fraction')
+plt.annotate("R2 CV: " + str(np.round(r2_cv, 4)), 
+             xy=(0.05, 0.6),
+             xycoords='axes fraction')
+plt.annotate("R2 CV: " + str(np.round(r2_test_dataset, 4)), 
+             xy=(0.05, 0.5),
+             xycoords='axes fraction')
+plt.savefig( \
+    fname="./results/model_comparison/" + model_name + "_scatter_pred_observed.png")
+plt.close()
+
+    #R2=0.5 in evaluation and test sets, which is usually considered OK
+        #https://stephenallwright.com/good-r-squared-value/
+    #the problem is that we have more error for strong sweep candidates (log probability close to zero). In classification occurs the same, as we have more false negatives than false positives (lower recall than precision). 
+    #the MDR for iHS has around 0.7 for the whole dataset (we are above here) but fit very well the distribution of iHS, while here we have a problem with the right tail.
+    #R2 or MSE/MAE for optimization?
+        #https://machinelearningmastery.com/regression-metrics-for-machine-learning/
+
+    #myabe using classification so we can optimize specifically recall?
+
+
+
+    #log improve a bit prediction and the histogram is much better, we lose the big peak around zero probability having only one at 1
+        #maybe you should apply log for DNN
+
+
+
+
+
+
+
+
+
+
+
+
+'''
 
 ##########
 # optuna #
@@ -503,3 +722,5 @@ main_optuna(optuna_seed=optuna_seed, n_trials=n_trials)
     #https://stackoverflow.com/questions/73569369/optuna-hyperparameter-search-repeats-hyperparameters-across-studies-with-paralle
 
 #we are going to use 5 kfold for now to seep up things and explore more hyperparameter combinations, then when we get good architecutres could narrow the search
+
+'''
