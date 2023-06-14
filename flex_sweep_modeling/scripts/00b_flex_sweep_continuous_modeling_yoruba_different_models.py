@@ -561,9 +561,10 @@ plt.close()
 #thermogenic distance doe snot work, but this is Yoruba, we should check in non-african pops exposed to cold conditions
 #check BAT? very good for climahealth. It is not comprehensive, we are losng genes important for thermo and BAT, but we know the genes included are important for thermo fiven what we found...
 
-#there is some pattern of decrease with distance to the bat connectome genes, but it is not very clear. When extending the list of genes biologically closest to UCP1 from 1% to 5%, the pattern improves. With 7, 8% is great, but at 9-10% is much less clear. Maybe we have more power with more genes related to BAT but at some point we are too much far away from UCP1?
+#there is some pattern of decrease with distance to the bat connectome genes, but it is not very clear. When extending the list of genes biologically closest to UCP1 from 1% to 5%, the pattern improves. With 7, 8% is great, but at 9, 10, 12...% is much less clear. Maybe we have more power with more genes related to BAT but at some point we are too much far away from UCP1?
     #I cannot find a way to check multiple percentages automatically, becuase we need to see the pattern in ALE plot (min-max is important but also if there is an increase in the middle), the length of the intervals... when
 
+#check 15, 17, 22....
 #repasa codigo de BAT y sigue modeling, trying to decide best transformation and then model comparison
     #hink if run DNN optuna with log...
 
