@@ -12,11 +12,13 @@
 
 
 
-########################################################
-######## COMPARE DIFFERENT MODELS IN PREDICTION ########
-########################################################
 
-#This script will perform model comparison for analysing flex-sweep probabilities 
+#####################################################
+######## CALCULATE THE DISTANCE TO BAT GENES ########
+#####################################################
+
+#This script will calculate the distance to each coding gene to the closest gene related to the BAT connectome
+
 
 
 
@@ -25,6 +27,8 @@
 ##################
 
 import pandas as pd
+import numpy as np
+
 
 
 
@@ -49,6 +53,7 @@ print_text("checking function to print nicely: header 1", header=1)
 print_text("checking function to print nicely: header 2", header=2)
 print_text("checking function to print nicely: header 3", header=3)
 print_text("checking function to print nicely: header 4", header=4)
+
 
 
 
@@ -124,9 +129,9 @@ run_bash("ls")
 
 
 
-####################
+############################
 # prepare folder structure #
-####################
+############################
 print_text("prepare folder structure", header=1)
 run_bash(" \
     mkdir \
@@ -136,88 +141,170 @@ run_bash(" \
 
 
 
-
-
-import pandas as pd
-
+################
+# prepare data #
+################
+print_text("prepare data", header=1)
+print_text("load the required files", header=2)
+print_text("load gene coordinates", header=3)
 gene_coords = pd.read_table(\
 	"/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/postdoc_enard_lab/projects/method_deep/data/search_diego/results/gene_number_cds_coords.txt", \
 	sep="\t", \
 	header=0, \
 	low_memory=False)
-gene_coords
+print(gene_coords)
 
+
+print_text("Select only one row per gene because in this file, each row is an exon, but all the rows of the same gene have the same middle gene position and gene windows as all the rows belongs to the same gene", header=4)
 gene_coords_no_duplicated = gene_coords[ \
-	(-gene_coords["gene_id"].duplicated(keep="first"))]
-gene_coords_no_duplicated
+	~gene_coords["gene_id"].duplicated(keep="first")]
+    #set as True all duplicates except the first occurrence.
+    #then negate with "~", so all duplicates are False except the first occurrence, leading to select only that first occurrence
+print(gene_coords_no_duplicated)
 
-import numpy as np
+print("Check that the subset has as many rows as unique gene IDs in the original file. If True, remove the original gene coirdinate file")
+check_gene_coords_subset = len(gene_coords["gene_id"].unique()) == gene_coords_no_duplicated.shape[0]
+if(check_gene_coords_subset):
+    del(gene_coords)
+else:
+    raise ValueError("ERROR: FALSE! WE HAVE A PROBLEM WITH THE SUBSET OF THE GENE COORDINATE FILE")
 
-print("Check that the subsetted has as many rows as unique gene IDs in the original file: ")
-print(len(np.unique(gene_coords["gene_id"])) == gene_coords_no_duplicated.shape[0])
 
-
+print_text("select only the columns we need", header=4)
 gene_coords_no_duplicated_subset = gene_coords_no_duplicated[[ 
-	'chromosome_name', 
-	'gene_id',
-	'gene_start',
-	'gene_end',
-	'middle_point',
-	'lower_end_window_50kb',
-	'upper_end_window_50kb', 
-	'lower_end_window_100kb',
-	'upper_end_window_100kb', 
-	'lower_end_window_200kb',
-	'upper_end_window_200kb',
-	'lower_end_window_500kb',
-	'upper_end_window_500kb',
-	'lower_end_window_1000kb',
-	'upper_end_window_1000kb']]
-gene_coords_no_duplicated_subset
+    "chromosome_name", \
+    "gene_id", \
+    "gene_start", \
+    "gene_end", \
+    "middle_point", \
+    "lower_end_window_50kb", \
+    "upper_end_window_50kb",  \
+    "lower_end_window_100kb", \
+    "upper_end_window_100kb",  \
+    "lower_end_window_200kb", \
+    "upper_end_window_200kb", \
+    "lower_end_window_500kb", \
+    "upper_end_window_500kb", \
+    "lower_end_window_1000kb", \
+    "upper_end_window_1000kb"]]
+print(gene_coords_no_duplicated_subset)
 
 
-gene_coords_no_duplicated_subset = gene_coords_no_duplicated_subset.reset_index(drop=True)
+print_text("reset the row index", header=4)
+gene_coords_no_duplicated_subset = gene_coords_no_duplicated_subset \
+    .reset_index(drop=True)
+    #drop: Do not try to insert index into dataframe columns. This resets the index to the default integer index.
 gene_coords_no_duplicated_subset
     #https://stackoverflow.com/questions/20490274/how-to-reset-index-in-a-pandas-dataframe
 
 
+print_text("make a depp copy of the dataset to add BAT information", header=4)
+bat_coords = gene_coords_no_duplicated.copy(deep=True)
+    #deep=True: 
+        #a new object will be created with a copy of the calling object's data and indices. Modifications to the data or indices of the copy will not be reflected in the original object (see notes below).
+print(bat_coords)
 
 
 
-bat_coords = gene_coords_no_duplicated.copy()
-
-#missing genes
-bat_relationship.loc[~bat_relationship["Genes"].isin(bat_coords["hgnc_symbol"]),:]
-	#faltan 2 genes
-
-bat_coords.loc[bat_coords["hgnc_symbol"].isin(["CD132", "CIDX", "IL-2RG", "IMD4", "P64", "SCIDX", "SCIDX1"]), :]
-
-bat_coords.loc[bat_coords["hgnc_symbol"].isin(["NRU", "P2P", "P2Y4", "UNR"]), :]
-	#the two missing genes have no synonmious in the dataset
-		#https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000186912;r=X:69478016-69479654;t=ENST00000374519
-		#https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000147168;r=X:70327254-70331958
-
-
-#load the connectome with UCP1 as core gene
-ucp1_conn = pd.read_csv("/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/other_projects/human_genome_connectome/bat_connectome/data/human_connectome/UCP1.txt", \
+print_text("load BAT data", header=3)
+print_text("load the connectome with UCP1 as core gene", header=4)
+ucp1_conn = pd.read_csv( \
+    "/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/other_projects/human_genome_connectome/bat_connectome/data/human_connectome/UCP1.txt", \
 	sep="\t", \
 	header=0, \
 	low_memory=False)
+print(ucp1_conn)
 
 
+print_text("load again the ucp1 connectome again but downloaded in 2020 (19/06/2020)", header=4)
+ucp1_2020 = pd.read_csv( \
+    "/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/other_projects/human_genome_connectome/bat_connectome/data/human_connectome/UCP1_downloaded_2020.txt", \
+    sep="\t", \
+    header=0, \
+    low_memory=False)
+print(ucp1_2020)
 
-#load the information about BAT relationships
-bat_relationship = pd.read_csv("/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/other_projects/human_genome_connectome/bat_connectome/results/connectome_results/tables/appendix_S1_ordered.csv", \
+
+print_text("checked that this is exactly similar to the file downloaded 2 years ago and loaded here", header=4)
+print(ucp1_2020.equals(ucp1_conn))
+
+
+print_text("load BAT relationships", header=4)
+bat_relationship = pd.read_csv( \
+    "/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/other_projects/human_genome_connectome/bat_connectome/results/connectome_results/tables/appendix_S1_ordered.csv", \
 	sep=",", \
 	header=0, \
 	low_memory=False)
-	#CHECK THIS FILE
+print(bat_relationship)
 
-#we can filter by p-vlaue percentage
-sum(ucp1_conn.loc[ucp1_conn.iloc[:, 3]< 0.25, "Target"].isin(bat_relationship["Genes"]))
 
-#10% is 0.1, 1% (used in the connectome paper) is 0.01
-selected_ucp_connectome_genes = ucp1_conn.loc[ucp1_conn.iloc[:, 3]< 0.01, "Target"]
+###por aquii
+
+#check
+    #http://localhost:8888/notebooks/calculation_new_selective_pressures_variables.ipynb
+
+print_text("load the new file with the bat relationships obtained in 2020 from the original file of Jose, to check we are using the correct file", header=4)
+bat_relationship_2 = read.table("/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/other_projects/human_genome_connectome/bat_connectome/results/connectome_results/tables/bat_relationship_check_2020.csv", sep=",", header=TRUE)
+#set as zero those cases with 2. I think these are cases not associated but that interact with other proteins that interact with UCP1
+bat_relationship_2[which(bat_relationship_2$BAT.relationship == 2),]$BAT.relationship <- 0
+#set the rows in alphabetic order according to gene name
+bat_relationship_2 = bat_relationship_2[order(bat_relationship_2$Genes),]
+#reset the row names
+row.names(bat_relationship_2) <- 1:nrow(bat_relationship_2)
+#add a new level to the Genes factors
+bat_relationship_2$Genes = factor(bat_relationship_2$Genes, c(levels(bat_relationship_2$Genes), "NRIP1"))
+#set NRIP1 o RIP140 as NRIP1
+bat_relationship_2[which(bat_relationship_2$Genes == "NRIP1 o RIP140"),]$Genes <- "NRIP1"
+#remove the not used levels
+bat_relationship_2$Genes = droplevels(bat_relationship_2$Genes)
+
+
+print_text("look for BAT genes without gene symbol in gene coords", header=4)
+print(bat_relationship.loc[~bat_relationship["Genes"].isin(bat_coords["hgnc_symbol"]),:])
+
+
+print_text("check that we do not have any of the synonyms of these two missing genes included in gene coords", header=4)
+print(bat_coords.loc[bat_coords["hgnc_symbol"].isin(["CD132", "CIDX", "IL-2RG", "IMD4", "P64", "SCIDX", "SCIDX1"]), :].shape[0] == 0)
+print(bat_coords.loc[bat_coords["hgnc_symbol"].isin(["NRU", "P2P", "P2Y4", "UNR"]), :].shape[0] == 0)
+    #the two missing genes have no synonmious in the dataset
+        #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000147168;r=X:70327254-70331958
+        #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000186912;r=X:69478016-69479654;t=ENST00000374519
+
+
+print_text("Select top 1% by p-value in the connectome and check whether these are the genes in BAT relationship file", header=4)
+from natsort import natsort_keygen
+print(ucp1_conn \
+    .loc[ \
+        ucp1_conn.loc[:, "Target_in_source_P-value(percentile)"] < 0.01, \
+        "Target"] \
+    .sort_values( \
+        axis=0, 
+        key=natsort_keygen(), \
+        ignore_index=True) \
+    .equals( \
+        bat_relationship["Genes"]\
+        .sort_values( \
+            axis=0, 
+            key=natsort_keygen(), \
+            ignore_index=True)))
+        #from the UCP1 connectome
+            #select those rows for which the p-value percentile of the gene is below 1% and get the gene name
+        #natural sort the gene names
+            #axis=0: rows
+            #key: Apply the key function to the values before sorting.
+                #natsort_keygen()
+                    #Generate a key to sort strings and numbers naturally.
+            #ignore_index:
+                #If True, the resulting axis will be labeled 0, 1, …, n - 1
+                #so you avoid the previous index
+        #check that the resulting series is equals to the Genes included in BAT relationships after sorting in the same way
+            #https://stackoverflow.com/a/63890954/12772630
+    
+
+
+
+print_text("10% is 0.1, 1% (used in the connectome paper) is 0.01", header=4)
+selected_ucp_connectome_genes = ucp1_conn.loc[ucp1_conn.iloc[:, "Target_in_source_P-value(percentile)"] < 0.01, "Target"]
 
 bat_coords["bat_status"] = ["yes" if gene_id in selected_ucp_connectome_genes.to_list() else "no" for gene_id in bat_coords["hgnc_symbol"]]
 	#CHECK THIS
