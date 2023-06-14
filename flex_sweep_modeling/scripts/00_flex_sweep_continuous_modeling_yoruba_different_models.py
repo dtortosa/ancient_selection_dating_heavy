@@ -149,14 +149,23 @@ print(f"The selected window size is {gene_window_size}")
 
 print_text("load and clean input data", header=2)
 print_text("load into pandas", header=3)
-final_data_yoruba = pd.read_csv( \
+final_data_yoruba_raw = pd.read_csv( \
     "data/flex_sweep_closest_window_center.txt.gz", \
     sep=",", \
     low_memory=False, \
     compression="gzip")
-print(final_data_yoruba)
+print(final_data_yoruba_raw)
 
 
+bat_distance = pd.read_csv( \
+    "./data/bat_distance/bat_distance.tsv",
+    sep='\t', 
+    header=0, 
+    low_memory=False)
+
+final_data_yoruba = pd.merge(left=final_data_yoruba_raw, right=bat_distance, on="gene_id", how="left")
+
+final_data_yoruba = final_data_yoruba.dropna()
 
 #print_text("clean predicted class", header=3)
 #if you want to do classification, you have to calculate the number of sweeps based on the probability and then convert "predicted_class" to 0-1 integer
@@ -201,8 +210,8 @@ print_text("exclude some columns we are not interested in", header=4)
 columns_to_exclude = [ \
     "gene_id", \
     "predicted_class", \
-    "thermogenic_distance", \
-    "vip_distance"]
+    "number_thermogenic_1000kb", \
+    "number_vips_1000kb"]
 modeling_data = final_data_yoruba[[column for column in final_data_yoruba.columns if column not in columns_to_exclude]]
 print(modeling_data)
 print(f"Columns excluded: {columns_to_exclude}")
@@ -222,11 +231,13 @@ print(modeling_data_array)
 
 print_text("Apply log transformation to the target variable", header=4)
 import numpy as np
-#modeling_data_array[:, 0] = np.log(modeling_data_array[:, 0])
+modeling_data_array[:, 0] = np.log(modeling_data_array[:, 0])
     #It is should be ok to apply the log before splitting the dataset. There is a problem if you use a transformation that requires learn something from the rest of the data. For example, if you scale the whole dataset, you are using the mean and sd of the whole dataset, influencing data that will be used for test. In other words, there is room for a data leak. In this case, however, log(1.5) is always 0.4, independently of the rest of the data, so I think no data leak is possible. You could do a pipeline with log but it is a little bit more complicated (see [link](https://stats.stackexchange.com/questions/402470/how-can-i-use-scaling-and-log-transforming-together)), so we leave it for now.
+        #Indeed I have found people in stack exchange saying this: However, yours (i.e. np.log1p) is a simple transformation that doesn't use any learnable parameters, and it won't matter if you do it before or after the split. It's like dividing a feature by 1000. 
+            #https://stats.stackexchange.com/a/456056
     #From all these follow that if you use other transformations like preprocessing.PowerTransformer or QuantileTransformer ([link](https://yashowardhanshinde.medium.com/what-is-skewness-in-data-how-to-fix-skewed-data-in-python-a792e98c0fa6)), it is possible to have data leaks, so be careful.
-
     #In previous versions I was not using scaling or log transform for deep learning, because I assumed that the DNNs can deal with that, but maybe that was too much and in any case, we are going to use here also more simpler models that can be helped by scaling
+    #Update: If I apply the log transformation within the pipeline I get a much lower R2 both in the training and test datasets! Not sure what is going on, but given this transformation does not summarize anything from the whole dataset, I can use it before splitting in training and evaluation. If this transformation was helping the training model to learn from the test set, the R2 in the test would be higher, but we have the opposite scenario.
 
 
 
@@ -323,7 +334,10 @@ number_jobs = 2
 print_text("Explanations about scaling", header=2)
 #We could apply the preprocessing to the initial dataset and then split into training and test but this is problematic. As previously explained, the scaling is done using the mean and sd of the sample, so if you do it in the whole dataset, the part will be used for test will be also influenced but training data. If you included your test data in the scaling, that means that your new data is treated differently from the training set, which defeats the purpose of the training set. In practice, this is unlikely to have a large impact, as computing mean and standard deviation is relatively stable on well-behaved datasets. However, I recommend to adhere to best practices, and split off the test set before doing any processing ([more info](https://amueller.github.io/aml/01-ml-workflow/03-preprocessing.html)).
 
-#In other words, when you fit the standard scaler on the whole dataset, information from the test set is used to normalize the training set. This is a common case of "data leakage", which means that information from the test set is used while training the model. This often results in overestimates of the model's performance ([link](https://stackoverflow.com/questions/63037248/is-it-correct-to-use-a-single-standardscaler-before-splitting-data?noredirect=1&lq=1)).
+#In other words, when you fit the standard scaler on the whole dataset, information from the test set is used to normalize the training set. This is a common case of "data leakage", which means that information from the test set is used while training the model. This often results in overestimates of the model's performance because the model can access to information of the test set during training, so the test set is no longer new data. ([link](https://stackoverflow.com/questions/63037248/is-it-correct-to-use-a-single-standardscaler-before-splitting-data?noredirect=1&lq=1)). 
+
+#We can easily avoid this problem by doing CV using a pipeline. This pipeline includes a transformer and the regressor, so when fitting it does the scaling using the training data and then fit the model on that training data, there is not access to test data. Test data is used only when predicting, once we have fit our model based on the scaled training data.
+    #Pipeline in sklearn enables you to set up trainable blocks that contain both your models and transformations in order, so that when fitted, it only uses training data.
 
 #standard.scaler() is similar to preprocessing.scale(). In both cases, scaling means standardizing by removing the mean and scaling to unit variance. The standard score of a sample x is calculated as: z = (x - u) / s, where u is the mean of the training samples or zero if with_mean=False, and s is the standard deviation of the training samples or one if with_std=False.
 
@@ -370,23 +384,37 @@ model = xgb.XGBRegressor(random_state=23534, n_estimators=500, booster="gbtree")
 
 
 
-model = RandomForestRegressor(random_state=23534, n_estimators=100)
+model = RandomForestRegressor(random_state=23534, n_estimators=10)
 model_name = "random_forest"
     #RF is 0.52 for VC and 0.86 for whole dataset
 
-trans = QuantileTransformer(n_quantiles=5000, output_distribution='uniform')
 
 from sklearn.preprocessing import PowerTransformer, QuantileTransformer
+
+trans = QuantileTransformer(n_quantiles=1000, output_distribution='uniform')
+
+
 
 
 estim = TransformedTargetRegressor( \
     regressor=Pipeline([ \
         ('scale', preprocessing.StandardScaler()), \
         ('regressor', model)]), \
-    transformer=preprocessing.StandardScaler())
+    check_inverse=True)
+        #func: function applied to "y" before doing anything, i.e., even before fitting. 
+            #This can be np.log or np.sqrt for example.
+        #inverse_func: function applied to the prediction of the regressor, i.e., we are reverting the transformation done before fitting, so we can get back the predictions of response without transformation, being comparable with the raw values of the response.
+            #If you do log, the inverse would be exp. For example np.log(1)=0.0, while np.exp(0.0)=1
+        #regressor: the regressor used for fitting, it can be a pipeline, so you can add scaling (applied to Y and Xs) along with modeling
+        #transformer: i understand this transformer is only aplied to "y", so it cannot be used if func/inverse_func are used.
+        #check_inverse: Whether to check that `transform` followed by `inverse_transform` or `func` followed by `inverse_func` leads to the original targets 
 estim
 
-    #we can trandofm only y, the R2 is lowet in CV, but fit in the hist is good
+
+
+
+
+    #we can trandofm only y, the R2 is lowet in CV, but fit in the hist is good but not the scatter
         #Sometimes it can be beneficial to transform a highly exponential or multi-modal distribution to have a uniform distribution. This is especially useful for data with a large and sparse range of values, e.g. outliers that are common rather than rare.
             #https://machinelearningmastery.com/quantile-transforms-for-machine-learning/
 
@@ -401,20 +429,22 @@ estim
 
 #See the keys, you can see how you need to write two times regressor to reach alpha parameter of Ridge ("regressor__regressor__alpha"). Ridge is a regressor of the pipeline, but the pipeline is in turn a regressor of TransformedTargetRegressor.
 
-#Fit and predict the model using the input data
 
 
+
+
+
+
+#Fit the model using the input data
 estim.fit(X_train, y_train)
-prediction = estim.predict(X)
 
 #See R2 in the whole dataset and in CV-subsets
 from sklearn.metrics import r2_score
 from sklearn.model_selection import cross_val_score
 
 print("R2 in the whole dataset:")
-r2_whole_dataset = r2_score(y, prediction)
+r2_whole_dataset = r2_score(y, estim.predict(X))
 print(r2_whole_dataset)
-
 print("R2 across CV folds:")
 r2_cv = np.mean(cross_val_score(estimator=estim, 
     X=X_train, \
@@ -434,14 +464,14 @@ print(r2_test_dataset)
 import matplotlib.pyplot as plt
 
 plt.hist(y, bins=50, color="green", alpha=0.4, label="Observed sweep probability")
-plt.hist(prediction, bins=50, color="blue", alpha=0.4, label="Prediction")
+plt.hist(estim.predict(X), bins=50, color="blue", alpha=0.4, label="Prediction")
 plt.annotate("R2 whole dataset: " + str(np.round(r2_whole_dataset, 4)), 
              xy=(0.05, 0.7),
              xycoords='axes fraction')
 plt.annotate("R2 CV: " + str(np.round(r2_cv, 4)), 
              xy=(0.05, 0.6),
              xycoords='axes fraction')
-plt.annotate("R2 CV: " + str(np.round(r2_test_dataset, 4)), 
+plt.annotate("R2 test set: " + str(np.round(r2_test_dataset, 4)), 
              xy=(0.05, 0.5),
              xycoords='axes fraction')
 plt.legend(loc='upper left')
@@ -452,16 +482,19 @@ plt.close()
 
 #When interpreting the R-Squared it is almost always a good idea to plot the data. That is, create a plot of the observed data and the predicted values of the data. This can reveal situations where R-Squared is highly misleading. For example, if the observed and predicted values do not appear as a cloud formed around a straight line, then the R-Squared, and the model itself, will be misleading. Similarly, outliers can make the R-Squared statistic be exaggerated or be much smaller than is appropriate to describe the overall pattern in the data.
     #https://www.displayr.com/8-tips-for-interpreting-r-squared/#:~:text=Don't%20use%20R%2DSquared%20to%20compare%20models&text=There%20are%20two%20different%20reasons,the%20variables%20are%20being%20transformed.
-plt.scatter(y, prediction, s=0.5)
-plt.annotate("R2 whole dataset: " + str(np.round(r2_whole_dataset, 4)), 
-             xy=(0.05, 0.7),
-             xycoords='axes fraction')
-plt.annotate("R2 CV: " + str(np.round(r2_cv, 4)), 
-             xy=(0.05, 0.6),
-             xycoords='axes fraction')
-plt.annotate("R2 CV: " + str(np.round(r2_test_dataset, 4)), 
-             xy=(0.05, 0.5),
-             xycoords='axes fraction')
+plt.scatter(y, estim.predict(X), s=0.5)
+plt.xlabel("Observed log Flex-sweep probability")
+plt.ylabel("Predicted log Flex-sweep probability")
+plt.annotate( \
+    "R2 whole dataset: " + str(np.round(r2_whole_dataset, 4)), \
+    xy=(0.05, 0.9), \
+    xycoords='axes fraction')
+plt.annotate("R2 CV: " + str(np.round(r2_cv, 4)), \
+    xy=(0.05, 0.8), \
+    xycoords='axes fraction')
+plt.annotate("R2 test set: " + str(np.round(r2_test_dataset, 4)), \
+    xy=(0.05, 0.7), \
+    xycoords='axes fraction')
 plt.savefig( \
     fname="./results/model_comparison/" + model_name + "_scatter_pred_observed.png")
 plt.close()
@@ -472,6 +505,12 @@ plt.close()
     #the MDR for iHS has around 0.7 for the whole dataset (we are above here) but fit very well the distribution of iHS, while here we have a problem with the right tail.
     #R2 or MSE/MAE for optimization?
         #https://machinelearningmastery.com/regression-metrics-for-machine-learning/
+
+    #maybe this is a result itself, the genomic features considered cannot fully explain all sweeps predicted by flex-sweep. This makes sense because we do not have included all selective pressures affecting the human genome, so functions that have been targeted by these pressures would have an excess of sweep probability based on their genomic features.
+        #we have strong sweep candidates that have less probability, but their probability is not zero. The model is predictiing some probability of sweep, but there is something else doing these genes enriched in sweep probability, maybe something related with their function.
+
+
+    #mira vip distance and thermo
 
     #myabe using classification so we can optimize specifically recall?
 
@@ -486,8 +525,47 @@ plt.close()
 
 
 
+from alepython import ale_plot
 
+X_train_pandas = pd.DataFrame(data=X_train, columns=modeling_data.iloc[:,1:].columns)
+X_train_pandas
 
+ale_plot(model=estim, 
+    train_set=X_train_pandas,
+        #pandas DF with training data
+    features=["bat_distance"], 
+    bins=10,
+        #Number of bins used to split feature's space
+        #I understand each bin has the same number of datapoints
+        #so large intervals means very sparse data
+        #Default 10
+    monte_carlo=True,
+        #Run or not a Monte Carlo, using only a sample of the 
+        #dataset. Monte Carlo can help to detect data ranges
+        #where data is very sparse and we cannot be confident
+    monte_carlo_rep=50,
+        #number of montecarlo replicas, default: 50
+    monte_carlo_ratio=0.1,
+        #Proportion of randomly selected samples from dataset
+        #for each Monte-Carlo replica
+        #default: 0.1
+    rugplot_lim=1000)
+        #A rug plot displays marks along an axis to visualise 
+        #the distribution of the data.
+        #The default is 1000, meaning that if you have more than 1000
+        #samples, you do not need to see the bar where each sample is
+        #set to None to plot to make always the rug plot
+plt.close()
+#vip distance gives the expected result very well, in contrast with vip number. we are going to use ditance? think
+    #we know the expected result because we already know VIPs are enrichd in positive selection so we should select the approach with power to detect this.
+#thermogenic distance doe snot work, but this is Yoruba, we should check in non-african pops exposed to cold conditions
+#check BAT? very good for climahealth. It is not comprehensive, we are losng genes important for thermo and BAT, but we know the genes included are important for thermo fiven what we found...
+
+#there is some pattern of decrease with distance to the bat connectome genes, but it is not very clear. When extending the list of genes biologically closest to UCP1 from 1% to 5%, the pattern improves. With 7, 8% is great, but at 9-10% is much less clear. Maybe we have more power with more genes related to BAT but at some point we are too much far away from UCP1?
+    #I cannot find a way to check multiple percentages automatically, becuase we need to see the pattern in ALE plot (min-max is important but also if there is an increase in the middle), the length of the intervals... when
+
+#repasa codigo de BAT y sigue modeling, trying to decide best transformation and then model comparison
+    #hink if run DNN optuna with log...
 
 
 
