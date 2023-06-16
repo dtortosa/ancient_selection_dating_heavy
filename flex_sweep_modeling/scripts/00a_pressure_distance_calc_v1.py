@@ -247,7 +247,7 @@ print(pressure_coords)
 
 
 print_text("load pressure data", header=3)
-print_text("first extract the connectome of the interest gene, i.e., " + core_gene, header=4)
+print_text("first extract the connectome of the interest gene", header=4)
 if(pressure_name == "bat"):
     core_gene = "UCP1"
 elif(pressure_name == "smt"):
@@ -289,6 +289,10 @@ pressure_conn = pd.read_csv( \
 print(pressure_conn)
 
 
+print_text("check we have selected the correct connectome, i.e., the one with the correct core gene", header=4)
+print(pressure_conn["Target"].iloc[0] == core_gene)
+
+
 print_text("if UCP1 is the core gene, check that the connectome extracted from the zip is the same as the original used for BAT analyses", header=4)
 if(pressure_name == "bat"):
     old_ucp1_conn = pd.read_csv( \
@@ -305,6 +309,8 @@ if(pressure_name == "bat"):
     print(pressure_conn.equals(old_ucp1_conn))
     print(pressure_conn.equals(ucp1_2020))
         #both files are the same, suggesting that the warning obtained when zipping is not a problem
+else:
+    print("We are not working with BAT, but with " + pressure_name)
 
 
 print_text("if UCP1 is the core gene, check that file with BAT relationships has the same genes than the connectome 1% obtained now", header=4)
@@ -342,6 +348,8 @@ if(pressure_name == "bat"):
                     #so you avoid the previous index
             #check that the resulting series is equals to the Genes included in BAT relationships after sorting in the same way
                 #https://stackoverflow.com/a/63890954/12772630
+else:
+    print("We are not working with BAT, but with " + pressure_name)
 
 
 
@@ -359,33 +367,59 @@ for p_value_percentile in [0.5, 1, 5]:
 
 
     print_text("create a variable about pressure status using this set of genes (those belonging to the set of interest are 'yes')", header=3)
-    pressure_coords[pressure_name + "_status"] = ["yes" if gene_id in selected_connectome_genes.to_list() else "no" for gene_id in pressure_coords["hgnc_symbol"]]
+    pressure_coords[pressure_name + "_status"] = ["yes" if gene_symbol in selected_connectome_genes.to_list() else "no" for gene_symbol in pressure_coords["hgnc_symbol"]]
     print(pressure_coords[pressure_name + "_status"])
+
+
+    print_text("check we have set as 'yes' all genes with coords that are included in the interest set of genes", header=4)
+    print(pressure_coords \
+        .loc[ \
+            pressure_coords["hgnc_symbol"].isin(selected_connectome_genes), \
+            pressure_name+"_status"] \
+        .unique() == "yes")
+
 
 
     print_text("explore pressure data", header=3)
     print_text("look for genes without gene symbol in gene coords", header=4)
     missing_genes = selected_connectome_genes.loc[~selected_connectome_genes.isin(pressure_coords["hgnc_symbol"])]
-    if (missing_genes.shape[0] > (selected_connectome_genes.shape[0]*0.1)):
+    if (missing_genes.shape[0] <= np.round(selected_connectome_genes.shape[0]*0.1)):
         print(missing_genes)
     else:
-        raise ValueError("ERROR: FALSE! TOO MANY GENES OF THE CONNECTOME ARE NOT INCLUDED IN GENE COORDS FILE")
+        raise ValueError("ERROR: FALSE! MORE THAN 10% OF GENES OF THE CONNECTOME ARE NOT INCLUDED IN GENE COORDS FILE")
 
 
     print_text("I obtained gene coords from biomart hg19, so I understand that I have all names (IDs and gene names) for those genes that passed my filters. If a interest gene is not included in my gene coord set, then it should not be used for hg19. Indeed, the two genes included in the 168 BAT connectome that are not in gene coordinates, have their gene id NOT included in gene coords", header=4)
-    #CHECK FOR SMT? A FEW GENES?
+    
+
+    print_text("check that we do not have any of the synonyms of these missing genes included in gene coords", header=4)
     if(pressure_name == "bat"):
-        print_text("check that we do not have any of the synonyms of these two missing genes included in gene coords", header=4)
         print(pressure_coords.loc[pressure_coords["hgnc_symbol"].isin(["CD132", "CIDX", "IL-2RG", "IMD4", "P64", "SCIDX", "SCIDX1"]), :].shape[0] == 0)
         print(pressure_coords.loc[pressure_coords["hgnc_symbol"].isin(["NRU", "P2P", "P2Y4", "UNR"]), :].shape[0] == 0)
             #the two missing genes have no synonmious in the dataset
                 #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000147168;r=X:70327254-70331958
                 #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000186912;r=X:69478016-69479654;t=ENST00000374519
             #THIS CHECK WAS DONE WITH HG19! LOOK AGAIN FOR HG38!
-        print(pressure_coords.loc[pressure_coords["gene_id"] == "ENSG00000147168", :].shape[0] == 0)
-        print(pressure_coords.loc[pressure_coords["gene_id"] == "ENSG00000186912", :].shape[0] == 0)
+    elif (pressure_name == "smt"):
+        print(pressure_coords.loc[pressure_coords["hgnc_symbol"].isin(["CHORDC3", "ITGB1BP", "MELUSIN"]), :].shape[0] == 0)
+            #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000147166;r=X:70521584-70525221
+        print(pressure_coords.loc[pressure_coords["hgnc_symbol"].isin(["FMRP", "FRAXA", "MGC87458", "POF", "POF1"]), :].shape[0] == 0)
+            #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000102081;r=X:146993469-147032645
+        print(pressure_coords.loc[pressure_coords["hgnc_symbol"].isin(["PKX1"]), :].shape[0] == 0)
+            #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000183943;r=X:3522411-3631649
+        print(pressure_coords.loc[pressure_coords["hgnc_symbol"].isin(["ECTD1", "ED1", "ED1-A1", "ED1-A2", "EDA-A1", "EDA-A2", "EDA1", "EDA2", "HED", "HED1", "ODT1", "STHAGX1", "XHED", "XLHED"]), :].shape[0] == 0)
+            #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000158813;r=X:68835911-69259319
+        print(pressure_coords.loc[pressure_coords["hgnc_symbol"].isin(["PMCA3", "PMCA3a", "SCAX1"]), :].shape[0] == 0)
+            #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000067842;r=X:152783134-152848397
+        print(pressure_coords.loc[pressure_coords["hgnc_symbol"].isin(["BRICD4", "CHM1L", "ChM1L", "TEM", "myodulin", "tendin"]), :].shape[0] == 0)
+            #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000000005;r=X:99839799-99854882
+        print(pressure_coords.loc[pressure_coords["hgnc_symbol"].isin(["CD132", "CIDX", "IL-2RG", "IMD4", "P64", "SCIDX", "SCIDX1"]), :].shape[0] == 0)
+            #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000147168;r=X:70327254-70331958
+        print(pressure_coords.loc[pressure_coords["hgnc_symbol"].isin(["IRS-4", "PY160"]), :].shape[0] == 0)
+            #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000133124;r=X:107975712-107979651;t=ENST00000372129
 
-    print_text("In the same vein, there are some genes in 'gene coords' that do not have gene name, only gene id. I understand that these genes have no valid gene name in hg38. Indeed, I have checked two of these genes and have NO description in ensembl. So they should not include our BAT genes", header=4)
+
+    print_text("In the same vein, there are some genes in 'gene coords' that do not have gene name, only gene id. I understand that these genes have no valid gene name in hg19. Indeed, I have checked two of these genes and have NO description in ensembl. So they should not be included in our interest genes", header=4)
     print(pressure_coords.loc[pressure_coords["hgnc_symbol"].isna(),:]
     )
         #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000116883;r=1:36789335-36794822;t=ENST00000373137
@@ -452,52 +486,54 @@ for p_value_percentile in [0.5, 1, 5]:
     print(non_interest_gene)
     print(interest_gene)
 
-    non_interest_gene[1] != 0
-    interest_gene[1] == 0
 
 
-    #por aquii
+    print_text("check that the non-interest gene has distance different from zero while the interest gene has a distance equal to zero", header=3)
+    print(non_interest_gene[1] != 0)
+    print(interest_gene[1] == 0)
+        #the result of my function is tuple with two elements: gene id and distance to the closest interest gene. The second element [1] is the distance.
 
 
 
-    import multiprocessing as mp
+    print_text("run the function", header=3)
+    print_text("use functools.partial to add a fixed parameter to the function. In this way, we can apply the function in parallel to each gene (third argument) while having the same value for the other two arguments, i.e., the dataset with the coordinates and the name of the selective pressure", header=4)
     from functools import partial
-    
-    #use partial to add a fixed parameter to the function
-    distance_calc_fixed = partial(distance_calc, 
-                                  pressure_coords, 
-                                  "bat")
-        #first you have the function
-        #then you have the arguments that will be fixed
-        #the first argument will always take the value of vip_distance_calc
-        #this the data.frame with the data for the selective pressure
-        #so it can be accessed by the function
-        #the second argument is for the name of the selective pressure, so we access
-        #columns by column name in pandas
+    distance_calc_fixed = partial(distance_calc, pressure_coords, pressure_name)
+        #first you have the function then you have the arguments that will be fixed the first argument will always take the value of pressure_coords this the data.frame with the data for the selective pressure so it can be accessed by the function the second argument is for the name of the selective pressure, so we access columns by column name in pandas
         #gene id is not included because we are going to iterate across gene ids
-        #https://stackoverflow.com/questions/25553919/passing-multiple-parameters-to-pool-map-function-in-python
+            #https://stackoverflow.com/questions/25553919/passing-multiple-parameters-to-pool-map-function-in-python
     
-    #open the pool with the selected number of cores
+
+    print_text("open the pool with the selected number of cores", header=4)
+    import multiprocessing as mp
     pool = mp.Pool(n_cores)
-    
-    #run the function to calculate distance of each gene to the closest
-    #selective pressure gene. This takes the gene IDs as inputs
-    #and the function will calculate the distance for each gene id
-    #https://stackoverflow.com/questions/64763867/parallel-processing-of-each-row-in-pandas-iteration
-    bat_results_map = pool.map(distance_calc_fixed, pressure_coords["gene_id"].values)
-    
-    #close the pool
+    print(pool)
+
+
+    print_text("run the function to calculate distance of each gene to the closest selective pressure gene. This takes the gene IDs as inputs and the function will output a list of tuples having each tuple the gene id and the distance to the closest interest gene", header=4)
+    results_map = pool.map( \
+        func=distance_calc_fixed, \
+        iterable=pressure_coords["gene_id"].values)
+            #Apply `func` to each element in `iterable`, collecting the results in a list that is returned
+            #gene id is the only argument not fixed in "distance_calc_fixed", so we can iterate across it
+                #https://stackoverflow.com/questions/64763867/parallel-processing-of-each-row-in-pandas-iteration
     pool.close()
-    
-    bat_results_df = pd.DataFrame( \
-        bat_results_map, 
+    print("see first 10 gene ids")
+    print(results_map[0:10])
+
+
+    print_text("convert the list with results to DF. The second column with the distance will be named used the pressure name and the p-value percentile used", header=4)
+    results_df = pd.DataFrame( \
+        results_map, 
         columns=[ \
             "gene_id", 
-            "bat_distance_percentile_" + str(p_value_percentile)])
-    print(bat_results_df)
+            pressure_name + "_distance_percentile_" + str(p_value_percentile)])
+    print(results_df)
     
-    bat_results_df.to_csv( \
-        "./data/bat_distance/bat_data_percentile_" + str(p_value_percentile) + ".tsv", \
+
+    print_text("save the results", header=4)
+    results_df.to_csv( \
+        "./data/" + pressure_name + "_distance/" + pressure_name + "_data_percentile_" + str(p_value_percentile) + ".tsv", \
         sep='\t', \
         header=True, \
         index=False)

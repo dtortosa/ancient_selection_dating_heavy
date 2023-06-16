@@ -1,0 +1,516 @@
+
+#######################################
+#######################################
+checking function to print nicely: header 1
+#######################################
+#######################################
+
+###### checking function to print nicely: header 2 ######
+
+## checking function to print nicely: header 3 ##
+
+# checking function to print nicely: header 4 #
+
+#######################################
+#######################################
+check behaviour run_bash
+#######################################
+#######################################
+
+###### see working directory ######
+/home/dftortosa/singularity/dating_climate_adaptation/flex_sweep_modeling
+
+
+###### list files/folders there ######
+data
+results
+scripts
+ubuntu_18_04_yoruba_modelling_flex_sweep.sif
+
+
+#######################################
+#######################################
+prepare folder structure
+#######################################
+#######################################
+total 6208076
+-rw-rw-r-- 1 dftortosa dftortosa 6355614636 Jun 15 17:02 all_human_gene-specific_connectomes_122015.zip
+drwxrwxr-x 2 dftortosa dftortosa       4096 Jun 16 11:37 bat_distance
+-rwxrwxrwx 1 dftortosa dftortosa    1433703 Jan 18 20:16 flex_sweep_closest_window_center.txt.gz
+-rw-rw-r-- 1 dftortosa dftortosa        598 Jun 16 10:07 README.txt
+drwxrwxr-x 2 dftortosa dftortosa       4096 Jun 16 11:37 smt_distance
+
+
+#######################################
+#######################################
+prepare data
+#######################################
+#######################################
+
+###### load the required files ######
+
+## load gene coordinates ##
+        chromosome_name hgnc_symbol  ... test_chr_name  test_na_cds
+0                     1       SCYL3  ...          True         True
+1                     1       SCYL3  ...          True         True
+2                     1       SCYL3  ...          True         True
+3                     1       SCYL3  ...          True         True
+4                     1       SCYL3  ...          True         True
+...                 ...         ...  ...           ...          ...
+643583               22         NaN  ...          True         True
+643584               22         NaN  ...          True         True
+643585               22         NaN  ...          True         True
+643586               22         NaN  ...          True         True
+643587               22         NaN  ...          True         True
+
+[643588 rows x 60 columns]
+
+# Select only one row per gene because in this file, each row is an exon, but all the rows of the same gene have the same middle gene position and gene windows as all the rows belongs to the same gene #
+        chromosome_name hgnc_symbol  ... test_chr_name  test_na_cds
+0                     1       SCYL3  ...          True         True
+49                    1    C1orf112  ...          True         True
+113                   1         FGR  ...          True         True
+174                   1         CFH  ...          True         True
+215                   1       STPG1  ...          True         True
+...                 ...         ...  ...           ...          ...
+643579               22         NaN  ...          True         True
+643581               22         NaN  ...          True         True
+643582               22         NaN  ...          True         True
+643584               22         NaN  ...          True         True
+643586               22         NaN  ...          True         True
+
+[19252 rows x 60 columns]
+Check that the subset has as many rows as unique gene IDs in the original file. If True, remove the original gene coirdinate file
+
+# select only the columns we need #
+        chromosome_name  ... upper_end_window_1000kb
+0                     1  ...             170341089.0
+49                    1  ...             170227232.0
+113                   1  ...              28450181.0
+174                   1  ...             197168820.0
+215                   1  ...              25213456.0
+...                 ...  ...                     ...
+643579               22  ...              51214226.0
+643581               22  ...              31314340.0
+643582               22  ...              36527110.0
+643584               22  ...              21859382.0
+643586               22  ...              42185536.0
+
+[19252 rows x 16 columns]
+
+# reset the row index #
+       chromosome_name  ... upper_end_window_1000kb
+0                    1  ...             170341089.0
+1                    1  ...             170227232.0
+2                    1  ...              28450181.0
+3                    1  ...             197168820.0
+4                    1  ...              25213456.0
+...                ...  ...                     ...
+19247               22  ...              51214226.0
+19248               22  ...              31314340.0
+19249               22  ...              36527110.0
+19250               22  ...              21859382.0
+19251               22  ...              42185536.0
+
+[19252 rows x 16 columns]
+
+# make a depp copy of the dataset to add information about the gene of interest #
+       chromosome_name  ... upper_end_window_1000kb
+0                    1  ...             170341089.0
+1                    1  ...             170227232.0
+2                    1  ...              28450181.0
+3                    1  ...             197168820.0
+4                    1  ...              25213456.0
+...                ...  ...                     ...
+19247               22  ...              51214226.0
+19248               22  ...              31314340.0
+19249               22  ...              36527110.0
+19250               22  ...              21859382.0
+19251               22  ...              42185536.0
+
+[19252 rows x 16 columns]
+
+## load pressure data ##
+
+# first extract the connectome of the interest gene #
+
+warning [./data/all_human_gene-specific_connectomes_122015.zip]:  4294967296 extra bytes at beginning or within zipfile
+  (attempting to process anyway)
+
+
+# load the connectome having SLN as core gene #
+         Target  ...  Degrees_connectivity
+0           SLN  ...                     0
+1        ATP2A1  ...                     1
+2           PLN  ...                     1
+3        ATP2A2  ...                     1
+4        TMEM79  ...                     1
+...         ...  ...                   ...
+16721     THAP6  ...                     5
+16722   FAM27E3  ...                     7
+16723  PNLIPRP3  ...                     8
+16724   CLEC18C  ...                     6
+16725      OCA2  ...                     6
+
+[16726 rows x 10 columns]
+
+# check we have selected the correct connectome, i.e., the one with the correct core gene #
+True
+
+# if UCP1 is the core gene, check that the connectome extracted from the zip is the same as the original used for BAT analyses #
+We are not working with BAT, but with smt
+
+# if UCP1 is the core gene, check that file with BAT relationships has the same genes than the connectome 1% obtained now #
+We are not working with BAT, but with smt
+
+###### start with the specific subset of genes in the connectome according to P-value percentile ######
+
+## select the interest genes genes ##
+0        SLN
+1     ATP2A1
+2        PLN
+3     ATP2A2
+4     TMEM79
+       ...  
+79      ASB5
+80    FBXO25
+81      CLN5
+82      CLN3
+83     RAB1B
+Name: Target, Length: 84, dtype: object
+
+## create a variable about pressure status using this set of genes (those belonging to the set of interest are 'yes') ##
+0        no
+1        no
+2        no
+3        no
+4        no
+         ..
+19247    no
+19248    no
+19249    no
+19250    no
+19251    no
+Name: smt_status, Length: 19252, dtype: object
+
+# check we have set as 'yes' all genes with coords that are included in the interest set of genes #
+[ True]
+
+## explore pressure data ##
+
+# look for genes without gene symbol in gene coords #
+8     ITGB1BP2
+14        FMR1
+22        PRKX
+45         EDA
+55      ATP2B3
+62        TNMD
+Name: Target, dtype: object
+
+# I obtained gene coords from biomart hg19, so I understand that I have all names (IDs and gene names) for those genes that passed my filters. If a interest gene is not included in my gene coord set, then it should not be used for hg19. Indeed, the two genes included in the 168 BAT connectome that are not in gene coordinates, have their gene id NOT included in gene coords #
+
+# check that we do not have any of the synonyms of these missing genes included in gene coords #
+True
+True
+True
+True
+True
+True
+True
+True
+
+# In the same vein, there are some genes in 'gene coords' that do not have gene name, only gene id. I understand that these genes have no valid gene name in hg19. Indeed, I have checked two of these genes and have NO description in ensembl. So they should not be included in our interest genes #
+       chromosome_name          gene_id  ... upper_end_window_1000kb  smt_status
+309                  1  ENSG00000116883  ...              37292078.0          no
+408                  1  ENSG00000117598  ...              99913196.0          no
+409                  1  ENSG00000117600  ...             100252327.0          no
+892                  1  ENSG00000143674  ...             233992203.0          no
+1538                 1  ENSG00000183291  ...              87854119.0          no
+...                ...              ...  ...                     ...         ...
+19247               22  ENSG00000268427  ...              51214226.0          no
+19248               22  ENSG00000268538  ...              31314340.0          no
+19249               22  ENSG00000268818  ...              36527110.0          no
+19250               22  ENSG00000269103  ...              21859382.0          no
+19251               22  ENSG00000269104  ...              42185536.0          no
+
+[947 rows x 17 columns]
+
+## define function to calculate the distance of each coding to gene to the closest BAT gene ##
+
+## see function in action with two genes, one that is included in the group of interest genes and other not included ##
+('ENSG00000000457', 752642.5)
+('ENSG00000010072', 0)
+
+## check that the non-interest gene has distance different from zero while the interest gene has a distance equal to zero ##
+True
+True
+
+## run the function ##
+
+# use functools.partial to add a fixed parameter to the function. In this way, we can apply the function in parallel to each gene (third argument) while having the same value for the other two arguments, i.e., the dataset with the coordinates and the name of the selective pressure #
+
+# open the pool with the selected number of cores #
+<multiprocessing.pool.Pool state=RUN pool_size=5>
+
+# run the function to calculate distance of each gene to the closest selective pressure gene. This takes the gene IDs as inputs and the function will output a list of tuples having each tuple the gene id and the distance to the closest interest gene #
+see first 10 gene ids
+[('ENSG00000000457', 752642.5), ('ENSG00000000460', 638785.5), ('ENSG00000000938', 1214249.5), ('ENSG00000000971', 6985628.0), ('ENSG00000001460', 4450974.5), ('ENSG00000001461', 4393556.0), ('ENSG00000004455', 4345660.0), ('ENSG00000004487', 5786369.5), ('ENSG00000006555', 777028.5), ('ENSG00000007341', 3819293.0)]
+
+# convert the list with results to DF. The second column with the distance will be named used the pressure name and the p-value percentile used #
+               gene_id  smt_distance_percentile_0.5
+0      ENSG00000000457                     752642.5
+1      ENSG00000000460                     638785.5
+2      ENSG00000000938                    1214249.5
+3      ENSG00000000971                    6985628.0
+4      ENSG00000001460                    4450974.5
+...                ...                          ...
+19247  ENSG00000268427                   18677779.0
+19248  ENSG00000268538                    1222107.0
+19249  ENSG00000268818                    3990663.0
+19250  ENSG00000269103                   10677064.5
+19251  ENSG00000269104                    9649089.5
+
+[19252 rows x 2 columns]
+
+# save the results #
+
+## select the interest genes genes ##
+0         SLN
+1      ATP2A1
+2         PLN
+3      ATP2A2
+4      TMEM79
+        ...  
+163     RUNX2
+164       JUN
+165      ESR1
+166     GSK3B
+167     EPHA2
+Name: Target, Length: 168, dtype: object
+
+## create a variable about pressure status using this set of genes (those belonging to the set of interest are 'yes') ##
+0        no
+1        no
+2        no
+3        no
+4        no
+         ..
+19247    no
+19248    no
+19249    no
+19250    no
+19251    no
+Name: smt_status, Length: 19252, dtype: object
+
+# check we have set as 'yes' all genes with coords that are included in the interest set of genes #
+[ True]
+
+## explore pressure data ##
+
+# look for genes without gene symbol in gene coords #
+8      ITGB1BP2
+14         FMR1
+22         PRKX
+45          EDA
+55       ATP2B3
+62         TNMD
+89        IL2RG
+101        IRS4
+Name: Target, dtype: object
+
+# I obtained gene coords from biomart hg19, so I understand that I have all names (IDs and gene names) for those genes that passed my filters. If a interest gene is not included in my gene coord set, then it should not be used for hg19. Indeed, the two genes included in the 168 BAT connectome that are not in gene coordinates, have their gene id NOT included in gene coords #
+
+# check that we do not have any of the synonyms of these missing genes included in gene coords #
+True
+True
+True
+True
+True
+True
+True
+True
+
+# In the same vein, there are some genes in 'gene coords' that do not have gene name, only gene id. I understand that these genes have no valid gene name in hg19. Indeed, I have checked two of these genes and have NO description in ensembl. So they should not be included in our interest genes #
+       chromosome_name          gene_id  ... upper_end_window_1000kb  smt_status
+309                  1  ENSG00000116883  ...              37292078.0          no
+408                  1  ENSG00000117598  ...              99913196.0          no
+409                  1  ENSG00000117600  ...             100252327.0          no
+892                  1  ENSG00000143674  ...             233992203.0          no
+1538                 1  ENSG00000183291  ...              87854119.0          no
+...                ...              ...  ...                     ...         ...
+19247               22  ENSG00000268427  ...              51214226.0          no
+19248               22  ENSG00000268538  ...              31314340.0          no
+19249               22  ENSG00000268818  ...              36527110.0          no
+19250               22  ENSG00000269103  ...              21859382.0          no
+19251               22  ENSG00000269104  ...              42185536.0          no
+
+[947 rows x 17 columns]
+
+## define function to calculate the distance of each coding to gene to the closest BAT gene ##
+
+## see function in action with two genes, one that is included in the group of interest genes and other not included ##
+('ENSG00000000457', 752642.5)
+('ENSG00000010072', 0)
+
+## check that the non-interest gene has distance different from zero while the interest gene has a distance equal to zero ##
+True
+True
+
+## run the function ##
+
+# use functools.partial to add a fixed parameter to the function. In this way, we can apply the function in parallel to each gene (third argument) while having the same value for the other two arguments, i.e., the dataset with the coordinates and the name of the selective pressure #
+
+# open the pool with the selected number of cores #
+<multiprocessing.pool.Pool state=RUN pool_size=5>
+
+# run the function to calculate distance of each gene to the closest selective pressure gene. This takes the gene IDs as inputs and the function will output a list of tuples having each tuple the gene id and the distance to the closest interest gene #
+see first 10 gene ids
+[('ENSG00000000457', 752642.5), ('ENSG00000000460', 638785.5), ('ENSG00000000938', 1214249.5), ('ENSG00000000971', 6985628.0), ('ENSG00000001460', 4450974.5), ('ENSG00000001461', 4393556.0), ('ENSG00000004455', 775788.0), ('ENSG00000004487', 5786369.5), ('ENSG00000006555', 777028.5), ('ENSG00000007341', 2138509.0)]
+
+# convert the list with results to DF. The second column with the distance will be named used the pressure name and the p-value percentile used #
+               gene_id  smt_distance_percentile_1
+0      ENSG00000000457                   752642.5
+1      ENSG00000000460                   638785.5
+2      ENSG00000000938                  1214249.5
+3      ENSG00000000971                  6985628.0
+4      ENSG00000001460                  4450974.5
+...                ...                        ...
+19247  ENSG00000268427                 13167740.5
+19248  ENSG00000268538                  1222107.0
+19249  ENSG00000268818                  1519375.5
+19250  ENSG00000269103                    69507.5
+19251  ENSG00000269104                  4139051.0
+
+[19252 rows x 2 columns]
+
+# save the results #
+
+## select the interest genes genes ##
+0          SLN
+1       ATP2A1
+2          PLN
+3       ATP2A2
+4       TMEM79
+        ...   
+832    PHACTR3
+833        SF1
+834      CDC5L
+835        VCP
+836      CALM1
+Name: Target, Length: 837, dtype: object
+
+## create a variable about pressure status using this set of genes (those belonging to the set of interest are 'yes') ##
+0         no
+1         no
+2        yes
+3         no
+4         no
+        ... 
+19247     no
+19248     no
+19249     no
+19250     no
+19251     no
+Name: smt_status, Length: 19252, dtype: object
+
+# check we have set as 'yes' all genes with coords that are included in the interest set of genes #
+[ True]
+
+## explore pressure data ##
+
+# look for genes without gene symbol in gene coords #
+8      ITGB1BP2
+14         FMR1
+22         PRKX
+45          EDA
+55       ATP2B3
+62         TNMD
+89        IL2RG
+101        IRS4
+183        ACE2
+214        MST4
+241      CSF2RA
+254       AKAP4
+360         OGT
+377        OFD1
+393       IL3RA
+424      ERCC6L
+436       HCFC1
+476       STAG2
+485      CD40LG
+497       IKBKG
+500      PFKFB1
+531       CENPI
+611     CYSLTR1
+625       HTR2C
+718       AIFM1
+763      P2RY10
+805        GRPR
+Name: Target, dtype: object
+
+# I obtained gene coords from biomart hg19, so I understand that I have all names (IDs and gene names) for those genes that passed my filters. If a interest gene is not included in my gene coord set, then it should not be used for hg19. Indeed, the two genes included in the 168 BAT connectome that are not in gene coordinates, have their gene id NOT included in gene coords #
+
+# check that we do not have any of the synonyms of these missing genes included in gene coords #
+True
+True
+True
+True
+True
+True
+True
+True
+
+# In the same vein, there are some genes in 'gene coords' that do not have gene name, only gene id. I understand that these genes have no valid gene name in hg19. Indeed, I have checked two of these genes and have NO description in ensembl. So they should not be included in our interest genes #
+       chromosome_name          gene_id  ... upper_end_window_1000kb  smt_status
+309                  1  ENSG00000116883  ...              37292078.0          no
+408                  1  ENSG00000117598  ...              99913196.0          no
+409                  1  ENSG00000117600  ...             100252327.0          no
+892                  1  ENSG00000143674  ...             233992203.0          no
+1538                 1  ENSG00000183291  ...              87854119.0          no
+...                ...              ...  ...                     ...         ...
+19247               22  ENSG00000268427  ...              51214226.0          no
+19248               22  ENSG00000268538  ...              31314340.0          no
+19249               22  ENSG00000268818  ...              36527110.0          no
+19250               22  ENSG00000269103  ...              21859382.0          no
+19251               22  ENSG00000269104  ...              42185536.0          no
+
+[947 rows x 17 columns]
+
+## define function to calculate the distance of each coding to gene to the closest BAT gene ##
+
+## see function in action with two genes, one that is included in the group of interest genes and other not included ##
+('ENSG00000000457', 752642.5)
+('ENSG00000000938', 0)
+
+## check that the non-interest gene has distance different from zero while the interest gene has a distance equal to zero ##
+True
+True
+
+## run the function ##
+
+# use functools.partial to add a fixed parameter to the function. In this way, we can apply the function in parallel to each gene (third argument) while having the same value for the other two arguments, i.e., the dataset with the coordinates and the name of the selective pressure #
+
+# open the pool with the selected number of cores #
+<multiprocessing.pool.Pool state=RUN pool_size=5>
+
+# run the function to calculate distance of each gene to the closest selective pressure gene. This takes the gene IDs as inputs and the function will output a list of tuples having each tuple the gene id and the distance to the closest interest gene #
+see first 10 gene ids
+[('ENSG00000000457', 752642.5), ('ENSG00000000460', 638785.5), ('ENSG00000000938', 0), ('ENSG00000000971', 4717488.5), ('ENSG00000001460', 1508620.5), ('ENSG00000001461', 1451202.0), ('ENSG00000004455', 775788.0), ('ENSG00000004487', 2844015.5), ('ENSG00000006555', 777028.5), ('ENSG00000007341', 2117894.5)]
+
+# convert the list with results to DF. The second column with the distance will be named used the pressure name and the p-value percentile used #
+               gene_id  smt_distance_percentile_5
+0      ENSG00000000457                   752642.5
+1      ENSG00000000460                   638785.5
+2      ENSG00000000938                        0.0
+3      ENSG00000000971                  4717488.5
+4      ENSG00000001460                  1508620.5
+...                ...                        ...
+19247  ENSG00000268427                    44457.0
+19248  ENSG00000268538                   153517.0
+19249  ENSG00000268818                  1295970.0
+19250  ENSG00000269103                    69507.5
+19251  ENSG00000269104                    23602.0
+
+[19252 rows x 2 columns]
+
+# save the results #
