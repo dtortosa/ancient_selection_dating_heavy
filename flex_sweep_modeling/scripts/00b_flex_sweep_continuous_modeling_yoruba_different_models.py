@@ -156,16 +156,20 @@ final_data_yoruba_raw = pd.read_csv( \
     compression="gzip")
 print(final_data_yoruba_raw)
 
-
+p_value_percentile = 1
 bat_distance = pd.read_csv( \
-    "./data/bat_distance/bat_distance.tsv",
+    "./data/bat_distance/bat_data_percentile_" + str(p_value_percentile) + ".tsv",
     sep='\t', 
     header=0, 
     low_memory=False)
 
+
+bat_distance = bat_distance.loc[:, ["gene_id", "bat_distance_percentile_" + str(p_value_percentile)]]
+
 final_data_yoruba = pd.merge(left=final_data_yoruba_raw, right=bat_distance, on="gene_id", how="left")
 
 final_data_yoruba = final_data_yoruba.dropna()
+    #check gene loss!!!!
 
 #print_text("clean predicted class", header=3)
 #if you want to do classification, you have to calculate the number of sweeps based on the probability and then convert "predicted_class" to 0-1 integer
@@ -533,7 +537,7 @@ X_train_pandas
 ale_plot(model=estim, 
     train_set=X_train_pandas,
         #pandas DF with training data
-    features=["bat_distance"], 
+    features=["bat_distance_percentile_" + str(p_value_percentile)], 
     bins=10,
         #Number of bins used to split feature's space
         #I understand each bin has the same number of datapoints

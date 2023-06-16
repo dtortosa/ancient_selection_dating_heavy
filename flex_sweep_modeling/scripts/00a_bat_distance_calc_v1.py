@@ -115,8 +115,22 @@ def run_bash(command, return_value=False):
             if return_value==True:
                 return complete_process.stdout
     else:
-        #print the standard error and stop
-        raise ValueError("ERROR: FALSE! WE HAVE A PROBLEM RUNNING COMMAND: " + complete_process.stderr)
+        if(complete_process.returncode==1) & (complete_process.stderr=="warning [./data/all_human_gene-specific_connectomes_122015.zip]:  4294967296 extra bytes at beginning or within zipfile\n  (attempting to process anyway)\n"):
+                #Error obtained from unzip. returncode=1 is only a warning according to unzip man.
+                    #https://linux.die.net/man/1/unzip
+            
+            #print the standard output without "\n" and other characters
+            print(complete_process.stdout)
+
+            #print the standard error without stopping
+            print(complete_process.stderr)
+
+            #return also the value if required
+            if return_value==True:
+                return complete_process.stdout
+        else:
+            #print the standard error and stop
+            raise ValueError("ERROR: FALSE! WE HAVE A PROBLEM RUNNING COMMAND: " + complete_process.stderr)
 
 #test it
 print_text("check behaviour run_bash", header=1)
@@ -129,6 +143,30 @@ run_bash("ls")
 
 
 
+#######################################
+# Passing arguments of python program #
+#######################################
+
+#define input arguments to be passed when running this script in bash
+#we will use a bash script to run this python program two times instead of doing a function and parallelize that function. In this way, the same python script is run for each selective pressure and if we want to run again one selective pressure, we just need to modify the bash script, not the whole python program. This makes sense because we have only two selective pressured, and the parallelization will occur inside each selective pressure. Importantly, we can also have separated .out files, so we can look at the checks separately.
+import sys
+import argparse
+parser=argparse.ArgumentParser()
+parser.add_argument("--selective_pressure", type=str, default="smt", help="Name of the selective pressure used as input. Always string.")
+parser.add_argument("--n_cores", type=int, default=5, help="Number of cores/threads requested. Integer always, None does not work!")
+    #type=str to use the input as string
+    #type=int converts to integer
+    #default is the default value when the argument is not passed
+args=parser.parse_args()
+    #https://docs.python.org/3/library/argparse.html
+
+#get the arguments of the function that have been passed through command line
+pressure_name = args.selective_pressure
+n_cores = args.n_cores
+
+
+
+
 ############################
 # prepare folder structure #
 ############################
@@ -136,8 +174,9 @@ print_text("prepare folder structure", header=1)
 run_bash(" \
     mkdir \
         --parents \
-        ./data/bat_distance; \
+        ./data/" + pressure_name + "_distance; \
     ls -l ./data")
+
 
 
 
@@ -174,6 +213,7 @@ print_text("select only the columns we need", header=4)
 gene_coords_no_duplicated_subset = gene_coords_no_duplicated[[ 
     "chromosome_name", \
     "gene_id", \
+    "hgnc_symbol", \
     "gene_start", \
     "gene_end", \
     "middle_point", \
@@ -194,211 +234,270 @@ print_text("reset the row index", header=4)
 gene_coords_no_duplicated_subset = gene_coords_no_duplicated_subset \
     .reset_index(drop=True)
     #drop: Do not try to insert index into dataframe columns. This resets the index to the default integer index.
-gene_coords_no_duplicated_subset
+print(gene_coords_no_duplicated_subset)
     #https://stackoverflow.com/questions/20490274/how-to-reset-index-in-a-pandas-dataframe
 
 
-print_text("make a depp copy of the dataset to add BAT information", header=4)
-bat_coords = gene_coords_no_duplicated.copy(deep=True)
+print_text("make a depp copy of the dataset to add information about the gene of interest", header=4)
+pressure_coords = gene_coords_no_duplicated_subset.copy(deep=True)
     #deep=True: 
         #a new object will be created with a copy of the calling object's data and indices. Modifications to the data or indices of the copy will not be reflected in the original object (see notes below).
-print(bat_coords)
+print(pressure_coords)
 
 
 
-print_text("load BAT data", header=3)
-print_text("load the connectome with UCP1 as core gene", header=4)
-ucp1_conn = pd.read_csv( \
-    "/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/other_projects/human_genome_connectome/bat_connectome/data/human_connectome/UCP1.txt", \
+print_text("load pressure data", header=3)
+print_text("first extract the connectome of the interest gene, i.e., " + core_gene, header=4)
+if(pressure_name == "bat"):
+    core_gene = "UCP1"
+elif(pressure_name == "smt"):
+    core_gene = "SLN"
+run_bash(" \
+    unzip \
+        -p \
+        ./data/all_human_gene-specific_connectomes_122015.zip \
+        " + core_gene + ".txt > \
+    ./data/" + pressure_name + "_distance/" + core_gene + ".txt")
+        #extract the connectome of the gene from a Zip fila with ALL individual connectomes
+            #downloaded from 
+                #https://lab.rockefeller.edu/casanova/HGC
+                #Human gene-specific connectomes - download specific genes
+                #last file:
+                    #all_human_gene-specific_connectomes_122015
+        #unzip -p: 
+            #extract files to pipe, no messages
+            #we can get a specific file within the zip
+                #https://unix.stackexchange.com/a/14125
+        #We get a warning with both UCP1 and SNL
+            #warning [./data/all_human_gene-specific_connectomes_122015.zip]:  4294967296 extra bytes at beginning or within zipfile (attempting to process anyway)
+            #the returncode is equal to 1.
+                #According to the man, this is not serious: 
+                    #one or more warning errors were encountered, but processing completed successfully anyway. This includes zipfiles where one or more files was skipped due to unsupported compression method or encryption with an unknown password.
+                        #https://linux.die.net/man/1/unzip
+                #this is not error but warning, error would be returncode 2
+                    #a generic error in the zipfile format was detected. Processing may have completed successfully anyway; some broken zipfiles created by other archivers have simple work-arounds.
+            #We are unzipping just 1 file, and the unzipping was successful, also this is only a warning, so I think we are good here.
+                #I am going to check below in the case of UCP1 is the file is identical to the original used for the BAT analyses. If so, the fact that we get a warning is not affecting.
+
+
+print_text("load the connectome having " + core_gene + " as core gene", header=4)
+pressure_conn = pd.read_csv( \
+    "./data/" + pressure_name + "_distance/" + core_gene + ".txt", \
 	sep="\t", \
 	header=0, \
 	low_memory=False)
-print(ucp1_conn)
+print(pressure_conn)
 
 
-print_text("load again the ucp1 connectome again but downloaded in 2020 (19/06/2020)", header=4)
-ucp1_2020 = pd.read_csv( \
-    "/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/other_projects/human_genome_connectome/bat_connectome/data/human_connectome/UCP1_downloaded_2020.txt", \
-    sep="\t", \
-    header=0, \
-    low_memory=False)
-print(ucp1_2020)
+print_text("if UCP1 is the core gene, check that the connectome extracted from the zip is the same as the original used for BAT analyses", header=4)
+if(pressure_name == "bat"):
+    old_ucp1_conn = pd.read_csv( \
+        "/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/other_projects/human_genome_connectome/bat_connectome/data/human_connectome/UCP1.txt", \
+        sep="\t", \
+        header=0, \
+        low_memory=False)
+    ucp1_2020 = pd.read_csv( \
+        "/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/other_projects/human_genome_connectome/bat_connectome/data/human_connectome/UCP1_downloaded_2020.txt", \
+        sep="\t", \
+        header=0, \
+        low_memory=False)
+        #ucp1 connectome again but downloaded in 2020 (19/06/2020
+    print(pressure_conn.equals(old_ucp1_conn))
+    print(pressure_conn.equals(ucp1_2020))
+        #both files are the same, suggesting that the warning obtained when zipping is not a problem
 
 
-print_text("checked that this is exactly similar to the file downloaded 2 years ago and loaded here", header=4)
-print(ucp1_2020.equals(ucp1_conn))
-
-
-print_text("load BAT relationships", header=4)
-bat_relationship = pd.read_csv( \
-    "/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/other_projects/human_genome_connectome/bat_connectome/results/connectome_results/tables/appendix_S1_ordered.csv", \
-	sep=",", \
-	header=0, \
-	low_memory=False)
-print(bat_relationship)
-
-
-###por aquii
-
-#check
-    #http://localhost:8888/notebooks/calculation_new_selective_pressures_variables.ipynb
-
-print_text("load the new file with the bat relationships obtained in 2020 from the original file of Jose, to check we are using the correct file", header=4)
-bat_relationship_2 = read.table("/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/other_projects/human_genome_connectome/bat_connectome/results/connectome_results/tables/bat_relationship_check_2020.csv", sep=",", header=TRUE)
-#set as zero those cases with 2. I think these are cases not associated but that interact with other proteins that interact with UCP1
-bat_relationship_2[which(bat_relationship_2$BAT.relationship == 2),]$BAT.relationship <- 0
-#set the rows in alphabetic order according to gene name
-bat_relationship_2 = bat_relationship_2[order(bat_relationship_2$Genes),]
-#reset the row names
-row.names(bat_relationship_2) <- 1:nrow(bat_relationship_2)
-#add a new level to the Genes factors
-bat_relationship_2$Genes = factor(bat_relationship_2$Genes, c(levels(bat_relationship_2$Genes), "NRIP1"))
-#set NRIP1 o RIP140 as NRIP1
-bat_relationship_2[which(bat_relationship_2$Genes == "NRIP1 o RIP140"),]$Genes <- "NRIP1"
-#remove the not used levels
-bat_relationship_2$Genes = droplevels(bat_relationship_2$Genes)
-
-
-print_text("look for BAT genes without gene symbol in gene coords", header=4)
-print(bat_relationship.loc[~bat_relationship["Genes"].isin(bat_coords["hgnc_symbol"]),:])
-
-
-print_text("check that we do not have any of the synonyms of these two missing genes included in gene coords", header=4)
-print(bat_coords.loc[bat_coords["hgnc_symbol"].isin(["CD132", "CIDX", "IL-2RG", "IMD4", "P64", "SCIDX", "SCIDX1"]), :].shape[0] == 0)
-print(bat_coords.loc[bat_coords["hgnc_symbol"].isin(["NRU", "P2P", "P2Y4", "UNR"]), :].shape[0] == 0)
-    #the two missing genes have no synonmious in the dataset
-        #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000147168;r=X:70327254-70331958
-        #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000186912;r=X:69478016-69479654;t=ENST00000374519
-
-
-print_text("Select top 1% by p-value in the connectome and check whether these are the genes in BAT relationship file", header=4)
-from natsort import natsort_keygen
-print(ucp1_conn \
-    .loc[ \
-        ucp1_conn.loc[:, "Target_in_source_P-value(percentile)"] < 0.01, \
-        "Target"] \
-    .sort_values( \
-        axis=0, 
-        key=natsort_keygen(), \
-        ignore_index=True) \
-    .equals( \
-        bat_relationship["Genes"]\
+print_text("if UCP1 is the core gene, check that file with BAT relationships has the same genes than the connectome 1% obtained now", header=4)
+if(pressure_name == "bat"):
+    bat_relationship = pd.read_csv( \
+        "/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/other_projects/human_genome_connectome/bat_connectome/results/connectome_results/tables/appendix_S1_ordered.csv", \
+        sep=",", \
+        header=0, \
+        low_memory=False)
+    from natsort import natsort_keygen
+    print(pressure_conn \
+        .loc[ \
+            pressure_conn["Target_in_source_P-value(percentile)"] < 0.01, \
+            "Target"] \
         .sort_values( \
             axis=0, 
             key=natsort_keygen(), \
-            ignore_index=True)))
-        #from the UCP1 connectome
-            #select those rows for which the p-value percentile of the gene is below 1% and get the gene name
-        #natural sort the gene names
-            #axis=0: rows
-            #key: Apply the key function to the values before sorting.
-                #natsort_keygen()
-                    #Generate a key to sort strings and numbers naturally.
-            #ignore_index:
-                #If True, the resulting axis will be labeled 0, 1, …, n - 1
-                #so you avoid the previous index
-        #check that the resulting series is equals to the Genes included in BAT relationships after sorting in the same way
-            #https://stackoverflow.com/a/63890954/12772630
-    
+            ignore_index=True) \
+        .equals( \
+            bat_relationship["Genes"]\
+            .sort_values( \
+                axis=0, 
+                key=natsort_keygen(), \
+                ignore_index=True)))
+            #from the UCP1 connectome
+                #select those rows for which the p-value percentile of the gene is below 1% and get the gene name
+            #natural sort the gene names
+                #"by" is not needed here because we only have 1 column
+                #axis=0: rows
+                #key: Apply the key function to the values before sorting.
+                    #natsort_keygen()
+                        #Generate a key to sort strings and numbers naturally.
+                #ignore_index:
+                    #If True, the resulting axis will be labeled 0, 1, …, n - 1
+                    #so you avoid the previous index
+            #check that the resulting series is equals to the Genes included in BAT relationships after sorting in the same way
+                #https://stackoverflow.com/a/63890954/12772630
 
 
 
-print_text("10% is 0.1, 1% (used in the connectome paper) is 0.01", header=4)
-selected_ucp_connectome_genes = ucp1_conn.loc[ucp1_conn.iloc[:, "Target_in_source_P-value(percentile)"] < 0.01, "Target"]
 
-bat_coords["bat_status"] = ["yes" if gene_id in selected_ucp_connectome_genes.to_list() else "no" for gene_id in bat_coords["hgnc_symbol"]]
-	#CHECK THIS
-#bat_coords["bat_status"] = ["yes" if gene_id in bat_relationship.loc[bat_relationship["BAT relationship"].isin([0, 1]), "Genes"].to_list() else "no" for gene_id in bat_coords["hgnc_symbol"]]
-	#CHECK THIS
+print_text("start with the specific subset of genes in the connectome according to P-value percentile", header=2)
+#p_value_percentile = 1
+for p_value_percentile in [0.5, 1, 5]:
 
-
-	#you want all genes in BAT relationships, known and unknown BAT genes
-
-bat_coords.columns
-
+    print_text("select the interest genes genes", header=3)
+    selected_connectome_genes = pressure_conn \
+        .loc[ \
+            pressure_conn["Target_in_source_P-value(percentile)"] < (p_value_percentile/100), \
+            "Target"]
+    print(selected_connectome_genes)
 
 
-#pressure_df = bat_coords
-#pressure_dist_name="bat"
-#gene_id="ENSG00000003987"
-def distance_calc(pressure_df, pressure_dist_name, gene_id):
-    
-    #select the row of the selected gene id
-    selected_gene_row = pressure_df[pressure_df["gene_id"] == gene_id]
+    print_text("create a variable about pressure status using this set of genes (those belonging to the set of interest are 'yes')", header=3)
+    pressure_coords[pressure_name + "_status"] = ["yes" if gene_id in selected_connectome_genes.to_list() else "no" for gene_id in pressure_coords["hgnc_symbol"]]
+    print(pressure_coords[pressure_name + "_status"])
+
+
+    print_text("explore pressure data", header=3)
+    print_text("look for genes without gene symbol in gene coords", header=4)
+    missing_genes = selected_connectome_genes.loc[~selected_connectome_genes.isin(pressure_coords["hgnc_symbol"])]
+    if (missing_genes.shape[0] > (selected_connectome_genes.shape[0]*0.1)):
+        print(missing_genes)
+    else:
+        raise ValueError("ERROR: FALSE! TOO MANY GENES OF THE CONNECTOME ARE NOT INCLUDED IN GENE COORDS FILE")
+
+
+    print_text("I obtained gene coords from biomart hg19, so I understand that I have all names (IDs and gene names) for those genes that passed my filters. If a interest gene is not included in my gene coord set, then it should not be used for hg19. Indeed, the two genes included in the 168 BAT connectome that are not in gene coordinates, have their gene id NOT included in gene coords", header=4)
+    #CHECK FOR SMT? A FEW GENES?
+    if(pressure_name == "bat"):
+        print_text("check that we do not have any of the synonyms of these two missing genes included in gene coords", header=4)
+        print(pressure_coords.loc[pressure_coords["hgnc_symbol"].isin(["CD132", "CIDX", "IL-2RG", "IMD4", "P64", "SCIDX", "SCIDX1"]), :].shape[0] == 0)
+        print(pressure_coords.loc[pressure_coords["hgnc_symbol"].isin(["NRU", "P2P", "P2Y4", "UNR"]), :].shape[0] == 0)
+            #the two missing genes have no synonmious in the dataset
+                #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000147168;r=X:70327254-70331958
+                #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000186912;r=X:69478016-69479654;t=ENST00000374519
+            #THIS CHECK WAS DONE WITH HG19! LOOK AGAIN FOR HG38!
+        print(pressure_coords.loc[pressure_coords["gene_id"] == "ENSG00000147168", :].shape[0] == 0)
+        print(pressure_coords.loc[pressure_coords["gene_id"] == "ENSG00000186912", :].shape[0] == 0)
+
+    print_text("In the same vein, there are some genes in 'gene coords' that do not have gene name, only gene id. I understand that these genes have no valid gene name in hg38. Indeed, I have checked two of these genes and have NO description in ensembl. So they should not include our BAT genes", header=4)
+    print(pressure_coords.loc[pressure_coords["hgnc_symbol"].isna(),:]
+    )
+        #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000116883;r=1:36789335-36794822;t=ENST00000373137
+        #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000268538;r=22:30814212-30814469;t=ENST00000598426
+
+
+
+    print_text("define function to calculate the distance of each coding to gene to the closest BAT gene", header=3)
+    #pressure_df = pressure_coords
+    #pressure_dist_name=pressure_name
+    #gene_id="ENSG00000003987"
+    def distance_calc(pressure_df, pressure_dist_name, gene_id):
         
-    #if the gene is a interest gene
-    if all(selected_gene_row[pressure_dist_name+"_status"] == "yes"):
-        #we need all() to avoid boolean problems with pandas
+        #select the row of the selected gene id
+        selected_gene_row = pressure_df[pressure_df["gene_id"] == gene_id]
         
-        #dist is zero
-        distance=0
-    else: 
-        #else, status is "no" or nan so we have to calculate the
-        #distance to the closest interest gene
-        
-        #select the genes related to the selective pressure
-        selected_genes = pressure_df[pressure_df[pressure_dist_name+"_status"] == "yes"]
-        
-        #check we have interest genes in the chromosome of the selected gene
+        #extract its chromosome
         selected_chromosome = int(selected_gene_row["chromosome_name"])
 
-        if(selected_chromosome in selected_genes["chromosome_name"].to_list()):
+        #select the genes related to the selective pressure
+        selected_genes = pressure_df.loc[pressure_df[pressure_dist_name+"_status"] == "yes", :]
 
-        	#from the interest genes, select those belonging to the same chromosome
-        	#and the get their center
-        	center_pressures = selected_genes.loc[
-        	    selected_genes["chromosome_name"] == selected_chromosome, 
-        	    "middle_point"]
-        	    #int to avoid comparing two pandas series. We directly convert chromosome name
-        	    #to integer
-        	
-        	#get the min distance between the center of the gene and those of the 
-        	#interest genes in absolute value
-        	distance=np.min(np.abs(float(selected_gene_row["middle_point"]) - center_pressures))
-        else:
-        	distance = np.nan
+        #if the gene is a interest gene
+        if all(selected_gene_row[pressure_dist_name+"_status"] == "yes"):
+            #we need all() to avoid boolean problems with pandas
+            
+            #dist is zero
+            distance=0
+        else: 
+            #else, status is "no" or nan so we have to calculate the
+            #distance to the closest interest gene
+            
+            #check we have interest genes in the chromosome of the selected gene
+            if(selected_chromosome in selected_genes["chromosome_name"].to_list()):
     
-    #return the distance and its gene_id as a tuple
-    return tuple([gene_id, distance])
+            	#from the interest genes, select those belonging to the same chromosome and then get their center
+            	center_pressures = selected_genes \
+                    .loc[
+            	       selected_genes["chromosome_name"] == int(selected_chromosome), 
+            	       "middle_point"]
+            	    #int to avoid comparing two pandas series. We directly convert chromosome name
+            	    #to integer
+            	
+            	#get the min distance between the center of the gene and those of the 
+            	#interest genes in absolute value
+            	distance=np.min(np.abs(float(selected_gene_row["middle_point"]) - center_pressures))
+            else: #else, we do not have interest genes in the selected chromosome, so NA
+            	distance = np.nan
+        
+        #return the distance and its gene_id as a tuple
+        return tuple([gene_id, distance])
 
 
-import multiprocessing as mp
-from functools import partial
 
-#use partial to add a fixed parameter to the function
-distance_calc_fixed = partial(distance_calc, 
-                              bat_coords, 
-                              "bat")
-    #first you have the function
-    #then you have the arguments that will be fixed
-    #the first argument will always take the value of vip_distance_calc
-    #this the data.frame with the data for the selective pressure
-    #so it can be accessed by the function
-    #the second argument is for the name of the selective pressure, so we access
-    #columns by column name in pandas
-    #gene id is not included because we are going to iterate across gene ids
-    #https://stackoverflow.com/questions/25553919/passing-multiple-parameters-to-pool-map-function-in-python
+    print_text("see function in action with two genes, one that is included in the group of interest genes and other not included", header=3)
+    non_interest_gene = distance_calc( \
+        pressure_df=pressure_coords, \
+        pressure_dist_name=pressure_name, \
+        gene_id=pressure_coords.loc[pressure_coords[pressure_name+"_status"]=="no", "gene_id"].iloc[0])
+    interest_gene = distance_calc( \
+        pressure_df=pressure_coords, \
+        pressure_dist_name=pressure_name, \
+        gene_id=pressure_coords.loc[pressure_coords[pressure_name+"_status"]=="yes", "gene_id"].iloc[0])
+    print(non_interest_gene)
+    print(interest_gene)
 
-#open the pool with 5 cores
-pool = mp.Pool(5)
-
-#run the function to calculate distance of each gene to the closest
-#selective pressure gene. This takes the gene IDs as inputs
-#and the function will calculate the distance for each gene id
-#https://stackoverflow.com/questions/64763867/parallel-processing-of-each-row-in-pandas-iteration
-bat_distance_first_map = pool.map(distance_calc_fixed, 
-                                  bat_coords["gene_id"].values)
-
-#close the pool
-pool.close()
-
-bat_distance_first_map_df = pd.DataFrame(bat_distance_first_map, 
-                                         columns=["gene_id", 
-                                                  "bat_distance"])
-bat_distance_first_map_df
+    non_interest_gene[1] != 0
+    interest_gene[1] == 0
 
 
-bat_distance_first_map_df.to_csv("./data/bat_distance/bat_distance.tsv",
-	sep='\t', 
-	header=True, 
-	index=False)
+    #por aquii
+
+
+
+    import multiprocessing as mp
+    from functools import partial
+    
+    #use partial to add a fixed parameter to the function
+    distance_calc_fixed = partial(distance_calc, 
+                                  pressure_coords, 
+                                  "bat")
+        #first you have the function
+        #then you have the arguments that will be fixed
+        #the first argument will always take the value of vip_distance_calc
+        #this the data.frame with the data for the selective pressure
+        #so it can be accessed by the function
+        #the second argument is for the name of the selective pressure, so we access
+        #columns by column name in pandas
+        #gene id is not included because we are going to iterate across gene ids
+        #https://stackoverflow.com/questions/25553919/passing-multiple-parameters-to-pool-map-function-in-python
+    
+    #open the pool with the selected number of cores
+    pool = mp.Pool(n_cores)
+    
+    #run the function to calculate distance of each gene to the closest
+    #selective pressure gene. This takes the gene IDs as inputs
+    #and the function will calculate the distance for each gene id
+    #https://stackoverflow.com/questions/64763867/parallel-processing-of-each-row-in-pandas-iteration
+    bat_results_map = pool.map(distance_calc_fixed, pressure_coords["gene_id"].values)
+    
+    #close the pool
+    pool.close()
+    
+    bat_results_df = pd.DataFrame( \
+        bat_results_map, 
+        columns=[ \
+            "gene_id", 
+            "bat_distance_percentile_" + str(p_value_percentile)])
+    print(bat_results_df)
+    
+    bat_results_df.to_csv( \
+        "./data/bat_distance/bat_data_percentile_" + str(p_value_percentile) + ".tsv", \
+        sep='\t', \
+        header=True, \
+        index=False)
