@@ -148,7 +148,7 @@ print(f"The selected window size is {gene_window_size}")
 
 
 print_text("load and clean input data", header=2)
-print_text("load into pandas", header=3)
+print_text("load flex-sweep probability and most predictors into pandas", header=3)
 final_data_yoruba_raw = pd.read_csv( \
     "data/flex_sweep_closest_window_center.txt.gz", \
     sep=",", \
@@ -156,20 +156,61 @@ final_data_yoruba_raw = pd.read_csv( \
     compression="gzip")
 print(final_data_yoruba_raw)
 
+
+
+print_text("load BAT and SMT data, only 1% percentile for now", header=3)
 p_value_percentile = 1
 bat_distance = pd.read_csv( \
     "./data/bat_distance/bat_data_percentile_" + str(p_value_percentile) + ".tsv",
     sep='\t', 
     header=0, 
     low_memory=False)
+smt_distance = pd.read_csv( \
+    "./data/smt_distance/smt_data_percentile_" + str(p_value_percentile) + ".tsv",
+    sep='\t', 
+    header=0, 
+    low_memory=False)
+print(bat_distance)
+print(smt_distance)
 
 
-bat_distance = bat_distance.loc[:, ["gene_id", "bat_distance_percentile_" + str(p_value_percentile)]]
+print_text("merge all data.frames", header=3)
+print_text("make list with all DFs", header=4)
+list_dataframes = [final_data_yoruba_raw, bat_distance, smt_distance]
+print(list_dataframes)
 
-final_data_yoruba = pd.merge(left=final_data_yoruba_raw, right=bat_distance, on="gene_id", how="left")
 
+print_text("merge all of them with reduce", header=4)
+from functools import reduce
+final_data_yoruba = reduce( \
+    lambda x, y: \
+        pd.merge( \
+            left=x, \
+            right=y, \
+            how="left", \
+            on="gene_id"), \
+    list_dataframes)
+        #reduce applies a function of two arguments cumulatively to the items of a sequence, from left to right, so as to reduce the sequence to a single value. For example, reduce(lambda x, y: x+y, [1, 2, 3, 4, 5]) calculates ((((1+2)+3)+4)+5).
+        #therefore, in the first iteration, we merge the first DF of the list (left) with the second (right). The resulting DF (left) is then merged with the third DF (right), and so on....
+        #the first DF is going to be the original dataset with flex-sweep probability and most of predictors, therefore using left we ensure we use only those rows with gene_id in the original DF.
+            #in any case, we should not have NA for distance to BAT and SMT as these have been calculated using the original gene coordinate file, which was in turn used to calculate many of our predictors.
+print(final_data_yoruba)
+
+
+print_text("count the number of NANs in distance BAT and SMT genes", header=4)
+n_nans_bat = sum(final_data_yoruba["bat_distance_percentile_1"].isna())
+n_nans_smt = sum(final_data_yoruba["smt_distance_percentile_1"].isna())
+if(n_nans_bat <= (final_data_yoruba.shape[0]*0.03)) | (n_nans_smt <= (final_data_yoruba.shape[0]*0.03)):
+    print(f"We have {n_nans_bat} NANs for the distance to the closest BAT gene")
+    print(f"We have {n_nans_smt} NANs for the distance to the closest SMT gene")
+else:
+    raise ValueError("ERROR: FALSE! WE HAVE MORE THAN 3% OF NANs FOR DISANCE TO INTEREST GENES")
+
+
+print_text("remove NANs", header=4)
 final_data_yoruba = final_data_yoruba.dropna()
-    #check gene loss!!!!
+print(final_data_yoruba)
+
 
 #print_text("clean predicted class", header=3)
 #if you want to do classification, you have to calculate the number of sweeps based on the probability and then convert "predicted_class" to 0-1 integer
@@ -560,6 +601,12 @@ ale_plot(model=estim,
         #samples, you do not need to see the bar where each sample is
         #set to None to plot to make always the rug plot
 plt.close()
+
+
+#bat 1% without no other selective pressure shows a clear decrease in the probability of selection as we move away from the BAT connectome genes. Note that there is a peak, an increase in the probability of selection at 717kb of distance from BAT genes. This is still relatively close. Remember that we consider the impact of genomic factors on the probability of selection of a gene that are up to 500kb from the center of the gene (500+500=1000kb windows) and then there is a clear decrease.
+#whean adding vip, thermogenic and smt distance, the pattern is much more CLEAR with a decrease of flex-sweep probability. With specific combinations of these predictors, bAT pattern is not super clear, but it is with all of them. This is not a problem to me becuase alone this factor already shows pattern. and we adding other factors, i.e., controlling for then we see even clearer impact.
+
+
 #vip distance gives the expected result very well, in contrast with vip number. we are going to use ditance? think
     #we know the expected result because we already know VIPs are enrichd in positive selection so we should select the approach with power to detect this.
 #thermogenic distance doe snot work, but this is Yoruba, we should check in non-african pops exposed to cold conditions

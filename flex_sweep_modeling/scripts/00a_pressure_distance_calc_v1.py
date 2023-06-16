@@ -358,7 +358,7 @@ print_text("start with the specific subset of genes in the connectome according 
 #p_value_percentile = 1
 for p_value_percentile in [0.5, 1, 5]:
 
-    print_text("select the interest genes genes", header=3)
+    print_text("Percentile " + str(p_value_percentile) + "% :  select the interest genes genes", header=3)
     selected_connectome_genes = pressure_conn \
         .loc[ \
             pressure_conn["Target_in_source_P-value(percentile)"] < (p_value_percentile/100), \
@@ -366,12 +366,12 @@ for p_value_percentile in [0.5, 1, 5]:
     print(selected_connectome_genes)
 
 
-    print_text("create a variable about pressure status using this set of genes (those belonging to the set of interest are 'yes')", header=3)
+    print_text("Percentile " + str(p_value_percentile) + "% :  create a variable about pressure status using this set of genes (those belonging to the set of interest are 'yes')", header=3)
     pressure_coords[pressure_name + "_status"] = ["yes" if gene_symbol in selected_connectome_genes.to_list() else "no" for gene_symbol in pressure_coords["hgnc_symbol"]]
     print(pressure_coords[pressure_name + "_status"])
 
 
-    print_text("check we have set as 'yes' all genes with coords that are included in the interest set of genes", header=4)
+    print_text("Percentile " + str(p_value_percentile) + "% :  check we have set as 'yes' all genes with coords that are included in the interest set of genes", header=4)
     print(pressure_coords \
         .loc[ \
             pressure_coords["hgnc_symbol"].isin(selected_connectome_genes), \
@@ -380,46 +380,50 @@ for p_value_percentile in [0.5, 1, 5]:
 
 
 
-    print_text("explore pressure data", header=3)
-    print_text("look for genes without gene symbol in gene coords", header=4)
+    print_text("Percentile " + str(p_value_percentile) + "% :  explore pressure data", header=3)
+    print_text("Percentile " + str(p_value_percentile) + "% :  look for genes without gene symbol in gene coords", header=4)
     missing_genes = selected_connectome_genes.loc[~selected_connectome_genes.isin(pressure_coords["hgnc_symbol"])]
     if (missing_genes.shape[0] <= np.round(selected_connectome_genes.shape[0]*0.1)):
+        print(f"We have lost {missing_genes.shape[0]} genes from the {core_gene} connectome")
         print(missing_genes)
     else:
         raise ValueError("ERROR: FALSE! MORE THAN 10% OF GENES OF THE CONNECTOME ARE NOT INCLUDED IN GENE COORDS FILE")
 
 
-    print_text("I obtained gene coords from biomart hg19, so I understand that I have all names (IDs and gene names) for those genes that passed my filters. If a interest gene is not included in my gene coord set, then it should not be used for hg19. Indeed, the two genes included in the 168 BAT connectome that are not in gene coordinates, have their gene id NOT included in gene coords", header=4)
+    print_text("Percentile " + str(p_value_percentile) + "% :  I obtained gene coords from biomart hg19, so I understand that I have all names (IDs and gene names) for those genes that passed my filters. If a interest gene is not included in my gene coord set, then it should not be used for hg19. Indeed, the two genes included in the 168 BAT connectome that are not in gene coordinates, have their gene id NOT included in gene coords", header=4)
     
 
-    print_text("check that we do not have any of the synonyms of these missing genes included in gene coords", header=4)
-    if(pressure_name == "bat"):
-        print(pressure_coords.loc[pressure_coords["hgnc_symbol"].isin(["CD132", "CIDX", "IL-2RG", "IMD4", "P64", "SCIDX", "SCIDX1"]), :].shape[0] == 0)
-        print(pressure_coords.loc[pressure_coords["hgnc_symbol"].isin(["NRU", "P2P", "P2Y4", "UNR"]), :].shape[0] == 0)
-            #the two missing genes have no synonmious in the dataset
+    #check the missing cases only for the percentile 1%, which is the one used for now in the analyses
+    if (p_value_percentile == 1):
+        print_text("Percentile " + str(p_value_percentile) + "% :  check that we do not have any of the synonyms of these missing genes included in gene coords", header=4)
+        if(pressure_name == "bat"):
+            print(pressure_coords.loc[pressure_coords["hgnc_symbol"].isin(["CD132", "CIDX", "IL-2RG", "IMD4", "P64", "SCIDX", "SCIDX1"]), :].shape[0] == 0)
+            print(pressure_coords.loc[pressure_coords["hgnc_symbol"].isin(["NRU", "P2P", "P2Y4", "UNR"]), :].shape[0] == 0)
+                #the two missing genes have no synonmious in the dataset
+                    #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000147168;r=X:70327254-70331958
+                    #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000186912;r=X:69478016-69479654;t=ENST00000374519
+                #THIS CHECK WAS DONE WITH HG19! LOOK AGAIN FOR HG38!
+        elif (pressure_name == "smt"):
+            print(pressure_coords.loc[pressure_coords["hgnc_symbol"].isin(["CHORDC3", "ITGB1BP", "MELUSIN"]), :].shape[0] == 0)
+                #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000147166;r=X:70521584-70525221
+            print(pressure_coords.loc[pressure_coords["hgnc_symbol"].isin(["FMRP", "FRAXA", "MGC87458", "POF", "POF1"]), :].shape[0] == 0)
+                #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000102081;r=X:146993469-147032645
+            print(pressure_coords.loc[pressure_coords["hgnc_symbol"].isin(["PKX1"]), :].shape[0] == 0)
+                #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000183943;r=X:3522411-3631649
+            print(pressure_coords.loc[pressure_coords["hgnc_symbol"].isin(["ECTD1", "ED1", "ED1-A1", "ED1-A2", "EDA-A1", "EDA-A2", "EDA1", "EDA2", "HED", "HED1", "ODT1", "STHAGX1", "XHED", "XLHED"]), :].shape[0] == 0)
+                #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000158813;r=X:68835911-69259319
+            print(pressure_coords.loc[pressure_coords["hgnc_symbol"].isin(["PMCA3", "PMCA3a", "SCAX1"]), :].shape[0] == 0)
+                #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000067842;r=X:152783134-152848397
+            print(pressure_coords.loc[pressure_coords["hgnc_symbol"].isin(["BRICD4", "CHM1L", "ChM1L", "TEM", "myodulin", "tendin"]), :].shape[0] == 0)
+                #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000000005;r=X:99839799-99854882
+            print(pressure_coords.loc[pressure_coords["hgnc_symbol"].isin(["CD132", "CIDX", "IL-2RG", "IMD4", "P64", "SCIDX", "SCIDX1"]), :].shape[0] == 0)
                 #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000147168;r=X:70327254-70331958
-                #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000186912;r=X:69478016-69479654;t=ENST00000374519
-            #THIS CHECK WAS DONE WITH HG19! LOOK AGAIN FOR HG38!
-    elif (pressure_name == "smt"):
-        print(pressure_coords.loc[pressure_coords["hgnc_symbol"].isin(["CHORDC3", "ITGB1BP", "MELUSIN"]), :].shape[0] == 0)
-            #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000147166;r=X:70521584-70525221
-        print(pressure_coords.loc[pressure_coords["hgnc_symbol"].isin(["FMRP", "FRAXA", "MGC87458", "POF", "POF1"]), :].shape[0] == 0)
-            #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000102081;r=X:146993469-147032645
-        print(pressure_coords.loc[pressure_coords["hgnc_symbol"].isin(["PKX1"]), :].shape[0] == 0)
-            #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000183943;r=X:3522411-3631649
-        print(pressure_coords.loc[pressure_coords["hgnc_symbol"].isin(["ECTD1", "ED1", "ED1-A1", "ED1-A2", "EDA-A1", "EDA-A2", "EDA1", "EDA2", "HED", "HED1", "ODT1", "STHAGX1", "XHED", "XLHED"]), :].shape[0] == 0)
-            #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000158813;r=X:68835911-69259319
-        print(pressure_coords.loc[pressure_coords["hgnc_symbol"].isin(["PMCA3", "PMCA3a", "SCAX1"]), :].shape[0] == 0)
-            #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000067842;r=X:152783134-152848397
-        print(pressure_coords.loc[pressure_coords["hgnc_symbol"].isin(["BRICD4", "CHM1L", "ChM1L", "TEM", "myodulin", "tendin"]), :].shape[0] == 0)
-            #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000000005;r=X:99839799-99854882
-        print(pressure_coords.loc[pressure_coords["hgnc_symbol"].isin(["CD132", "CIDX", "IL-2RG", "IMD4", "P64", "SCIDX", "SCIDX1"]), :].shape[0] == 0)
-            #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000147168;r=X:70327254-70331958
-        print(pressure_coords.loc[pressure_coords["hgnc_symbol"].isin(["IRS-4", "PY160"]), :].shape[0] == 0)
-            #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000133124;r=X:107975712-107979651;t=ENST00000372129
+            print(pressure_coords.loc[pressure_coords["hgnc_symbol"].isin(["IRS-4", "PY160"]), :].shape[0] == 0)
+                #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000133124;r=X:107975712-107979651;t=ENST00000372129
+    else:
+        print("ERROR: FALSE! This is not an actual error, just a warning. We have extracted genes close to UCP1 and Sarcopilin, not only according a p-value percentile of 1%, but also 0.5 and 5%. In these cases, the number of connectome genes that are NOT included in the gene_coords file is different than in the case of 1% as the set of genes is different. For example, for sarcopilin we lose 27 genes from the 5% connectome. I have NOT check if synonyms of these genes are in gene_coord. It should not be the case as no missing gene of the 1% had any synonym in gene_coords, but take this in mind if you use these sets.")
 
-
-    print_text("In the same vein, there are some genes in 'gene coords' that do not have gene name, only gene id. I understand that these genes have no valid gene name in hg19. Indeed, I have checked two of these genes and have NO description in ensembl. So they should not be included in our interest genes", header=4)
+    print_text("Percentile " + str(p_value_percentile) + "% :  In the same vein, there are some genes in 'gene coords' that do not have gene name, only gene id. I understand that these genes have no valid gene name in hg19. Indeed, I have checked two of these genes and have NO description in ensembl. So they should not be included in our interest genes", header=4)
     print(pressure_coords.loc[pressure_coords["hgnc_symbol"].isna(),:]
     )
         #https://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000116883;r=1:36789335-36794822;t=ENST00000373137
@@ -427,7 +431,7 @@ for p_value_percentile in [0.5, 1, 5]:
 
 
 
-    print_text("define function to calculate the distance of each coding to gene to the closest BAT gene", header=3)
+    print_text("Percentile " + str(p_value_percentile) + "% :  define function to calculate the distance of each coding to gene to the closest BAT gene", header=3)
     #pressure_df = pressure_coords
     #pressure_dist_name=pressure_name
     #gene_id="ENSG00000003987"
@@ -474,7 +478,7 @@ for p_value_percentile in [0.5, 1, 5]:
 
 
 
-    print_text("see function in action with two genes, one that is included in the group of interest genes and other not included", header=3)
+    print_text("Percentile " + str(p_value_percentile) + "% :  see function in action with two genes, one that is included in the group of interest genes and other not included", header=3)
     non_interest_gene = distance_calc( \
         pressure_df=pressure_coords, \
         pressure_dist_name=pressure_name, \
@@ -488,15 +492,15 @@ for p_value_percentile in [0.5, 1, 5]:
 
 
 
-    print_text("check that the non-interest gene has distance different from zero while the interest gene has a distance equal to zero", header=3)
+    print_text("Percentile " + str(p_value_percentile) + "% :  check that the non-interest gene has distance different from zero while the interest gene has a distance equal to zero", header=3)
     print(non_interest_gene[1] != 0)
     print(interest_gene[1] == 0)
         #the result of my function is tuple with two elements: gene id and distance to the closest interest gene. The second element [1] is the distance.
 
 
 
-    print_text("run the function", header=3)
-    print_text("use functools.partial to add a fixed parameter to the function. In this way, we can apply the function in parallel to each gene (third argument) while having the same value for the other two arguments, i.e., the dataset with the coordinates and the name of the selective pressure", header=4)
+    print_text("Percentile " + str(p_value_percentile) + "% :  run the function", header=3)
+    print_text("Percentile " + str(p_value_percentile) + "% :  use functools.partial to add a fixed parameter to the function. In this way, we can apply the function in parallel to each gene (third argument) while having the same value for the other two arguments, i.e., the dataset with the coordinates and the name of the selective pressure", header=4)
     from functools import partial
     distance_calc_fixed = partial(distance_calc, pressure_coords, pressure_name)
         #first you have the function then you have the arguments that will be fixed the first argument will always take the value of pressure_coords this the data.frame with the data for the selective pressure so it can be accessed by the function the second argument is for the name of the selective pressure, so we access columns by column name in pandas
@@ -504,13 +508,13 @@ for p_value_percentile in [0.5, 1, 5]:
             #https://stackoverflow.com/questions/25553919/passing-multiple-parameters-to-pool-map-function-in-python
     
 
-    print_text("open the pool with the selected number of cores", header=4)
+    print_text("Percentile " + str(p_value_percentile) + "% :  open the pool with the selected number of cores", header=4)
     import multiprocessing as mp
     pool = mp.Pool(n_cores)
     print(pool)
 
 
-    print_text("run the function to calculate distance of each gene to the closest selective pressure gene. This takes the gene IDs as inputs and the function will output a list of tuples having each tuple the gene id and the distance to the closest interest gene", header=4)
+    print_text("Percentile " + str(p_value_percentile) + "% :  run the function to calculate distance of each gene to the closest selective pressure gene. This takes the gene IDs as inputs and the function will output a list of tuples having each tuple the gene id and the distance to the closest interest gene", header=4)
     results_map = pool.map( \
         func=distance_calc_fixed, \
         iterable=pressure_coords["gene_id"].values)
@@ -522,7 +526,7 @@ for p_value_percentile in [0.5, 1, 5]:
     print(results_map[0:10])
 
 
-    print_text("convert the list with results to DF. The second column with the distance will be named used the pressure name and the p-value percentile used", header=4)
+    print_text("Percentile " + str(p_value_percentile) + "% :  convert the list with results to DF. The second column with the distance will be named used the pressure name and the p-value percentile used", header=4)
     results_df = pd.DataFrame( \
         results_map, 
         columns=[ \
@@ -531,9 +535,24 @@ for p_value_percentile in [0.5, 1, 5]:
     print(results_df)
     
 
-    print_text("save the results", header=4)
+    print_text("Percentile " + str(p_value_percentile) + "% :  count how many NANs we have for the distance. NANs are caused because the gene has no interest genes within its chromosome, so no distance can be calculated", header=4)
+    n_nans = sum(results_df[pressure_name + "_distance_percentile_" + str(p_value_percentile)].isna())
+    print(n_nans)
+    if(n_nans <= (results_df.shape[0]*0.03)):
+        print(f"We have {n_nans} NANs for the distance to the closest {pressure_name.upper()} gene")
+    elif (pressure_name=="smt") & (p_value_percentile==0.5) & (n_nans <= (results_df.shape[0]*0.1)):
+        print("ERROR: FALSE! This is not an actual error, just a warning. We have many NANs for SMT and percentile 0.5%, around 1500 genes lost (only below 10%). Have this mind if you use this percentile.")
+        print(f"We have {n_nans} NANs for the distance to the closest {pressure_name.upper()} gene")
+    else:
+        raise ValueError("ERROR: FALSE! WE HAVE TOO MUCH NANs FOR DISTANCE TO INTEREST GENES")
+
+
+    print_text("Percentile " + str(p_value_percentile) + "% :  save the results", header=4)
     results_df.to_csv( \
         "./data/" + pressure_name + "_distance/" + pressure_name + "_data_percentile_" + str(p_value_percentile) + ".tsv", \
         sep='\t', \
         header=True, \
         index=False)
+
+
+    print_text("Percentile " + str(p_value_percentile) + "% :  FINISHED", header=4)

@@ -38,7 +38,7 @@ total 6208076
 drwxrwxr-x 2 dftortosa dftortosa       4096 Jun 16 11:37 bat_distance
 -rwxrwxrwx 1 dftortosa dftortosa    1433703 Jan 18 20:16 flex_sweep_closest_window_center.txt.gz
 -rw-rw-r-- 1 dftortosa dftortosa        598 Jun 16 10:07 README.txt
-drwxrwxr-x 2 dftortosa dftortosa       4096 Jun 16 11:37 smt_distance
+drwxrwxr-x 2 dftortosa dftortosa       4096 Jun 16 11:41 smt_distance
 
 
 #######################################
@@ -165,7 +165,7 @@ We are not working with BAT, but with smt
 
 ###### start with the specific subset of genes in the connectome according to P-value percentile ######
 
-## select the interest genes genes ##
+## Percentile 0.5% :  select the interest genes genes ##
 0        SLN
 1     ATP2A1
 2        PLN
@@ -179,7 +179,7 @@ We are not working with BAT, but with smt
 83     RAB1B
 Name: Target, Length: 84, dtype: object
 
-## create a variable about pressure status using this set of genes (those belonging to the set of interest are 'yes') ##
+## Percentile 0.5% :  create a variable about pressure status using this set of genes (those belonging to the set of interest are 'yes') ##
 0        no
 1        no
 2        no
@@ -193,12 +193,13 @@ Name: Target, Length: 84, dtype: object
 19251    no
 Name: smt_status, Length: 19252, dtype: object
 
-# check we have set as 'yes' all genes with coords that are included in the interest set of genes #
+# Percentile 0.5% :  check we have set as 'yes' all genes with coords that are included in the interest set of genes #
 [ True]
 
-## explore pressure data ##
+## Percentile 0.5% :  explore pressure data ##
 
-# look for genes without gene symbol in gene coords #
+# Percentile 0.5% :  look for genes without gene symbol in gene coords #
+We have lost 6 genes from the SLN connectome
 8     ITGB1BP2
 14        FMR1
 22        PRKX
@@ -207,19 +208,10 @@ Name: smt_status, Length: 19252, dtype: object
 62        TNMD
 Name: Target, dtype: object
 
-# I obtained gene coords from biomart hg19, so I understand that I have all names (IDs and gene names) for those genes that passed my filters. If a interest gene is not included in my gene coord set, then it should not be used for hg19. Indeed, the two genes included in the 168 BAT connectome that are not in gene coordinates, have their gene id NOT included in gene coords #
+# Percentile 0.5% :  I obtained gene coords from biomart hg19, so I understand that I have all names (IDs and gene names) for those genes that passed my filters. If a interest gene is not included in my gene coord set, then it should not be used for hg19. Indeed, the two genes included in the 168 BAT connectome that are not in gene coordinates, have their gene id NOT included in gene coords #
+ERROR: FALSE! This is not an actual error, just a warning. We have extracted genes close to UCP1 and Sarcopilin, not only according a p-value percentile of 1%, but also 0.5 and 5%. In these cases, the number of connectome genes that are NOT included in the gene_coords file is different than in the case of 1% as the set of genes is different. For example, for sarcopilin we lose 27 genes from the 5% connectome. I have NOT check if synonyms of these genes are in gene_coord. It should not be the case as no missing gene of the 1% had any synonym in gene_coords, but take this in mind if you use these sets.
 
-# check that we do not have any of the synonyms of these missing genes included in gene coords #
-True
-True
-True
-True
-True
-True
-True
-True
-
-# In the same vein, there are some genes in 'gene coords' that do not have gene name, only gene id. I understand that these genes have no valid gene name in hg19. Indeed, I have checked two of these genes and have NO description in ensembl. So they should not be included in our interest genes #
+# Percentile 0.5% :  In the same vein, there are some genes in 'gene coords' that do not have gene name, only gene id. I understand that these genes have no valid gene name in hg19. Indeed, I have checked two of these genes and have NO description in ensembl. So they should not be included in our interest genes #
        chromosome_name          gene_id  ... upper_end_window_1000kb  smt_status
 309                  1  ENSG00000116883  ...              37292078.0          no
 408                  1  ENSG00000117598  ...              99913196.0          no
@@ -235,28 +227,28 @@ True
 
 [947 rows x 17 columns]
 
-## define function to calculate the distance of each coding to gene to the closest BAT gene ##
+## Percentile 0.5% :  define function to calculate the distance of each coding to gene to the closest BAT gene ##
 
-## see function in action with two genes, one that is included in the group of interest genes and other not included ##
+## Percentile 0.5% :  see function in action with two genes, one that is included in the group of interest genes and other not included ##
 ('ENSG00000000457', 752642.5)
 ('ENSG00000010072', 0)
 
-## check that the non-interest gene has distance different from zero while the interest gene has a distance equal to zero ##
+## Percentile 0.5% :  check that the non-interest gene has distance different from zero while the interest gene has a distance equal to zero ##
 True
 True
 
-## run the function ##
+## Percentile 0.5% :  run the function ##
 
-# use functools.partial to add a fixed parameter to the function. In this way, we can apply the function in parallel to each gene (third argument) while having the same value for the other two arguments, i.e., the dataset with the coordinates and the name of the selective pressure #
+# Percentile 0.5% :  use functools.partial to add a fixed parameter to the function. In this way, we can apply the function in parallel to each gene (third argument) while having the same value for the other two arguments, i.e., the dataset with the coordinates and the name of the selective pressure #
 
-# open the pool with the selected number of cores #
+# Percentile 0.5% :  open the pool with the selected number of cores #
 <multiprocessing.pool.Pool state=RUN pool_size=5>
 
-# run the function to calculate distance of each gene to the closest selective pressure gene. This takes the gene IDs as inputs and the function will output a list of tuples having each tuple the gene id and the distance to the closest interest gene #
+# Percentile 0.5% :  run the function to calculate distance of each gene to the closest selective pressure gene. This takes the gene IDs as inputs and the function will output a list of tuples having each tuple the gene id and the distance to the closest interest gene #
 see first 10 gene ids
 [('ENSG00000000457', 752642.5), ('ENSG00000000460', 638785.5), ('ENSG00000000938', 1214249.5), ('ENSG00000000971', 6985628.0), ('ENSG00000001460', 4450974.5), ('ENSG00000001461', 4393556.0), ('ENSG00000004455', 4345660.0), ('ENSG00000004487', 5786369.5), ('ENSG00000006555', 777028.5), ('ENSG00000007341', 3819293.0)]
 
-# convert the list with results to DF. The second column with the distance will be named used the pressure name and the p-value percentile used #
+# Percentile 0.5% :  convert the list with results to DF. The second column with the distance will be named used the pressure name and the p-value percentile used #
                gene_id  smt_distance_percentile_0.5
 0      ENSG00000000457                     752642.5
 1      ENSG00000000460                     638785.5
@@ -272,9 +264,16 @@ see first 10 gene ids
 
 [19252 rows x 2 columns]
 
-# save the results #
+# Percentile 0.5% :  count how many NANs we have for the distance. NANs are caused because the gene has no interest genes within its chromosome, so no distance can be calculated #
+1686
+ERROR: FALSE! This is not an actual error, just a warning. We have many NANs for SMT and percentile 0.5%, around 1500 genes lost (only below 10%). Have this mind if you use this percentile.
+We have 1686 NANs for the distance to the closest SMT gene
 
-## select the interest genes genes ##
+# Percentile 0.5% :  save the results #
+
+# Percentile 0.5% :  FINISHED #
+
+## Percentile 1% :  select the interest genes genes ##
 0         SLN
 1      ATP2A1
 2         PLN
@@ -288,7 +287,7 @@ see first 10 gene ids
 167     EPHA2
 Name: Target, Length: 168, dtype: object
 
-## create a variable about pressure status using this set of genes (those belonging to the set of interest are 'yes') ##
+## Percentile 1% :  create a variable about pressure status using this set of genes (those belonging to the set of interest are 'yes') ##
 0        no
 1        no
 2        no
@@ -302,12 +301,13 @@ Name: Target, Length: 168, dtype: object
 19251    no
 Name: smt_status, Length: 19252, dtype: object
 
-# check we have set as 'yes' all genes with coords that are included in the interest set of genes #
+# Percentile 1% :  check we have set as 'yes' all genes with coords that are included in the interest set of genes #
 [ True]
 
-## explore pressure data ##
+## Percentile 1% :  explore pressure data ##
 
-# look for genes without gene symbol in gene coords #
+# Percentile 1% :  look for genes without gene symbol in gene coords #
+We have lost 8 genes from the SLN connectome
 8      ITGB1BP2
 14         FMR1
 22         PRKX
@@ -318,9 +318,9 @@ Name: smt_status, Length: 19252, dtype: object
 101        IRS4
 Name: Target, dtype: object
 
-# I obtained gene coords from biomart hg19, so I understand that I have all names (IDs and gene names) for those genes that passed my filters. If a interest gene is not included in my gene coord set, then it should not be used for hg19. Indeed, the two genes included in the 168 BAT connectome that are not in gene coordinates, have their gene id NOT included in gene coords #
+# Percentile 1% :  I obtained gene coords from biomart hg19, so I understand that I have all names (IDs and gene names) for those genes that passed my filters. If a interest gene is not included in my gene coord set, then it should not be used for hg19. Indeed, the two genes included in the 168 BAT connectome that are not in gene coordinates, have their gene id NOT included in gene coords #
 
-# check that we do not have any of the synonyms of these missing genes included in gene coords #
+# Percentile 1% :  check that we do not have any of the synonyms of these missing genes included in gene coords #
 True
 True
 True
@@ -330,7 +330,7 @@ True
 True
 True
 
-# In the same vein, there are some genes in 'gene coords' that do not have gene name, only gene id. I understand that these genes have no valid gene name in hg19. Indeed, I have checked two of these genes and have NO description in ensembl. So they should not be included in our interest genes #
+# Percentile 1% :  In the same vein, there are some genes in 'gene coords' that do not have gene name, only gene id. I understand that these genes have no valid gene name in hg19. Indeed, I have checked two of these genes and have NO description in ensembl. So they should not be included in our interest genes #
        chromosome_name          gene_id  ... upper_end_window_1000kb  smt_status
 309                  1  ENSG00000116883  ...              37292078.0          no
 408                  1  ENSG00000117598  ...              99913196.0          no
@@ -346,28 +346,28 @@ True
 
 [947 rows x 17 columns]
 
-## define function to calculate the distance of each coding to gene to the closest BAT gene ##
+## Percentile 1% :  define function to calculate the distance of each coding to gene to the closest BAT gene ##
 
-## see function in action with two genes, one that is included in the group of interest genes and other not included ##
+## Percentile 1% :  see function in action with two genes, one that is included in the group of interest genes and other not included ##
 ('ENSG00000000457', 752642.5)
 ('ENSG00000010072', 0)
 
-## check that the non-interest gene has distance different from zero while the interest gene has a distance equal to zero ##
+## Percentile 1% :  check that the non-interest gene has distance different from zero while the interest gene has a distance equal to zero ##
 True
 True
 
-## run the function ##
+## Percentile 1% :  run the function ##
 
-# use functools.partial to add a fixed parameter to the function. In this way, we can apply the function in parallel to each gene (third argument) while having the same value for the other two arguments, i.e., the dataset with the coordinates and the name of the selective pressure #
+# Percentile 1% :  use functools.partial to add a fixed parameter to the function. In this way, we can apply the function in parallel to each gene (third argument) while having the same value for the other two arguments, i.e., the dataset with the coordinates and the name of the selective pressure #
 
-# open the pool with the selected number of cores #
+# Percentile 1% :  open the pool with the selected number of cores #
 <multiprocessing.pool.Pool state=RUN pool_size=5>
 
-# run the function to calculate distance of each gene to the closest selective pressure gene. This takes the gene IDs as inputs and the function will output a list of tuples having each tuple the gene id and the distance to the closest interest gene #
+# Percentile 1% :  run the function to calculate distance of each gene to the closest selective pressure gene. This takes the gene IDs as inputs and the function will output a list of tuples having each tuple the gene id and the distance to the closest interest gene #
 see first 10 gene ids
 [('ENSG00000000457', 752642.5), ('ENSG00000000460', 638785.5), ('ENSG00000000938', 1214249.5), ('ENSG00000000971', 6985628.0), ('ENSG00000001460', 4450974.5), ('ENSG00000001461', 4393556.0), ('ENSG00000004455', 775788.0), ('ENSG00000004487', 5786369.5), ('ENSG00000006555', 777028.5), ('ENSG00000007341', 2138509.0)]
 
-# convert the list with results to DF. The second column with the distance will be named used the pressure name and the p-value percentile used #
+# Percentile 1% :  convert the list with results to DF. The second column with the distance will be named used the pressure name and the p-value percentile used #
                gene_id  smt_distance_percentile_1
 0      ENSG00000000457                   752642.5
 1      ENSG00000000460                   638785.5
@@ -383,9 +383,15 @@ see first 10 gene ids
 
 [19252 rows x 2 columns]
 
-# save the results #
+# Percentile 1% :  count how many NANs we have for the distance. NANs are caused because the gene has no interest genes within its chromosome, so no distance can be calculated #
+242
+We have 242 NANs for the distance to the closest SMT gene
 
-## select the interest genes genes ##
+# Percentile 1% :  save the results #
+
+# Percentile 1% :  FINISHED #
+
+## Percentile 5% :  select the interest genes genes ##
 0          SLN
 1       ATP2A1
 2          PLN
@@ -399,7 +405,7 @@ see first 10 gene ids
 836      CALM1
 Name: Target, Length: 837, dtype: object
 
-## create a variable about pressure status using this set of genes (those belonging to the set of interest are 'yes') ##
+## Percentile 5% :  create a variable about pressure status using this set of genes (those belonging to the set of interest are 'yes') ##
 0         no
 1         no
 2        yes
@@ -413,12 +419,13 @@ Name: Target, Length: 837, dtype: object
 19251     no
 Name: smt_status, Length: 19252, dtype: object
 
-# check we have set as 'yes' all genes with coords that are included in the interest set of genes #
+# Percentile 5% :  check we have set as 'yes' all genes with coords that are included in the interest set of genes #
 [ True]
 
-## explore pressure data ##
+## Percentile 5% :  explore pressure data ##
 
-# look for genes without gene symbol in gene coords #
+# Percentile 5% :  look for genes without gene symbol in gene coords #
+We have lost 27 genes from the SLN connectome
 8      ITGB1BP2
 14         FMR1
 22         PRKX
@@ -448,19 +455,10 @@ Name: smt_status, Length: 19252, dtype: object
 805        GRPR
 Name: Target, dtype: object
 
-# I obtained gene coords from biomart hg19, so I understand that I have all names (IDs and gene names) for those genes that passed my filters. If a interest gene is not included in my gene coord set, then it should not be used for hg19. Indeed, the two genes included in the 168 BAT connectome that are not in gene coordinates, have their gene id NOT included in gene coords #
+# Percentile 5% :  I obtained gene coords from biomart hg19, so I understand that I have all names (IDs and gene names) for those genes that passed my filters. If a interest gene is not included in my gene coord set, then it should not be used for hg19. Indeed, the two genes included in the 168 BAT connectome that are not in gene coordinates, have their gene id NOT included in gene coords #
+ERROR: FALSE! This is not an actual error, just a warning. We have extracted genes close to UCP1 and Sarcopilin, not only according a p-value percentile of 1%, but also 0.5 and 5%. In these cases, the number of connectome genes that are NOT included in the gene_coords file is different than in the case of 1% as the set of genes is different. For example, for sarcopilin we lose 27 genes from the 5% connectome. I have NOT check if synonyms of these genes are in gene_coord. It should not be the case as no missing gene of the 1% had any synonym in gene_coords, but take this in mind if you use these sets.
 
-# check that we do not have any of the synonyms of these missing genes included in gene coords #
-True
-True
-True
-True
-True
-True
-True
-True
-
-# In the same vein, there are some genes in 'gene coords' that do not have gene name, only gene id. I understand that these genes have no valid gene name in hg19. Indeed, I have checked two of these genes and have NO description in ensembl. So they should not be included in our interest genes #
+# Percentile 5% :  In the same vein, there are some genes in 'gene coords' that do not have gene name, only gene id. I understand that these genes have no valid gene name in hg19. Indeed, I have checked two of these genes and have NO description in ensembl. So they should not be included in our interest genes #
        chromosome_name          gene_id  ... upper_end_window_1000kb  smt_status
 309                  1  ENSG00000116883  ...              37292078.0          no
 408                  1  ENSG00000117598  ...              99913196.0          no
@@ -476,28 +474,28 @@ True
 
 [947 rows x 17 columns]
 
-## define function to calculate the distance of each coding to gene to the closest BAT gene ##
+## Percentile 5% :  define function to calculate the distance of each coding to gene to the closest BAT gene ##
 
-## see function in action with two genes, one that is included in the group of interest genes and other not included ##
+## Percentile 5% :  see function in action with two genes, one that is included in the group of interest genes and other not included ##
 ('ENSG00000000457', 752642.5)
 ('ENSG00000000938', 0)
 
-## check that the non-interest gene has distance different from zero while the interest gene has a distance equal to zero ##
+## Percentile 5% :  check that the non-interest gene has distance different from zero while the interest gene has a distance equal to zero ##
 True
 True
 
-## run the function ##
+## Percentile 5% :  run the function ##
 
-# use functools.partial to add a fixed parameter to the function. In this way, we can apply the function in parallel to each gene (third argument) while having the same value for the other two arguments, i.e., the dataset with the coordinates and the name of the selective pressure #
+# Percentile 5% :  use functools.partial to add a fixed parameter to the function. In this way, we can apply the function in parallel to each gene (third argument) while having the same value for the other two arguments, i.e., the dataset with the coordinates and the name of the selective pressure #
 
-# open the pool with the selected number of cores #
+# Percentile 5% :  open the pool with the selected number of cores #
 <multiprocessing.pool.Pool state=RUN pool_size=5>
 
-# run the function to calculate distance of each gene to the closest selective pressure gene. This takes the gene IDs as inputs and the function will output a list of tuples having each tuple the gene id and the distance to the closest interest gene #
+# Percentile 5% :  run the function to calculate distance of each gene to the closest selective pressure gene. This takes the gene IDs as inputs and the function will output a list of tuples having each tuple the gene id and the distance to the closest interest gene #
 see first 10 gene ids
 [('ENSG00000000457', 752642.5), ('ENSG00000000460', 638785.5), ('ENSG00000000938', 0), ('ENSG00000000971', 4717488.5), ('ENSG00000001460', 1508620.5), ('ENSG00000001461', 1451202.0), ('ENSG00000004455', 775788.0), ('ENSG00000004487', 2844015.5), ('ENSG00000006555', 777028.5), ('ENSG00000007341', 2117894.5)]
 
-# convert the list with results to DF. The second column with the distance will be named used the pressure name and the p-value percentile used #
+# Percentile 5% :  convert the list with results to DF. The second column with the distance will be named used the pressure name and the p-value percentile used #
                gene_id  smt_distance_percentile_5
 0      ENSG00000000457                   752642.5
 1      ENSG00000000460                   638785.5
@@ -513,4 +511,10 @@ see first 10 gene ids
 
 [19252 rows x 2 columns]
 
-# save the results #
+# Percentile 5% :  count how many NANs we have for the distance. NANs are caused because the gene has no interest genes within its chromosome, so no distance can be calculated #
+0
+We have 0 NANs for the distance to the closest SMT gene
+
+# Percentile 5% :  save the results #
+
+# Percentile 5% :  FINISHED #
