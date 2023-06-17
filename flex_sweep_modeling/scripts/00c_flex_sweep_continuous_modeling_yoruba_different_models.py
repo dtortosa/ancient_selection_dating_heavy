@@ -212,42 +212,48 @@ final_data_yoruba = final_data_yoruba.dropna()
 print(final_data_yoruba)
 
 
-#print_text("clean predicted class", header=3)
-#if you want to do classification, you have to calculate the number of sweeps based on the probability and then convert "predicted_class" to 0-1 integer
-#final_data_yoruba["predicted_class"] = ["neutral" if prob < 0.5 else "sweep" for prob in final_data_yoruba["prob(sweep)"]]
-#decode_response = {"predicted_class": {"neutral": 0, "sweep": 1}}
-#final_data_yoruba = final_data_yoruba.replace(decode_response)
-    #https://pbpython.com/categorical-encoding.html
-#final_data_yoruba["predicted_class"]=final_data_yoruba["predicted_class"].astype("int")
-    #https://stackoverflow.com/questions/41925157/logisticregression-unknown-label-type-continuous-using-sklearn-in-python
-#discrete is not bad! but regression seems to work better and we avoid issues related to dicomitize a continuous variable and using an arbitrary threshold.
-    #results RandomForestRegressor in CV - 5 fold
-        #accuracy: array([0.80921584, 0.81601294, 0.82531338, 0.82248281, 0.82207845]),
-        #precision: array([0.78202677, 0.80529301, 0.82278481, 0.77163904, 0.81785714]),
-        #recall: array([0.53324641, 0.54755784, 0.57667934, 0.57084469, 0.57537688]),
-        #f1: array([0.63410853, 0.65187452, 0.6780924 , 0.65622553, 0.67551622])}
-    #results RandomForestRegressor in the test set
-        #accuracy = 0.8479948253557568
-        #precision = 0.8280346820809249
-        #recall = 0.6201298701298701
-        #f1 = 0.7091584158415841
-    #explanation about metrics
-        #accuracy does not work very well for imbalanced datasets like ours, we have 1/3 of sweeps compared to non-sweeps.
-        #precision minimice false positives
-        #recall minimize false negative
-        #f1 is the harmomic average of precision and recall, so if any of the two parameters is low, the average will be much lower than it was an aritmetic or geometric average. 
-            #this is useful if you want to minimize both false negatives and positives
-            #https://towardsdatascience.com/essential-things-you-need-to-know-about-f1-score-dbd973bf1a3
-            #https://stephenallwright.com/good-f1-score/
-    #Interpretation
-        #Overall we are OK: f1 value around 0.6 is OK but not good (pasable)! 
-            #https://stephenallwright.com/good-f1-score/
-        #we do not have a higher f1 because recall is lower than precision, i.e., we are not minimizing false negatives as much as false positives.
-        #in other words, we have more sweeps that are classified as non-sweeps than neutral classified as sweep.
-            #you can also see this with the continuous variable because there is more error in the prediction of strong sweeps candidates (log probability equal to zero).
-    #setting the threshold at 0.75 make recall worse. Also not sure if using the prediciton improvement is a good a idea to select the threshold.
-        #https://stats.stackexchange.com/a/94044
-    #this is not too bad, but regression gets better results and we avoid the use of arbitrary thresholds for classification
+
+
+'''
+print_text("clean predicted class", header=3)
+if FALSE:
+    #if you want to do classification, you have to calculate the number of sweeps based on the probability and then convert "predicted_class" to 0-1 integer
+    final_data_yoruba["predicted_class"] = ["neutral" if prob < 0.5 else "sweep" for prob in final_data_yoruba["prob(sweep)"]]
+    decode_response = {"predicted_class": {"neutral": 0, "sweep": 1}}
+    final_data_yoruba = final_data_yoruba.replace(decode_response)
+       #https://pbpython.com/categorical-encoding.html
+    final_data_yoruba["predicted_class"]=final_data_yoruba["predicted_class"].astype("int")
+        #https://stackoverflow.com/questions/41925157/logisticregression-unknown-label-type-continuous-using-sklearn-in-python
+    #discrete is not bad! but regression seems to work better and we avoid issues related to dicomitize a continuous variable and using an arbitrary threshold.
+        #results RandomForestRegressor in CV - 5 fold
+            #accuracy: array([0.80921584, 0.81601294, 0.82531338, 0.82248281, 0.82207845]),
+            #precision: array([0.78202677, 0.80529301, 0.82278481, 0.77163904, 0.81785714]),
+            #recall: array([0.53324641, 0.54755784, 0.57667934, 0.57084469, 0.57537688]),
+            #f1: array([0.63410853, 0.65187452, 0.6780924 , 0.65622553, 0.67551622])}
+        #results RandomForestRegressor in the test set
+            #accuracy = 0.8479948253557568
+            #precision = 0.8280346820809249
+            #recall = 0.6201298701298701
+            #f1 = 0.7091584158415841
+        #explanation about metrics
+            #accuracy does not work very well for imbalanced datasets like ours, we have 1/3 of sweeps compared to non-sweeps.
+            #precision minimice false positives
+            #recall minimize false negative
+            #f1 is the harmomic average of precision and recall, so if any of the two parameters is low, the average will be much lower than it was an aritmetic or geometric average. 
+                #this is useful if you want to minimize both false negatives and positives
+                #https://towardsdatascience.com/essential-things-you-need-to-know-about-f1-score-dbd973bf1a3
+                #https://stephenallwright.com/good-f1-score/
+        #Interpretation
+            #Overall we are OK: f1 value around 0.6 is OK but not good (pasable)! 
+                #https://stephenallwright.com/good-f1-score/
+            #we do not have a higher f1 because recall is lower than precision, i.e., we are not minimizing false negatives as much as false positives.
+            #in other words, we have more sweeps that are classified as non-sweeps than neutral classified as sweep.
+                #you can also see this with the continuous variable because there is more error in the prediction of strong sweeps candidates (log probability equal to zero).
+        #setting the threshold at 0.75 make recall worse. Also not sure if using the prediciton improvement is a good a idea to select the threshold.
+            #https://stats.stackexchange.com/a/94044
+        #this is not too bad, but regression gets better results and we avoid the use of arbitrary thresholds for classification
+'''
+
 
 
 print_text("clean the data", header=3)
@@ -257,42 +263,35 @@ columns_to_exclude = [ \
     "predicted_class", \
     "number_thermogenic_1000kb", \
     "number_vips_1000kb"]
-modeling_data = final_data_yoruba[[column for column in final_data_yoruba.columns if column not in columns_to_exclude]]
-print(modeling_data)
+final_data_yoruba_subset = final_data_yoruba[[column for column in final_data_yoruba.columns if column not in columns_to_exclude]]
+print(final_data_yoruba_subset)
 print(f"Columns excluded: {columns_to_exclude}")
 
 
 print_text("put the response as first column", header=4)
 response_name = "prob(sweep)"
-first_column = modeling_data.pop(response_name)
-modeling_data.insert(0, response_name, first_column)
+first_column = final_data_yoruba_subset.pop(response_name)
+final_data_yoruba_subset.insert(0, response_name, first_column)
     #https://www.geeksforgeeks.org/how-to-move-a-column-to-first-position-in-pandas-dataframe/
+print(final_data_yoruba_subset)
 
 
-print_text("Convert to numpy array", header=4)
-modeling_data_array = modeling_data.values
-print(modeling_data_array)
+print_text("make deep copy of the data to do further operations", header=4)
+modeling_data = final_data_yoruba_subset.copy(deep=True)
+    #deep=True: 
+        #a new object will be created with a copy of the calling object's data and indices. Modifications to the data or indices of the copy will not be reflected in the original object (see notes below).
+print(modeling_data)
 
 
-print_text("Apply log transformation to the target variable", header=4)
+print_text("Apply log transformation to the target variable using the original DF as source", header=4)
 import numpy as np
-modeling_data_array[:, 0] = np.log(modeling_data_array[:, 0])
+modeling_data["prob(sweep)"] = final_data_yoruba_subset["prob(sweep)"].apply(lambda x: np.log(x))
     #It is should be ok to apply the log before splitting the dataset. There is a problem if you use a transformation that requires learn something from the rest of the data. For example, if you scale the whole dataset, you are using the mean and sd of the whole dataset, influencing data that will be used for test. In other words, there is room for a data leak. In this case, however, log(1.5) is always 0.4, independently of the rest of the data, so I think no data leak is possible. You could do a pipeline with log but it is a little bit more complicated (see [link](https://stats.stackexchange.com/questions/402470/how-can-i-use-scaling-and-log-transforming-together)), so we leave it for now.
         #Indeed I have found people in stack exchange saying this: However, yours (i.e. np.log1p) is a simple transformation that doesn't use any learnable parameters, and it won't matter if you do it before or after the split. It's like dividing a feature by 1000. 
             #https://stats.stackexchange.com/a/456056
     #From all these follow that if you use other transformations like preprocessing.PowerTransformer or QuantileTransformer ([link](https://yashowardhanshinde.medium.com/what-is-skewness-in-data-how-to-fix-skewed-data-in-python-a792e98c0fa6)), it is possible to have data leaks, so be careful.
     #In previous versions I was not using scaling or log transform for deep learning, because I assumed that the DNNs can deal with that, but maybe that was too much and in any case, we are going to use here also more simpler models that can be helped by scaling
     #Update: If I apply the log transformation within the pipeline I get a much lower R2 both in the training and test datasets! Not sure what is going on, but given this transformation does not summarize anything from the whole dataset, I can use it before splitting in training and evaluation. If this transformation was helping the training model to learn from the test set, the R2 in the test would be higher, but we have the opposite scenario.
-
-
-
-print_text("separate response and predictors, then split the data in training and test. Training will be used for CV", header=3)
-print_text("Separate the response and predictors", header=4)
-y = modeling_data_array[:, 0]
-print(f"see shape of the response array {y.shape}")
-X = modeling_data_array[:, 1:]
-print(f"see shape of the predictor array {X.shape}")
-print(f"Do we have the correct number of predictors? {X.shape[1] + 1 == modeling_data.shape[1]}")
 
 
 print_text("set seeds for reproducibility", header=4)
@@ -317,29 +316,28 @@ print_text("make the split training vs test", header=4)
 #Update: We are having problems to get good R2 with the probability closest at the center of the window. I am going to increase the sample size of the training set so maybe we can get better models, we have a relatively large sample size, so we can use 80-20.
 
 from sklearn.model_selection import train_test_split
-X_train, X_test, y_train, y_test = train_test_split(
-    X, \
-    y, \
+modeling_data_train, modeling_data_test = train_test_split(
+    modeling_data, \
     test_size=0.20, \
     random_state=54, \
     shuffle=True)
     #train size is automatically calculated using "test_size" 
     #this function uses internally ShuffleSplit so it can randomly split a dataset in training and evaluation but instead of getting an interable (like in ShuffleSplit), you directly get the datasets splitted
         #https://stackoverflow.com/questions/66757902/differnce-between-train-test-split-and-stratifiedshufflesplit
-print("see shapes of training and test")
-print(X_train.shape, y_train.shape)
-print(X_test.shape, y_test.shape)
+print("see shapes of training and test sets")
+print(modeling_data_train.shape)
+print(modeling_data_test.shape)
 
 
 print_text("Create create random splits for training and test sets", header=4)
 #We are going to make 5 splits. Therefore, we will obtain the average score of 5 CV splits, to catch models that are overfitting. If we exposed the model to model different datasets, there are more possibilities to detect if the model has problems to generalize. 1/5 of 14000 is 1400 which I think it is ok.
 n_folds = 5
-sample_size_eval = X_train.shape[0]/n_folds
+sample_size_eval = modeling_data_train.shape[0]/n_folds
     #the training set is divided by the number of folds, and one of the folds is used for evaluation
 if(sample_size_eval > 2000):
-    print(f"We will use 5 folds. The size of the evaluation set is {sample_size_eval}")
+    print(f"We will use 5 folds. The size of the evaluation set in cross-validation is {sample_size_eval}")
 else:
-    raise ValueError("ERROR: FALSE! We have less than 2000 genes for evaluation")
+    raise ValueError("ERROR: FALSE! We have less than 2000 genes for evaluation in cross-validation")
 
 #It is very important for us to avoid overfitting becuase we want to quantify the true impact of genomic factors on selection probability. If the model overfits, it will assume that genomic factors like recombination or GC-content explain much selection variability across the genome than they actually explain, reducing in this way the remaining variability that could be explained by other factors. 
 
@@ -374,9 +372,29 @@ number_jobs = 2
     #I have detected that the decreasing the number of cores reduces the usage of memory even having the same number_jobs and optuna processes. Using for example 20 cores, I can run 10 optuna processes with number_jobs=2 using just 200GB per core. If I increase the number of cores to 40, things seems to seed up, but I get the workers error. So we are keeping things conservative with just 20 cores.
 
 
+print_text("Convert to numpy array the training and test sets along with the whole set", header=4)
+modeling_data_array = modeling_data.values
+modeling_data_train_array = modeling_data_train.values
+modeling_data_test_array = modeling_data_test.values
+print(modeling_data_array)
+print(modeling_data_train_array)
+print(modeling_data_test_array)
 
 
-print_text("Explanations about scaling", header=2)
+print_text("Separate the response and predictors", header=4)
+y = modeling_data_array[:, 0]
+X = modeling_data_array[:, 1:]
+y_train = modeling_data_train_array[:, 0]
+X_train = modeling_data_train_array[:, 1:]
+y_test = modeling_data_test_array[:, 0]
+X_test = modeling_data_test_array[:, 1:]
+print(f"see shape of the X and y training {(X_train, y_train)}")
+print(f"see shape of the X and y test {(X_test, y_test)}")
+print(f"Do we have the correct number of predictors in the X sets? {(X_train.shape[1] + 1 == modeling_data_train.shape[1], X_test.shape[1] + 1 == modeling_data_test.shape[1], X.shape[1] + 1 == modeling_data.shape[1])}")
+print(f"Do we have the correct number of observations in the y sets? {(len(y_train)==modeling_data_train.shape[0], len(y_test)==modeling_data_test.shape[0], len(y)==modeling_data.shape[0])}")
+
+
+print_text("Explanations about scaling", header=4)
 #We could apply the preprocessing to the initial dataset and then split into training and test but this is problematic. As previously explained, the scaling is done using the mean and sd of the sample, so if you do it in the whole dataset, the part will be used for test will be also influenced but training data. If you included your test data in the scaling, that means that your new data is treated differently from the training set, which defeats the purpose of the training set. In practice, this is unlikely to have a large impact, as computing mean and standard deviation is relatively stable on well-behaved datasets. However, I recommend to adhere to best practices, and split off the test set before doing any processing ([more info](https://amueller.github.io/aml/01-ml-workflow/03-preprocessing.html)).
 
 #In other words, when you fit the standard scaler on the whole dataset, information from the test set is used to normalize the training set. This is a common case of "data leakage", which means that information from the test set is used while training the model. This often results in overestimates of the model's performance because the model can access to information of the test set during training, so the test set is no longer new data. ([link](https://stackoverflow.com/questions/63037248/is-it-correct-to-use-a-single-standardscaler-before-splitting-data?noredirect=1&lq=1)). 
@@ -403,21 +421,22 @@ print(preprocessing.scale(dummy_sample))
 
 
 
+
 print_text("comparison of multiple models", header=2)
 
 
 
+##por aqui
+#create function that run 1 optuna process per model and core??
 
 
 
 #Create a pipe that includes the tranformer to do the scaling so it is fit (get mean and SD) to the training sets and not evaluation/validation sets. When using grid search ([link](https://stackoverflow.com/questions/51459406/how-to-apply-standardscaler-in-pipeline-in-scikit-learn-sklearn)) and cross_val_score ([link](https://stackoverflow.com/questions/44446501/how-to-standardize-data-with-sklearns-cross-val-score)), it uses the mean and SD of the training set of a given iteration and apply the transformation to the test set, then in the next iteration does the same but with the new training and test set.
 
-
 #We need to first create a pipeline ([link](https://stackoverflow.com/questions/33091376/what-is-exactly-sklearn-pipeline-pipeline)) including scaling of predictors and the regressor. Then add it to the transformer of the response using TransformedTargetRegressor. We cannot just use StandardScaling on the response ([link](https://stackoverflow.com/questions/67824676/how-to-scale-both-x-and-y-data-in-sklearn-pipeline)).
 
 
 from sklearn.pipeline import Pipeline
-from sklearn.compose import TransformedTargetRegressor
 from sklearn import preprocessing
 
 from sklearn.ensemble import RandomForestRegressor
@@ -434,27 +453,34 @@ model_name = "random_forest"
     #RF is 0.52 for VC and 0.86 for whole dataset
 
 
-from sklearn.preprocessing import PowerTransformer, QuantileTransformer
-
-trans = QuantileTransformer(n_quantiles=1000, output_distribution='uniform')
-
-
+estim = Pipeline([ \
+    ('scale', preprocessing.StandardScaler()), \
+    ('regressor', model)])
 
 
-estim = TransformedTargetRegressor( \
-    regressor=Pipeline([ \
-        ('scale', preprocessing.StandardScaler()), \
-        ('regressor', model)]), \
-    check_inverse=True)
-        #func: function applied to "y" before doing anything, i.e., even before fitting. 
-            #This can be np.log or np.sqrt for example.
-        #inverse_func: function applied to the prediction of the regressor, i.e., we are reverting the transformation done before fitting, so we can get back the predictions of response without transformation, being comparable with the raw values of the response.
-            #If you do log, the inverse would be exp. For example np.log(1)=0.0, while np.exp(0.0)=1
-        #regressor: the regressor used for fitting, it can be a pipeline, so you can add scaling (applied to Y and Xs) along with modeling
-        #transformer: i understand this transformer is only aplied to "y", so it cannot be used if func/inverse_func are used.
-        #check_inverse: Whether to check that `transform` followed by `inverse_transform` or `func` followed by `inverse_func` leads to the original targets 
-estim
+#yifei applied preprocessing.StandardScaler() after the log to y, maybe we can applied woth the transformed in the pipeline before fitting, but I have seen does not improve THINK
 
+
+'''
+#in case you want to apply the log transformation within the pipeline, but this make the model MUCH WORSE compared to just apply the log to the original DF. Do not know why.
+if FALSE:
+    from sklearn.compose import TransformedTargetRegressor
+    estim = TransformedTargetRegressor( \
+        func=np.log, \
+        inverse_func=np.exp, \
+        regressor=Pipeline([ \
+            ('scale', preprocessing.StandardScaler()), \
+            ('regressor', model)]), \
+        check_inverse=True)
+            #func: function applied to "y" before doing anything, i.e., even before fitting. 
+                #This can be np.log or np.sqrt for example.
+            #inverse_func: function applied to the prediction of the regressor, i.e., we are reverting the transformation done before fitting, so we can get back the predictions of response without transformation, being comparable with the raw values of the response.
+                #If you do log, the inverse would be exp. For example np.log(1)=0.0, while np.exp(0.0)=1
+            #regressor: the regressor used for fitting, it can be a pipeline, so you can add scaling (applied to Y and Xs) along with modeling
+            #transformer: i understand this transformer is only aplied to "y", so it cannot be used if func/inverse_func are used.
+            #check_inverse: Whether to check that `transform` followed by `inverse_transform` or `func` followed by `inverse_func` leads to the original targets 
+    estim
+'''
 
 
 
@@ -477,6 +503,12 @@ estim
 
 
 
+#CHANGE X_train por modeling_data_train
+
+
+###POR AQUIIII
+#WE MODEL WITH LOG, BUT THEN ALEPLOT GIVE DIFFERNECES OF 0.2? THIS MAKES SENSE?
+#THINK ABOUT THIS!!!
 
 
 
@@ -572,12 +604,17 @@ plt.close()
 
 from alepython import ale_plot
 
-X_train_pandas = pd.DataFrame(data=X_train, columns=modeling_data.iloc[:,1:].columns)
-X_train_pandas
 
+print_text("get the predictors used for training as a DF, which is required for ale_plot. We can just use the training DF that was converted to numpy array", header=4)
+modeling_data_train_predictors = modeling_data_train.iloc[:, 1:]
+    #the first column is the response, so we need to avoid it
+print(modeling_data_train_predictors)
+
+
+print_text("run ale_plot", header=4)
 ale_plot(model=estim, 
-    train_set=X_train_pandas,
-        #pandas DF with training data
+    train_set=modeling_data_train_predictors,
+        #pandas DF with values of predictors for training data
     features=["bat_distance_percentile_" + str(p_value_percentile)], 
     bins=10,
         #Number of bins used to split feature's space
@@ -605,6 +642,8 @@ plt.close()
 
 #bat 1% without no other selective pressure shows a clear decrease in the probability of selection as we move away from the BAT connectome genes. Note that there is a peak, an increase in the probability of selection at 717kb of distance from BAT genes. This is still relatively close. Remember that we consider the impact of genomic factors on the probability of selection of a gene that are up to 500kb from the center of the gene (500+500=1000kb windows) and then there is a clear decrease.
 #whean adding vip, thermogenic and smt distance, the pattern is much more CLEAR with a decrease of flex-sweep probability. With specific combinations of these predictors, bAT pattern is not super clear, but it is with all of them. This is not a problem to me becuase alone this factor already shows pattern. and we adding other factors, i.e., controlling for then we see even clearer impact.
+#note that the differences respect to the average prediction are similar to those of VIP distance! so I see potential in BAT set!!! We have this set validated, knowjing that is cohesive...!
+
 
 
 #vip distance gives the expected result very well, in contrast with vip number. we are going to use ditance? think
