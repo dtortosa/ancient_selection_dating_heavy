@@ -315,6 +315,34 @@ print_text("make the split training vs test", header=4)
 
 #Update: We are having problems to get good R2 with the probability closest at the center of the window. I am going to increase the sample size of the training set so maybe we can get better models, we have a relatively large sample size, so we can use 80-20.
 
+
+
+
+#we are going to use nested Cross-Validation, so we can tune hyperparameters and select the best model class without having too optismistic results about model performance. If the same dataset is used to tune hyperparameters and then evaluate the tuned models to compare between model classes, there is a risk of overfitting.
+    #https://machinelearningmastery.com/nested-cross-validation-for-machine-learning-with-python/
+
+#X = modeling_data.iloc[:, 1:]
+
+#think about the number of K, usually K in outer cv is larger
+
+from sklearn.model_selection import KFold
+cv_outer = KFold(n_splits=10, random_state=4534, shuffle=True)
+
+#por aquii
+
+outer_results = list()
+#train_index = [i for i in cv_outer.split(modeling_data)]
+for train_index, test_index in cv_outer.split(modeling_data):
+
+    #split the data
+    X_train, X_test = modeling_data[train_index, 1:], modeling_data[test_index, 1:]
+    y_train, y_test = modeling_data[train_index, 0], modeling_data[test_index, 0]
+
+
+    #you could do a sensitivity analysis for K
+        #https://machinelearningmastery.com/how-to-configure-k-fold-cross-validation/
+
+
 from sklearn.model_selection import train_test_split
 modeling_data_train, modeling_data_test = train_test_split(
     modeling_data, \
@@ -467,9 +495,16 @@ estim = Pipeline([ \
     ('scale', preprocessing.StandardScaler()), \
     ('regressor', model)])
 
-#4 fives of models: elastic net, RF, XGboost and DNNs
+#4 fives of models used by the paper: elastic net, RF, XGboost and DNNs
+    #From my previous experience, RF and DNNs work well
+    #XGboost is a new approach with very good results in regression
+        #https://machinelearningmastery.com/extreme-gradient-boosting-ensemble-in-python/
+    #elastic net is a linear approach that combines the strengths of ridge and lasso when controlling the impact of multiple features. We do not have maaany features (i.e., more features than samples), but still have a considerable amount of features.
+        #https://machinelearningmastery.com/elastic-net-regression-in-python/
 #5-fold CV
     #4 folds for training and 1 for test
+        #this step is important because we ensure that the same data is not used for test twice. 
+        #it is like we were repeating the same experiment 5 times, using 5 completely different test set
     #within training
         #3 folds for learning and 1 for validation
         #use different combinations of hyperparameters
@@ -483,6 +518,18 @@ estim = Pipeline([ \
     #try to ensemble different models of the same class because there are differences in the feature importance between highly-predicitve models (see paper)
     #they used the combination of shapely values across models, and they know that shapely fails with multicolinearty! check what the did to control for that
 
+
+#Gene correlations
+    #I am not sure this is a problem
+    #Imagine you have a house pricing dataset and want to predict these prices using features of the houses
+        #use 80% of houses for training and 20% for evaluation.
+        #you could have several houses belonging to the same owner, one in training and other in evaluation. This owner tend to do good renovations and improve the condition. Therefore, the houses of this owner tend to be above the average of each area.
+        #the model learns to predict price using features of the house and this includes some of the houses of this owner.
+        #when evaluating, the model predict prices for some other houses of this owner. These houses are related to some houses in the training set as they share the owner, but the model does not know that!
+        #The model just take the features of the house, and given the houses of this owner are in good condition, it predicts a high price.
+        #the ultimate cause of their higher price is the owner, the proximate causes are the house features that owner has changed. 
+        #The would go for genes that are physically close. They will likely have a more similar probability of selection than more distant genes. The ultimate cause is the proximity, but the proximate causes would be the recombination rate, GC content, etc... 
+        #Therefore, I do not think there is any leak of data from training to evalution. The model learns patterns between genomic features and selection, then extrapolating to other genes.
 
 
 
