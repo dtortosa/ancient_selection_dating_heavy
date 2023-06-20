@@ -442,20 +442,48 @@ from sklearn import preprocessing
 from sklearn.ensemble import RandomForestRegressor
 
 
-import xgboost as xgb
-model = xgb.XGBRegressor(random_state=23534, n_estimators=500, booster="gbtree")
+#import xgboost as xgb
+#model = xgb.XGBRegressor(random_state=23534, n_estimators=100, booster="gbtree")
+#model_name="XGBoost"
     #booster: gbtree, gblinear or dart.
 
+#from sklearn.ensemble import ExtraTreesRegressor
+#model = ExtraTreesRegressor(random_state=23534, n_estimators=10)
+#model_name = "extra_tree_regressor"
 
+#from sklearn.ensemble import VotingRegressor, GradientBoostingRegressor
+#from sklearn.linear_model import Ridge
+#reg1 = GradientBoostingRegressor(random_state=1)
+#reg2 = ExtraTreesRegressor(random_state=1)
+#reg3 = Ridge()
+#model = VotingRegressor(estimators=[('gb', reg1), ('et', reg2), ('rdg', reg3)])
+#model_name = "voting_regressor"
 
 model = RandomForestRegressor(random_state=23534, n_estimators=10)
 model_name = "random_forest"
     #RF is 0.52 for VC and 0.86 for whole dataset
 
-
 estim = Pipeline([ \
     ('scale', preprocessing.StandardScaler()), \
     ('regressor', model)])
+
+#4 fives of models: elastic net, RF, XGboost and DNNs
+#5-fold CV
+    #4 folds for training and 1 for test
+    #within training
+        #3 folds for learning and 1 for validation
+        #use different combinations of hyperparameters
+        #select the one with the best performance in validation
+        #use that combination to train on the 4 folds and then predict in the test set
+    #we obtain one value type of model and test set
+#Within each test set, compare each model with the other 3
+#we will have 15 comparisons (compare each model with the other 3 x 5 tests = 15)
+#select the model class being the best in the larger number of comparisons
+#once you have the model class
+    #try to ensemble different models of the same class because there are differences in the feature importance between highly-predicitve models (see paper)
+    #they used the combination of shapely values across models, and they know that shapely fails with multicolinearty! check what the did to control for that
+
+
 
 
 #yifei applied preprocessing.StandardScaler() after the log to y, maybe we can applied woth the transformed in the pipeline before fitting, but I have seen does not improve THINK
@@ -531,6 +559,7 @@ r2_cv = np.mean(cross_val_score(estimator=estim,
     n_jobs=shuffle_split.n_splits))
 print(r2_cv)
 
+    #repeate with mse? like in uncovering expression signatures of synergistic drug response using an ensemble of explainable ai models?
 
 print("R2 in the test dataset:")
 r2_test_dataset = r2_score(y_test, estim.predict(X_test))

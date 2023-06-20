@@ -5,7 +5,7 @@
 
 Bootstrap: library #It determines the bootstrap agent that will be used to create the base operating system you want to use. For example, the library bootstrap agent will pull a container from the Container Library. 
 
-From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword becomes valid. You indicate the container you want from the library. This will be downloaded and build. 
+From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword becomes valid. You indicate the container you want from the library. This will be downloaded and build. #it seem deadsnakes for downloading python does not work anymore with ubuntu 18.04, so we use ubuntu 20.04 #https://stackoverflow.com/a/64353748/12772630
 
 
 
@@ -38,8 +38,8 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
 %files
 
 	#copy scripts
-    /home/dftortosa/singularity/dating_climate_adaptation/flex_sweep_modeling/scripts/flex_sweep_continuous_modeling_yoruba.py /opt/scripts/flex_sweep_continuous_modeling_yoruba.py
-    /home/dftortosa/singularity/dating_climate_adaptation/flex_sweep_modeling/scripts/bash_optuna_processes.sh /opt/scripts/bash_optuna_processes.sh
+    /home/dftortosa/singularity/dating_climate_adaptation/flex_sweep_modeling/scripts/01_models_benchmark.py /opt/scripts/01_models_benchmark.py
+
 
     #From the original folder in the host, we copy a R script to a new folder in the container called scripts. NEVER PUT ANYTHING ELSE IN THE LINE WITH SOURCE AND DESTINATION, GIVES ERROR.
     #https://groups.google.com/a/lbl.gov/forum/#!topic/singularity/4NFDsohnxgg
@@ -95,6 +95,7 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
 	python3.9 get-pip.py
 
 	#python3.9 -m pip install future #the "-m" flag search for the last version of the package.
+	python3.9 -m pip install alepython
 	python3.9 -m pip install xgboost
 	python3.9 -m pip install sklearn
 	python3.9 -m pip install eli5
@@ -117,7 +118,7 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
 	#pip3.9 install --upgrade pandas
 	
 	#give rights to run the bash script
-	chmod +x opt/scripts/bash_optuna_processes.sh
+	chmod +x opt/scripts/01_models_benchmark.py
 
 
 
@@ -158,8 +159,8 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
 
 %runscript
 
-	#upgrade the optuna database
-	optuna storage upgrade --storage 'sqlite:///results/optuna_optimization/yoruba_flex_sweep_closest_window_center_optimization.db'
+	#upgrade the optuna database IF NEEDED
+	#optuna storage upgrade --storage 'sqlite:///results/optuna_optimization/yoruba_flex_sweep_closest_window_center_optimization.db'
 		#I got the following error one time after building the container again and then, likely, getting a newer version of optuna, which seems to be in conflict with the version of the database that was created with a previous optuna version
 			#"RuntimeError: The runtime optuna version 3.2.0 is no longer compatible with the table schema (set up by optuna 3.1.1). Please execute `$ optuna storage upgrade --stora ge $STORAGE_URL` for upgrading the storage."
 		#this is solved updating the database using optuna from the command line as suggested by the error.
@@ -167,9 +168,7 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
 		#if the DB has already the latest version, you just get a confirmation message: "This storage is up-to-date."
 
 	#run scripts. NOT USE "&", each script have to be run after the previous one have been run
-	/./opt/scripts/bash_optuna_processes.sh > bash_optuna_processes.out 2>&1
-		#to get output and errors in the same file
-		#see bash script for details
+	/opt/scripts/./01_models_benchmark.py > ./01_models_benchmark.out 2>&1
 
 
 
@@ -180,14 +179,14 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
 
 #Command to build, enter interactively or run
 	#now apply the definition file final_test_def for creating a container
-		#sudo singularity build /home/dftortosa/singularity/dating_climate_adaptation/flex_sweep_modeling/ubuntu_18_04_yoruba_modelling_flex_sweep.sif /home/dftortosa/singularity/dating_climate_adaptation/flex_sweep_modeling/scripts/recipes/yoruba_modelling_flex_sweep_v1.def
+		#sudo singularity build /home/dftortosa/singularity/dating_climate_adaptation/flex_sweep_modeling/01_models_benchmark.sif /home/dftortosa/singularity/dating_climate_adaptation/flex_sweep_modeling/scripts/recipes/01_models_benchmark.def
 			#In the definition file is indicate that we will take an Ubuntu 20.04 container from the Singularity library. We do not need anything else. We do not need a previous image in the host system! The definition file has the instructions to get the required container from the library.
 	#you can run this image interactively with shell. For that you have to be in a specific folder in order to have the scripts workingnter in the container
 		#cd /home/dftortosa/singularity/dating_climate_adaptation/flex_sweep_modeling
-		#sudo singularity shell /home/dftortosa/singularity/dating_climate_adaptation/flex_sweep_modeling/ubuntu_18_04_yoruba_modelling_flex_sweep.sif
+		#sudo singularity shell /home/dftortosa/singularity/dating_climate_adaptation/flex_sweep_modeling/01_models_benchmark.sif
 	#to run the container. For that you have to be in a specific folder in order to have the scripts workingnter in the container
 		#cd /home/dftortosa/singularity/dating_climate_adaptation/flex_sweep_modeling
-		#sudo singularity run /home/dftortosa/singularity/dating_climate_adaptation/flex_sweep_modeling/ubuntu_18_04_yoruba_modelling_flex_sweep.sif
+		#sudo singularity run /home/dftortosa/singularity/dating_climate_adaptation/flex_sweep_modeling/01_models_benchmark.sif
 
 %labels
     Author dftortosa
