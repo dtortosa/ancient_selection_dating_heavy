@@ -124,9 +124,56 @@ run_bash("ls")
 
 
 
-####################
+##########################
+# ensure reproducibility #
+##########################
+print_text("set seeds for reproducibility", header=1)
+#No need to set random_state for any model after this
+#https://stackoverflow.com/a/52897216/12772630
+
+
+print_text("Seed value", header=2)
+seed_value=0
+print(seed_value)
+
+
+print_text("Set the `PYTHONHASHSEED` environment variable at a fixed value", header=2)
+import os
+os.environ['PYTHONHASHSEED']=str(seed_value)
+print(os.environ['PYTHONHASHSEED'])
+
+
+print_text("Set the `python` built-in pseudo-random generator at a fixed value", header=2)
+import random
+random.seed(seed_value)
+
+
+print_text("Set the `numpy` pseudo-random generator at a fixed value", header=2)
+import numpy as np
+np.random.seed(seed_value)
+
+
+print_text("Set the `tensorflow` pseudo-random generator at a fixed value", header=2)
+import tensorflow as tf
+tf.random.set_seed(seed_value)
+
+
+print_text("Configure a new global `tensorflow` session", header=2)
+session_conf = tf.compat.v1.ConfigProto( \
+    intra_op_parallelism_threads=1,  \
+    inter_op_parallelism_threads=1)
+sess = tf.compat.v1.Session( \
+    graph=tf.compat.v1.get_default_graph(), \
+    config=session_conf)
+tf.compat.v1.keras.backend.set_session(sess)
+
+
+
+
+
+############################
 # prepare folder structure #
-####################
+############################
 print_text("prepare folder structure", header=1)
 run_bash(" \
     mkdir \
@@ -294,15 +341,27 @@ modeling_data["prob(sweep)"] = final_data_yoruba_subset["prob(sweep)"].apply(lam
     #Update: If I apply the log transformation within the pipeline I get a much lower R2 both in the training and test datasets! Not sure what is going on, but given this transformation does not summarize anything from the whole dataset, I can use it before splitting in training and evaluation. If this transformation was helping the training model to learn from the test set, the R2 in the test would be higher, but we have the opposite scenario.
 
 
-print_text("set seeds for reproducibility", header=4)
-from tensorflow.random import set_seed as tf_set_seed
-np_seed = 7
-tf_seed = 42
-np.random.seed(np_seed)
-tf_set_seed(tf_seed)
 
 
-print_text("make the split training vs test", header=4)
+
+###por aquiii
+
+
+
+
+
+print_text("define function to run across folds and model classes within a nested CV schema", header=1)
+
+
+#we are going to use nested Cross-Validation, so we can tune hyperparameters and select the best model class without having too optismistic results about model performance. If the same dataset is used to tune hyperparameters and then evaluate the tuned models to compare between model classes, there is a risk of overfitting.
+    #https://machinelearningmastery.com/nested-cross-validation-for-machine-learning-with-python/
+
+
+
+
+##check this explanations that are from previous versions
+
+
 #Held out part of the dataset. This part will not be used for parameter optimization, but for the final validation after the final model has been optimized. In this way, we avoid potential overfittin in the evaluation sets ([see link](https://scikit-learn.org/stable/modules/cross_validation.html#cross-validation)). If you use train in a set of the data and then evaluate in other, you can see if the model trained is not overfitting to the training data and flexible enough to predict the evaluation data. The problem is that in parameter optimization, we select the best parameters based on the evaluation metrics in the evaluation sets, thus we could get a model that fit too much the evaluation dataset, loosing generalization and thus making the evaluation metrics no longer metrics of generalization. To avoid this, we leave out a set of the data for final evaluation. This set will be NOT used in parameter optimization. Once we have selected the best parameters to train a model in the training dataset and predict well in the evaluation dataset, we use these parameter to create a final model, fit to the whole training data and then predict in the final evaluation dataset, which was not used for anything before. If the model works well, it means it is generalizable and it is not overfitting the data, so, in our case, we can say that it is explaining the variance in selection that it is really explained by the genomic factors and the rest would be variance that could be explained by selective pressures. If there is overfitting, the model fit too much the data, there is not non-explained variance.
 
 #In the future, we may want to use the final model to obtain a probability of selection considering genomic factors and then use it to select genes with the same expected probability of selection (according to these factors) than our genes of interest. The idea is that the interest genes should have the same probability of selection based on genomic features (predicted probability), but if they are target of a selective pressure, their observed probability of selection should be higher. If predicted and observed are exactly the same, there is no room for enrichment of selection in interest genes after controling for confounding factors, and this would be an methodological artifact due to a model that just fit the observed data without any generalization. This can be a problem with algorithms like RF or in deep learning. In other words, more overfitting, less power to detect the impact of selective pressures.
@@ -317,30 +376,264 @@ print_text("make the split training vs test", header=4)
 
 
 
+print_text("prepare models, HPs and CV scheme", header=2)
+print_text("define a dict with model instances and grids of HPs", header=3)
+#define a dict
+    #keys:
+        #the name of the model
+    #Values:
+        #the code for creating an instance of the corresponding model with no arguments.
+        #We will use "eval()" to run this line of code and create a new instance of the corresponding model
+        #Note that the reproducibility is ensured as we have set the seeds of python, numpy and tensorflow before.
+from sklearn.linear_model import ElasticNet
+from sklearn.ensemble import RandomForestRegressor
+import xgboost as xgb
+from tensorflow import keras
+dict_models = { \
+    "elastic_net": {"instance": "ElasticNet()"}, \
+    "random_forest": {"instance": "RandomForestRegressor()"}, \
+    "xgboost": {"instance": "xgb.XGBRegressor()"}, \
+    "neural_nets": {"instance": "keras.Sequential()"}}
+dict_models
 
-#we are going to use nested Cross-Validation, so we can tune hyperparameters and select the best model class without having too optismistic results about model performance. If the same dataset is used to tune hyperparameters and then evaluate the tuned models to compare between model classes, there is a risk of overfitting.
-    #https://machinelearningmastery.com/nested-cross-validation-for-machine-learning-with-python/
+
+print_text("add HPs for gridsearch", header=3)
+#the regressor will be part of a pipeline, so we need to specify the name of the step in the pipeline (i.e., regressor) before the name of the hyperparameter
+print_text("elastic net", header=4)
+#general notes about elastic nets
+    #Linear regression is the standard algorithm for regression that assumes a linear relationship between inputs and the target variable. An extension to linear regression involves adding penalties to the loss function during training that encourage simpler models that have smaller coefficient values. These extensions are referred to as regularized linear regression or penalized linear regression.
+    #Elastic net is a popular type of regularized linear regression that combines two popular penalties, specifically the L1 and L2 penalty functions.
+    #Linear regression refers to a model that assumes a linear relationship between input variables and the target variable. With a single input variable, this relationship is a line, and with higher dimensions, this relationship can be thought of as a hyperplane that connects the input variables to the target variable. The coefficients of the model are found via an optimization process that seeks to minimize the sum squared error between the predictions (yhat) and the expected target values (y).
+    #A problem with linear regression is that estimated coefficients of the model can become large, making the model sensitive to inputs and possibly unstable. This is particularly true for problems with few observations (samples) or more samples (n) than input predictors (p) or variables (so-called p >> n problems).
+    #One approach to addressing the stability of regression models is to change the loss function to include additional costs for a model that has large coefficients. Linear regression models that use these modified loss functions during training are referred to collectively as penalized linear regression.
+    #One popular penalty is to penalize a model based on the sum of the squared coefficient values. This is called an L2 penalty. An L2 penalty minimizes the size of all coefficients, ALTHOUGH IT PREVENTS ANY COEFFICIENTS FROM BEING REMOVED FROM THE MODEL.
+    #Another popular penalty is to penalize a model based on the sum of the absolute coefficient values. This is called the L1 penalty. An L1 penalty minimizes the size of all coefficients and allows some coefficients to be minimized to the value zero, WHICH REMOVES THE PREDICTOR FROM THE MODEL.
+    #Elastic net is a penalized linear regression model that includes both the L1 and L2 penalties during training. The benefit is that elastic net allows a balance of both penalties, which can result in better performance than a model with either one or the other penalty on some problems.
+        #https://machinelearningmastery.com/elastic-net-regression-in-python/
+    #MY OPINION
+        #with elastic net, we can check a wide range in the degree of penalties from maximum penalty to no penalty (usual linear model). We include the penalty of Lasso and Ridge, so we can covering the different options in out GridSearch.
+            #The main difference between Lasso and Ridge is the penalty term they use. Ridge uses L2 penalty term which limits the size of the coefficient vector. Lasso uses L1 penalty which imposes sparsity among the coefficients and thus, makes the fitted model more interpretable. Elasticnet is introduced as a compromise between these two techniques, and has a penalty which is a mix of L1 and L2 norms.
+            #https://stats.stackexchange.com/a/93195
+dict_models["elastic_net"]["HPs"] = { \
+    "regressor__l1_ratio": np.arange(0, 1, 0.01),
+    "regressor__alpha": [1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 0.0, 1.0, 10.0, 100.0]}
+    #HPs
+        #l1_ratio
+            #alpha in elastic net theory (different from alpha in scikit learn) determines how much weight is given to each of the L1 and L2 penalties (see above). Alpha is a value between 0 and 1 and is used to weight the contribution of the L1 penalty and one minus the alpha value is used to weight the L2 penalty.
+            #For example, an alpha of 0.5 would provide a 50 percent contribution of each penalty to the loss function. An alpha value of 0 gives all weight to the L2 penalty and a value of 1 gives all weight to the L1 penalty.
+            #the alpha hyperparameter can be set via the “l1_ratio” argument that controls the contribution of the L1 and L2 penalties 
+        #alpha
+            #Another hyperparameter is provided called “lambda” (alpha in scikit learn) that controls the weighting of the sum of both penalties to the loss function. A default value of 1.0 is used to use the fully weighted penalty; a value of 0 excludes the penalty. Very small values of lambada, such as 1e-3 or smaller, are common.
+            #In scikit learn, “alpha” argument controls the contribution of the sum of both penalties to the loss function
+            #``alpha = 0`` is equivalent to an ordinary least square, solved by the :class:`LinearRegression` object
+                #Therefore, typical linear model
+        #Confusingly, as you can see the notation is different in scikit learn, as indicated in the help:
+            #The parameter l1_ratio corresponds to alpha in the glmnet R package while alpha corresponds to the lambda parameter in glmnet.
+    #grid
+        #Janizek 2023
+            #the ‘alpha’ parameter was tuned over values ranging from 0.1 to 100, whereas the ‘l1_ratio’ parameter was tuned from 0.25 to 0.75.
+        #ML mastery
+            #One approach would be to gird search l1_ratio values between 0 and 1 with a 0.1 or 0.01 separation and alpha values from perhaps 1e-5 to 100 on a log-10 scale and discover what works best for a dataset.
+        #The grid of ML Mastery is wider but it takes less than 1.5 hours to run across all folds, so we should use that.
+    #we get warning about not converging. ML Mastery says that is ok.
+
+
+
+#check other parameters of elastic net
+
+
+
+print_text("random forest", header=4)
+#general notes about random forest
+dict_models["random_forest"]["HPs"] = { \
+    "regressor__l1_ratio": np.arange(0, 1, 0.01),
+    "regressor__alpha": [1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 0.0, 1.0, 10.0, 100.0]}
+
+
+
+
 
 #X = modeling_data.iloc[:, 1:]
 
 #think about the number of K, usually K in outer cv is larger
 
 from sklearn.model_selection import KFold
-cv_outer = KFold(n_splits=10, random_state=4534, shuffle=True)
+cv_outer = KFold( \
+    n_splits=10,  \
+    shuffle=True)
+    #random_state is not required as we have already ensured reproducibility by setting the seeds of python, numpy and tensorflow
+print(cv_outer)
 
-#por aquii
 
-outer_results = list()
-#train_index = [i for i in cv_outer.split(modeling_data)]
-for train_index, test_index in cv_outer.split(modeling_data):
 
-    #split the data
-    X_train, X_test = modeling_data[train_index, 1:], modeling_data[test_index, 1:]
-    y_train, y_test = modeling_data[train_index, 0], modeling_data[test_index, 0]
 
+print_text("define a dict with model instances and grids of HPs", header=2)
+
+
+indexes_cv_outer = []
+#train_index, test_index = [(train_index, test_index) for fold, (train_index, test_index) in enumerate(cv_outer.split(modeling_data)) if fold==0]
+    #select the first fold for debugging
+for fold, (train_index, test_index) in enumerate(cv_outer.split(modeling_data)):
+
+    for model_class in dict_models.keys():
+
+        indexes_cv_outer.append((fold, train_index, test_index, model_class))
+print(indexes_cv_outer)
+
+
+len(indexes_cv_outer) == cv_outer.n_splits * len(dict_models.keys())
+
+
+
+print_text("Define function and run it only for elastic net", header=2)
+from sklearn.pipeline import Pipeline
+from sklearn import preprocessing
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import r2_score
+from sklearn.base import clone
+#fold, train_index, test_index, model_class = indexes_cv_outer[0]
+def model_evaluation(fold, train_index, test_index, model_class):
+
+    print_text(f"Starting with fold: {fold}, model: {model_class}", header=3)
+    print_text("split the data", header=4)
+    X_train, y_train = modeling_data.iloc[train_index, 1:], modeling_data.iloc[train_index, 0]
+    X_test, y_test = modeling_data.iloc[test_index, 1:], modeling_data.iloc[test_index, 0]
+
+
+    print_text("check correct shape datasets", header=4)
+    print((X_train.shape[0] == len(train_index)) & (y_train.shape[0] == len(train_index)))
+    print((X_test.shape[0] == len(test_index)) & (y_test.shape[0] == len(test_index)))
+
+
+    print_text("set the inner CV", header=4)
+    cv_inner = KFold( \
+        n_splits=3,  \
+        shuffle=True)
+        #random_state is not required as we have already ensured reproducibility by setting the seeds of python, numpy and tensorflow
+    print(cv_inner)
+
+
+    print_text("open instance of the model", header=4)
+    regressor = eval(dict_models[model_class]["instance"])
+        #we have a dict the code to create a new instance of the model between '""', so we can evaluate it
+    print(regressor)
+
+
+    print_text("define pipeline with scaling and regressor", header=4)
+    pipeline = Pipeline( \
+        steps=[ \
+        ('scale', preprocessing.StandardScaler()), \
+        ('regressor', regressor)])
+        #Pipeline:
+            #Sequentially apply a list of transforms and a final estimator. Intermediate steps of the pipeline must be 'transforms', that is, they must implement `fit` and `transform` methods. The final estimator only needs to implement `fit`.
+        #We obtain the model instance from the dict of models selecting the corresponding model class
+    print(pipeline)
+
+
+    print_text("extract dict with HPs for the GridSearch", header=4)
+    space = dict_models[model_class]["HPs"]
+    print(space)
+    
+
+    print_text("define the GridSearch", header=4)
+    search = GridSearchCV( \
+        estimator=pipeline, \
+        param_grid=space, \
+        scoring="r2", \
+        n_jobs=1 , \
+        cv=cv_inner, \
+        refit=True, \
+        pre_dispatch="2*n_jobs") #if n_jobs>1, then pre_dispatch should be "1*n_jobs", if not, the dataset will be copied many times increasing a lot memory usage
+            #Exhaustive search over specified parameter values for an estimator.
+                #The parameters of the estimator used to apply these methods are optimized by cross-validated grid-search over a parameter grid
+            #estimator
+                #This is assumed to implement the scikit-learn estimator interface. Either estimator needs to provide a ``score`` function, or ``scoring`` must be passed.
+            #param_grid
+                #Dictionary with parameters names (`str`) as keys and lists of parameter settings to try as values, or a list of such dictionaries, in which case the grids spanned by each dictionary in the list are explored. This enables searching over any sequence of parameter settings.
+            #scoring
+                #Strategy to evaluate the performance of the cross-validated model on the test set.
+                #It can be one or several (included in a list or dict...)
+            #n_jobs
+                #Number of jobs to run in parallel
+                #we are using only 1 because we are parallelizing per fold*model class combination.
+            #Refit=True
+                #Refit an estimator using the best found parameters on the WHOLE dataset
+            #cv:
+                #Determines the cross-validation splitting strategy.
+            #pre_dispatch:
+                #Controls the number of jobs that get dispatched during parallel execution. Reducing this number can be useful to avoid an explosion of memory consumption when more jobs get dispatched than CPUs can process.
+                #If `n_jobs` was set to a value higher than one, the data is copied for each point in the grid (and not `n_jobs` times). This is done for efficiency reasons if individual jobs take very little time, but may raise errors if the dataset is large and not enough memory is available.  A workaround in this case is to set `pre_dispatch`. Then, the memory is copied only `pre_dispatch` many times. A reasonable value for `pre_dispatch` is `2 * n_jobs`.
+
+
+    print_text("run the GridSearch", header=4)
+    search_results = search.fit(X_train, y_train)
+    print(search_results)
+
+
+    print_text("get the parameters of the best model", header=4)
+    best_params = search_results.best_params_
+        #Parameter setting that gave the best results on the hold out data
+    print(best_params)
+
+
+    print_text("extract the best regressor already fitted", header=4)
+    best_model = search_results.best_estimator_
+        #Estimator that was chosen by the search, i.e. estimator which gave highest score (or smallest loss if specified) on the left out data. Not available if ``refit=False``.
+    print(best_model)
+
+
+    print_text("predict on the test set", header=4)
+    y_pred = best_model.predict(X_test)
+
+
+    print_text("calculate evaluation score in the test set", header=4)
+    score = r2_score(y_test, y_pred)
+
+
+    print_text("return results as a tuple", header=4)
+    tuple_results = (fold, model_class, best_params, score)
+    print(tuple_results)
+    return tuple_results
+
+#run it across folds for elastic net only
+[model_evaluation(*i) for i in indexes_cv_outer if i[3]=="elastic_net"]
+    #"*" is used to unpack a tuple and use its elements as arguments
+    #in our case, each tuple has as elements de fold, indexes and name of the model class
+        #https://stackoverflow.com/a/1993732/12772630
+
+
+
+print_text("parallelize the function", header=2)
+print_text("open pool", header=3)
+import multiprocessing as mp
+pool = mp.Pool(5)
+print(pool)
+
+
+print_text("run the function using starmap, which is useful to apply function across iterable whose elements are in turn also iterables storing arguments (tuples in our case)", header=3)
+results = pool.starmap(model_evaluation, indexes_cv_outer)
+    #map: Apply `func` to each element in `iterable`, collecting the results in a list that is returned
+    #starmap: Like `map()` method but the elements of the `iterable` are expected to be iterables as well and will be unpacked as arguments. Hence `func` and (a, b) becomes func(a, b).
+        #this is our case, as we have a list of tuples. Therefore, each element of the iterable (list) is in turn another iterable (tuple).
+        #elements of the tuple are unpacked as argument which is exactly what we want.
+        #https://stackoverflow.com/a/47506842/12772630
+        #https://discuss.python.org/t/differences-between-pool-map-pool-apply-and-pool-apply-async/6575
+print(results)
+
+
+
+
+
+pd.DataFrame(results)
 
     #you could do a sensitivity analysis for K
         #https://machinelearningmastery.com/how-to-configure-k-fold-cross-validation/
+
+
+#gridsearch, random serach or optuna?
+    #probably grdisearch with narrow list is the best option
+#r2 or mse?
+#apply scaling to prob(sweep) before like yifei?
 
 
 from sklearn.model_selection import train_test_split
