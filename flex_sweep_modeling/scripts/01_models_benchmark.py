@@ -386,6 +386,7 @@ print_text("define a dict with model instances and grids of HPs", header=3)
         #We will use "eval()" to run this line of code and create a new instance of the corresponding model
         #Note that the reproducibility is ensured as we have set the seeds of python, numpy and tensorflow before.
 from sklearn.linear_model import ElasticNet
+from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
 import xgboost as xgb
 from tensorflow import keras
@@ -421,26 +422,69 @@ dict_models["elastic_net"]["HPs"] = { \
         #l1_ratio
             #alpha in elastic net theory (different from alpha in scikit learn) determines how much weight is given to each of the L1 and L2 penalties (see above). Alpha is a value between 0 and 1 and is used to weight the contribution of the L1 penalty and one minus the alpha value is used to weight the L2 penalty.
             #For example, an alpha of 0.5 would provide a 50 percent contribution of each penalty to the loss function. An alpha value of 0 gives all weight to the L2 penalty and a value of 1 gives all weight to the L1 penalty.
-            #the alpha hyperparameter can be set via the “l1_ratio” argument that controls the contribution of the L1 and L2 penalties 
+            #the alpha hyperparameter can be set via the “l1_ratio” argument that controls the contribution of the L1 and L2 penalties.
+            #Specifically, l1_ratio = 1 is the lasso (L1) penalty. Currently, l1_ratio <= 0.01 is not reliable, unless you supply your own sequence of alpha.
+                #No problem because we supply the alpha values.
+            #In contrast, l1_ratio=0 is Ridge (L2) penalty.
         #alpha
             #Another hyperparameter is provided called “lambda” (alpha in scikit learn) that controls the weighting of the sum of both penalties to the loss function. A default value of 1.0 is used to use the fully weighted penalty; a value of 0 excludes the penalty. Very small values of lambada, such as 1e-3 or smaller, are common.
             #In scikit learn, “alpha” argument controls the contribution of the sum of both penalties to the loss function
             #``alpha = 0`` is equivalent to an ordinary least square, solved by the :class:`LinearRegression` object
                 #Therefore, typical linear model
+            #For numerical reasons, using ``alpha = 0`` with the ``Lasso`` object (l1_ratio=1) is not advised. Given this, you should use the :class:`LinearRegression` object.
+                #No problem because we are not including alpha=0.
         #Confusingly, as you can see the notation is different in scikit learn, as indicated in the help:
             #The parameter l1_ratio corresponds to alpha in the glmnet R package while alpha corresponds to the lambda parameter in glmnet.
+        #fit_intercept (default=True): 
+            #Whether the intercept should be estimated or not. If ``False``, the data is assumed to be already centered.
+            #our data is scaled (so I guess centered), but I see no reason to avoid the intercept in a linear model.
+        #max_iter (default=1000):
+            #The maximum number of iterations.
+            #Using the default because increasing to 2000 does not improve convergence. Convergence problems could be caused by some combinations of alpha and l1_ratio. For example, alpha=0 (no penalty) gives convergence problems.
+        #copy_X (default=True)
+            #If ``True``, X will be copied; else, it may be overwritten.
+            #Ensure we copy X always? Not sure, just use default.
+        #tol (default=1e-4)
+            #The tolerance for the optimization: if the updates are smaller than ``tol``, the optimization code checks the dual gap for optimality and continues until it is smaller than ``tol``, see Notes below.
+            #It seems this is the maximum level of change in the last weight modified that is required in order to stop the model and finish. But I do not fully understand this argument, so I am going to use the default.
+                #https://stats.stackexchange.com/questions/445831/how-is-tol-used-in-scikit-learns-lasso-and-elasticnet
+        #warm_start (default=False)
+            #When set to ``True``, reuse the solution of the previous call to fit as initialization, otherwise, just erase the previous solution. See :term:`the Glossary <warm_start>`.
+            #Avoid reusing any previous call, just fresh start
+        #positive (default=False)
+            #When set to ``True``, forces the coefficients to be positive.
+            #No makes sense for us. Recombination rate should have negative coefficients...
+        #There are many other arguments used to speed up calculations, but we do not need them as we can run everything for this model in less than 1 hour.
+    #Convergence problems
+        #We have convergence problems for some combinations of hyperparameters
+        #I have increased the number of iterations from 1000 to 50000 without changes. The tolerance (change in the last weight modified) decreases but it gets stuck after 10000 iterations.
+            #https://stats.stackexchange.com/questions/445831/how-is-tol-used-in-scikit-learns-lasso-and-elasticnet
+        #The other solution that gives the help is to increase the regularization and we do that as we explore a wide range of penalization levels.
+    #Decision about using Elastic net over Ridge, Lasso and LinearRegression
+        #alpha=0
+            #with alpha=0 we exactly the same R2 scores for ElasticNet as Lasso (l1_ratio=1), ElasticNet as Ridge (l1_ratio=0) and LinearRegression.
+            #with alpha=1e-5 we get almost the same results with the three approaches.
+            #This is despite the warning of convergence in ElasticNet
+        #l1_ratio=1
+            #with l1_ratio=1 we get exactly the same results with ElasticNet as Lasso (l1_ratio=1) and Lasso().
+        #l1_ratio=0
+            #with l1_ratio=0 we get results that are close but not the same with ElasticNet as Lasso (l1_ratio=1) and Ridge (~0.4 of difference).
+            #if we set alpha=alpha/X_train.shape[0] in ElasticNet, we get exactly the same results in ElasticNet and Ridge. I have also check what happens in the lowest alpha value I am going to use (1e-5). Both approaches gives almost the same even if we do not divide alpha by X_train.shape[0] for ElasticNet. So it seems we are doing the same here.
+                #https://stackoverflow.com/questions/47365978/scikit-learn-elastic-net-approaching-ridge
+            #This is despite the warning of convergence in ElasticNet
+        #It is important to note that I am ONLY going to use this for selecting the best model class. I am not going to extract coefficients or make inferences about the data. I just need comparable score results in order to select the model class that consistently perform better across folds. These results indicate that ElasticNet can produce similar results than the other functions in terms of score. Therefore, I think we can just use ElasticNet with a wide range of parameters in order to cover Ridge, Lasso and LinearRegression.
     #grid
         #Janizek 2023
             #the ‘alpha’ parameter was tuned over values ranging from 0.1 to 100, whereas the ‘l1_ratio’ parameter was tuned from 0.25 to 0.75.
         #ML mastery
             #One approach would be to gird search l1_ratio values between 0 and 1 with a 0.1 or 0.01 separation and alpha values from perhaps 1e-5 to 100 on a log-10 scale and discover what works best for a dataset.
-        #The grid of ML Mastery is wider but it takes less than 1.5 hours to run across all folds, so we should use that.
+        #My opinion:
+            #The grid of ML Mastery is wider but it takes less than 1 hour to run across all folds without parallelization!
+            #It checks 
+                #from very low penalty (alpha close to zero; regular linear model) to very high penalty (alpha at 100)
+                #at each level of penalty, it consider more impact for L2 penalty (lambda close to zero), equal impact (lambda=0.5) and more impact for L1 penalty (lambda close to 1) 
+            #It explores a lot of scenarios that includes pure Ridge, pure Lasso, pure LinearRegression and many intermediate steps in less than 1 hour!
     #we get warning about not converging. ML Mastery says that is ok.
-
-
-
-#check other parameters of elastic net
-
 
 
 print_text("random forest", header=4)
@@ -485,24 +529,30 @@ len(indexes_cv_outer) == cv_outer.n_splits * len(dict_models.keys())
 
 
 
+
+
 print_text("Define function and run it only for elastic net", header=2)
 from sklearn.pipeline import Pipeline
 from sklearn import preprocessing
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import r2_score
-from sklearn.base import clone
 #fold, train_index, test_index, model_class = indexes_cv_outer[0]
 def model_evaluation(fold, train_index, test_index, model_class):
 
     print_text(f"Starting with fold: {fold}, model: {model_class}", header=3)
     print_text("split the data", header=4)
-    X_train, y_train = modeling_data.iloc[train_index, 1:], modeling_data.iloc[train_index, 0]
-    X_test, y_test = modeling_data.iloc[test_index, 1:], modeling_data.iloc[test_index, 0]
+    X_train, y_train = modeling_data.iloc[train_index, 1:].to_numpy(), modeling_data.iloc[train_index, 0].to_numpy()
+    X_test, y_test = modeling_data.iloc[test_index, 1:].to_numpy(), modeling_data.iloc[test_index, 0].to_numpy()
 
 
-    print_text("check correct shape datasets", header=4)
-    print((X_train.shape[0] == len(train_index)) & (y_train.shape[0] == len(train_index)))
-    print((X_test.shape[0] == len(test_index)) & (y_test.shape[0] == len(test_index)))
+    print_text("check correct shape training arrays", header=4)
+    print((X_train.shape[0] == len(train_index)) & (X_train.shape[1] == modeling_data.shape[1]-1))
+    print((y_train.shape[0] == len(train_index)) & (len(y_train.shape) == 1))
+        #the shape of the response is (XXXX,), so we only have 1 number (row number) and not column number.
+
+    print_text("check correct shape test arrays", header=4)
+    print((X_test.shape[0] == len(test_index)) & (X_test.shape[1] == modeling_data.shape[1]-1))
+    print((y_test.shape[0] == len(test_index)) & (len(y_test.shape) == 1))
 
 
     print_text("set the inner CV", header=4)
@@ -510,6 +560,8 @@ def model_evaluation(fold, train_index, test_index, model_class):
         n_splits=3,  \
         shuffle=True)
         #random_state is not required as we have already ensured reproducibility by setting the seeds of python, numpy and tensorflow
+        #I have run two times elastic net across all folds and I get exactly the same R2 for the best model. This indicates that both inner and outer CV schemas are the same across runs.
+        #I have also run several times the training of random forest with this CV inner schema for the same outer folds, and I get the same results always.
     print(cv_inner)
 
 
@@ -630,6 +682,7 @@ pd.DataFrame(results)
         #https://machinelearningmastery.com/how-to-configure-k-fold-cross-validation/
 
 
+#repeateKfold?
 #gridsearch, random serach or optuna?
     #probably grdisearch with narrow list is the best option
 #r2 or mse?
