@@ -415,9 +415,11 @@ print_text("elastic net", header=4)
         #with elastic net, we can check a wide range in the degree of penalties from maximum penalty to no penalty (usual linear model). We include the penalty of Lasso and Ridge, so we can covering the different options in out GridSearch.
             #The main difference between Lasso and Ridge is the penalty term they use. Ridge uses L2 penalty term which limits the size of the coefficient vector. Lasso uses L1 penalty which imposes sparsity among the coefficients and thus, makes the fitted model more interpretable. Elasticnet is introduced as a compromise between these two techniques, and has a penalty which is a mix of L1 and L2 norms.
             #https://stats.stackexchange.com/a/93195
+#set the HPs
 dict_models["elastic_net"]["HPs"] = { \
-    "regressor__l1_ratio": np.arange(0, 1, 0.01),
+    "regressor__l1_ratio": np.arange(0, 1.01, 0.01), #1.01 is not included, it ends at 1, which is like Lasso
     "regressor__alpha": [1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 0.0, 1.0, 10.0, 100.0]}
+print(dict_models["elastic_net"])
     #HPs
         #l1_ratio
             #alpha in elastic net theory (different from alpha in scikit learn) determines how much weight is given to each of the L1 and L2 penalties (see above). Alpha is a value between 0 and 1 and is used to weight the contribution of the L1 penalty and one minus the alpha value is used to weight the L2 penalty.
@@ -489,9 +491,95 @@ dict_models["elastic_net"]["HPs"] = { \
 
 print_text("random forest", header=4)
 #general notes about random forest
+    #Random forest is based on Decision trees:
+        #In a decision tree, you have several predictors (columns, X) used to predict a response (y).
+        #A decision tree is made by looking what value of a given predictor can be used to effectively split data points that are different (e.g., low and high flex-sweep probability).
+        #For example, using a decision criteria a recombination rate of 4 will be very likely useful to separate genes with very low flex sweep probability because above 4, it is very difficult to detect any sweep due to the eroding effect of recombination. Of course, below that threshold we will have low and high flew-sweep probabilities, but at least we have already separated a group of low flex-sweep probabilities. 
+        #we have our two first branches, ending one of them in a leaf or terminal node because all genes in that node have very low flex-sweep probability.
+        #then the other branch continue, using other values of recombination rate to effectively split low and high flex-sweep probabilities.
+        #This will generate another split that can continue with more splits (using recombination or other predictors) until all nodes are terminal nodes.
+        #very good and simple video about
+            #https://youtu.be/ZVR2Way4nwQ
+    #Random forest
+        #What is the problem with a decision tree? that is very dependent on the data that have seen and has low very capacity for generalizying. If you just change a few values of the predictors for a sample, you will get a completely different decision tree.
+        #The solution is to use a random set of different decision trees generating a random forest
+        #First you do bootstrap
+            #start randomly selecting samples (rows) with replacement (the same sample can be selected two times) until you reach a given sample size (usually the size of the original sample size). 
+            #for each of this random set of sample you will fit a decision tree. As the decision tree is influenced by small changes in training data, the different decision trees will be different between them.
+        #Another random step
+            #you randomly select the predictors considered to make decision in each decision tree.
+            #if all trees uses the same predictors, it is likely that they will tend to be similar.
+            #therefore, each decision tree uses different samples and different predictors as input. 
+            #this greatly reduces the correlation between trees and errors.
+        #Once you have all your decision trees fitted to the corresponding random set of samples and using a random set of predictors, you can predict.
+        #you have a new row to predict flex-sweep probability. Do the prediction across all trees and then obtain the average (if classification it would be a vote, class with more votes across trees wins).
+        #This last steps is called aggregation and gives name in combination to bootstrap to bagging (bootstrap+aggregation)
+        #very good video about random forest
+            #https://youtu.be/v6VJ2RO66Ag
+#set the HPs
 dict_models["random_forest"]["HPs"] = { \
-    "regressor__l1_ratio": np.arange(0, 1, 0.01),
-    "regressor__alpha": [1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 0.0, 1.0, 10.0, 100.0]}
+    "regressor__max_samples": np.arange(0.1, 1.1, 0.1), \
+    "regressor__max_features": np.arange(3, 10, 1), \
+    "regressor__n_estimators": [10, 50, 100, 500, 1000, 2000], \
+    "regressor__max_depth": [i for i in range(1,8)] + [None]} #the last number (second argument) in np.arrange is not included. In max_samples, we include until 1.0, which is equivalent to None, i.e., all samples included.
+print(dict_models["random_forest"])
+
+
+
+#check if you are missing something at the end of RF explanation
+#then check other HPs and do review of all HPs selection in ML mastery page
+
+
+#with n_estimators=10, I have checked R2 between 3 and 14 features, getting the best result (0.58!) with 14. check until 19 and then see what happens with 1000 estimators.
+
+#max_features
+    #Perhaps the most important hyperparameter to tune for the random forest is the number of random features to consider at each split point. A good heuristic for regression is to set this hyperparameter to 1/3 the number of input features.
+    #It is set via the max_features argument. In this case, for our test dataset, the heuristic would be 19/3 or about 6 features.
+    #We will explore the effect of the number of features randomly selected at each split point on predictive power. We will try values from 3 to 9 and would expect a small value, around 6, to perform well based on the heuristic.
+
+
+#max_depth
+    #Another important hyperparameter to tune is the depth of the decision trees. Deeper trees are often more overfit to the training data, but also less correlated, which in turn may improve the performance of the ensemble. Depths from 1 to 10 levels may be effective.
+    #By default, trees are constructed to an arbitrary depth and are not pruned. This is a sensible default, although we can also explore fitting trees with different fixed depths.
+    #The maximum tree depth can be specified via the max_depth argument and is set to None (no maximum depth) by default.
+    #We will explore "from 1 to 7 and None=full"
+
+
+
+#n_estimators
+    #Finally, the number of decision trees in the ensemble can be set. Often, this is increased until no further improvement is seen. When fitting a final model, it may be desirable to either increase the number of trees until the variance of the model is reduced across repeated evaluations, or to fit multiple final models and average their predictions.
+    #Typically, the number of trees is increased until the model performance stabilizes. Intuition might suggest that more trees will lead to overfitting, although this is not the case. Both bagging and random forest algorithms appear to be somewhat immune to overfitting the training dataset given the stochastic nature of the learning algorithm.
+    #The number of trees can be set via the “n_estimators” argument and defaults to 100.
+    #We will explore the effect of the number of trees with values between 10 to 1,000. If the cross-validation performance profiles are still improving at 1,000 trees, then incorporate more trees until performance levels off.
+
+
+
+
+
+
+#Each decision tree in the ensemble is fit on a bootstrap sample drawn from the training dataset. This can be turned off by setting the “bootstrap” argument to False, if you desire. In that case, the whole training dataset will be used to train each decision tree. This is not recommended.
+
+#max_samples
+    #The “max_samples” argument can be set to a float between 0 and 1 to control the percentage of the size of the training dataset to make the bootstrap sample used to train each decision tree. For example, if the training dataset has 100 rows, the max_samples argument could be set to 0.5 and each decision tree will be fit on a bootstrap sample with (100 * 0.5) or 50 rows of data. 
+    #A smaller sample size will make trees more different, and a larger sample size will make the trees more similar. Setting max_samples to “None” will make the sample size the same size as the training dataset and this is the default.
+    #In general, It is good practice to make the bootstrap sample as large as the original dataset size. We will check from 10% to 100% in 10% increments
+    #You might like to extend this example and see what happens if the bootstrap sample size is larger or even much larger than the training dataset (e.g. you can set an integer value as the number of samples instead of a float percentage of the training dataset size).
+        #remember that there is replacement, so you can create datasets larger than the original dataset
+
+
+
+
+
+
+
+
+#random forest
+    #
+
+
+
+
+#https://machinelearningmastery.com/xgboost-for-regression/
 
 
 
@@ -648,10 +736,11 @@ def model_evaluation(fold, train_index, test_index, model_class):
     return tuple_results
 
 #run it across folds for elastic net only
-[model_evaluation(*i) for i in indexes_cv_outer if i[3]=="elastic_net"]
+[model_evaluation(*i) for i in indexes_cv_outer if (i[3]=="elastic_net")]
     #"*" is used to unpack a tuple and use its elements as arguments
     #in our case, each tuple has as elements de fold, indexes and name of the model class
         #https://stackoverflow.com/a/1993732/12772630
+#[model_evaluation(*i) for i in indexes_cv_outer if (i[3]=="random_forest") & (i[0]==0)]
 
 
 
@@ -683,6 +772,11 @@ pd.DataFrame(results)
 
 
 #repeateKfold?
+    #ML mastery says: "When using machine learning algorithms that have a stochastic learning algorithm, it is good practice to evaluate them by averaging their performance across multiple runs or repeats of cross-validation."
+    #Note: Your results may vary given the stochastic nature of the algorithm or evaluation procedure, or differences in numerical precision. Consider running the example a few times and compare the average outcome.
+        #https://machinelearningmastery.com/different-results-each-time-in-machine-learning/
+
+
 #gridsearch, random serach or optuna?
     #probably grdisearch with narrow list is the best option
 #r2 or mse?
