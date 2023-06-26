@@ -494,12 +494,23 @@ print_text("random forest", header=4)
     #Random forest is based on Decision trees:
         #In a decision tree, you have several predictors (columns, X) used to predict a response (y).
         #A decision tree is made by looking what value of a given predictor can be used to effectively split data points that are different (e.g., low and high flex-sweep probability).
-        #For example, using a decision criteria a recombination rate of 4 will be very likely useful to separate genes with very low flex sweep probability because above 4, it is very difficult to detect any sweep due to the eroding effect of recombination. Of course, below that threshold we will have low and high flew-sweep probabilities, but at least we have already separated a group of low flex-sweep probabilities. 
-        #we have our two first branches, ending one of them in a leaf or terminal node because all genes in that node have very low flex-sweep probability.
-        #then the other branch continue, using other values of recombination rate to effectively split low and high flex-sweep probabilities.
-        #This will generate another split that can continue with more splits (using recombination or other predictors) until all nodes are terminal nodes.
-        #very good and simple video about
+        #For example, using as decision criteria a recombination rate of 4 will be very likely useful to separate genes with very low flex sweep probability because above 4, it is very difficult to detect any sweep due to the eroding effect of recombination. Of course, we will have low and high flew-sweep probabilities in both groups, but we have created to groups that are more homogeneous. In other words, we have increased the impurity of the groups.
+        #To decide that criteria use in each decision tree we calculate the variance reduction, i.e., impurity.
+            #We calculate the variance of flew-sweep probability in the whole dataset (sum of difference between y minus average divided by sample size). 
+            #Then calculate the variance in the two child nodes using criteria one
+            #Calculate the variance in the two child nodes using criteria two.
+            #Then calculate the variance reducing in both cases with respect to the full dataset. We select the criteria that reduce more variance, i.e., decrease impurity.
+            #Note that the model calculates the variance reduction for every possible split!!
+        #the process continue for each branch, using other values of the same predictor or other predictor to split each of the two groups in smaller groups that are more homogeneous, i.e., have less impurity.
+        #At the end, what we have done is to divided the parametric space in the different regions based on the flex-sweep probabiltiy values. For example, very low recombination and very low vip distance will probably have genes with very high flex-sweep probability. Therefore, even though we are doing regressions, we are effectively classifying the parametric space and the samples.
+        #this process will continue until we have reached our desired depth. 
+        #At the end, we have different groups with (hopefully) low impurity. For example, a group with very low flex-sweep probs, a group with low but a bit higher flex-sweep probs... and so on.
+        #Then to predict a new gene, 
+            #you check what conditions the gene satisfies for each decision node (i.e., each threshold of a given predictor), advancing through the tree until reaching the terminal node.
+            #once the gene is classified in a terminal node, its prediction is then obtained by calculating the average flex-sweep probability of genes classified in that group during training. For example, if our gene under prediction is classified as very-low flex-sweep prob and we have there 10 training genes, we take their flex-sweep probabilties and calculate the average, that is the prediction for the new gene.
+        #very good and simple videos about decision trees classifier and regressors
             #https://youtu.be/ZVR2Way4nwQ
+            #https://www.youtube.com/watch?v=UhY5vPfQIrA&ab_channel=NormalizedNerd
     #Random forest
         #What is the problem with a decision tree? that is very dependent on the data that have seen and has low very capacity for generalizying. If you just change a few values of the predictors for a sample, you will get a completely different decision tree.
         #The solution is to use a random set of different decision trees generating a random forest
@@ -518,68 +529,142 @@ print_text("random forest", header=4)
             #https://youtu.be/v6VJ2RO66Ag
 #set the HPs
 dict_models["random_forest"]["HPs"] = { \
-    "regressor__max_samples": np.arange(0.1, 1.1, 0.1), \
-    "regressor__max_features": np.arange(3, 10, 1), \
-    "regressor__n_estimators": [10, 50, 100, 500, 1000, 2000], \
-    "regressor__max_depth": [i for i in range(1,8)] + [None]} #the last number (second argument) in np.arrange is not included. In max_samples, we include until 1.0, which is equivalent to None, i.e., all samples included.
+    "regressor__max_features": np.arange(8, 18, 2), \
+    "regressor__n_estimators": [100, 300, 500, 1000], \
+    "regressor__max_depth": [i for i in range(1,8,3)] + [None], \
+    "regressor__max_samples": np.arange(0.6, 1.1, 0.2)} #the last number (second argument) in np.arrange is not included. In max_samples, we include until 1.0, which is equivalent to None, i.e., all samples included.
 print(dict_models["random_forest"])
+    #The most important HPs in general
+        #The following HPs are those that are being consistently recommended as those with the greatest impact on predictive power.
+            #https://machinelearningmastery.com/random-forest-ensemble-in-python/
+            #https://stackoverflow.com/questions/36107820/how-to-tune-parameters-in-random-forest-using-scikit-learn
+            #https://www.analyticsvidhya.com/blog/2020/03/beginners-guide-random-forest-hyperparameter-tuning/
+        #max_features
+            #Perhaps the most important hyperparameter to tune for the random forest is the number of random features to consider at each split point. A good heuristic for regression is to set this hyperparameter to 1/3 the number of input features.
+            #It is set via the max_features argument. In this case, for our test dataset, the heuristic would be 19/3 or about 6 features.
+            #We will explore the effect of the number of features randomly selected at each split point on predictive power.
+            #In our case, it seems that in our case the best performance is around 14 predictors, so we are going to explore that region of the space for this HP. We are going to select every 2 values between 12 and 17 to cover all the space we are interested in but avoid being too exhaustive. This is probably the HPs that I have found more impact have along with n_estimators.
+        #n_estimators
+            #the number of decision trees in the ensemble can be set. Often, this is increased until no further improvement is seen. When fitting a final model, it may be desirable to either increase the number of trees until the variance of the model is reduced across repeated evaluations, or to fit multiple final models and average their predictions.
+            #Typically, the number of trees is increased until the model performance stabilizes. Intuition might suggest that more trees will lead to overfitting, although this is not the case. Both bagging and random forest algorithms appear to be somewhat immune to overfitting the training dataset given the stochastic nature of the learning algorithm.
+            #The number of trees can be set via the “n_estimators” argument and defaults to 100.
+            #We will explore the effect of the number of trees with values up to 1000. If the cross-validation performance profiles are still improving at 1,000 trees, then incorporate more trees until performance levels off.
+                #I have checked that improvement gets veeery slow after 300 estimators.
+                    #0.6338044371221603 - 200
+                    #0.6335467935081995 - 300
+                    #0.6369000637004534 - 400
+                    #0.635493122565769 - 500
+        #max_depth
+            #Another important hyperparameter to tune is the depth of the decision trees. Deeper trees are often more overfit to the training data, but also less correlated, which in turn may improve the performance of the ensemble. Depths from 1 to 10 levels may be effective.
+            #By default, trees are constructed to an arbitrary depth and are not pruned. This is a sensible default, although we can also explore fitting trees with different fixed depths.
+            #The maximum tree depth can be specified via the max_depth argument and is set to None (no maximum depth) by default.
+            #We will explore "from 1 to 7 and None=full". Instead of doing 1,2,3... we are going to select a few values between 1 and 7 because most of the times, the highest predictive power is obtained by None.
+        #max_samples
+            #The “max_samples” argument can be set to a float between 0 and 1 to control the percentage of the size of the training dataset to make the bootstrap sample used to train each decision tree. For example, if the training dataset has 100 rows, the max_samples argument could be set to 0.5 and each decision tree will be fit on a bootstrap sample with (100 * 0.5) or 50 rows of data. 
+            #A smaller sample size will make trees more different, and a larger sample size will make the trees more similar. Setting max_samples to “None” will make the sample size the same size as the training dataset and this is the default.
+            #In general, It is good practice to make the bootstrap sample as large as the original dataset size. We will check from several sizes but with focus on values close to the total sample size.
+    #Other HPs that could be used in a more detailed search if this model class is selected
+        #min_samples_split and min_samples_leaf
+            #These two were recommended during TDI in case more tunning was required.
+            #From documentation "The main difference between the two is that min_samples_leaf guarantees a minimum number of samples in a leaf, while min_samples_split can create arbitrary small leaves, though min_samples_split is more common in the literature."
+            #we should make the distinction between a leaf (also called external node) and an internal node. An internal node will have further splits (also called children), while a leaf is by definition a node without any children (without any further splits).
+            #min_samples_split specifies the minimum number of samples required to split an internal node, while min_samples_leaf specifies the minimum number of samples required to be at a leaf node.
+            #For instance, if min_samples_split = 5, and there are 7 samples at an internal node, then the split is allowed. But let's say the split results in two leaves, one with 1 sample, and another with 6 samples. If min_samples_leaf = 2, then the split won't be allowed (even if the internal node has 7 samples) because one of the leaves resulted will have less then the minimum number of samples required to be at a leaf node.
+            #As the documentation referenced above mentions, min_samples_leaf guarantees a minimum number of samples in every leaf, no matter the value of min_samples_split.
+            #In other words,
+                #The min_samples_split parameter will evaluate the number of samples in the node, and if the number is less than the minimum the split will be avoided and the node will be a leaf.
+                #The min_samples_leaf parameter checks before the node is generated, that is, if the possible split results in a child with fewer samples, the split will be avoided (since the minimum number of samples for the child to be a leaf has not been reached) and the node will be replaced by a leaf.
+            #https://stackoverflow.com/a/46488222/12772630
+            #https://towardsdatascience.com/hyperparameter-tuning-the-random-forest-in-python-using-scikit-learn-28d2aa77dd74
+        #max_leaf_nodes
+            #This hyperparameter sets a condition on the splitting of the nodes in the tree and hence restricts the growth of the tree. If after splitting we have more terminal nodes than the specified number of terminal nodes, it will stop the splitting and the tree will not grow further.
+            #Let’s say we set the maximum terminal nodes as 2 in this case. As there is only one node when starting, it will allow the tree to grow further. Now, after the first split, you can see that there are 2 nodes here and we have set the maximum terminal nodes as 2. Hence, the tree will terminate here and will not grow further. This is how setting the maximum terminal nodes or max_leaf_nodes can help us in preventing overfitting.
+            #When the parameter value is very small, the tree is underfitting and as the parameter value increases, the performance of the tree over both test and train increases, but beyond a point, the tree starts to overfit as the parameter value goes beyond 25.
+            #This makes sense to me because as the tree grows and you have more terminal leaves, i.e., more groups of samples. Therefore you are splitting the space in more groups, creating small groups defined by very specific combinations of predictors based on the training data. As more grow, more specific conditions. If we reduce the growth, we should limit the overfitting to the specific conditions of the training data and increase generalization.
+                #https://www.analyticsvidhya.com/blog/2020/03/beginners-guide-random-forest-hyperparameter-tuning/
+            #This parameter is complementary to max_depth, because two trees with the same number of terminal nodes can have very different depths
+                #https://stats.stackexchange.com/questions/544111/max-depth-vs-max-leaf-nodes-in-scikit-learns-randomforestclassifier
+                #https://www.geeksforgeeks.org/random-forest-hyperparameter-tuning-in-python/
+        #bootstrap: NOT RECOMMENDED CHANGING THE DEFAULT
+            #Each decision tree in the ensemble is fit on a bootstrap sample drawn from the training dataset. This can be turned off by setting the “bootstrap” argument to False, if you desire. In that case, the whole training dataset will be used to train each decision tree. This is not recommended.
+        #there are more HPs that you can explore when working with the selected model class
+            #criterion...
+
+print_text("XGboost", header=4)
+#general notes about gradient boosting
+    #The idea of boosting came out of the idea of whether a weak learner can be modified to become better. Hypothesis boosting was the idea of filtering observations, leaving those observations that the weak learner can handle and focusing on developing new weak learns to handle the remaining difficult observations.
+    #A first implementation of this was AdaBoost
+        #AdaBoost works by weighting the observations, putting more weight on difficult to classify instances and less on those already handled well. New weak learners are added sequentially that focus their training on the more difficult patterns.
+        #This means that samples that are difficult to classify receive increasing larger weights until the algorithm identifies a model that correctly classifies these samples
+        #Predictions are made by majority vote of the weak learners’ predictions, weighted by their individual accuracy.
+    #This was further developed into Gradient Boosting Machines
+        #the objective is to minimize the loss of the model by adding weak learners using a gradient descent like procedure.
+        #This class of algorithms were described as a stage-wise additive model. This is because one new weak learner is added at a time and existing weak learners in the model are frozen and left unchanged.
+            #Note that this stagewise strategy is different from stepwise approaches that readjust previously entered terms when new ones are added
+        #The generalization allowed arbitrary differentiable loss functions to be used, expanding the technique beyond binary classification problems to support regression, multi-class classification and more.
+    #How gradient boost works
+        #1. A loss function to be optimized, i.e., you calculate the loss based on the predictions of your first tree.
+            #many standard loss functions are supported and you can define your own.
+            #For example, regression may use a squared error and classification may use logarithmic loss.
+            #A benefit of the gradient boosting framework is that a new boosting algorithm does not have to be derived for each loss function that may want to be used, instead, it is a generic enough framework that any differentiable loss function can be used.
+        #2. A weak learner to make predictions.
+            #Decision trees are used as the weak learner in gradient boosting.
+            #We use regression trees. They output real values for splits, thus their output can be added together. This allows to add the output of subsequent models and “correct” the residuals in the predictions.
+            #Trees are constructed in a greedy manner, choosing the best split points based on purity scores like Gini or to minimize the loss.
+            #Initially, such as in the case of AdaBoost, very short decision trees were used that only had a single split, called a decision stump. Larger trees can be used generally with 4-to-8 levels.
+            #It is common to constrain the weak learners in specific ways, such as a maximum number of layers, nodes, splits or leaf nodes. This is to ensure that the learners remain weak, but can still be constructed in a greedy manner. 
+                #THIS SEEMS IMPORTANT, as it seems to reduce overfitting when adding many learners.
+        #3. An additive model to add weak learners to minimize the loss function.
+            #Trees are added one at a time, and existing trees in the model are not changed.
+            #A gradient descent procedure is used to minimize the loss when adding trees.
+            #Traditionally, gradient descent is used to minimize a set of parameters, such as the coefficients in a regression equation or weights in a neural network. After calculating error or loss, the weights are updated to minimize that error.
+            #Instead of parameters, we have weak learner sub-models or more specifically decision trees. After calculating the loss, to perform the gradient descent procedure, we must add a tree to the model that reduces the loss (i.e. follow the gradient). We do this by parameterizing the tree, then modify the parameters of the tree and move in the right direction by reducing the residual loss. 
+            #Generally this approach is called functional gradient descent or gradient descent with functions.
+                #One way to produce a weighted combination of classifiers which optimizes [the cost] is by gradient descent in function space
+            #The output for the new tree is then added to the output of the existing sequence of trees in an effort to correct or improve the final output of the model.
+            #A fixed number of trees are added or training stops once loss reaches an acceptable level or no longer improves on an external validation dataset.
+
+
+            #CHECK STEP 3
 
 
 
-#check if you are missing something at the end of RF explanation
-#then check other HPs and do review of all HPs selection in ML mastery page
 
-
-#with n_estimators=10, I have checked R2 between 3 and 14 features, getting the best result (0.58!) with 14. check until 19 and then see what happens with 1000 estimators.
-
-#max_features
-    #Perhaps the most important hyperparameter to tune for the random forest is the number of random features to consider at each split point. A good heuristic for regression is to set this hyperparameter to 1/3 the number of input features.
-    #It is set via the max_features argument. In this case, for our test dataset, the heuristic would be 19/3 or about 6 features.
-    #We will explore the effect of the number of features randomly selected at each split point on predictive power. We will try values from 3 to 9 and would expect a small value, around 6, to perform well based on the heuristic.
-
-
-#max_depth
-    #Another important hyperparameter to tune is the depth of the decision trees. Deeper trees are often more overfit to the training data, but also less correlated, which in turn may improve the performance of the ensemble. Depths from 1 to 10 levels may be effective.
-    #By default, trees are constructed to an arbitrary depth and are not pruned. This is a sensible default, although we can also explore fitting trees with different fixed depths.
-    #The maximum tree depth can be specified via the max_depth argument and is set to None (no maximum depth) by default.
-    #We will explore "from 1 to 7 and None=full"
+    #summary
+        #steps
+            #you train a decision tree
+            #calculate the loss, 
+            #train a new tree using the LOSS, the error.
+            #add the new trained tree to the ensemble with the previous tree
+            #make predictions again
+            #calculate again the loss
+            #use this loss to train a new tree
+            #and so on...
+                #https://www.youtube.com/watch?v=yw-E__nDkKU&ab_channel=EmmaDing
+        #I think this approach makes process to focus on the parts of the data that are more difficult to learn as you try to fit the residuals of the current model when adding a new tree.
 
 
 
-#n_estimators
-    #Finally, the number of decision trees in the ensemble can be set. Often, this is increased until no further improvement is seen. When fitting a final model, it may be desirable to either increase the number of trees until the variance of the model is reduced across repeated evaluations, or to fit multiple final models and average their predictions.
-    #Typically, the number of trees is increased until the model performance stabilizes. Intuition might suggest that more trees will lead to overfitting, although this is not the case. Both bagging and random forest algorithms appear to be somewhat immune to overfitting the training dataset given the stochastic nature of the learning algorithm.
-    #The number of trees can be set via the “n_estimators” argument and defaults to 100.
-    #We will explore the effect of the number of trees with values between 10 to 1,000. If the cross-validation performance profiles are still improving at 1,000 trees, then incorporate more trees until performance levels off.
+ 
 
-
-
-
-
-
-#Each decision tree in the ensemble is fit on a bootstrap sample drawn from the training dataset. This can be turned off by setting the “bootstrap” argument to False, if you desire. In that case, the whole training dataset will be used to train each decision tree. This is not recommended.
-
-#max_samples
-    #The “max_samples” argument can be set to a float between 0 and 1 to control the percentage of the size of the training dataset to make the bootstrap sample used to train each decision tree. For example, if the training dataset has 100 rows, the max_samples argument could be set to 0.5 and each decision tree will be fit on a bootstrap sample with (100 * 0.5) or 50 rows of data. 
-    #A smaller sample size will make trees more different, and a larger sample size will make the trees more similar. Setting max_samples to “None” will make the sample size the same size as the training dataset and this is the default.
-    #In general, It is good practice to make the bootstrap sample as large as the original dataset size. We will check from 10% to 100% in 10% increments
-    #You might like to extend this example and see what happens if the bootstrap sample size is larger or even much larger than the training dataset (e.g. you can set an integer value as the number of samples instead of a float percentage of the training dataset size).
-        #remember that there is replacement, so you can create datasets larger than the original dataset
-
-
-
-
-
-
-
-
-#random forest
-    #
-
-
-
-
+#https://machinelearningmastery.com/gentle-introduction-gradient-boosting-algorithm-machine-learning/
 #https://machinelearningmastery.com/xgboost-for-regression/
+
+
+
+#set the HPs
+dict_models["xgboost"]["HPs"] = {}
+print(dict_models["xgboost"])
+
+
+#links about HPs focusing on the important 
+    #https://stackoverflow.com/a/69830350/12772630
+
+#more detailed HPs with stepwise selection
+    #https://www.analyticsvidhya.com/blog/2016/03/complete-guide-parameter-tuning-xgboost-with-codes-python/
+    #https://datascience.stackexchange.com/a/108242
+
+
 
 
 
@@ -682,6 +767,7 @@ def model_evaluation(fold, train_index, test_index, model_class):
         scoring="r2", \
         n_jobs=1 , \
         cv=cv_inner, \
+        #verbose=4,
         refit=True, \
         pre_dispatch="2*n_jobs") #if n_jobs>1, then pre_dispatch should be "1*n_jobs", if not, the dataset will be copied many times increasing a lot memory usage
             #Exhaustive search over specified parameter values for an estimator.
@@ -703,6 +789,7 @@ def model_evaluation(fold, train_index, test_index, model_class):
             #pre_dispatch:
                 #Controls the number of jobs that get dispatched during parallel execution. Reducing this number can be useful to avoid an explosion of memory consumption when more jobs get dispatched than CPUs can process.
                 #If `n_jobs` was set to a value higher than one, the data is copied for each point in the grid (and not `n_jobs` times). This is done for efficiency reasons if individual jobs take very little time, but may raise errors if the dataset is large and not enough memory is available.  A workaround in this case is to set `pre_dispatch`. Then, the memory is copied only `pre_dispatch` many times. A reasonable value for `pre_dispatch` is `2 * n_jobs`.
+    print(search)
 
 
     print_text("run the GridSearch", header=4)
@@ -1177,6 +1264,30 @@ plt.close()
 #repasa codigo de BAT y sigue modeling, trying to decide best transformation and then model comparison
     #hink if run DNN optuna with log...
 
+
+
+
+
+#plan
+    #get class model selection completely done in a week
+    #then select the three/four best models in the selected class
+        #variability of results across best models
+            #just using predictive power is not a good idea in order to do inference
+        #Recombination will be stable and possibly VIPs and BAT
+    #speculative explanation for BAT vs thermogenic
+        #I do not know where Yoruba ancestors were located in the past, but around the current Yorubaland there are areas with considerable diurnal variation in temperature.
+        #this could be relevant to explain why BAT but not thermogenic distance show a pattern. The second set of genes includes genes implicated in both short- and long-term regulation of body temperature while the BAT set is focused on non-shivering thermogenesis mediated by brown-adipose tissue, which is related to short-term responses to temperature changes.
+        #Maybe populations exposed to diurnal rather than seasonal changes of temperatures tend to specifically adapt through faster, short-term pathways of temperature control.
+        #I think remember that Australian Aborigenes shows signs of adaptation night cold temperatures. So maybe this has also happen for other pops in warm climates.
+    #next steps
+        #try to combine the predictions of several models in order to get average pattern
+            #maybe use 
+                #voting regressor
+                    #https://scikit-learn.org/stable/modules/ensemble.html#voting-regressor
+                #stacking
+                    #https://scikit-learn.org/stable/modules/ensemble.html#stacked-generalization
+        #spend more time in optimization with optuna
+        #analyze other populations, specifically from higher latitudes where maybe adaptation to seasonal temperature variation was more relevant
 
 
 '''
