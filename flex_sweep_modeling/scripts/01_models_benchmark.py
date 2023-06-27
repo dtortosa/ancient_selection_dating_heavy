@@ -389,12 +389,12 @@ from sklearn.linear_model import ElasticNet
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
 import xgboost as xgb
-from tensorflow import keras
+from scikeras.wrappers import KerasRegressor
 dict_models = { \
     "elastic_net": {"instance": "ElasticNet()"}, \
     "random_forest": {"instance": "RandomForestRegressor()"}, \
     "xgboost": {"instance": "xgb.XGBRegressor()"}, \
-    "neural_nets": {"instance": "keras.Sequential()"}}
+    "neural_nets": {"instance": "KerasRegressor()"}}
 dict_models
 
 
@@ -599,6 +599,8 @@ print_text("XGboost", header=4)
         #Predictions are made by majority vote of the weak learners’ predictions, weighted by their individual accuracy.
     #This was further developed into Gradient Boosting Machines
         #the objective is to minimize the loss of the model by adding weak learners using a gradient descent like procedure.
+            #The job of the algorithm is to find a set of internal model parameters (predictors) that perform well against some performance measure such as logarithmic loss or mean squared error. 
+            #Optimization is a type of searching process and you can think of this search as learning. The optimization algorithm is called “gradient descent“, where “gradient” refers to the calculation of an error gradient or slope of error and “descent” refers to the moving down along that slope towards some minimum level of error.
         #This class of algorithms were described as a stage-wise additive model. This is because one new weak learner is added at a time and existing weak learners in the model are frozen and left unchanged.
             #Note that this stagewise strategy is different from stepwise approaches that readjust previously entered terms when new ones are added
         #The generalization allowed arbitrary differentiable loss functions to be used, expanding the technique beyond binary classification problems to support regression, multi-class classification and more.
@@ -618,51 +620,732 @@ print_text("XGboost", header=4)
             #Trees are added one at a time, and existing trees in the model are not changed.
             #A gradient descent procedure is used to minimize the loss when adding trees.
             #Traditionally, gradient descent is used to minimize a set of parameters, such as the coefficients in a regression equation or weights in a neural network. After calculating error or loss, the weights are updated to minimize that error.
-            #Instead of parameters, we have weak learner sub-models or more specifically decision trees. After calculating the loss, to perform the gradient descent procedure, we must add a tree to the model that reduces the loss (i.e. follow the gradient). We do this by parameterizing the tree, then modify the parameters of the tree and move in the right direction by reducing the residual loss. 
-            #Generally this approach is called functional gradient descent or gradient descent with functions.
-                #One way to produce a weighted combination of classifiers which optimizes [the cost] is by gradient descent in function space
+            #Instead of parameters, we have weak learner sub-models or more specifically decision trees. After calculating the loss, to perform the gradient descent procedure, we must add a tree to the model that reduces the loss (i.e. follow the gradient). We do this by parameterizing the tree, then modify the parameters of the tree and move in the right direction by reducing the residual loss.
+                #Basically we train the new tree in order to fit the loss of the current set of trees.
             #The output for the new tree is then added to the output of the existing sequence of trees in an effort to correct or improve the final output of the model.
-            #A fixed number of trees are added or training stops once loss reaches an acceptable level or no longer improves on an external validation dataset.
-
-
-            #CHECK STEP 3
-
-
-
-
+                #you combine the existing ensemble of tree with the new tree.
+            #The new ensemble is used to predict and the new loss is then fitted by a new tree.
+            #A fixed number of trees are added and then we stop. We can also stop training stops once loss reaches an acceptable level or no longer improves on an external validation dataset.
     #summary
         #steps
             #you train a decision tree
             #calculate the loss, 
             #train a new tree using the LOSS, the error.
-            #add the new trained tree to the ensemble with the previous tree
+            #add the new trained tree to the ensemble with the previous tree, i.e., you are BOOSTING the previous tree with a new one. Each time you add a new tree is a boosting round.
             #make predictions again
             #calculate again the loss
             #use this loss to train a new tree
             #and so on...
                 #https://www.youtube.com/watch?v=yw-E__nDkKU&ab_channel=EmmaDing
         #I think this approach makes process to focus on the parts of the data that are more difficult to learn as you try to fit the residuals of the current model when adding a new tree.
-
-
-
- 
-
-#https://machinelearningmastery.com/gentle-introduction-gradient-boosting-algorithm-machine-learning/
-#https://machinelearningmastery.com/xgboost-for-regression/
-
-
-
+    #Improvements to Basic Gradient Boosting
+        #Gradient boosting is a greedy algorithm and can overfit a training dataset quickly.
+        #It can benefit from regularization methods that penalize various parts of the algorithm and generally improve the performance of the algorithm by reducing overfitting.
+            #1.Tree Constraints
+                #It is important that the weak learners have skill but remain weak. There are a number of ways that the trees can be constrained.
+                #A good general heuristic is that the more constrained tree creation is, the more trees you will need in the model, and the reverse, where less constrained individual trees, the fewer trees that will be required.
+                #Below are some constraints that can be imposed on the construction of decision trees:
+                    #Number of trees, generally adding more trees to the model can be very slow to overfit. The advice is to keep adding trees until no further improvement is observed.
+                        #This means there is a low-risk of overfitting by adding trees, so just add them until there is no improvement.
+                    #Tree depth, deeper trees are more complex trees and shorter trees are preferred. Generally, better results are seen with 4-8 levels.
+                    #Number of nodes or number of leaves, like depth, this can constrain the size of the tree, but is not constrained to a symmetrical structure if other constraints are used.
+                    #Number of observations per split imposes a minimum constraint on the amount of training data at a training node before a split can be considered
+                    #Minimum improvement to loss is a constraint on the improvement of any split added to a tree.
+            #2.Shrinkage - Weighted Updates
+                #The predictions of each tree are added together sequentially.
+                #The contribution of each tree to this sum (previous ensemble) can be weighted to slow down the learning by the algorithm. This weighting is called a shrinkage or a learning rate.
+                    #Similar to a learning rate in stochastic optimization, shrinkage reduces the influence of each individual tree and leaves space for future trees to improve the model.
+                    #each individual tree has less impact on the global output because you limit how much change an individual tree can make in a single step.
+                #In other words
+                    #The learning rate controls the amount of contribution that each model has on the ensemble prediction.
+                #The effect is that learning is slowed down, in turn require more trees to be added to the model, in turn taking longer to train, providing a configuration trade-off between the number of trees and learning rate.
+                #It is common to have small values in the range of 0.1 to 0.3, as well as values less than 0.1.
+            #3.Random sampling
+                #A big insight into bagging ensembles and random forest was allowing trees to be greedily created from subsamples of the training dataset, so trees and errors are less correlated.
+                #This same benefit can be used to reduce the correlation between the trees in the sequence in gradient boosting models.
+                #This variation of boosting is called stochastic gradient boosting.
+                #at each iteration a subsample of the training data is drawn at random (without replacement) from the full training dataset. The randomly selected subsample is then used, instead of the full sample, to fit the base learner
+                    #I understand the base learner is the weak learner that is being used for boosting.
+                #A few variants of stochastic boosting that can be used:
+                    #Subsample rows before creating each tree.
+                    #Subsample columns before creating each tree
+                    #Subsample columns before considering each split.
+                #Generally, aggressive sub-sampling such as selecting only 50% of the data has shown to be beneficial.
+                #According to user feedback, using column sub-sampling prevents over-fitting even more so than the traditional row sub-sampling
+                    #XGBoost: A Scalable Tree Boosting System, 2016
+            #4.Penalized Learning
+                #Additional constraints can be imposed on the parameterized trees in addition to their structure.
+                #Classical decision trees like CART are not used as weak learners, instead a modified form called a regression tree is used that has numeric values in the leaf nodes (also called terminal nodes). The values in the leaves of the trees can be called weights in some literature.
+                    #In classical decision trees you have a condition like predictor X1 is higher than 30. 
+                    #I understand that in regression trees we have just a number of weight in the node instead of a condition.
+                #As such, the leaf weight values of the trees can be regularized using popular regularization functions, such as:
+                    #L1 regularization of weights.
+                    #L2 regularization of weights.
+                #The additional regularization term helps to smooth the final learnt weights to avoid over-fitting. Intuitively, the regularized objective will tend to select a model employing simple and predictive functions.
+                    #These are the regularization methods of Ridge and Lasso.
+    #links
+        #https://machinelearningmastery.com/gentle-introduction-gradient-boosting-algorithm-machine-learning/
+        #https://youtu.be/yw-E__nDkKU
+#general notes about Extreme Gradient Boosting
+    #Gradient boosting refers to a class of ensemble machine learning algorithms that can be used for classification or regression predictive modeling problems.
+    #Ensembles are constructed from decision tree models. Trees are added one at a time to the ensemble and fit to correct the prediction errors made by prior models. This is a type of ensemble machine learning model referred to as boosting.
+    #Models are fit using any arbitrary differentiable loss function and gradient descent optimization algorithm. This gives the technique its name, “gradient boosting,” as the loss gradient is minimized as the model is fit, much like a neural network.
+    #Extreme Gradient Boosting, or XGBoost for short, is an efficient open-source implementation of the gradient boosting algorithm. As such, XGBoost is an algorithm, an open-source project, and a Python library.
+    #It is designed to be both computationally efficient (e.g. fast to execute) and highly effective, perhaps more effective than other open-source implementations.
+    #The two main reasons to use XGBoost are execution speed and model performance.
+    #XGBoost dominates structured or tabular datasets on classification and regression predictive modeling problems. The evidence is that it is the go-to algorithm for competition winners on the Kaggle competitive data science platform.
+    #link
+        #https://machinelearningmastery.com/xgboost-for-regression/
 #set the HPs
-dict_models["xgboost"]["HPs"] = {}
+dict_models["xgboost"]["HPs"] = { \
+    "regressor__max_depth": np.arange(8, 11, 1), #9\
+    "regressor__min_child_weight": np.arange(1, 4, 1), #1-2\
+    "regressor__subsample": np.arange(0.6, 1.2, 0.2), #1\
+    "regressor__colsample_bytree": np.arange(0.6, 1.2, 0.2), #1\
+    "regressor__eta": [0.01, 0.1, 0.2], #0.1\
+    "regressor__n_estimators": [800, 900, 1000]} #
 print(dict_models["xgboost"])
+    #I have narrowed the hyperparametric space by using a sequential approach: All default, just tune max_depth and min_child_weight. See what range of values give the best and select it. Repeat now with subsample and colsample leaving all default except max_depth and min_child_weight. Select the best range for subsample and colsample. Then tune eta and n_estimators. This is similar than I did for random forest, using first a smaller number of estimators to tune each HP each time. Maybe we are losing some part of parametric space is relevant but it is ok, we just to get general information about what model class is the best.
+        #https://datascience.stackexchange.com/a/108242
+    #About the HPs. To fully understand their impact see general notes and, in particular, regularization methods used in order to avoid overfitting.
+        #booster: 
+            #The booster to use, you can use trees as base learner or linear models. We use trees as linear does not seem to improver over a simpler linear model
+            #https://stats.stackexchange.com/questions/230388/how-does-linear-base-learner-works-in-boosting-and-how-does-it-works-in-the-xgb
+        #n_estimators: 
+            #An important hyperparameter for the XGBoost ensemble algorithm is the number of decision trees used in the ensemble.
+            #Recall that decision trees are added to the model sequentially in an effort to correct and improve upon the predictions made by prior trees. As such, more trees is often better.
+            #The number of trees can be set via the “n_estimators” argument and defaults to 100.
+            #The number of trees in the ensemble, often increased until no further improvements are seen.
+            #We explore the effect of the number of trees with values between 100 and 1000. There are not important improvements after 1000.
+                #0.6922856167497518 - 600
+                #0.6934848103575237 - 800
+                #0.6941669620218125 - 1000
+                #0.6947398798622135 - 1500
+        #max_depth: 
+            #Varying the depth of each tree added to the ensemble is another important hyperparameter for gradient boosting.
+            #The tree depth controls how specialized each tree is to the training dataset: how general or overfit it might be. Trees are preferred that are not too shallow and general (like AdaBoost) and not too deep and specialized (like bootstrap aggregation [of RF?]).
+            #Gradient boosting generally performs well with trees that have a modest depth, finding a balance between skill and generality.
+            #Tree depth is controlled via the “max_depth” argument and defaults to 6.
+            #The maximum depth of each tree, often values are between 1 and 10. We explore this range.
+        #min_child_weight
+            #If the tree partition step results in a leaf node with the sum of instance weight less than min_child_weight, then the building process will give up further partitioning. The larger min_child_weight is, the more conservative the algorithm will be.
+                #https://xgboost.readthedocs.io/en/latest/parameter.html#
+            #For a regression task with squared loss (the default) min_child_weight is just the number of instances in a child.
+                #https://stackoverflow.com/questions/69786993/tuning-xgboost-hyperparameters-with-randomizedsearchcv/69830350#69830350
+                #https://xgboost.readthedocs.io/en/latest/parameter.html#
+            #If, for example, you have 500000 observations, it will probably not make (much of) a difference wether 1, 2, 3 or 4 observations end up in a leaf. So you have to use a number of instances that can be relevant given your sample size.
+            #Used to control over-fitting. Higher values prevent a model from learning relations that might be highly specific to the particular sample selected for a tree.
+            #Too high values can lead to under-fitting; hence, it should be tuned using CV.
+                #https://www.analyticsvidhya.com/blog/2016/03/complete-guide-parameter-tuning-xgboost-with-codes-python/
+        #eta:
+            #Learning rate controls the amount of contribution that each model has on the ensemble prediction.
+                #Makes the model more robust by shrinking the weights on each step
+            #Smaller rates may require more decision trees in the ensemble (because each individual tree has less impact).
+            #The learning rate can be controlled via the “eta” argument and defaults to 0.3.
+            #It is common to have small values in the range of 0.1 to 0.3, as well as values less than 0.1 (0.01-0.2).
+        #subsample
+            #The number of samples used to fit each tree can be varied. This means that each tree is fit on a randomly selected subset of the training dataset.
+            #Using fewer samples introduces more variance for each tree, although it can improve the overall performance of the model.
+            #The number of samples used to fit each tree is specified by the “subsample” argument and can be set to a fraction of the training dataset size. By default, it is set to 1.0 to use the entire training dataset.
+            #Typical values: 0.5-1
+        #“colsample_bytree” and “colsample_bylevel”
+            #The number of features used to fit each decision tree can be varied.
+            #Like changing the number of samples, changing the number of features introduces additional variance into the model, which may improve performance, although it might require an increase in the number of trees.
+            #The number of features used by each tree is taken as a random sample and is specified by the “colsample_bytree” argument and defaults to all features in the training dataset, e.g. 100 percent or a value of 1.0. You can also sample columns for each split, and this is controlled by the “colsample_bylevel” argument, but we will not look at this hyperparameter here.
+            #We will explore from 10 percent to 100 percent in 10 percent increments.
+        #links
+            #https://machinelearningmastery.com/xgboost-for-regression/ 
+            #https://stackoverflow.com/a/69830350/12772630
+            #https://datascience.stackexchange.com/a/108242
+        #there are more HPs that can be useful to combat overfitting and improve performance like lamba or alpha (for regularization) or gamma, but we will not explore them here. We can do it if this class is finally selected.
+            #https://www.analyticsvidhya.com/blog/2016/03/complete-guide-parameter-tuning-xgboost-with-codes-python/
 
 
-#links about HPs focusing on the important 
-    #https://stackoverflow.com/a/69830350/12772630
+print_text("Neural Networks", header=4)
+print("Neural Networks - General Notes")
+#general notes about Neural Networks (you can also look at your DNN course in physalia)
+    #Artificial neural networks can be considered as function approximation algorithms. 
+    #In a supervised learning setting, when presented with many input observations representing the problem of interest, together with their corresponding target outputs, the artificial neural network will seek to approximate the mapping that exists between the two. 
+    #The human brain consists of a massive network of interconnected neurons (around one hundred billion of them), with each comprising a cell body, a set of fibres called dendrites, and an axon:
+    #The dendrites act as the input channels to a neuron, whereas the axon acts as the output channel. Therefore, a neuron would receive input signals through its dendrites, which in turn would be connected to the (output) axons of other neighbouring neurons. In this manner, a sufficiently strong electrical pulse (also called an action potential) can be transmitted along the axon of one neuron, to all the other neurons that are connected to it. This permits signals to be propagated along the structure of the human brain. 
+    #An artificial neural network is analogous to the structure of the human brain, because (1) it is similarly composed of a large number of interconnected neurons that, (2) seek to propagate information across the network by, (3) receiving sets of stimuli from neighbouring neurons and mapping these to outputs, to be fed to the next layer of neurons. 
+    #The structure of an artificial neural network is typically organised into layers of neurons (recall the depiction of a tree diagram). For example, the following diagram illustrates a fully-connected  neural network, where all the neurons in one layer are connected to all the neurons in the next layer:
+    #The inputs are presented on the left hand side of the network, and the information propagates  (or flows) rightward towards the outputs at the opposite end. Since the information is, hereby, propagating in the forward direction through the network, then we would also refer to such a network as a feedforward neural network. 
+    #The layers of neurons in between the input and output layers are called hidden layers, because they are not directly accessible. 
+    #Each connection (represented by an arrow in the diagram) between two neurons is attributed a weight, which acts on the data flowing through the network, as we will see shortly. 
+    #Math behind
+        #More specifically, let’s say that a particular artificial neuron (or a perceptron, as Frank Rosenblatt had initially named it) receives n inputs, [x1, …, xn], where each connection is attributed a corresponding weight, [w1, …, wn]. 
+        #The first operation that is carried out multiplies the input values by their corresponding weight, and adds a bias term, b, to their sum, producing an output, z: z = ((x1 × w1) + (x2 × w2) + … + (xn × wn)) + b
+        #This weighted sum calculation that we have performed so far is a linear operation. If every neuron had to implement this particular calculation alone, then the neural network would be restricted to learning only linear input-output mappings. 
+        #Hence, a second operation is performed by each neuron that transforms the weighted sum by the application of a nonlinear activation function, a(.).
+            #The activation determines whether the particular combination of weights and inputs + bias is enough to activate that neuron and send output to a neuron in the next layer.
+            #that output will be then multiply for the weight of the next neuron + bias and then the activation of that second neuron will determine if that new neuron is fired up.
+            #the previous neuron will do this for each of the neurons in the next layer if the NN is fully connected.
+        #Therefore, each neuron can be considered to implement a nonlinear function that maps a set of inputs to an output activation. 
+    #training the network
+        #Training an artificial neural network involves the process of searching for the set of weights that model best the patterns in the data. It is a process that employs the backpropagation and gradient descent algorithms in tandem. Both of these algorithms make extensive use of calculus. 
+        #Each time that the network is traversed in the forward (or rightward) direction, the error of the network can be calculated as the difference between the output produced by the network and the expected ground truth, by means of a loss function (such as the sum of squared errors (SSE)). The backpropagation algorithm, then, calculates the gradient (or the rate of change) of this error to changes in the weights. In order to do so, it requires the use of the chain rule and partial derivatives. 
+        #For simplicity, consider a network made up of two neurons connected by a single path of activation. If we had to break them open, we would find that the neurons perform the following operations in cascade:
+            #The neuro receives input, which is multiplied by the weight and then bias is sum. Activation is applied and the output is sent to the new neuron and multiply by its weight.
+            #This connects the errors...
+            #This is suppose to be connected to the fact that deirvatives are used, but I do not fully understand this. What I got in this point that the network does small changes in the weights and this produce an overall error when generating the output and comparing the observed value.
+            #The loss (difference between predicted and observed) is minimized by doing small changes in the weights and check whether we have less error now.
+    #link
+        #https://machinelearningmastery.com/calculus-in-action-neural-networks/
 
-#more detailed HPs with stepwise selection
-    #https://www.analyticsvidhya.com/blog/2016/03/complete-guide-parameter-tuning-xgboost-with-codes-python/
-    #https://datascience.stackexchange.com/a/108242
+print("define a function to generate DNNs to be used in scikeras. This will be an input argument for KerasRegressor()")
+#We are going to use scikeras, a wrapper for using keras on scipy ([link](https://www.adriangb.com/scikeras/stable/notebooks/Basic_Usage.html#7.-Usage-with-sklearn-GridSearchCV)). You can use it to run keras neural networks in pipelines and then use gridsearch to perform parameter optimization ([link](https://www.adriangb.com/scikeras/stable/notebooks/Basic_Usage.html#7.-Usage-with-sklearn-GridSearchCV)). As we will see below, we can optimize any parameter of the network. Not only the loss function or the learning rate, but also the number of layers and units, the dropout rate... just by using loops and ifelse within the function to create the model. Therefore, we can select the best combination of hyperparamenters to maximize predictive prower in the different evaluation datasets. Of course, as we can use pipelines, we can apply the scaling in response and predictors separately in each training-evaluation set.
+#First, we are going to create a function to get the keras models. This function will be in turn used as input in scikeras.KerasRegressor().
+    #https://coderzcolumn.com/tutorials/artificial-intelligence/scikeras-give-scikit-learn-like-api-to-your-keras-networks#1
+    #https://www.adriangb.com/scikeras/stable/quickstart.html
+from tensorflow.keras.layers import Dropout
+from tensorflow.keras.constraints import MaxNorm
+from tensorflow.keras import regularizers
+def get_neural_reg(meta, n_layers, n_units, activation, init_mode, dropout_rate, weight_constraint, regu_L1, regu_L2):
+    #note that meta is a dict with input metadata. I think this generated by KerasRegressor automatically once the input data is included
+    
+    #we import keras inside the function to avoid problems with parallelization
+    from tensorflow import keras
+        #https://stackoverflow.com/questions/42504669/keras-tensorflow-and-multiprocessing-in-python/42506478#42506478
+
+    #start the sequential model
+    model = keras.Sequential()
+    
+    #add the input layer
+    model.add(keras.layers.Input(shape=(meta["n_features_in_"])))
+        #input shape obtained from meta, a dict containing input metadata
+
+    #for each of the layer sizes we have
+    for i in range(n_layers):
+        
+        #add layer
+        model.add(keras.layers.Dense(
+            units=n_units, \
+            activation=activation, \
+            kernel_initializer=init_mode, #method to add initial weight values\
+            kernel_constraint=MaxNorm(weight_constraint), \
+            kernel_regularizer=regularizers.L1L2( \
+                l1=regu_L1, \
+                l2=regu_L2)))
+        model.add(Dropout(dropout_rate))        
+            #You can add a parameter for the dropout rate and add dropout layers after some layers within the loop (using ifelse). You can also stop the network at certain level of accuracy, i.e., callbacks.
+                #https://machinelearningmastery.com/weight-initialization-for-deep-learning-neural-networks/
+                #https://www.adriangb.com/scikeras/stable/notebooks/Basic_Usage.html#6.-Callbacks
+
+    #add the output layer with just one node (predicting 1 value)
+    model.add(keras.layers.Dense(1))
+        #No activation function is used for the output layer because it is a regression problem, and you are interested in predicting  numerical values directly without transformation.
+            #https://machinelearningmastery.com/regression-tutorial-keras-deep-learning-library-python/
+    
+    #compile the model using the KerasRegressor arguments for
+    #loss and optimization
+    #model.compile(loss=compile_kwargs["loss"], optimizer=compile_kwargs["optimizer"])
+        #to run this line you need to add to the function an argument called "compile_kwargs", but we are going to do this outside of this function
+        #According to the author of scikeras, it is easier and safer to allow SciKeras to compile your model for you by passing the loss to KerasRegressor directly (KerasRegressor(loss="")) instead of compiling it inside get_reg. It is less flexible because you can not use custom logic, e.g., if else to select a different learning rate according to the optimizer, but he says it is safer, so we are going to select this approach. In case we need more flexibility, we can do the other approach.
+            #https://www.adriangb.com/scikeras/stable/notebooks/MLPClassifier_MLPRegressor.html#2.4-Losses-and-optimizer
+            #https://www.adriangb.com/scikeras/stable/advanced.html
+    return model
+#Now we use KerasRegressor. This takes as input a callable function (get_reg) that returns a keras model (model argument). KerasRegressor also takes some arguments needed to prepare a keras model like the activation function or the optimizer. We must also pass all of the arguments to get_reg as keyword arguments to KerasRegressor. Note that if you do not pass an argument to KerasRegressor, it will not be available for hyperparameter tuning.
+dummy_dnn = KerasRegressor(model=get_neural_reg, optimizer="Adam", optimizer__learning_rate=0.001, loss="mse", model__n_layers=2, model__n_units=10, model__activation="relu", model__init_mode="uniform", model__dropout_rate=0, model__weight_constraint=0, model__regu_L1=0, model__regu_L2=0, batch_size=200, epochs=50, verbose=0)
+    #https://www.adriangb.com/scikeras/stable/notebooks/Basic_Usage.html#2.3-Defining-and-training-the-neural-net-classifier
+    #Note about keyword arguments: Keyword arguments (or named arguments) are values that, when passed into a function, are identifiable by specific parameter names.
+print(dummy_dnn)
+#You can apply the regressor to the data and obtain predictions (user verbose=1 to see losses in each epoch) ([link](https://www.adriangb.com/scikeras/stable/notebooks/Basic_Usage.html#2.3-Defining-and-training-the-neural-net-classifier)).
+dummy_dnn.fit(modeling_data.iloc[:,1:], modeling_data.iloc[:,0])
+dummy_dnn.model_.summary()
+    #we get exactly the architecture we wanted
+#We are going to perform a gridsearch in order to optimize the hyperparameters. SciKeras allows to direct access to all parameters passed to the wrapper constructors. This allows tunning of parameters like hidden_layer_sizes as well as optimizer__learning_rate. 
+#The model__ prefix can be used to specify that a paramter is destined only for get_reg. In addition, to differentiate paramters like callbacks which are accepted by both tf.keras.Model.fit and tf.keras.Model.predict you can add a fit__ or predict__ routing suffix respectively ([link](https://www.adriangb.com/scikeras/stable/notebooks/Basic_Usage.html#7.-Usage-with-sklearn-GridSearchCV)).
+# We can access the history saved after fitting.
+loss_pipe = dummy_dnn.history_
+print("print loss")
+print(loss_pipe)
+# We can see how there is only one loss, meaning that the loss is calculated in the data used as input (X_train), considering it as a whole, not partioning. The splitting in evaluation and training will be done later with gridsearch.
+print("set the HPs")
+dict_models["neural_nets"]["HPs"] = { \
+    "regressor__verbose": [0], \
+    "regressor__optimizer": ["rmsprop"], \
+    "regressor__optimizer__learning_rate": [0.01], \
+    "regressor__loss": ["mse"], \
+    "regressor__batch_size": np.arange(5, 300, 10), \
+    "regressor__epochs": np.arange(10, 900, 100), \
+    "regressor__model": [get_neural_reg], \
+    "regressor__model__n_layers": [2], \
+    "regressor__model__n_units": [10], \
+    "regressor__model__activation": ["relu"], \
+    "regressor__model__init_mode": ["uniform"], \
+    "regressor__model__dropout_rate": [0], \
+    "regressor__model__weight_constraint": [0], \
+    "regressor__model__regu_L1": [0], \
+    "regressor__model__regu_L2": [0]} #
+print(dict_models["neural_nets"])
+
+
+#por aquii
+
+
+
+
+if False:
+    #about HPs
+        #Batch vs. Epoch 
+            #https://machinelearningmastery.com/difference-between-a-batch-and-an-epoch/
+            #Stochastic Gradient descent: 
+                #The job of the algorithm is to find a set of internal model parameters (predictors) that perform well against some performance measure such as logarithmic loss or mean squared error. 
+                #Optimization is a type of searching process and you can think of this search as learning. The optimization algorithm is called “gradient descent“, where “gradient” refers to the calculation of an error gradient or slope of error and “descent” refers to the moving down along that slope towards some minimum level of error.
+                #The algorithm is iterative. This means that the search process occurs over multiple discrete steps, each step hopefully slightly improving the model parameters.
+                #Each step involves using the model with the current set of internal parameters to make predictions on some samples, comparing the predictions to the real expected outcomes, calculating the error, and using the error to update the internal model parameters.
+                #This update procedure is different for different algorithms, but in the case of artificial neural networks, the backpropagation update algorithm is used.
+                #Stochastic gradient descent is an optimization algorithm that estimates the error gradient for the current state of the model using examples from the training dataset, then updates the weights of the model using the back-propagation of errors algorithm, referred to as simply backpropagation.
+                #The amount that the weights are updated during training is referred to as the step size or the “learning rate.”
+                #Specifically, the learning rate is a configurable hyperparameter used in the training of neural networks that has a small positive value, often in the range between 0.0 and 1.0.
+                #The learning rate controls how quickly the model is adapted to the problem. Smaller learning rates require more training epochs given the smaller changes made to the weights each update, whereas larger learning rates result in rapid changes and require fewer training epochs.
+                #A learning rate that is too large can cause the model to converge too quickly to a suboptimal solution, whereas a learning rate that is too small can cause the process to get stuck.
+                #The challenge of training deep learning neural networks involves carefully selecting the learning rate. It may be the most important hyperparameter for the model.
+            #Sample
+                #A sample is a single row of data.
+                #It contains inputs that are fed into the algorithm and an output that is used to compare to the prediction and calculate an error.
+                #A training dataset is comprised of many rows of data, e.g. many samples. A sample may also be called an instance, an observation, an input vector, or a feature vector.
+            #Batch
+                #The batch size is a hyperparameter that defines the number of samples (rows) to work through before updating the internal model parameters.
+                #Think of a batch as a for-loop iterating over one or more samples and making predictions. In each iteration, a portion of the data is considered and predictions are made considering the current combination of parameters. At the end of the batch, the predictions are compared to the expected output variables and an error is calculated. From this error, the update algorithm is used to improve the model, e.g. move down along the error gradient.
+                #A training dataset can be divided into one or more batches.
+                #When all training samples are used to create one batch, the learning algorithm is called batch gradient descent. When the batch is the size of one sample, the learning algorithm is called stochastic gradient descent. When the batch size is more than one sample and less than the size of the training dataset, the learning algorithm is called mini-batch gradient descent.
+                    #Batch Gradient Descent. Batch Size = Size of Training Set
+                    #Stochastic Gradient Descent. Batch Size = 1
+                    #Mini-Batch Gradient Descent. 1 < Batch Size < Size of Training Set
+                #In the case of mini-batch gradient descent, popular batch sizes include 32, 64, and 128 samples. You may see these values used in models in the literature and in tutorials.
+            #Epochs
+                #The number of epochs is a hyperparameter that defines the number times that the learning algorithm will work through the entire training dataset.
+                #One epoch means that each sample in the training dataset has had an opportunity to update the internal model parameters. An epoch is comprised of one or more batches. For example, as above, an epoch that has one batch is called the batch gradient descent learning algorithm.
+                #You can think of a for-loop over the number of epochs where each loop proceeds over the whole training dataset. Within this for-loop is another nested for-loop that iterates over each batch of samples, where one batch has the specified “batch size” number of samples.
+                #The number of epochs is traditionally large, often hundreds or thousands, allowing the learning algorithm to run until the error from the model has been sufficiently minimized. You may see examples of the number of epochs in the literature and in tutorials set to 10, 100, 500, 1000, and larger.
+                #It is common to create line plots that show epochs along the x-axis as time and the error or skill of the model on the y-axis. These plots are sometimes called learning curves. These plots can help to diagnose whether the model has over learned, under learned, or is suitably fit to the training dataset.  
+            #Batch vs. Epoch
+                #The batch size is a number of samples processed before the model is updated.
+                #The number of epochs is the number of complete passes through the whole training dataset.
+                #The size of a batch must be more than or equal to one and less than or equal to the number of samples in the training dataset.
+                #The number of epochs can be set to an integer value between one and infinity. You can run the algorithm for as long as you like and even stop it using other criteria besides a fixed number of epochs, such as a change (or lack of change) in model error over time.
+                #They are both integer values and they are both hyperparameters for the learning algorithm, e.g. parameters for the learning process, not internal model parameters found by the learning process.
+                #You must specify the batch size and number of epochs for a learning algorithm.
+                #There are no magic rules for how to configure these parameters. You must try different values and see what works best for your problem.
+            #Worked Example
+                #Assume you have a dataset with 200 samples (rows of data) and you choose a batch size of 5 and 1,000 epochs.
+                #This means that the dataset will be divided into 40 batches (5*40=200), each with five samples. The model weights will be updated after each batch of five samples, i.e., in each learning step, only 5 random rows will be considered.
+                #This also means that one epoch will involve 40 batches or 40 updates to the model.
+                #With 1,000 epochs, the model will be exposed to or pass through the whole dataset 1,000 times. That is a total of 40,000 batches during the entire training process.
+                #If the sample size is not divisible by the batch size without remainder, the last batch would have a smaller number of samples (https://machinelearningmastery.com/difference-between-a-batch-and-an-epoch/). I guess this is ok because we have already fitted the model multiple times with the previous batches and we will repeate this several epochs. In addition, it is usual to tune the batch size testing different sizes, so people usually have this situation.
+            #Summary
+                #Stochastic gradient descent is an iterative learning algorithm that uses a training dataset to update a model.
+                #The batch size is a hyperparameter of gradient descent that controls the number of training samples to work through before the model’s internal parameters are updated.
+                #The number of epochs is a hyperparameter of gradient descent that controls the number of complete passes through the training dataset. 
+                #The idea behind is that most observations in a large data set will have many neighbors that impart almost the same information. We don't need all of them in our learning process. 
+                #BUT CAREFUL IN YOUR CASE, because you do not have millions of samples, although using multiple epochs you will go through the data many times using maany batches.
+            #Epochs and batches (number of rows in each step) are not a replacement of cross-validation. It is an iterative process that works better in a subset of the data if you have a looot of data, because you will probably have repeated data. You can increase the batch size until the time of each step starts to increase. By default, tensorflow uses no replacement by default for batches. 
+
+
+
+
+
+
+    # In[62]:
+    
+    
+    
+    # **Note**:
+    # 
+    # We are only using mini-batches, i.e., batch size>1 and < sample size. Using the whole sample size could make a lot of use of memory and I think batch size=1 could have problems to converge. I have used still a wider range than people use for minibatches.
+    #Modification for the second run: The best trials have a batch size between 10-20, so we are in the lower limit of this parameter. I am going to extend the space reaching Stochastic Gradient Descent, i.e., batch size=1. Note that the previous space was 10 to 220, but best models appears very close to 10. Maybe, we do not have so much data, so there is no so high redundancy. I am also using smaller steps to have more resolution
+    # 
+    # The epoch sizes usually go from 1 to 1000, I am not using the whole range to reduce computation time.
+    #In the second run I am extending the upper limit because best trials were not far from that
+    # 
+    # If we see the best models are around the limits, we can do a finer search around these values.
+    
+    
+    # ## Optimization method 
+    # 
+    # There is a lot of literature and discussion about the selection of the optimization. Adam seems to be an approach that combine the strengths of other methods (i.e., Adagrad and RMSProp; [link](https://towardsdatascience.com/a-visual-explanation-of-gradient-descent-methods-momentum-adagrad-rmsprop-adam-f898b102325c); [link](https://datascience.stackexchange.com/questions/10523/guidelines-for-selecting-an-optimizer-for-training-neural-networks)). There is controversy about it with some results showing poor performance, but then other results show good performance (similar to Stochastic gradient descent + momentum) when doing a well parameter optimization ([link](https://www.fast.ai/posts/2018-07-02-adam-weight-decay.html), [link](http://ruder.io/optimizing-gradient-descent/index.html#adam)).
+    #  
+    # Advantages of Adam ([link](https://machinelearningmastery.com/adam-optimization-algorithm-for-deep-learning/)):
+    # - Straightforward to implement.
+    # - Computationally efficient.
+    # - Little memory requirements.
+    # - Invariant to diagonal rescale of the gradients.
+    # - Well suited for problems that are large in terms of data and/or parameters.
+    # - Appropriate for non-stationary objectives.
+    # - Appropriate for problems with very noisy/or sparse gradients.
+    # - Hyper-parameters have intuitive interpretation and typically require little tuning.
+    # 
+    # The authors describe Adam as combining the advantages of two other extensions of stochastic gradient descent. Specifically:
+    # 
+    # - Adaptive Gradient Algorithm (AdaGrad) that maintains a per-parameter learning rate that improves performance on problems with sparse gradients (e.g. natural language and computer vision problems).
+    #     - Our selective pressure variables has many zeros or values close to zero, being the most important values, so an approach like this that try not to underwegight this predictors could be useful.
+    # - Root Mean Square Propagation (RMSProp) that also maintains per-parameter learning rates that are adapted based on the average of recent magnitudes of the gradients for the weight (e.g. how quickly it is changing). This means the algorithm does well on online and non-stationary problems (e.g. noisy).
+    #     - We could consider our problem as noisy becasue we have multiple factors influencing selection.
+    #  
+    # In a review of optimizers ([link](https://arxiv.org/abs/1609.04747)), they say "Insofar, RMSprop, Adadelta, and Adam are very similar algorithms that do well in similar circumstances. […] its bias-correction helps Adam slightly outperform RMSprop towards the end of optimization as gradients become sparser. Insofar, Adam might be the best overall choice."
+    # 
+    # It seems this approach work fast and good for non-shallow problems, being usually used as first option currently. 
+    # 
+    # We are going to consider different optimizers just in case this makes any difference. 
+    # 
+    # **Note**: 
+    # 
+    # There are two optimizers (AdamW and Adafactor) that cannot be used as input strings in kerasregressor. We can use a class but that cannot be optimized in the tunning process. For doing that, I should compile the model inside get_reg() and add an argument for optimizer. Then include an Ifelse, if optimizer="AdamW", uses class AdamW, which has been previoulsy used. However, scikeras author recommend to compile the model outside, i.e., let kerasregressor to do it.
+    # 
+    # Given that these are only two optimizers and we are already including a battery of optimizers, including several Adam versions, we are going to skip this for now. 
+    
+    # In[63]:
+    
+    
+    optimizers = ["SGD", 
+                  "RMSprop", 
+                  "Adagrad", 
+                  "Adadelta", 
+                  "Adam", 
+                  "Adamax", 
+                  "Nadam", 
+                  "Ftrl"]
+    
+    
+    # ## Adam parameters ([link](https://machinelearningmastery.com/adam-optimization-algorithm-for-deep-learning/))
+    # 
+    # - alpha. Also referred to as the learning rate or step size. The proportion that weights are updated (e.g. 0.001). Larger values (e.g. 0.3) results in faster initial learning before the rate is updated. Smaller values (e.g. 1.0E-5) slow learning right down during training
+    # - beta1. The exponential decay rate for the first moment estimates (e.g. 0.9).
+    # - beta2. The exponential decay rate for the second-moment estimates (e.g. 0.999). This value should be set close to 1.0 on problems with a sparse gradient (e.g. NLP and computer vision problems).
+    # - epsilon. Is a very small number to prevent any division by zero in the implementation (e.g. 10E-8).
+    # 
+    # 
+    # The Adam paper suggests:
+    # - Good default settings for the tested machine learning problems are alpha=0.001, beta1=0.9, beta2=0.999 and epsilon=10−8
+    # - The TensorFlow documentation suggests some tuning of epsilon:
+    #     - The default value of 1e-8 for epsilon might not be a good default in general. For example, when training an Inception network on ImageNet a current good choice is 1.0 or 0.1.
+    # - Keras uses these values as default except epsilon, being 10-7.
+    # 
+    # They say that the default configuration parameters do well on most problems, so we are just going to tune the learning rate alpha. It seems that beta should not be change except to change specific reasons for your data ([link](https://stats.stackexchange.com/questions/499013/adam-adaptive-optimizers-learning-rate-tuning?rq=1)). Maybe in the future we can tune the betas usng bayesian optimization ([link](https://stats.stackexchange.com/questions/265400/deep-learning-how-does-beta-1-and-beta-2-in-the-adam-optimizer-affect-its-lear)). We could even not tune learning rate because it is adaptive in Adam (it changes along the process), but we are going to do it just in case, because it is an important parameter, and it could influence the initila learning rate before updating the parameters. In addition, we are using other optimizers in which learning rate could be more relevant, so it is important to tune this paramater.
+    # 
+    # More general info about tunning learning rate ([link](https://www.bdhammel.com/learning-rates/)).
+    # 
+    # Generally, it is a good idea to also include the number of epochs in an optimization like this as there is a dependency between the amount of learning per batch (learning rate), the number of updates per epoch (batch size), and the number of epochs ([link](https://machinelearningmastery.com/grid-search-hyperparameters-deep-learning-models-python-keras/)).
+    # 
+    # We do that as we are also tunning the number of batches and epochs.
+    # 
+    # **Note**: 
+    # 
+    # We are not optimizing some specific parameters of the optimizers, like epsilon, etc... In order to do that, we should compile the model inside get_reg() and add ifelse for the value of a new "optimizer" argument. For example, if optimizer="Adam", use Adam(epsilon_...) or something like that. So the function only take epsilon for Adam, but not sure if this would work if you are not using adam and epsilon is still a parameter in keras regressor. 
+    # 
+    # We are going to stick to default parameters (except learning rate) for optimizers for now. Maybe after the big search, having already an optimizer selected, we can optimize its own parameters.
+    
+    # In[64]:
+    
+    
+    alphas = [0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1, 0.2, 0.3]
+    
+    
+    # I have seen that people using optuna (bayesian) sample learning rate values
+    # considering the algorithm scale, I think to prioritize small values. Our reference tutorial goes in the same line with grid searchs typically consisting in picking numbers between 10^−5 and 0.3 on a logaritmic scale ([link](https://machinelearningmastery.com/learning-rate-for-deep-learning-neural-networks/)). The wider range would be 1 - 10^−6: "Typical values for a neural network with standardized inputs (or inputs mapped to the (0,1) interval) are less than 1 and greater than 10^−6". 
+    # 
+    # Given we are going to use the narrower (but still wide) range of 10^−5 to 0.3. If we see that the best models are close to the limits, we can run a more detailed search around these values.
+    #The best trials are not veeery close but still close to the lower limit, so we are extending the lower limit in the second run (1e-6).
+    
+    # ## Weight initiallization ([link](https://machinelearningmastery.com/weight-initialization-for-deep-learning-neural-networks/))
+    # 
+    # The optimization algorithm requires a starting point in the space of possible weight values from which to begin the optimization process. Weight initialization is a procedure to set the weights of a neural network to small random values that define the starting point for the optimization (learning or training) of the neural network model.
+    # 
+    # " training deep models is a sufficiently difficult task that most algorithms are strongly affected by the choice of initialization. The initial point can determine whether the algorithm converges at all, with some initial points being so unstable that the algorithm encounters numerical difficulties and fails altogether"
+    # 
+    # Neural network weight initialization used to be simple: use small random values ([link](https://machinelearningmastery.com/grid-search-hyperparameters-deep-learning-models-python-keras/)). Now there is a suite of different techniques to choose from. Keras provides a laundry list.
+    # 
+    # Ideally, it may be good to use different weight initialization schemes according to the activation function used on each layer. In our case, however, we will use the same activation across layers because we are working with regression, not classification. Maybe if we use a initialization method that is not good for tahn, that combination will not work and will have low R2, but we will also run other DNNs with tahn and other initialization methods, and other with relu...
+    
+    # In[65]:
+    
+    
+    init_mode = ["uniform",
+                 "lecun_uniform",
+                 "normal",
+                 "zero",
+                 "glorot_normal",
+                 "glorot_uniform",
+                 "he_normal",
+                 "he_uniform",
+                 "truncated_normal",
+                 "ones",
+                 "identity",
+                 "orthogonal",
+                 "constant",
+                 "variance_scaling"]
+    
+    
+    # ## Activation function ([link](https://machinelearningmastery.com/grid-search-hyperparameters-deep-learning-models-python-keras/))
+    # 
+    # The activation function controls the non-linearity of individual neurons and when to fire ([link](https://machinelearningmastery.com/grid-search-hyperparameters-deep-learning-models-python-keras/)). 
+    # 
+    # We are going to check a big battery of functions
+    
+    # In[66]:
+    
+    
+    activations = ['softmax', 
+                   'softplus', 
+                   'softsign', 
+                   'relu', 
+                   'LeakyReLU',
+                   'selu',
+                   'elu',
+                   'exponential',
+                   'tanh', 
+                   'sigmoid', 
+                   'hard_sigmoid', 
+                   'linear']
+    
+    
+    # ## Dropout rate ([link](https://machinelearningmastery.com/dropout-for-regularizing-deep-neural-networks/))
+    # 
+    # We are going to add dropout so some neurons are shutdown. In this way, we will try to get more generalization. 
+    # 
+    # During training, some number of layer outputs are randomly ignored or “dropped out.” This has the effect of making the layer look-like and be treated-like a layer with a different number of nodes and connectivity to the prior layer. In effect, each update to a layer during training is performed with a different “view” of the configured layer.
+    # 
+    # Dropout has the effect of making the training process noisy, forcing nodes within a layer to probabilistically take on more or less responsibility for the inputs. 
+    # 
+    # The idea behind this is to keep individual neurons from becoming too specialized.  Because each neuron may or may not be in any given run, it cannot be the only neuron detecting a particular feature.  If that feature is important, responsibility for its detection needs to be spread out among several neurons.  When we make a prediction, we will keep all of the neurons, in order to make the best prediction possible.
+    # 
+    # 
+    # This conceptualization suggests that perhaps dropout breaks-up situations where network layers co-adapt to correct mistakes from prior layers, in turn making the model more robust.
+    # 
+    # Dropout may be implemented on any or all hidden layers in the network as well as the visible or input layer. It is not used on the output layer.
+    # 
+    # A common value is a probability of 0.5 for retaining the output of each node in a hidden layer and a value close to 1.0, such as 0.8, for retaining inputs from the visible layer.
+    # 
+    # When using dropout regularization, it is possible to use larger networks with less risk of overfitting. In fact, a large network (more nodes per layer) may be required as dropout will probabilistically reduce the capacity of the network.
+    # 
+    # A good rule of thumb is to divide the number of nodes in the layer before dropout by the proposed dropout rate and use that as the number of nodes in the new network that uses dropout. For example, a network with 100 nodes and a proposed dropout rate of 0.5 will require 200 nodes (100 / 0.5) when using dropout.
+    # 
+    # Dropotu can be applied to the input layer, so some samples are removed ([link](https://machinelearningmastery.com/dropout-regularization-deep-learning-models-keras/)), but I have not seens this before in my previous courses so I will pass.
+    
+    # **weight constrain**
+    # 
+    # You also need weight constrain:
+    #     
+    # Network weights will increase in size in response to the probabilistic removal of layer activations.Large weight size can be a sign of an unstable network.
+    # 
+    # To counter this effect a weight constraint can be imposed to force the norm (magnitude) of all weights in a layer to be below a specified value. For example, the maximum norm constraint is recommended with a value between 3-4.
+    # 
+    # Constraining the weight matrix directly is another kind of regularization. If you use a simple L2 regularization term (see below) you penalize high weights with your loss function. With this constraint, you regularize directly ([link](https://www.kdnuggets.com/2015/04/preventing-overfitting-neural-networks.html/2), [link](https://stackoverflow.com/questions/45970888/what-does-kernel-constraint-max-norm3-do)). Therefore, this is another layer of regularization that is considered. Our search could combine it with the rest of thechiques or not, depending on the combination.
+    
+    # We will try dropout percentages between 0.0 and 0.9 (1.0 does not make sense) and maxnorm weight constraint values between 0 and 5.
+    
+    # In[67]:
+    
+    
+    dropout_rates = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    weight_constraints = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
+    
+    
+    # **Note**
+    # 
+    # We are going to apply the same dropout rate for all inner layers. Once we have an optimized architecture, we can try to improve it by setting the dropout only in specific layers.
+    
+    
+    # ## Early Stop
+    # 
+    # The idea behind early stop is to stop the fitting process if a given metric does not improve after several steps. 
+    # 
+    # Ideally, you would monitor the loss/accuracy of the validation dataset, so you can if the validation dataset is not improving and hence we would have a high risk of overfitting (i.e., getting better predictions in training than in validation). 
+    # 
+    # This can be implemented in KerasRegressor with the argument callbacks, for example calling the class EarlyStopping, and then add routed parameters like callbacks__patience (how many steps we have to wait to stop if there is no improvement).
+    # 
+    # There is, however, a **problem** if we use this in combination with cross_val_score, grid search.... There is no validaition set identified in KerasRegressor (the validation sets are created are created by grid search), so we can only monitor the loss/accuracy in the training dataset.
+    # 
+    # There are also criticisms to combine CV and early stopping ([link](https://stackoverflow.com/questions/48127550/early-stopping-with-keras-and-sklearn-gridsearchcv-cross-validation)), because you could loss your best model because stopping early. I am not sure about that, but there is an more important point:
+    # 
+    # You are already comparing models with different number of epocs, so if there is overfitting after some epocs, the model with more epocs will get a lower R2 in the validation dataset. 
+    # 
+    # In summary, we are not going to use early stopping to avoid overfitting. We stick to the selection of the best number of epochs according the validation set.
+    
+    
+    # ## Regularization
+    # 
+    # Overfitting is caused by the model having too much flexibility, and the main source of flexibility in a neural network is the weights in the neurons. Specifically, non-zero weights indicate some relationship between the input and the output. Regularization penalizes this flexibility by penalizing non-zero weights. Thus, the network will only have a weight be non-zero if the benefit to the loss function is greater than the penalty applied for the weight.
+    # 
+    # There are two main types of regularization:  𝐿2 -regularization adds a penalty proportional to the sum of the squares of the weights, while  𝐿1 -regularization uses the sum of the absolute values of the weights. (The biases are generally not regularized.). Therefore, making less likely to have non-positive weights and hence associations between predictors and target. In other words, it penalizes “big” weights.
+    # 
+    # The hyperparameter  𝛼  is the regularization parameter. Its size needs to be set to provide the right amount of flexibility that the net avoids both overfitting and its converse, underfitting. In general, you will need to do a bit of a search to find the appropriate value for your problem. Info from Optizimation notebook of TDI.
+    # 
+    # If the hyperparameter is zero, then the L1/2 sum goes to zero, and there is no regulization ([link](https://towardsdatascience.com/intuitions-on-l1-and-l2-regularisation-235f2db4c261)).
+    # 
+    # A linear regression model that implements L1 norm for regularisation is called lasso regression, and one that implements (squared) L2 norm for regularisation is called ridge regression ([link](https://towardsdatascience.com/intuitions-on-l1-and-l2-regularisation-235f2db4c261)). We are going to use L1L2 function so you can have both or one of the two most frequent types of regularization setting the corresponding parameter l1 and l2 for each regularization type ([link](https://keras.io/api/layers/regularizers/)). The default is 0.01 in both cases. 
+    
+    # Three different regularizer instances are provided; they are ([link](https://machinelearningmastery.com/how-to-reduce-overfitting-in-deep-learning-with-weight-regularization/)):
+    # 
+    # - L1: Sum of the absolute weights.
+    # - L2: Sum of the squared weights.
+    # - L1L2: Sum of the absolute and the squared weights.
+    # 
+    # This is achieved by setting the kernel_regularizer argument on each layer. A separate regularizer can also be used for the bias via the bias_regularizer argument, although this is less often used.
+    # 
+    # The most common type of regularization is L2, also called simply “weight decay,” with values often on a **logarithmic scale** between 0 and 0.1, such as 0.1, 0.001, 0.0001, etc. It is a good practice to first grid search through some orders of magnitude between 0.0 and 0.1, then once a level is found, to grid search on that level.
+    # 
+    # Note that in the paper introducing dropout, this techinque was combined with L2 regularization ([link](https://stats.stackexchange.com/questions/241001/deep-learning-use-l2-and-dropout-regularization-simultaneously)). In any case, we are going to explore the possibilty of having both or one of them by tunning their corresponding hyperparameters.
+    
+    # In[68]:
+    
+    
+    regu_L1_values=[1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8, 1e-9, 1e-10] #use log
+    regu_L2_values=[1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8, 1e-9, 1e-10] #use log
+    
+    
+    # **Note**
+    # 
+    # In the second search, we can make a finer search around the values of the best models.
+    #We have extended the lower limit for the second search because the best trials were close
+    #to that limit
+    
+    # #### Batch normalization
+    # 
+    # Another [recently-developed](https://arxiv.org/pdf/1502.03167v3.pdf) tool for deep networks is **batch normalization**.  Although it can help with overfitting, it was originally developed to deal with the vanishing gradient problem.  Recall that activation functions have flat regions, where their gradients are small.  When the input is in these regions, gradient descent will only move the weights small amounts, leaving them stuck in the low-gradient regions.  Intelligent choices for initializations and activation functions try to avoid this as much as possible.
+    # 
+    # Batch normalization takes a more proactive approach, scaling and shifting the inputs so that the average input, over the whole batch, has a target mean and standard deviation.  These target values become parameters of the model, tuned during training.
+    # 
+    # By keeping gradients from vanishing, batch normalization reduces the importance of the weight initialization and the activation function.  Larger learning rates can be used.  Although the initial steps may proceed more slowly, as the correct normalizations must be learned, learning should proceed much faster overall than without.  Batch normalization can also have a regularization effect, reducing the propensity towards overfitting!
+    # 
+    # From TDI optimization notebook. 
+    # 
+    # **Don’t Use With Dropout** ([link](https://machinelearningmastery.com/batch-normalization-for-training-of-deep-neural-networks/), [link](https://stackoverflow.com/a/62806906/12772630))
+    # 
+    # Batch normalization offers some regularization effect, reducing generalization error, perhaps no longer requiring the use of dropout for regularization.
+    # 
+    # Removing Dropout from Modified BN-Inception speeds up training, without increasing overfitting.
+    # 
+    # — Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift, 2015.
+    # 
+    # Further, it may not be a good idea to use batch normalization and dropout in the same network.
+    # 
+    # The reason is that the statistics used to normalize the activations of the prior layer may become noisy given the random dropping out of nodes during the dropout procedure.
+    # 
+    # Batch normalization also sometimes reduces generalization error and allows dropout to be omitted, due to the noise in the estimate of the statistics used to normalize each variable.
+    # 
+    # — Page 425, Deep Learning, 2016.
+    # 
+    # **Decision:** We are not going to use batch normalization for now.
+    
+    
+    # ## Number of inner layers and neurons ([link](https://machinelearningmastery.com/grid-search-hyperparameters-deep-learning-models-python-keras/))
+    # 
+    # The number of neurons in a layer is an important parameter to tune. Generally the number of neurons in a layer controls the representational capacity of the network, at least at that point in the topology.
+    # 
+    # Also, generally, a large enough single layer network can approximate any other neural network, at least in theory.
+    # 
+    # A larger network requires more training and at least the batch size and number of epochs should ideally be optimized with the number of neurons (we are doing that).
+    # 
+    # It is recommended in general to start coarse and then fine tune the model, so we are going to compare very different number of layers and neurons.
+    
+    # In[69]:
+    
+    
+    n_layers = np.arange(1, 21, 1)
+    n_units = np.arange(1, 2000, 20)
+        #For the second run, we are extending the maximum number of nodes
+        #the best number until now is between 300-400, but some trials
+        #are also high close to 500, so maybe the optimum
+        #is bigger.
+        #in the 10th run we have a lot of good runs around 1000, so we are extending the upper limit a lot.
+        #in the 11st run we have a lot of good runs around 1200, so we are extending the upper limit a lot.
+    
+    
+    # **Note**
+    # 
+    # We are not looking to networks deeper than 20 layers because computational time. If we see that the number of layers or neurons of the best models is close to the limit, we can extedn this in the finer search.
+    # 
+    # Similarly, in the second search we can try to change a bit the number of units between layers.
+    
+    
+    # ## Losses ([link](https://machinelearningmastery.com/how-to-choose-loss-functions-when-training-deep-learning-neural-networks/))
+    # 
+    # Inside the network, the difference between observed and predicted will be calculated using the loss function, and this information will be used to make the next step while considering the learning rate, etc... 
+    # 
+    # These metrics can be used also as accuracy metrics in the CV, but for the cross-validation, we will use r2 (see below).
+    # 
+    # - The Mean Squared Error, or MSE,
+    #     - loss is the default loss to use for regression problems. 
+    #     - Mathematically, it is the preferred loss function under the inference framework of maximum likelihood if the distribution of the target variable is Gaussian. It is the loss function to be evaluated first and only changed if you have a good reason.
+    #     - Mean squared error is calculated as the average of the squared differences between the predicted and actual values. The result is always positive regardless of the sign of the predicted and actual values and a perfect value is 0.0. The squaring means that larger mistakes result in more error than smaller mistakes, meaning that the model is punished for making larger mistakes.
+    # 
+    # - Mean Squared Logarithmic Error Loss
+    #     - There may be regression problems in which the target value has a spread of values and when predicting a large value, you may not want to punish a model as heavily as mean squared error.
+    #     - Instead, you can first calculate the natural logarithm of each of the predicted values, then calculate the mean squared error. This is called the Mean Squared Logarithmic Error loss, or MSLE for short.
+    #     - It has the effect of relaxing the punishing effect of large differences in large predicted values.
+    #     - As a loss measure, it may be more appropriate when the model is predicting unscaled quantities directly. Nevertheless, we can demonstrate this loss function using our simple regression problem.
+    #     - The model can be updated to use the ‘mean_squared_logarithmic_error‘ loss function and keep the same configuration for the output layer. We will also track the mean squared error as a metric when fitting the model so that we can use it as a measure of performance and plot the learning curve.
+    # 
+    # - Mean Absolute Error
+    #     - On some regression problems, the distribution of the target variable may be mostly Gaussian, but may have outliers, e.g. large or small values far from the mean value.
+    #     - The Mean Absolute Error, or MAE, loss is an appropriate loss function in this case as it is more robust to outliers. It is calculated as the average of the absolute difference between the actual and predicted values.
+    #     - The model can be updated to use the ‘mean_absolute_error‘ loss function and keep the same configuration for the output layer.
+    # 
+    # There are more losses for regression like Mean Absolute Percentage Error (Mape) or Mean Squared Logarithmic Error (square(log(y_true + 1.) - log(y_pred + 1.))). I have selected all that are not dedicated to categorical responses ([link](https://www.tensorflow.org/api_docs/python/tf/keras/losses), [link](https://towardsdatascience.com/understanding-loss-functions-the-smart-way-904266e9393)).
+    
+    # In[70]:
+    
+    
+    losses = ["mse", 
+              "msle", 
+              "mae", 
+              "mape",
+              "mean_absolute_error",
+              "cosine_similarity", 
+              "huber", #In statistics, the Huber loss is a loss function 
+                      #used in robust regression, that is less sensitive to
+                      #outliers in data than the squared error loss.
+                      #it seems to get the strengths of MAE and MSE without 
+                      #their weaknesess
+                      #https://towardsdatascience.com/understanding-loss-functions-the-smart-way-904266e9393
+              "log_cosh"]
+                #log(cosh(x)) is approximately equal to (x ** 2) / 2 for small x and 
+                #to abs(x) - log(2) for large x. This means that 'logcosh' 
+                #works mostly like the mean squared error, but will not be so 
+                #strongly affected by the occasional wildly incorrect prediction.
+    
+    
+    # ## Scorer for tuning
+    # 
+    # We are going to select ONLY ONE scorer in order to perform the hyperparameter tuning.
+    # 
+    # In regression problems you can not use the same accuracy metrics as in classification problems (e.g. error rate, confusion matrix, etc.): in stead, other metrics are used like:
+    # 
+    # - Pearson linear correlation
+    # - Spearman rank correlation
+    # - RMSE (root mean squared error)
+    # - MAE (mean absolute error)
+    # - etc. (there are many more)
+    # 
+    # The R2 is the proportion of the variation in the dependent variable that is predictable from the independent variable(s) ([link](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.r2_score.html#sklearn.metrics.r2_score), [link](https://en.wikipedia.org/wiki/Coefficient_of_determination)). 
+    # 
+    # I have used this metric multiple times including in this very project and I saw a great correlation between R2 and the fit to the distribution. For example, in cases of extreme overfitting, i.e., the distribution of predicted is exactly the same than observed, the R2 calculated with scikitlearn is 1. It is also much easier to interpet and widely use both in machine learning and science in general.
+    # 
+    # We are going to use this metric for now.
+    
+    
+    
+    
+    
+    #https://machinelearningmastery.com/grid-search-hyperparameters-deep-learning-models-python-keras/
+
+
+
+    #WE WILL USE THE GRID WE ALREADY HAVE, BUT WE CAN DO FURTHER IMPROVEMENTS IF THIS IS THE SELECTED MODEL CLASS
+        #do like in PRS deep learning paper, you create networks with increasing or decreasing number of neurons in each layer
+        #see paper
+
+
+
+
+
+
+
+
+
 
 
 
@@ -704,12 +1387,17 @@ len(indexes_cv_outer) == cv_outer.n_splits * len(dict_models.keys())
 
 
 
+
+
+
+
 print_text("Define function and run it only for elastic net", header=2)
 from sklearn.pipeline import Pipeline
 from sklearn import preprocessing
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import r2_score
 #fold, train_index, test_index, model_class = indexes_cv_outer[0]
+#fold, train_index, test_index, model_class = indexes_cv_outer[3]
 def model_evaluation(fold, train_index, test_index, model_class):
 
     print_text(f"Starting with fold: {fold}, model: {model_class}", header=3)
@@ -767,7 +1455,7 @@ def model_evaluation(fold, train_index, test_index, model_class):
         scoring="r2", \
         n_jobs=1 , \
         cv=cv_inner, \
-        #verbose=4,
+        verbose=4,
         refit=True, \
         pre_dispatch="2*n_jobs") #if n_jobs>1, then pre_dispatch should be "1*n_jobs", if not, the dataset will be copied many times increasing a lot memory usage
             #Exhaustive search over specified parameter values for an estimator.
@@ -827,7 +1515,7 @@ def model_evaluation(fold, train_index, test_index, model_class):
     #"*" is used to unpack a tuple and use its elements as arguments
     #in our case, each tuple has as elements de fold, indexes and name of the model class
         #https://stackoverflow.com/a/1993732/12772630
-#[model_evaluation(*i) for i in indexes_cv_outer if (i[3]=="random_forest") & (i[0]==0)]
+#[model_evaluation(*i) for i in indexes_cv_outer if (i[3]=="neural_nets") & (i[0]==0)]
 
 
 
@@ -862,6 +1550,9 @@ pd.DataFrame(results)
     #ML mastery says: "When using machine learning algorithms that have a stochastic learning algorithm, it is good practice to evaluate them by averaging their performance across multiple runs or repeats of cross-validation."
     #Note: Your results may vary given the stochastic nature of the algorithm or evaluation procedure, or differences in numerical precision. Consider running the example a few times and compare the average outcome.
         #https://machinelearningmastery.com/different-results-each-time-in-machine-learning/
+    #When using machine learning algorithms that have a stochastic learning algorithm, it is good practice to evaluate them by averaging their performance across multiple runs or repeats of cross-validation. When fitting a final model, it may be desirable to either increase the number of trees until the variance of the model is reduced across repeated evaluations, or to fit multiple final models and average their predictions.
+
+
 
 
 #gridsearch, random serach or optuna?
@@ -1288,6 +1979,7 @@ plt.close()
                     #https://scikit-learn.org/stable/modules/ensemble.html#stacked-generalization
         #spend more time in optimization with optuna
         #analyze other populations, specifically from higher latitudes where maybe adaptation to seasonal temperature variation was more relevant
+        #use overall probability of selection in the bootstrap test
 
 
 '''

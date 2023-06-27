@@ -240,11 +240,10 @@ def get_reg(meta, n_layers, n_units, activation, init_mode, dropout_rate, weight
         #dropout
         #regularization L1L2
         model.add(keras.layers.Dense(n_units, 
-                                     activation=activation, 
-                                     kernel_initializer=init_mode, 
-                                     kernel_constraint=MaxNorm(weight_constraint), 
-                                     kernel_regularizer=regularizers.L1L2(l1=regu_L1, 
-                                                                           l2=regu_L2)))
+            activation=activation, 
+            kernel_initializer=init_mode, 
+            kernel_constraint=MaxNorm(weight_constraint), 
+            kernel_regularizer=regularizers.L1L2(l1=regu_L1, l2=regu_L2)))
         model.add(Dropout(dropout_rate))        
         
     #add the output layer with just one node (predicting 1 value)
