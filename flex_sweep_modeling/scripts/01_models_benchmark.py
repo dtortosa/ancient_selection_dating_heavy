@@ -824,7 +824,7 @@ def get_neural_reg(meta, n_layers, n_units, activation, init_mode, dropout_rate,
             activation=activation, \
             kernel_initializer=init_mode, #method to add initial weight values\
             kernel_constraint=MaxNorm(weight_constraint), \
-            kernel_regularizer=regularizers.L1L2( \
+            kernel_regularizer=regularizers.L1L2(
                 l1=regu_L1, \
                 l2=regu_L2)))
         model.add(Dropout(dropout_rate))        
@@ -846,7 +846,7 @@ def get_neural_reg(meta, n_layers, n_units, activation, init_mode, dropout_rate,
             #https://www.adriangb.com/scikeras/stable/advanced.html
     return model
 #Now we use KerasRegressor. This takes as input a callable function (get_reg) that returns a keras model (model argument). KerasRegressor also takes some arguments needed to prepare a keras model like the activation function or the optimizer. We must also pass all of the arguments to get_reg as keyword arguments to KerasRegressor. Note that if you do not pass an argument to KerasRegressor, it will not be available for hyperparameter tuning.
-dummy_dnn = KerasRegressor(model=get_neural_reg, optimizer="Adam", optimizer__learning_rate=0.001, loss="mse", model__n_layers=2, model__n_units=10, model__activation="relu", model__init_mode="uniform", model__dropout_rate=0, model__weight_constraint=0, model__regu_L1=0, model__regu_L2=0, batch_size=200, epochs=50, verbose=0)
+dummy_dnn = KerasRegressor(model=get_neural_reg, optimizer="Adam", optimizer__learning_rate=0.001, loss="mse", model__n_layers=2, model__n_units=10, model__activation="relu", model__init_mode="uniform", model__dropout_rate=0, model__weight_constraint=0, model__regu_L1=0, model__regu_L2=0, batch_size=200, epochs=50, verbose=1)
     #https://www.adriangb.com/scikeras/stable/notebooks/Basic_Usage.html#2.3-Defining-and-training-the-neural-net-classifier
     #Note about keyword arguments: Keyword arguments (or named arguments) are values that, when passed into a function, are identifiable by specific parameter names.
 print(dummy_dnn)
@@ -863,31 +863,131 @@ print(loss_pipe)
 # We can see how there is only one loss, meaning that the loss is calculated in the data used as input (X_train), considering it as a whole, not partioning. The splitting in evaluation and training will be done later with gridsearch.
 print("set the HPs")
 dict_models["neural_nets"]["HPs"] = { \
-    "regressor__verbose": [0], \
-    "regressor__optimizer": ["rmsprop"], \
-    "regressor__optimizer__learning_rate": [0.01], \
-    "regressor__loss": ["mse"], \
-    "regressor__batch_size": np.arange(5, 300, 10), \
-    "regressor__epochs": np.arange(10, 900, 100), \
+    "regressor__verbose": [1], \
     "regressor__model": [get_neural_reg], \
-    "regressor__model__n_layers": [2], \
-    "regressor__model__n_units": [10], \
-    "regressor__model__activation": ["relu"], \
-    "regressor__model__init_mode": ["uniform"], \
-    "regressor__model__dropout_rate": [0], \
-    "regressor__model__weight_constraint": [0], \
-    "regressor__model__regu_L1": [0], \
-    "regressor__model__regu_L2": [0]} #
+    "regressor__optimizer__learning_rate": [0.0006, 0.002], \
+    "regressor__optimizer": ["Adamax"], \
+    "regressor__model__weight_constraint": [2, 7], \
+    "regressor__model__regu_L1": [3.0e-08], \
+    "regressor__model__regu_L2": [9.0e-08], \
+    "regressor__model__n_units": [1000], \
+    "regressor__model__n_layers": [5], \
+    "regressor__model__init_mode": ["orthogonal"], \
+    "regressor__model__dropout_rate": [0.07], \
+    "regressor__model__activation": ["tanh", "selu"], \
+    "regressor__loss": ["mse"], \
+    "regressor__epochs": [630], \
+    "regressor__batch_size": [10, 100, 200]} #
 print(dict_models["neural_nets"])
+#explanation about the specific numbers of the HPs
+    #we are going to take advantage of the two optuna attempts we did (runs 01-08 and runs 09-11). 
+        #We have invested a looot of computational resources in these analyses, getting good curves of performance. We have done several independent optuna processes, lots of iterations...
+        #If after investing all this effort, the resulting network cannot defeat XGBoost solving the same problems (i.e., same folds), then this is not the best class. Remember that we have done much less tunning on XGBoost.
+        #we are going to take the optimum vale for each HP according to the two optuna attempts. We will further tune just those parameters that differ a lot between the first and the second attempt or when there is no clear peak.
+            #The first attempt has more weight because it has much more datapoints and a higher R2.
+            #Although we will try to get a compromise in general and check in GS if the results are too different.
+    #learning rate
+        #first optuna attempt
+            #We have a clear peak around 0.002. This is the MOST clear peak.
+            #There is a small peak at 0.0006 but it is much smaller and only has R2=0.531 instead of 0.526.
+        #second optuna attempt
+            #we have to peaks around 0.0002 and 0.005.
+        #Decision
+            #test 0.0006 and 0.002.
+    #optimizer
+        #first optuna attempt
+            #Adamax, followed by Adam and Nadam.
+        #second optuna attempt
+            #Adamax, followed by RSMprop and Adam.
+        #solution
+            #Adamax.
+    #weight constrain 
+        #first optuna attempt
+            #there is a complete plateau, maybe a mild increase at 7 
+        #second optuna attempt
+            #clear peak in 2
+        #solution
+            #as this parameter does not seem to influence in the first attempt, we could select any value within the range explored. 
+            #we are going to check both 2 and 7 just in case.
+    #L1 regularization
+        #first optuna attempt
+            #plateau with the middle being at 3e-8 and then decrease after 1.3e-5
+        #second optuna attempt
+            #there are two peaks flanking 3e-8
+        #solution
+            #3e-8
+    #L2 regularization
+        #first optuna attempt
+            #plateau with the middle being at 9e-8 and then decrease after 1.3e-5
+        #second optuna attempt
+            #there is a peak at 6.1e-5, which is close to the end of the plateau in the first attempt
+        #solution
+            #9e-8. The peak of the second attempt is already downhill of the plateau in the first attempt. Note that the second attempt did not explore fully the space as the first one, so it is possible that with more iterations it could also get high R2 under lower L2 values.
+    #number of units
+        #first optuna attempt
+            #increase up to 700, then plateau until the limit of the epxlored parametric space (900)
+        #second optuna attempt
+            #increase up to 1000
+        #solution
+            #Note that, in the first attempt, we did not explore over 900 units, but we did it in the second attempt, getting the best values over 1000.
+            #select 1000 which is the peak of the second attempt and still close to the peak of the first attempt.
+    #number layers
+        #first optuna attempt
+            #peak at 4 and 6
+        #second optuna attempt
+            #peak at 5
+        #solution
+            #5. It is not the best in the first attempt, but in the second does very good and the numbers at both sides do also well. If 4 and 6 works, it would be strange that 5 does not work.
+    #init mode
+        #first optuna attempt
+            #orthogonal followed by identity, normal, and truncated normal
+        #second optuna attempt
+            #orthogonal, lecun uniform and normal
+        #solution
+            #orthogonal
+    #dropout rate
+        #first optuna attempt
+            #peak at 0.07 and a bit in 0.2, then goes dooown
+        #second optuna attempt
+            #peak at 0.03
+        #solution
+            #0.07 which top in the first and very close to the top in the second attempt.
+    #model activation
+        #first optuna attempt
+            #tanh followed by elu and softsign
+        #second optuna attempt
+            #selu followed by hard sigmoid
+        #solution
+            #tanh and selu
+    #loss function
+        #first optuna attempt
+            #mse followed by huber and log cosh
+        #second optuna attempt
+            #mse followed by log cosh and huber
+        #solution
+            #mse
+    #epochs
+        #first optuna attempt
+            #wide peak around 630, then decrease
+        #second optuna attempt
+            #peak around 610
+        #solution
+            #630 so we are close to both peaks
+    #batch size
+        #first optuna attempt
+            #two peaks around 80-100 and 200
+        #second optuna attempt
+            #peak at 5
+        #solution
+            #test 10, 100 and 200 to cover all peaks
+
+##por aquii
+#add 7 in weight constrain??? estimate time..
+#while running we can work on xgboost?
 
 
-#por aquii
-
-
-
-
+#about HPs
 if False:
-    #about HPs
         #Batch vs. Epoch 
             #https://machinelearningmastery.com/difference-between-a-batch-and-an-epoch/
             #Stochastic Gradient descent: 
@@ -942,252 +1042,109 @@ if False:
                 #The idea behind is that most observations in a large data set will have many neighbors that impart almost the same information. We don't need all of them in our learning process. 
                 #BUT CAREFUL IN YOUR CASE, because you do not have millions of samples, although using multiple epochs you will go through the data many times using maany batches.
             #Epochs and batches (number of rows in each step) are not a replacement of cross-validation. It is an iterative process that works better in a subset of the data if you have a looot of data, because you will probably have repeated data. You can increase the batch size until the time of each step starts to increase. By default, tensorflow uses no replacement by default for batches. 
-
-
-
-
-
-
-    # In[62]:
-    
-    
-    
-    # **Note**:
-    # 
-    # We are only using mini-batches, i.e., batch size>1 and < sample size. Using the whole sample size could make a lot of use of memory and I think batch size=1 could have problems to converge. I have used still a wider range than people use for minibatches.
-    #Modification for the second run: The best trials have a batch size between 10-20, so we are in the lower limit of this parameter. I am going to extend the space reaching Stochastic Gradient Descent, i.e., batch size=1. Note that the previous space was 10 to 220, but best models appears very close to 10. Maybe, we do not have so much data, so there is no so high redundancy. I am also using smaller steps to have more resolution
-    # 
-    # The epoch sizes usually go from 1 to 1000, I am not using the whole range to reduce computation time.
-    #In the second run I am extending the upper limit because best trials were not far from that
-    # 
-    # If we see the best models are around the limits, we can do a finer search around these values.
-    
-    
-    # ## Optimization method 
-    # 
-    # There is a lot of literature and discussion about the selection of the optimization. Adam seems to be an approach that combine the strengths of other methods (i.e., Adagrad and RMSProp; [link](https://towardsdatascience.com/a-visual-explanation-of-gradient-descent-methods-momentum-adagrad-rmsprop-adam-f898b102325c); [link](https://datascience.stackexchange.com/questions/10523/guidelines-for-selecting-an-optimizer-for-training-neural-networks)). There is controversy about it with some results showing poor performance, but then other results show good performance (similar to Stochastic gradient descent + momentum) when doing a well parameter optimization ([link](https://www.fast.ai/posts/2018-07-02-adam-weight-decay.html), [link](http://ruder.io/optimizing-gradient-descent/index.html#adam)).
-    #  
-    # Advantages of Adam ([link](https://machinelearningmastery.com/adam-optimization-algorithm-for-deep-learning/)):
-    # - Straightforward to implement.
-    # - Computationally efficient.
-    # - Little memory requirements.
-    # - Invariant to diagonal rescale of the gradients.
-    # - Well suited for problems that are large in terms of data and/or parameters.
-    # - Appropriate for non-stationary objectives.
-    # - Appropriate for problems with very noisy/or sparse gradients.
-    # - Hyper-parameters have intuitive interpretation and typically require little tuning.
-    # 
-    # The authors describe Adam as combining the advantages of two other extensions of stochastic gradient descent. Specifically:
-    # 
-    # - Adaptive Gradient Algorithm (AdaGrad) that maintains a per-parameter learning rate that improves performance on problems with sparse gradients (e.g. natural language and computer vision problems).
-    #     - Our selective pressure variables has many zeros or values close to zero, being the most important values, so an approach like this that try not to underwegight this predictors could be useful.
-    # - Root Mean Square Propagation (RMSProp) that also maintains per-parameter learning rates that are adapted based on the average of recent magnitudes of the gradients for the weight (e.g. how quickly it is changing). This means the algorithm does well on online and non-stationary problems (e.g. noisy).
-    #     - We could consider our problem as noisy becasue we have multiple factors influencing selection.
-    #  
-    # In a review of optimizers ([link](https://arxiv.org/abs/1609.04747)), they say "Insofar, RMSprop, Adadelta, and Adam are very similar algorithms that do well in similar circumstances. […] its bias-correction helps Adam slightly outperform RMSprop towards the end of optimization as gradients become sparser. Insofar, Adam might be the best overall choice."
-    # 
-    # It seems this approach work fast and good for non-shallow problems, being usually used as first option currently. 
-    # 
-    # We are going to consider different optimizers just in case this makes any difference. 
-    # 
-    # **Note**: 
-    # 
-    # There are two optimizers (AdamW and Adafactor) that cannot be used as input strings in kerasregressor. We can use a class but that cannot be optimized in the tunning process. For doing that, I should compile the model inside get_reg() and add an argument for optimizer. Then include an Ifelse, if optimizer="AdamW", uses class AdamW, which has been previoulsy used. However, scikeras author recommend to compile the model outside, i.e., let kerasregressor to do it.
-    # 
-    # Given that these are only two optimizers and we are already including a battery of optimizers, including several Adam versions, we are going to skip this for now. 
-    
-    # In[63]:
-    
-    
-    optimizers = ["SGD", 
-                  "RMSprop", 
-                  "Adagrad", 
-                  "Adadelta", 
-                  "Adam", 
-                  "Adamax", 
-                  "Nadam", 
-                  "Ftrl"]
-    
-    
-    # ## Adam parameters ([link](https://machinelearningmastery.com/adam-optimization-algorithm-for-deep-learning/))
-    # 
-    # - alpha. Also referred to as the learning rate or step size. The proportion that weights are updated (e.g. 0.001). Larger values (e.g. 0.3) results in faster initial learning before the rate is updated. Smaller values (e.g. 1.0E-5) slow learning right down during training
-    # - beta1. The exponential decay rate for the first moment estimates (e.g. 0.9).
-    # - beta2. The exponential decay rate for the second-moment estimates (e.g. 0.999). This value should be set close to 1.0 on problems with a sparse gradient (e.g. NLP and computer vision problems).
-    # - epsilon. Is a very small number to prevent any division by zero in the implementation (e.g. 10E-8).
-    # 
-    # 
-    # The Adam paper suggests:
-    # - Good default settings for the tested machine learning problems are alpha=0.001, beta1=0.9, beta2=0.999 and epsilon=10−8
-    # - The TensorFlow documentation suggests some tuning of epsilon:
-    #     - The default value of 1e-8 for epsilon might not be a good default in general. For example, when training an Inception network on ImageNet a current good choice is 1.0 or 0.1.
-    # - Keras uses these values as default except epsilon, being 10-7.
-    # 
-    # They say that the default configuration parameters do well on most problems, so we are just going to tune the learning rate alpha. It seems that beta should not be change except to change specific reasons for your data ([link](https://stats.stackexchange.com/questions/499013/adam-adaptive-optimizers-learning-rate-tuning?rq=1)). Maybe in the future we can tune the betas usng bayesian optimization ([link](https://stats.stackexchange.com/questions/265400/deep-learning-how-does-beta-1-and-beta-2-in-the-adam-optimizer-affect-its-lear)). We could even not tune learning rate because it is adaptive in Adam (it changes along the process), but we are going to do it just in case, because it is an important parameter, and it could influence the initila learning rate before updating the parameters. In addition, we are using other optimizers in which learning rate could be more relevant, so it is important to tune this paramater.
-    # 
-    # More general info about tunning learning rate ([link](https://www.bdhammel.com/learning-rates/)).
-    # 
-    # Generally, it is a good idea to also include the number of epochs in an optimization like this as there is a dependency between the amount of learning per batch (learning rate), the number of updates per epoch (batch size), and the number of epochs ([link](https://machinelearningmastery.com/grid-search-hyperparameters-deep-learning-models-python-keras/)).
-    # 
-    # We do that as we are also tunning the number of batches and epochs.
-    # 
-    # **Note**: 
-    # 
-    # We are not optimizing some specific parameters of the optimizers, like epsilon, etc... In order to do that, we should compile the model inside get_reg() and add ifelse for the value of a new "optimizer" argument. For example, if optimizer="Adam", use Adam(epsilon_...) or something like that. So the function only take epsilon for Adam, but not sure if this would work if you are not using adam and epsilon is still a parameter in keras regressor. 
-    # 
-    # We are going to stick to default parameters (except learning rate) for optimizers for now. Maybe after the big search, having already an optimizer selected, we can optimize its own parameters.
-    
-    # In[64]:
-    
-    
-    alphas = [0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1, 0.2, 0.3]
-    
-    
-    # I have seen that people using optuna (bayesian) sample learning rate values
-    # considering the algorithm scale, I think to prioritize small values. Our reference tutorial goes in the same line with grid searchs typically consisting in picking numbers between 10^−5 and 0.3 on a logaritmic scale ([link](https://machinelearningmastery.com/learning-rate-for-deep-learning-neural-networks/)). The wider range would be 1 - 10^−6: "Typical values for a neural network with standardized inputs (or inputs mapped to the (0,1) interval) are less than 1 and greater than 10^−6". 
-    # 
-    # Given we are going to use the narrower (but still wide) range of 10^−5 to 0.3. If we see that the best models are close to the limits, we can run a more detailed search around these values.
-    #The best trials are not veeery close but still close to the lower limit, so we are extending the lower limit in the second run (1e-6).
-    
-    # ## Weight initiallization ([link](https://machinelearningmastery.com/weight-initialization-for-deep-learning-neural-networks/))
-    # 
-    # The optimization algorithm requires a starting point in the space of possible weight values from which to begin the optimization process. Weight initialization is a procedure to set the weights of a neural network to small random values that define the starting point for the optimization (learning or training) of the neural network model.
-    # 
-    # " training deep models is a sufficiently difficult task that most algorithms are strongly affected by the choice of initialization. The initial point can determine whether the algorithm converges at all, with some initial points being so unstable that the algorithm encounters numerical difficulties and fails altogether"
-    # 
-    # Neural network weight initialization used to be simple: use small random values ([link](https://machinelearningmastery.com/grid-search-hyperparameters-deep-learning-models-python-keras/)). Now there is a suite of different techniques to choose from. Keras provides a laundry list.
-    # 
-    # Ideally, it may be good to use different weight initialization schemes according to the activation function used on each layer. In our case, however, we will use the same activation across layers because we are working with regression, not classification. Maybe if we use a initialization method that is not good for tahn, that combination will not work and will have low R2, but we will also run other DNNs with tahn and other initialization methods, and other with relu...
-    
-    # In[65]:
-    
-    
-    init_mode = ["uniform",
-                 "lecun_uniform",
-                 "normal",
-                 "zero",
-                 "glorot_normal",
-                 "glorot_uniform",
-                 "he_normal",
-                 "he_uniform",
-                 "truncated_normal",
-                 "ones",
-                 "identity",
-                 "orthogonal",
-                 "constant",
-                 "variance_scaling"]
-    
-    
-    # ## Activation function ([link](https://machinelearningmastery.com/grid-search-hyperparameters-deep-learning-models-python-keras/))
-    # 
-    # The activation function controls the non-linearity of individual neurons and when to fire ([link](https://machinelearningmastery.com/grid-search-hyperparameters-deep-learning-models-python-keras/)). 
-    # 
-    # We are going to check a big battery of functions
-    
-    # In[66]:
-    
-    
-    activations = ['softmax', 
-                   'softplus', 
-                   'softsign', 
-                   'relu', 
-                   'LeakyReLU',
-                   'selu',
-                   'elu',
-                   'exponential',
-                   'tanh', 
-                   'sigmoid', 
-                   'hard_sigmoid', 
-                   'linear']
-    
-    
-    # ## Dropout rate ([link](https://machinelearningmastery.com/dropout-for-regularizing-deep-neural-networks/))
-    # 
-    # We are going to add dropout so some neurons are shutdown. In this way, we will try to get more generalization. 
-    # 
-    # During training, some number of layer outputs are randomly ignored or “dropped out.” This has the effect of making the layer look-like and be treated-like a layer with a different number of nodes and connectivity to the prior layer. In effect, each update to a layer during training is performed with a different “view” of the configured layer.
-    # 
-    # Dropout has the effect of making the training process noisy, forcing nodes within a layer to probabilistically take on more or less responsibility for the inputs. 
-    # 
-    # The idea behind this is to keep individual neurons from becoming too specialized.  Because each neuron may or may not be in any given run, it cannot be the only neuron detecting a particular feature.  If that feature is important, responsibility for its detection needs to be spread out among several neurons.  When we make a prediction, we will keep all of the neurons, in order to make the best prediction possible.
-    # 
-    # 
-    # This conceptualization suggests that perhaps dropout breaks-up situations where network layers co-adapt to correct mistakes from prior layers, in turn making the model more robust.
-    # 
-    # Dropout may be implemented on any or all hidden layers in the network as well as the visible or input layer. It is not used on the output layer.
-    # 
-    # A common value is a probability of 0.5 for retaining the output of each node in a hidden layer and a value close to 1.0, such as 0.8, for retaining inputs from the visible layer.
-    # 
-    # When using dropout regularization, it is possible to use larger networks with less risk of overfitting. In fact, a large network (more nodes per layer) may be required as dropout will probabilistically reduce the capacity of the network.
-    # 
-    # A good rule of thumb is to divide the number of nodes in the layer before dropout by the proposed dropout rate and use that as the number of nodes in the new network that uses dropout. For example, a network with 100 nodes and a proposed dropout rate of 0.5 will require 200 nodes (100 / 0.5) when using dropout.
-    # 
-    # Dropotu can be applied to the input layer, so some samples are removed ([link](https://machinelearningmastery.com/dropout-regularization-deep-learning-models-keras/)), but I have not seens this before in my previous courses so I will pass.
-    
-    # **weight constrain**
-    # 
-    # You also need weight constrain:
-    #     
-    # Network weights will increase in size in response to the probabilistic removal of layer activations.Large weight size can be a sign of an unstable network.
-    # 
-    # To counter this effect a weight constraint can be imposed to force the norm (magnitude) of all weights in a layer to be below a specified value. For example, the maximum norm constraint is recommended with a value between 3-4.
-    # 
-    # Constraining the weight matrix directly is another kind of regularization. If you use a simple L2 regularization term (see below) you penalize high weights with your loss function. With this constraint, you regularize directly ([link](https://www.kdnuggets.com/2015/04/preventing-overfitting-neural-networks.html/2), [link](https://stackoverflow.com/questions/45970888/what-does-kernel-constraint-max-norm3-do)). Therefore, this is another layer of regularization that is considered. Our search could combine it with the rest of thechiques or not, depending on the combination.
-    
-    # We will try dropout percentages between 0.0 and 0.9 (1.0 does not make sense) and maxnorm weight constraint values between 0 and 5.
-    
-    # In[67]:
-    
-    
-    dropout_rates = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-    weight_constraints = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
-    
-    
-    # **Note**
-    # 
-    # We are going to apply the same dropout rate for all inner layers. Once we have an optimized architecture, we can try to improve it by setting the dropout only in specific layers.
-    
-    
-    # ## Early Stop
-    # 
-    # The idea behind early stop is to stop the fitting process if a given metric does not improve after several steps. 
-    # 
-    # Ideally, you would monitor the loss/accuracy of the validation dataset, so you can if the validation dataset is not improving and hence we would have a high risk of overfitting (i.e., getting better predictions in training than in validation). 
-    # 
-    # This can be implemented in KerasRegressor with the argument callbacks, for example calling the class EarlyStopping, and then add routed parameters like callbacks__patience (how many steps we have to wait to stop if there is no improvement).
-    # 
-    # There is, however, a **problem** if we use this in combination with cross_val_score, grid search.... There is no validaition set identified in KerasRegressor (the validation sets are created are created by grid search), so we can only monitor the loss/accuracy in the training dataset.
-    # 
-    # There are also criticisms to combine CV and early stopping ([link](https://stackoverflow.com/questions/48127550/early-stopping-with-keras-and-sklearn-gridsearchcv-cross-validation)), because you could loss your best model because stopping early. I am not sure about that, but there is an more important point:
-    # 
-    # You are already comparing models with different number of epocs, so if there is overfitting after some epocs, the model with more epocs will get a lower R2 in the validation dataset. 
-    # 
-    # In summary, we are not going to use early stopping to avoid overfitting. We stick to the selection of the best number of epochs according the validation set.
-    
-    
-    # ## Regularization
-    # 
-    # Overfitting is caused by the model having too much flexibility, and the main source of flexibility in a neural network is the weights in the neurons. Specifically, non-zero weights indicate some relationship between the input and the output. Regularization penalizes this flexibility by penalizing non-zero weights. Thus, the network will only have a weight be non-zero if the benefit to the loss function is greater than the penalty applied for the weight.
-    # 
-    # There are two main types of regularization:  𝐿2 -regularization adds a penalty proportional to the sum of the squares of the weights, while  𝐿1 -regularization uses the sum of the absolute values of the weights. (The biases are generally not regularized.). Therefore, making less likely to have non-positive weights and hence associations between predictors and target. In other words, it penalizes “big” weights.
-    # 
-    # The hyperparameter  𝛼  is the regularization parameter. Its size needs to be set to provide the right amount of flexibility that the net avoids both overfitting and its converse, underfitting. In general, you will need to do a bit of a search to find the appropriate value for your problem. Info from Optizimation notebook of TDI.
-    # 
-    # If the hyperparameter is zero, then the L1/2 sum goes to zero, and there is no regulization ([link](https://towardsdatascience.com/intuitions-on-l1-and-l2-regularisation-235f2db4c261)).
-    # 
-    # A linear regression model that implements L1 norm for regularisation is called lasso regression, and one that implements (squared) L2 norm for regularisation is called ridge regression ([link](https://towardsdatascience.com/intuitions-on-l1-and-l2-regularisation-235f2db4c261)). We are going to use L1L2 function so you can have both or one of the two most frequent types of regularization setting the corresponding parameter l1 and l2 for each regularization type ([link](https://keras.io/api/layers/regularizers/)). The default is 0.01 in both cases. 
-    
-    # Three different regularizer instances are provided; they are ([link](https://machinelearningmastery.com/how-to-reduce-overfitting-in-deep-learning-with-weight-regularization/)):
-    # 
-    # - L1: Sum of the absolute weights.
-    # - L2: Sum of the squared weights.
-    # - L1L2: Sum of the absolute and the squared weights.
-    # 
-    # This is achieved by setting the kernel_regularizer argument on each layer. A separate regularizer can also be used for the bias via the bias_regularizer argument, although this is less often used.
-    # 
-    # The most common type of regularization is L2, also called simply “weight decay,” with values often on a **logarithmic scale** between 0 and 0.1, such as 0.1, 0.001, 0.0001, etc. It is a good practice to first grid search through some orders of magnitude between 0.0 and 0.1, then once a level is found, to grid search on that level.
-    # 
-    # Note that in the paper introducing dropout, this techinque was combined with L2 regularization ([link](https://stats.stackexchange.com/questions/241001/deep-learning-use-l2-and-dropout-regularization-simultaneously)). In any case, we are going to explore the possibilty of having both or one of them by tunning their corresponding hyperparameters.
+            #Notes about the search I initially did in optuna: 
+                # We are only using mini-batches, i.e., batch size>1 and < sample size. Using the whole sample size could make a lot of use of memory and I think batch size=1 could have problems to converge. I have used still a wider range than people use for minibatches.
+                #Modification for the second run: The best trials have a batch size between 10-20, so we are in the lower limit of this parameter. I am going to extend the space reaching Stochastic Gradient Descent, i.e., batch size=1. Note that the previous space was 10 to 220, but best models appears very close to 10. Maybe, we do not have so much data, so there is no so high redundancy. I am also using smaller steps to have more resolution.
+                    #Indeed, best values tend to be around a batch size of 5.
+                # The epoch sizes usually go from 1 to 1000, I am not using the whole range to reduce computation time. In the second run I am extending the upper limit because best trials were not far from that 
+        #Optimization method 
+            # There is a lot of literature and discussion about the selection of the optimization. Adam seems to be an approach that combine the strengths of other methods (i.e., Adagrad and RMSProp; [link](https://towardsdatascience.com/a-visual-explanation-of-gradient-descent-methods-momentum-adagrad-rmsprop-adam-f898b102325c); [link](https://datascience.stackexchange.com/questions/10523/guidelines-for-selecting-an-optimizer-for-training-neural-networks)). There is controversy about it with some results showing poor performance, but then other results show good performance (similar to Stochastic gradient descent + momentum) when doing a well parameter optimization ([link](https://www.fast.ai/posts/2018-07-02-adam-weight-decay.html), [link](http://ruder.io/optimizing-gradient-descent/index.html#adam)).
+            # Advantages of Adam ([link](https://machinelearningmastery.com/adam-optimization-algorithm-for-deep-learning/)):
+                #Straightforward to implement.
+                #Computationally efficient.
+                #Little memory requirements.
+                #Invariant to diagonal rescale of the gradients.
+                #Well suited for problems that are large in terms of data and/or parameters.
+                #Appropriate for non-stationary objectives.
+                #Appropriate for problems with very noisy/or sparse gradients.
+                #Hyper-parameters have intuitive interpretation and typically require little tuning.
+                #The authors describe Adam as combining the advantages of two other extensions of stochastic gradient descent. Specifically:
+                    #Adaptive Gradient Algorithm (AdaGrad) that maintains a per-parameter learning rate that improves performance on problems with sparse gradients (e.g. natural language and computer vision problems).
+                        #Our selective pressure variables has many zeros or values close to zero, being the most important values, so an approach like this that try not to underwegight this predictors could be useful.
+                    #Root Mean Square Propagation (RMSProp) that also maintains per-parameter learning rates that are adapted based on the average of recent magnitudes of the gradients for the weight (e.g. how quickly it is changing). This means the algorithm does well on online and non-stationary problems (e.g. noisy).
+                        #We could consider our problem as noisy becasue we have multiple factors influencing selection.
+            # In a review of optimizers ([link](https://arxiv.org/abs/1609.04747)), they say "Insofar, RMSprop, Adadelta, and Adam are very similar algorithms that do well in similar circumstances. […] its bias-correction helps Adam slightly outperform RMSprop towards the end of optimization as gradients become sparser. Insofar, Adam might be the best overall choice."
+            # It seems this approach work fast and good for non-shallow problems, being usually used as first option currently.
+            # We are going to consider different optimizers just in case this makes any difference. 
+            #Note about the search done with optuna: 
+                #There are two optimizers (AdamW and Adafactor) that cannot be used as input strings in kerasregressor. We can use a class but that cannot be optimized in the tunning process. For doing that, I should compile the model inside get_reg() and add an argument for optimizer. Then include an Ifelse, if optimizer="AdamW", uses class AdamW, which has been previoulsy used. However, scikeras author recommend to compile the model outside, i.e., let kerasregressor to do it.
+                #Given that these are only two optimizers and we already tested a battery of optimizers, including several Adam versions, we are going to skip this for now.
+        #Adam parameters ([link](https://machinelearningmastery.com/adam-optimization-algorithm-for-deep-learning/))
+            #alpha. Also referred to as the learning rate or step size. The proportion that weights are updated (e.g. 0.001). Larger values (e.g. 0.3) results in faster initial learning before the rate is updated. Smaller values (e.g. 1.0E-5) slow learning right down during training
+            #beta1. The exponential decay rate for the first moment estimates (e.g. 0.9).
+            #beta2. The exponential decay rate for the second-moment estimates (e.g. 0.999). This value should be set close to 1.0 on problems with a sparse gradient (e.g. NLP and computer vision problems).
+            #epsilon. Is a very small number to prevent any division by zero in the implementation (e.g. 10E-8).
+            # The Adam paper suggests:
+                #Good default settings for the tested machine learning problems are alpha=0.001, beta1=0.9, beta2=0.999 and epsilon=10−8
+                #The TensorFlow documentation suggests some tuning of epsilon:
+                    #The default value of 1e-8 for epsilon might not be a good default in general. For example, when training an Inception network on ImageNet a current good choice is 1.0 or 0.1.
+                #Keras uses these values as default except epsilon, being 10-7.
+            #They say that the default configuration parameters do well on most problems, so we are just going to tune the learning rate alpha. It seems that beta should not be change except to change specific reasons for your data ([link](https://stats.stackexchange.com/questions/499013/adam-adaptive-optimizers-learning-rate-tuning?rq=1)). Maybe in the future we can tune the betas usng bayesian optimization ([link](https://stats.stackexchange.com/questions/265400/deep-learning-how-does-beta-1-and-beta-2-in-the-adam-optimizer-affect-its-lear)). We could even not tune learning rate because it is adaptive in Adam (it changes along the process), but we are going to do it just in case, because it is an important parameter, and it could influence the initila learning rate before updating the parameters. In addition, we are using other optimizers in which learning rate could be more relevant, so it is important to tune this paramater.
+            #More general info about tunning learning rate ([link](https://www.bdhammel.com/learning-rates/)).
+                # Generally, it is a good idea to also include the number of epochs in an optimization like this as there is a dependency between the amount of learning per batch (learning rate), the number of updates per epoch (batch size), and the number of epochs ([link](https://machinelearningmastery.com/grid-search-hyperparameters-deep-learning-models-python-keras/)).
+                # We do that as we are also tunning the number of batches and epochs.
+            #Note after optuna: 
+                # We are not optimizing some specific parameters of the optimizers, like epsilon, etc... In order to do that, we should compile the model inside get_reg() and add ifelse for the value of a new "optimizer" argument. For example, if optimizer="Adam", use Adam(epsilon_...) or something like that. So the function only take epsilon for Adam, but not sure if this would work if you are not using adam and epsilon is still a parameter in keras regressor. 
+                # We are going to stick to default parameters (except learning rate) for optimizers for now. Maybe after the big search, having already an optimizer selected, we can optimize its own parameters.
+                #I have seen that people using optuna (bayesian) sample learning rate values
+                #considering the algorithm scale, I think to prioritize small values. Our reference tutorial goes in the same line with grid searchs typically consisting in picking numbers between 10^−5 and 0.3 on a logaritmic scale ([link](https://machinelearningmastery.com/learning-rate-for-deep-learning-neural-networks/)). The wider range would be 1 - 10^−6: "Typical values for a neural network with standardized inputs (or inputs mapped to the (0,1) interval) are less than 1 and greater than 10^−6". 
+                #Given we are going to use the narrower (but still wide) range of 10^−5 to 0.3. If we see that the best models are close to the limits, we can run a more detailed search around these values.
+                #the best trials are not veeery close but still close to the lower limit, so we are extending the lower limit in the second run (1e-6).
+        #Weight initiallization ([link](https://machinelearningmastery.com/weight-initialization-for-deep-learning-neural-networks/))
+            # The optimization algorithm requires a starting point in the space of possible weight values from which to begin the optimization process. Weight initialization is a procedure to set the weights of a neural network to small random values that define the starting point for the optimization (learning or training) of the neural network model.
+            # " training deep models is a sufficiently difficult task that most algorithms are strongly affected by the choice of initialization. The initial point can determine whether the algorithm converges at all, with some initial points being so unstable that the algorithm encounters numerical difficulties and fails altogether"
+            # Neural network weight initialization used to be simple: use small random values ([link](https://machinelearningmastery.com/grid-search-hyperparameters-deep-learning-models-python-keras/)). Now there is a suite of different techniques to choose from. Keras provides a laundry list.
+            # Ideally, it may be good to use different weight initialization schemes according to the activation function used on each layer. In our case, however, we will use the same activation across layers because we are working with regression, not classification. Maybe if we use a initialization method that is not good for tahn, that combination will not work and will have low R2, but we will also run other DNNs with tahn and other initialization methods, and other with relu...
+        #Activation function ([link](https://machinelearningmastery.com/grid-search-hyperparameters-deep-learning-models-python-keras/))
+            # The activation function controls the non-linearity of individual neurons and when to fire ([link](https://machinelearningmastery.com/grid-search-hyperparameters-deep-learning-models-python-keras/)). 
+        #Dropout rate ([link](https://machinelearningmastery.com/dropout-for-regularizing-deep-neural-networks/))
+            # We are going to add dropout so some neurons are shutdown. In this way, we will try to get more generalization. 
+            # During training, some number of layer outputs are randomly ignored or “dropped out.” This has the effect of making the layer look-like and be treated-like a layer with a different number of nodes and connectivity to the prior layer. In effect, each update to a layer during training is performed with a different “view” of the configured layer.
+            # Dropout has the effect of making the training process noisy, forcing nodes within a layer to probabilistically take on more or less responsibility for the inputs. 
+            # The idea behind this is to keep individual neurons from becoming too specialized.  Because each neuron may or may not be in any given run, it cannot be the only neuron detecting a particular feature.  If that feature is important, responsibility for its detection needs to be spread out among several neurons.  When we make a prediction, we will keep all of the neurons, in order to make the best prediction possible.
+            # This conceptualization suggests that perhaps dropout breaks-up situations where network layers co-adapt to correct mistakes from prior layers, in turn making the model more robust.
+            # Dropout may be implemented on any or all hidden layers in the network as well as the visible or input layer. It is not used on the output layer.
+            # A common value is a probability of 0.5 for retaining the output of each node in a hidden layer and a value close to 1.0, such as 0.8, for retaining inputs from the visible layer.
+            # When using dropout regularization, it is possible to use larger networks with less risk of overfitting. In fact, a large network (more nodes per layer) may be required as dropout will probabilistically reduce the capacity of the network.
+            # A good rule of thumb is to divide the number of nodes in the layer before dropout by the proposed dropout rate and use that as the number of nodes in the new network that uses dropout. For example, a network with 100 nodes and a proposed dropout rate of 0.5 will require 200 nodes (100 / 0.5) when using dropout.
+            # Dropotu can be applied to the input layer, so some samples are removed ([link](https://machinelearningmastery.com/dropout-regularization-deep-learning-models-keras/)), but I have not seens this before in my previous courses so I will pass.
+        # **weight constrain**
+            # You also need weight constrain:
+            # Network weights will increase in size in response to the probabilistic removal of layer activations.Large weight size can be a sign of an unstable network.
+            # To counter this effect a weight constraint can be imposed to force the norm (magnitude) of all weights in a layer to be below a specified value. For example, the maximum norm constraint is recommended with a value between 3-4.
+            # Constraining the weight matrix directly is another kind of regularization. If you use a simple L2 regularization term (see below) you penalize high weights with your loss function. With this constraint, you regularize directly ([link](https://www.kdnuggets.com/2015/04/preventing-overfitting-neural-networks.html/2), [link](https://stackoverflow.com/questions/45970888/what-does-kernel-constraint-max-norm3-do)). Therefore, this is another layer of regularization that is considered. Our search could combine it with the rest of thechiques or not, depending on the combination.
+            # We will try dropout percentages between 0.0 and 0.9 (1.0 does not make sense) and maxnorm weight constraint values between 0 and 5.    
+            # **Note**
+                # We are going to apply the same dropout rate for all inner layers. Once we have an optimized architecture, we can try to improve it by setting the dropout only in specific layers.
+        # ## Early Stop
+            # The idea behind early stop is to stop the fitting process if a given metric does not improve after several steps. 
+            # Ideally, you would monitor the loss/accuracy of the validation dataset, so you can if the validation dataset is not improving and hence we would have a high risk of overfitting (i.e., getting better predictions in training than in validation). 
+            # This can be implemented in KerasRegressor with the argument callbacks, for example calling the class EarlyStopping, and then add routed parameters like callbacks__patience (how many steps we have to wait to stop if there is no improvement).
+            # There is, however, a **problem** if we use this in combination with cross_val_score, grid search.... There is no validaition set identified in KerasRegressor (the validation sets are created are created by grid search), so we can only monitor the loss/accuracy in the training dataset.
+            # There are also criticisms to combine CV and early stopping ([link](https://stackoverflow.com/questions/48127550/early-stopping-with-keras-and-sklearn-gridsearchcv-cross-validation)), because you could loss your best model because stopping early. I am not sure about that, but there is an more important point:
+            # You are already comparing models with different number of epocs, so if there is overfitting after some epocs, the model with more epocs will get a lower R2 in the validation dataset. 
+            # In summary, we are not going to use early stopping to avoid overfitting. We stick to the selection of the best number of epochs according the validation set.
+        # ## Regularization
+            # Overfitting is caused by the model having too much flexibility, and the main source of flexibility in a neural network is the weights in the neurons. Specifically, non-zero weights indicate some relationship between the input and the output. Regularization penalizes this flexibility by penalizing non-zero weights. Thus, the network will only have a weight be non-zero if the benefit to the loss function is greater than the penalty applied for the weight.
+            # There are two main types of regularization:  𝐿2 -regularization adds a penalty proportional to the sum of the squares of the weights, while  𝐿1 -regularization uses the sum of the absolute values of the weights. (The biases are generally not regularized.). Therefore, making less likely to have non-positive weights and hence associations between predictors and target. In other words, it penalizes “big” weights.
+            # 
+            # The hyperparameter  𝛼  is the regularization parameter. Its size needs to be set to provide the right amount of flexibility that the net avoids both overfitting and its converse, underfitting. In general, you will need to do a bit of a search to find the appropriate value for your problem. Info from Optizimation notebook of TDI.
+            # 
+            # If the hyperparameter is zero, then the L1/2 sum goes to zero, and there is no regulization ([link](https://towardsdatascience.com/intuitions-on-l1-and-l2-regularisation-235f2db4c261)).
+            # 
+            # A linear regression model that implements L1 norm for regularisation is called lasso regression, and one that implements (squared) L2 norm for regularisation is called ridge regression ([link](https://towardsdatascience.com/intuitions-on-l1-and-l2-regularisation-235f2db4c261)). We are going to use L1L2 function so you can have both or one of the two most frequent types of regularization setting the corresponding parameter l1 and l2 for each regularization type ([link](https://keras.io/api/layers/regularizers/)). The default is 0.01 in both cases. 
+            
+            # Three different regularizer instances are provided; they are ([link](https://machinelearningmastery.com/how-to-reduce-overfitting-in-deep-learning-with-weight-regularization/)):
+            # 
+            # - L1: Sum of the absolute weights.
+            # - L2: Sum of the squared weights.
+            # - L1L2: Sum of the absolute and the squared weights.
+            # 
+            # This is achieved by setting the kernel_regularizer argument on each layer. A separate regularizer can also be used for the bias via the bias_regularizer argument, although this is less often used.
+            # 
+            # The most common type of regularization is L2, also called simply “weight decay,” with values often on a **logarithmic scale** between 0 and 0.1, such as 0.1, 0.001, 0.0001, etc. It is a good practice to first grid search through some orders of magnitude between 0.0 and 0.1, then once a level is found, to grid search on that level.
+            # 
+            # Note that in the paper introducing dropout, this techinque was combined with L2 regularization ([link](https://stats.stackexchange.com/questions/241001/deep-learning-use-l2-and-dropout-regularization-simultaneously)). In any case, we are going to explore the possibilty of having both or one of them by tunning their corresponding hyperparameters.
     
     # In[68]:
     
@@ -1339,14 +1296,10 @@ if False:
         #see paper
 
 
-
-
-
-
-
-
-
-
+    #for the future,
+        #tune parameters for the optimizer because if this is the selected class, you can focus an see what happens with specific optimizer, or with the best one.
+        #dropout in the input layer? see notes?
+        # We are going to apply the same dropout rate for all inner layers. Once we have an optimized architecture, we can try to improve it by setting the dropout only in specific layers.
 
 
 
@@ -1447,17 +1400,25 @@ def model_evaluation(fold, train_index, test_index, model_class):
     space = dict_models[model_class]["HPs"]
     print(space)
     
+    print_text("set the number of jobs based on the model class as we need more for DNNs", header=4)
+    if (model_class == "neural_nets"):
+        n_jobs=4
+        pre_dispatch_value="1*n_jobs" 
+            #to avoid memory explosion, see below
+    else:
+        n_jobs=1
+        pre_dispatch_value="2*n_jobs" 
 
     print_text("define the GridSearch", header=4)
     search = GridSearchCV( \
         estimator=pipeline, \
         param_grid=space, \
         scoring="r2", \
-        n_jobs=1 , \
+        n_jobs=n_jobs, \
         cv=cv_inner, \
         verbose=4,
         refit=True, \
-        pre_dispatch="2*n_jobs") #if n_jobs>1, then pre_dispatch should be "1*n_jobs", if not, the dataset will be copied many times increasing a lot memory usage
+        pre_dispatch=pre_dispatch_value) #if n_jobs>1, then pre_dispatch should be "1*n_jobs", if not, the dataset will be copied many times increasing a lot memory usage
             #Exhaustive search over specified parameter values for an estimator.
                 #The parameters of the estimator used to apply these methods are optimized by cross-validated grid-search over a parameter grid
             #estimator
@@ -1524,6 +1485,8 @@ print_text("open pool", header=3)
 import multiprocessing as mp
 pool = mp.Pool(5)
 print(pool)
+
+####YOU NEED 40 CORES + 40. 1 FOR EACH FOLD-CLASS COMBINATION AND THEN ONE ADDITIONAL FOR EACH NEURAL NET FOLD.
 
 
 print_text("run the function using starmap, which is useful to apply function across iterable whose elements are in turn also iterables storing arguments (tuples in our case)", header=3)
