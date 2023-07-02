@@ -20,14 +20,6 @@
 
 
 
-##################
-# import modules #
-##################
-
-import pandas as pd
-
-
-
 ########################################
 # define function to print text nicely #
 ########################################
@@ -139,8 +131,8 @@ print(seed_value)
 
 print_text("Set the `PYTHONHASHSEED` environment variable at a fixed value", header=2)
 import os
-os.environ['PYTHONHASHSEED']=str(seed_value)
-print(os.environ['PYTHONHASHSEED'])
+os.environ["PYTHONHASHSEED"]=str(seed_value)
+print(os.environ["PYTHONHASHSEED"])
 
 
 print_text("Set the `python` built-in pseudo-random generator at a fixed value", header=2)
@@ -198,9 +190,11 @@ print(f"The selected window size is {gene_window_size}")
 
 print_text("load and clean input data", header=2)
 print_text("load flex-sweep probability and most predictors into pandas", header=3)
+import pandas as pd
 final_data_yoruba_raw = pd.read_csv( \
-    "data/flex_sweep_closest_window_center.txt.gz", \
+    "./data/flex_sweep_closest_window_center.txt.gz", \
     sep=",", \
+    header=0, \
     low_memory=False, \
     compression="gzip")
 print(final_data_yoruba_raw)
@@ -249,7 +243,7 @@ print(final_data_yoruba)
 print_text("count the number of NANs in distance BAT and SMT genes", header=4)
 n_nans_bat = sum(final_data_yoruba["bat_distance_percentile_1"].isna())
 n_nans_smt = sum(final_data_yoruba["smt_distance_percentile_1"].isna())
-if(n_nans_bat <= (final_data_yoruba.shape[0]*0.03)) | (n_nans_smt <= (final_data_yoruba.shape[0]*0.03)):
+if(n_nans_bat <= (final_data_yoruba.shape[0]*0.03)) & (n_nans_smt <= (final_data_yoruba.shape[0]*0.03)):
     print(f"We have {n_nans_bat} NANs for the distance to the closest BAT gene")
     print(f"We have {n_nans_smt} NANs for the distance to the closest SMT gene")
 else:
@@ -412,7 +406,6 @@ print_text("define a dict with model instances and grids of HPs", header=3)
         #We will use "eval()" to run this line of code and create a new instance of the corresponding model
         #Note that the reproducibility is ensured as we have set the seeds of python, numpy and tensorflow before.
 from sklearn.linear_model import ElasticNet
-from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
 import xgboost as xgb
 from scikeras.wrappers import KerasRegressor
@@ -558,7 +551,7 @@ dict_models["random_forest"]["HPs"] = { \
     "regressor__n_estimators": np.arange(10, 1500, 400), \
     "regressor__max_features": np.arange(2, 16, 4), \
     "regressor__max_depth": [i for i in range(1,8,3)] + [None], \
-    "regressor__max_samples": [i for i in np.arange(0.1,0.8,0.3)] + [1]} 
+    "regressor__max_samples": [i for i in np.arange(0.1,0.8,0.3)] + [1]}
         #the last number (second argument) in np.arrange is not included. So we end at 0.7 in max_samples, then we and None to have 100% of samples.
 print(dict_models["random_forest"])
     #The most important HPs in general
@@ -840,7 +833,7 @@ def get_neural_reg(meta, n_layers, n_units, activation, init_mode, dropout_rate,
         model.add(keras.layers.Dense(
             units=n_units, \
             activation=activation, \
-            kernel_initializer=init_mode, #method to add initial weight values\
+            kernel_initializer=init_mode, #method to add initial weight values \
             kernel_constraint=MaxNorm(weight_constraint), \
             kernel_regularizer=regularizers.L1L2(
                 l1=regu_L1, \
@@ -1478,7 +1471,7 @@ print_text("open pool with as many cores as splits*model class combinations we h
 import multiprocessing as mp
 pool = mp.Pool(len(indexes_cv_outer))
 print(pool)
-
+    #40 splits*model classes combinations multiplied by 10 jobs/combination = 400 cores 
 
 
 print_text("run the function using starmap, which is useful to apply function across iterable whose elements are in turn also iterables storing arguments (tuples in our case)", header=3)
@@ -1499,52 +1492,9 @@ print(results_df)
 
 
 
-####plan
-    #get class model selection completely done in a week
-        #check R2 and plots of the best models
-            #When interpreting the R-Squared it is almost always a good idea to plot the data. That is, create a plot of the observed data and the predicted values of the data. This can reveal situations where R-Squared is highly misleading. For example, if the observed and predicted values do not appear as a cloud formed around a straight line, then the R-Squared, and the model itself, will be misleading. Similarly, outliers can make the R-Squared statistic be exaggerated or be much smaller than is appropriate to describe the overall pattern in the data.
-                #https://www.displayr.com/8-tips-for-interpreting-r-squared/#:~:text=Don't%20use%20R%2DSquared%20to%20compare%20models&text=There%20are%20two%20different%20reasons,the%20variables%20are%20being%20transformed.
-        #results for now
-            #R2=0.5 in evaluation and test sets, which is usually considered OK
-                #https://stephenallwright.com/good-r-squared-value/
-            #the problem is that we have more error for strong sweep candidates (log probability close to zero). In classification occurs the same, as we have more false negatives than false positives (lower recall than precision). 
-            #the MDR for iHS has around 0.7 for the whole dataset (we are above here) but fit very well the distribution of iHS, while here we have a problem with the right tail.
-            #R2 or MSE/MAE for optimization?
-                #https://machinelearningmastery.com/regression-metrics-for-machine-learning/
-            #maybe this is a result itself, the genomic features considered cannot fully explain all sweeps predicted by flex-sweep. This makes sense because we do not have included all selective pressures affecting the human genome, so functions that have been targeted by these pressures would have an excess of sweep probability based on their genomic features.
-                #we have strong sweep candidates that have less probability, but their probability is not zero. The model is predictiing some probability of sweep, but there is something else doing these genes enriched in sweep probability, maybe something related with their function.
-        #results about BAT
-            #bat 1% without no other selective pressure shows a clear decrease in the probability of selection as we move away from the BAT connectome genes. Note that there is a peak, an increase in the probability of selection at 717kb of distance from BAT genes. This is still relatively close. Remember that we consider the impact of genomic factors on the probability of selection of a gene that are up to 500kb from the center of the gene (500+500=1000kb windows) and then there is a clear decrease.
-            #whean adding vip, thermogenic and smt distance, the pattern is much more CLEAR with a decrease of flex-sweep probability. With specific combinations of these predictors, bAT pattern is not super clear, but it is with all of them. This is not a problem to me becuase alone this factor already shows pattern. and we adding other factors, i.e., controlling for then we see even clearer impact.
-            #note that the differences respect to the average prediction are similar to those of VIP distance! so I see potential in BAT set!!! We have this set validated, knowjing that is cohesive...!
-    #then select the three/four best models in the selected class
-        #variability of results across best models
-            #just using predictive power is not a good idea in order to do inference
-        #in the deep learning paper (Janizek et al 2023)
-            #they used the combination of shapely values across models, and they know that shapely fails with multicolinearty! check what the did to control for that
-        #RecJanizekombination will be stable and possibly VIPs and BAT
-    #speculative explanation for BAT vs thermogenic
-        #I do not know where Yoruba ancestors were located in the past, but around the current Yorubaland there are areas with considerable diurnal variation in temperature.
-        #this could be relevant to explain why BAT but not thermogenic distance show a pattern. The second set of genes includes genes implicated in both short- and long-term regulation of body temperature while the BAT set is focused on non-shivering thermogenesis mediated by brown-adipose tissue, which is related to short-term responses to temperature changes.
-        #Maybe populations exposed to diurnal rather than seasonal changes of temperatures tend to specifically adapt through faster, short-term pathways of temperature control.
-        #I think remember that Australian Aborigenes shows signs of adaptation night cold temperatures. So maybe this has also happen for other pops in warm climates.
-    #next steps
-        #select models based on mse instead of R2? 
-            #some say that you cannot use R2 calculated from the test set because of the formula used by scikit learn
-                #https://stats.stackexchange.com/questions/590199/how-to-motivate-the-definition-of-r2-in-sklearn-metrics-r2-score
-            #Janizek et al 2023 uses "mse"
-        #use optuna instead gridsearchCV, using less HPs for neural nets...
-        #once we have selected a model class, 
-            #try to combine the predictions of several models in order to get average pattern
-                #maybe use 
-                    #voting regressor
-                        #https://scikit-learn.org/stable/modules/ensemble.html#voting-regressor
-                    #stacking
-                        #https://scikit-learn.org/stable/modules/ensemble.html#stacked-generalization
-                #we can also use this to consider stochasticity (different seeds give different results)
-                    #When using machine learning algorithms that have a stochastic learning algorithm, it is good practice to evaluate them by averaging their performance across multiple runs or repeats of cross-validation. When fitting a final model, it may be desirable to either increase the number of trees until the variance of the model is reduced across repeated evaluations, or to fit multiple final models and average their predictions.
-                        #https://machinelearningmastery.com/different-results-each-time-in-machine-learning/
-            #use optuna in detail for this model class
-        #analyze other populations, specifically from higher latitudes where maybe adaptation to seasonal temperature variation was more relevant
-        #use overall probability of selection in the bootstrap test
-
+print_text("save the table", header=3)
+results_df.to_csv( \
+    "./results/model_comparison/model_class_selection_yoruba_hg19.tsv", \
+    sep='\t', \
+    header=True, \
+    index=False)
