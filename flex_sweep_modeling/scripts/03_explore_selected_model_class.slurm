@@ -19,7 +19,7 @@
 ### OPTIONAL. Select the cores bought by David.
 #SBATCH --qos=user_qos_denard
 ### REQUIRED. Set the number of cores that will be used for this job.
-#SBATCH --ntasks=200
+#SBATCH --ntasks=300
 ### OPTIONAL. You can set the number of cores per task. This can be useful for scripts in which inside the parallelized process there are other subprocesses, like the iHS calculation with hapbin per population. 
 #SBATCH --cpus-per-task=1
 ### REQUIRED. Set the memory required for this job. I will set 40GC per each of the 100 cores=4000GB; https://public.confluence.arizona.edu/display/UAHPC/Allocation+and+Limits

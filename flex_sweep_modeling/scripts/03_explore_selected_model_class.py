@@ -399,7 +399,289 @@ print_text("Explanations about the non-independence of genes", header=4)
 
 
 
-print_text("define function to perform HP optimization", header=1)
+
+print_text("prepare CV scheme", header=1)
+#It is VERY important that we avoid overfitting given the use we are going to make of the models.
+    #In the future, we will use the final model to obtain a probability of selection considering genomic factors and then use it to select genes with the same expected probability of selection (according to these factors) than our genes of interest. The idea is that the interest genes should have the same probability of selection based on genomic features (predicted probability), but if they are target of a selective pressure, their observed probability of selection should be higher. If predicted and observed are exactly the same, there is no room for enrichment of selection in interest genes after controling for confounding factors, and this would be an methodological artifact due to a model that just fit the observed data without any generalization. This can be a problem with algorithms like RF or in deep learning. In other words, more overfitting, less power to detect the impact of selective pressures.
+
+#Held out part of the dataset in each CV round (i.e., test set) 
+    #This part will not be used for parameter optimization, but for the final validation after the final model has been optimized. In this way, we avoid potential overfiting in the evaluation sets ([see link](https://scikit-learn.org/stable/modules/cross_validation.html#cross-validation)). If you use train in a set of the data and then evaluate in other, you can see if the model trained is not overfitting to the training data and is flexible enough to predict the evaluation data. The problem is that in parameter optimization, we select the best parameters based on the evaluation metrics in the evaluation sets, thus we could get a model that fit too much the evaluation dataset, loosing generalization and thus making the evaluation metrics no longer metrics of generalization. To avoid this, we leave out a set of the data for final evaluation, i.e., the test set. This set will be NOT used in parameter optimization. Once we have selected the best parameters to train a model in the training dataset and predict well in the evaluation datasets of the CV, we use these parameter to create a final model, fit to the whole training data and then predict in the final evaluation dataset, which was not used for anything before. If the model works well, it means it is generalizable and it is not overfitting the data, so, in our case, we can say that it is explaining the variance in selection that it is really explained by the genomic factors and the rest would be variance that could be explained by selective pressures. If there is overfitting, the model fit too much the data, there is not non-explained variance.
+
+
+
+print_text("split train/test set", header=2)
+from sklearn.model_selection import train_test_split
+train, test = train_test_split(
+    modeling_data,
+    test_size=0.20, #train size is automatically calculated using this value 
+    #random_state=54, #we have already set the seed, so this is not required
+    shuffle=True)
+        #this function uses internally ShuffleSplit
+        #so it can randomly split a dataset in training and evaluation
+        #but instead of getting an interable (like in ShuffleSplit), 
+        #you directly get the datasets splitted
+            #https://stackoverflow.com/questions/66757902/differnce-between-train-test-split-and-stratifiedshufflesplit
+print("Do we have the correct shapes")
+print(train.shape)
+print(test.shape)
+print((train.shape[1] == modeling_data.shape[1]) & (test.shape[1] == modeling_data.shape[1]))
+print(train.shape[0]+test.shape[0] == modeling_data.shape[0])
+
+
+print_text("set the CV scheme for the training set", header=2)
+from sklearn.model_selection import KFold
+cv_scheme = KFold( \
+    n_splits=5,  \
+    shuffle=True)
+    #random_state is not required as we have already ensured reproducibility by setting the seeds of python, numpy and tensorflow
+print(cv_scheme)
+#we will use k=5 for now for speed
+    #it has been seen in many datasets that 10 folds works relatively well to estimate model performance ([link](https://machinelearningmastery.com/how-to-configure-k-fold-cross-validation/#:~:text=configure%20the%20procedure.-,Sensitivity%20Analysis%20for%20k,evaluate%20models%20is%20k%3D10.)). Although there is some debate about it. We will stick to 10 folds for now
+    #This is very well explained here (https://stackoverflow.com/questions/45969390/difference-between-stratifiedkfold-and-stratifiedshufflesplit-in-sklearn).
+
+#In the future you could compare different K values and select the best 
+    #you could do a sensitivity analysis
+        #use default parameters
+        #then run several CVs with different number of folds
+        #calculate the average R2 and min-max in the folds
+        #select the number of folds that give the greatest R2
+    #This will automatically select the best number of folds, thus also selecting the selecting the size of the training/evaluation sets. For example, 10 outer folds means that 90% will be used for training and 10% for evaluation.
+    #link
+        #https://machinelearningmastery.com/how-to-configure-k-fold-cross-validation/
+
+#Respect to the repetition because of the stochastic nature of the machine learning models
+    #If a large number of machine learning algorithms and algorithm configurations are being evaluated systematically on a predictive modeling task, it can be a good idea to fix the random seed of the evaluation procedure. Any value will do.
+    #The idea is that each candidate solution (each algorithm or configuration) will be evaluated in an identical manner. This ensures an apples-to-apples comparison. It also allows for the use of paired statistical hypothesis tests later, if needed, to check if differences between algorithms are statistically significant.
+    #This what we are gonna do, as we just want to select a model class. We can consider stochasiticity when working with the selected class, running different models with different seeds and get the average prediction. We will likely have several good models, not only one.
+        #https://machinelearningmastery.com/different-results-each-time-in-machine-learning/
+
+
+
+
+
+print_text("Start with the tuning", header=1)
+print_text("Fix the learning rate and number of estimators for tuning tree-based parameters", header=2)
+#for this step I am going to use, not only the sklearn wrapper for XGBoost (XGBRegressor), but also the original xgb package in order to use its cv function.
+#with the cv function of xgb, we can run XGBoost with a pre-define number of boosts, but stopping when the there is no improvement. In this way, we can easily tune the number of estimators.
+#we will update the number of estimator after tunning other parameters.
+import xgboost as xgb
+
+
+print_text("define a function to run CV + early top within xgb package", header=3)
+#alg=xgb.XGBRegressor(objective="reg:squarederror", eval_metric="rmse", nthread=10)
+#train_data=train
+#predictors=[x for x in train.columns if x not in ["prob(sweep)"]]
+#useTrainCV=True
+#early_stopping_rounds=50
+from sklearn.metrics import r2_score
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import GridSearchCV
+
+def modelfit(alg, train_data, predictors, useTrainCV=True, early_stopping_rounds=50):
+    
+    #if you want CV
+    if useTrainCV:
+
+        #extract the parameters of the XGBoost instance we have opened
+        xgb_param = alg.get_xgb_params()
+
+        #convert data to the structure required by XGBoost
+        xgtrain = xgb.DMatrix(train_data[predictors].values, label=train_data["prob(sweep)"].values)
+            #use predictors and response (label) of training data in the form of numpy array as input
+
+        #define function to preprocess training and evaluation data separately
+        def fpreproc(dtrain, dtest, param):
+            train_array_scaled = preprocessing.scale(dtrain.get_data().toarray().astype(float))
+            eval_array_scaled = preprocessing.scale(dtest.get_data().toarray().astype(float))
+                #UserWarning: Numerical issues were encountered when centering the data and might not be solved. Dataset may contain too large values.
+                    #solved by converting to float
+                        #https://stackoverflow.com/a/64145149/12772630
+
+                #IMPORTANT
+                    #If NAn, get_data().toarray() will considered Nan as zero!!
+                    #https://stackoverflow.com/questions/37309096/convert-python-xgboost-dmatrix-to-numpy-ndarray-or-pandas-dataframe
+
+            dtrain=xgb.DMatrix(train_array_scaled[:,1:], train_array_scaled[:,0])
+            dtest=xgb.DMatrix(eval_array_scaled[:,1:], eval_array_scaled[:,0])
+
+            return (dtrain, dtest, param)
+                #https://xgboost.readthedocs.io/en/stable/python/examples/cross_validation.html
+                #params is the list (or dict?) of params, you do not change anythighn and just return as it was received
+
+        #perform CV within XGBoost
+        cvresult = xgb.cv( \
+            params=xgb_param, \
+            dtrain=xgtrain, \
+            num_boost_round=alg.get_params()["n_estimators"], \
+            folds=cv_scheme, \
+            metrics="rmse", \
+            maximize=False,
+            early_stopping_rounds=early_stopping_rounds, \
+            fpreproc=fpreproc, \
+            seed=0)
+                #params : dict
+                    #Booster params.
+                #dtrain : DMatrix
+                    #Data to be trained.
+                #num_boost_round : int
+                    #Number of boosting iterations. We use the number of estimators previously selected in the XGBoost instance
+                #folds : a KFold or StratifiedKFold instance or list of fold indices
+                #metrics : string or list of strings
+                    #Evaluation metrics to be watched in CV.
+                #maximize : bool
+                    #Whether to maximize evaluation metric.
+                    #False in our case, because we are using root mean squared error, so larger values means more error. We want to minimize.
+                #early_stopping_rounds:
+                    #Activates early stopping. Cross-Validation metric (average of validation metric computed over CV folds) needs to improve at least once in every **early_stopping_rounds** round(s) to continue training. The last entry in the evaluation history will represent the best iteration. If there's more than one metric in the **eval_metric** parameter given in **params**, the last metric will be used for early stopping.
+
+
+
+
+
+        alg.set_params(n_estimators=cvresult.shape[0])
+        print("Number of trees")
+        print(cvresult.shape[0])
+    
+    ###to see R2 you should to do preprocessing here if you want to get visible results as you ahve applied in cv
+
+    #Fit the algorithm on the data
+    alg.fit(train_data[predictors], train_data["prob(sweep)"])
+        
+    #Predict training set:
+    dtrain_predictions = alg.predict(train_data[predictors])
+
+    #Print model report:
+    print("\nModel Report")
+    print("R2 (train): %.4g" % r2_score(train_data["prob(sweep)"].values, dtrain_predictions))
+
+##IMPORTANT
+##now 372 treee after sacling!!!!!!!!
+
+
+predictors = [x for x in train.columns if x not in ["prob(sweep)"]]
+
+##if you cannot do preprocesing in xgb, just use GD search also for this
+
+##rmse!!!
+#not R2!!!
+
+xgb1 = xgb.XGBRegressor(
+    learning_rate=0.1,
+    n_estimators=5000,
+    max_depth=13,
+    min_child_weight=1,
+    gamma=0,
+    subsample=0.7,
+    colsample_bytree=0.7,
+    objective="reg:squarederror",
+    nthread=10, 
+    eval_metric="rmse", 
+    seed=0) #seed is not required when running the whole script (we set the seed at the start), but it is when running interactively just parts
+        #select eval metric to avoid warning
+            #https://stackoverflow.com/questions/66097701/how-can-i-fix-this-warning-in-xgboost
+modelfit(xgb1, train, test, predictors)
+
+
+
+
+print_text("Tune max_depth and min_child_weight", header=2)
+print_text("wide search", header=2)
+param_test1 = {
+    "regressor__max_depth": [i for i in range(1,15,4)] + [None], \
+    "regressor__min_child_weight": [1, 10, 100]}
+xgb2 = xgb.XGBRegressor(
+    learning_rate=0.1,
+    n_estimators=676,
+    max_depth=5,
+    min_child_weight=1,
+    gamma=0,
+    subsample=0.8,
+    colsample_bytree=0.8,
+    objective="reg:squarederror",
+    nthread=1, 
+    eval_metric="rmse", 
+    seed=0)
+gsearch1 = GridSearchCV( \
+    estimator=Pipeline( \
+        steps=[ \
+        ('scale', preprocessing.StandardScaler()), \
+        ('regressor', xgb2)]), 
+    param_grid=param_test1, 
+    scoring="neg_root_mean_squared_error",
+    n_jobs=10, \
+    cv=cv_scheme, \
+    verbose=4,
+    refit=True, \
+    pre_dispatch="1*n_jobs") #if n_jobs>1, then pre_dispatch should be "1*n_jobs", if not, the dataset will be copied many times increasing a lot memory usage
+        #Exhaustive search over specified parameter values for an estimator.
+            #The parameters of the estimator used to apply these methods are optimized by cross-validated grid-search over a parameter grid
+        #estimator
+            #This is assumed to implement the scikit-learn estimator interface. Either estimator needs to provide a ``score`` function, or ``scoring`` must be passed.
+        #param_grid
+            #Dictionary with parameters names (`str`) as keys and lists of parameter settings to try as values, or a list of such dictionaries, in which case the grids spanned by each dictionary in the list are explored. This enables searching over any sequence of parameter settings.
+        #scoring
+            #Strategy to evaluate the performance of the cross-validated model on the test set.
+            #It can be one or several (included in a list or dict...)
+        #n_jobs
+            #Number of jobs to run in parallel
+            #we are using only 1 because we are parallelizing per fold*model class combination.
+        #Refit=True
+            #Refit an estimator using the best found parameters on the WHOLE dataset used for training
+        #cv:
+            #Determines the cross-validation splitting strategy.
+        #pre_dispatch:
+            #Controls the number of jobs that get dispatched during parallel execution. Reducing this number can be useful to avoid an explosion of memory consumption when more jobs get dispatched than CPUs can process.
+            #If `n_jobs` was set to a value higher than one, the data is copied for each point in the grid (and not `n_jobs` times). This is done for efficiency reasons if individual jobs take very little time, but may raise errors if the dataset is large and not enough memory is available.  A workaround in this case is to set `pre_dispatch`. Then, the memory is copied only `pre_dispatch` many times. A reasonable value for `pre_dispatch` is `2 * n_jobs`.
+print(gsearch1)
+
+print_text("run the GridSearch", header=4)
+gsearch1.fit(train[predictors],train["prob(sweep)"])
+gsearch1.cv_results_, gsearch1.best_params_, gsearch1.best_score_
+
+    #we are using neg rmse, so larger values are better because this means less error
+
+
+
+print_text("narrow search", header=3)
+gsearch2 = GridSearchCV( \
+    estimator=Pipeline( \
+        steps=[ \
+        ('scale', preprocessing.StandardScaler()), \
+        ('regressor', xgb.XGBRegressor(
+            learning_rate=0.1,
+            n_estimators=676,
+            max_depth=5,
+            min_child_weight=1,
+            gamma=0,
+            subsample=0.8,
+            colsample_bytree=0.8,
+            objective="reg:squarederror",
+            nthread=1, 
+            eval_metric="rmse", 
+            seed=0))]),
+    param_grid={ \
+        "regressor__max_depth": [8,9,10,11], \
+        "regressor__min_child_weight": [9,10,11,12]}, \
+    scoring="neg_root_mean_squared_error", \
+    n_jobs=10, \
+    cv=cv_scheme, \
+    verbose=4, \
+    refit=True, \
+    pre_dispatch="1*n_jobs")
+print_text("run the GridSearch", header=4)
+gsearch2.fit(train[predictors],train["prob(sweep)"])
+gsearch2.cv_results_, gsearch2.best_params_, gsearch2.best_score_
+
+    ###RUN AGAIN THIS SEARCH 2
+
+#you can also look for R2 after CV just to see where you are
+
+
+
+
+
+
+print_text("prepare the HP optimization", header=1)
 print_text("prepare models and HPs", header=2)
 print_text("define a dict with model instances and grids of HPs", header=3)
 #define a dict
@@ -527,16 +809,13 @@ print_text("XGboost", header=4)
 dict_models["xgboost"]["HPs"] = { \
     "regressor__max_depth": [i for i in range(1,15,4)] + [None], \
     "regressor__min_child_weight": [1, 10, 100], \
-    "regressor__subsample":  [i for i in np.arange(0.1,0.8,0.3)]+[1], \
-    "regressor__colsample_bytree": [i for i in np.arange(0.1,0.8,0.3)]+[1], \
-    "regressor__eta": [0.001, 0.01, 0.1, 0.2, 0.3], \
-    "regressor__n_estimators": [10]+[i for i in np.arange(200, 2200, 500)], \
-    "regressor__gamma": np.arange(0, 1, 0.2), \
-    "regressor__alpha": [1e-6, 1e-5, 1e-2, 0.1, 1, 10, 100], \
-    "regressor__lambda": np.arange(0, 1.01, 0.2), \
-    "regressor__colsample_bylevel": [i for i in np.arange(0.1,0.8,0.3)]+[1], \
-    "regressor__colsample_bynode": [i for i in np.arange(0.1,0.8,0.3)]+[1], \
-    "regressor__max_delta_step": np.arange(0, 14, 2)}
+    "regressor__subsample":  [0.8], \
+    "regressor__colsample_bytree": [0.8], \
+    "regressor__eta": [0.1], \
+    "regressor__n_estimators": [3000], \
+    "regressor__gamma": [0], \
+    "regressor__colsample_bylevel": [0.8], \
+    "regressor__colsample_bynode": [0.8]}
 print(dict_models["xgboost"])
     #About the HPs. To fully understand their impact see general notes and, in particular, regularization methods used in order to avoid overfitting.
         #booster: 
@@ -585,90 +864,54 @@ print(dict_models["xgboost"])
             #https://machinelearningmastery.com/xgboost-for-regression/ 
             #https://stackoverflow.com/a/69830350/12772630
             #https://datascience.stackexchange.com/a/108242
-        #there are more HPs that can be useful to combat overfitting and improve performance like lamba or alpha (for regularization) or gamma, but we will not explore them here. We can do it if this class is finally selected.
+    #Additional HPs considered
+        #there are more HPs that can be useful to combat overfitting and improve performance like lamba or alpha (for regularization) or gamma. This can be relevant in our case given that we have a distribution with most of the data around the extreme values (close to 0 and close to 1). Therefore, I think we can make good use of a flexible model.
             #https://www.analyticsvidhya.com/blog/2016/03/complete-guide-parameter-tuning-xgboost-with-codes-python/
-        #You can also narrow the hyperparametric space by using a sequential approach: All default, just tune max_depth and min_child_weight. See what range of values give the best and select it. Repeat now with subsample and colsample leaving all default except max_depth and min_child_weight. Select the best range for subsample and colsample. Then tune eta and n_estimators.
-            #https://datascience.stackexchange.com/a/108242
-
-#we are adding more HPs that can help with overfitting.
-    #https://www.analyticsvidhya.com/blog/2016/03/complete-guide-parameter-tuning-xgboost-with-codes-python/
-
-#gamma
-#lambda
-#alpha
-
-
-
-#colsample_by*
-    #The parameters specify the percentage of random columns to sample from total columns available. colsample_by parameters work cumulatively, as each tree has different levels which end in nodes. The sampling can be done at each tree, level, and/or node.If you set the sampling to 0.5, you will use half off your columns. For example, the combination {colsample_bytree:0.5, colsample_bylevel: 0.5, colsample_bynode:0.5} with 64 initial features will randomly halve features used by the tree to 32, subsequently halve to 16 at the tree levels, and finally halve to 8 features at the node.
-        #https://stackoverflow.com/questions/51022822/subsample-colsample-bytree-colsample-bylevel-in-xgbclassifier-python-3-x
-    #this seems to be specially useful when you have many features, as you can use maany different subsets of features across trees, depth levels and nodes.
-
-#gamma
-#there are more HPs that can be useful to combat overfitting and improve performance like lamba or alpha (for regularization) or gamma, but we will not explore them here. We can do it if this class is finally selected.
-    #https://www.analyticsvidhya.com/blog/2016/03/complete-guide-parameter-tuning-xgboost-with-codes-python/
-
-#Maximum delta step
-    #this is useful for imbalanced class. I used it anyways because we have a continuous variables with a lot of values in the extremes of the distribution.
-    #Maximum delta step we allow each leaf output to be. If the value is set to 0, it means there is no constraint. If it is set to a positive value, it can help making the update step more conservative. Usually this parameter is not needed, but it might help in logistic regression when class is extremely imbalanced. Set it to value of 1-10 might help control the update.
-        #https://stats.stackexchange.com/questions/233248/max-delta-step-in-xgboost
-
-
-
-
-print_text("prepare CV scheme", header=2)
-#It is VERY important that we avoid overfitting given the use we are going to make of the models.
-    #In the future, we will use the final model to obtain a probability of selection considering genomic factors and then use it to select genes with the same expected probability of selection (according to these factors) than our genes of interest. The idea is that the interest genes should have the same probability of selection based on genomic features (predicted probability), but if they are target of a selective pressure, their observed probability of selection should be higher. If predicted and observed are exactly the same, there is no room for enrichment of selection in interest genes after controling for confounding factors, and this would be an methodological artifact due to a model that just fit the observed data without any generalization. This can be a problem with algorithms like RF or in deep learning. In other words, more overfitting, less power to detect the impact of selective pressures.
-
-#Held out part of the dataset in each CV round (i.e., test set) 
-    #This part will not be used for parameter optimization, but for the final validation after the final model has been optimized. In this way, we avoid potential overfiting in the evaluation sets ([see link](https://scikit-learn.org/stable/modules/cross_validation.html#cross-validation)). If you use train in a set of the data and then evaluate in other, you can see if the model trained is not overfitting to the training data and is flexible enough to predict the evaluation data. The problem is that in parameter optimization, we select the best parameters based on the evaluation metrics in the evaluation sets, thus we could get a model that fit too much the evaluation dataset, loosing generalization and thus making the evaluation metrics no longer metrics of generalization. To avoid this, we leave out a set of the data for final evaluation, i.e., the test set. This set will be NOT used in parameter optimization. Once we have selected the best parameters to train a model in the training dataset and predict well in the evaluation datasets of the CV, we use these parameter to create a final model, fit to the whole training data and then predict in the final evaluation dataset, which was not used for anything before. If the model works well, it means it is generalizable and it is not overfitting the data, so, in our case, we can say that it is explaining the variance in selection that it is really explained by the genomic factors and the rest would be variance that could be explained by selective pressures. If there is overfitting, the model fit too much the data, there is not non-explained variance.
-
-
-print_text("split train/test set", header=2)
-from sklearn.model_selection import train_test_split
-X_train, X_test, y_train, y_test = train_test_split(
-    modeling_data.iloc[:, 1:], 
-    modeling_data.iloc[:, 0],
-    test_size=0.20, #train size is automatically calculated using this value 
-    #random_state=54, #we have already set the seed, so this is not required
-    shuffle=True)
-        #this function uses internally ShuffleSplit
-        #so it can randomly split a dataset in training and evaluation
-        #but instead of getting an interable (like in ShuffleSplit), 
-        #you directly get the datasets splitted
-            #https://stackoverflow.com/questions/66757902/differnce-between-train-test-split-and-stratifiedshufflesplit
-print(X_train.shape)
-print(X_test.shape)
-print(y_train.shape)
-print(y_test.shape)
+        #more manual tuning if you want
+            #You can also narrow the hyperparametric space by using a sequential approach: All default, just tune max_depth and min_child_weight. See what range of values give the best and select it. Repeat now with subsample and colsample leaving all default except max_depth and min_child_weight. Select the best range for subsample and colsample. Then tune eta and n_estimators.
+                #https://datascience.stackexchange.com/a/108242
+                #https://www.analyticsvidhya.com/blog/2016/03/complete-guide-parameter-tuning-xgboost-with-codes-python/
+        #New HPS
+            #gamma:
+                #A node is split only when the resulting split gives a positive reduction in the loss function. Gamma specifies the minimum loss reduction required to make a split.
+                #Larger values make the algorithm conservative. The values can vary depending on the loss function and should be tuned.
+                #Range: [0, infinite]; default 0
+                #Following analysis vidha, I have explored values between 0 and 1, getting better results with 0.4, so I going to restrict the search to that range.
+            #alpha
+                #L1 regularization term on weight (analogous to Lasso regression)
+                #It can be used in case of very high dimensionality so that the algorithm runs faster when implemented
+                #Increasing this value will make model more conservative.
+                #default 0
+                #I have used the range of values from Analytics Vidhya as template, which is very similar to the range of values I used for L1 in elastic net. I have also added 1e-6 because I got the best results with 1e-5.
+                #I have checked you get the same results with alpha and reg_alpha
+            #lambda:
+                #L2 regularization term on weights (analogous to Ridge regression)
+                #This is used to handle the regularization part of XGBoost. Though many data scientists don’t use it often, it should be explored to reduce overfitting.
+                #Increasing this value will make model more conservative
+                #default 1
+                #i have used the same range than in elastic net for L2 but with less data points
+            #colsample_by*
+                #The parameters specify the percentage of random columns to sample from total columns available. colsample_by parameters work cumulatively, as each tree has different levels which end in nodes. The sampling can be done at each tree, level, and/or node.If you set the sampling to 0.5, you will use half off your columns. For example, the combination {colsample_bytree:0.5, colsample_bylevel: 0.5, colsample_bynode:0.5} with 64 initial features will randomly halve features used by the tree to 32, subsequently halve to 16 at the tree levels, and finally halve to 8 features at the node.
+                    #https://stackoverflow.com/questions/51022822/subsample-colsample-bytree-colsample-bylevel-in-xgbclassifier-python-3-x
+                #Summary
+                    #colsample_bytree is the subsample ratio of columns when constructing each tree. Subsampling occurs once for every tree constructed.
+                    #colsample_bylevel is the subsample ratio of columns for each level. Subsampling occurs once for every new depth level reached in a tree. Columns are subsampled from the set of columns chosen for the current tree.
+                    #colsample_bynode is the subsample ratio of columns for each node (split). Subsampling occurs once every time a new split is evaluated. Columns are subsampled from the set of columns chosen for the current level.
+                #All colsample_by* parameters have a range of (0, 1], the default value of 1, and specify the fraction of columns to be subsampled.
+                #this seems to be specially useful when you have many features, as you can use maany different subsets of features across trees, depth levels and nodes. 
+                #I have used the same range between 0 and 1 for all HPs.
+            #Maximum delta step
+                #this is useful for imbalanced class. I used it anyways because we have a continuous variables with a lot of values in the extremes of the distribution.
+                #If the value is set to 0, it means there is no constraint. If it is set to a positive value, it can help making the update step more conservative. Usually this parameter is not needed, but it might help in logistic regression when class is extremely imbalanced. Set it to value of 1-10 might help control the update.
+                    #https://stats.stackexchange.com/questions/233248/max-delta-step-in-xgboost
+                #we use several values between 1 and 10 as recommended by the help.
 
 
-print_text("set the CV scheme", header=4)
-from sklearn.model_selection import KFold
-cv_scheme = KFold( \
-    n_splits=10,  \
-    shuffle=True)
-    #random_state is not required as we have already ensured reproducibility by setting the seeds of python, numpy and tensorflow
-print(cv_scheme)
-#we will use k=10 for now
-    #it has been seen in many datasets that 10 folds works relatively well to estimate model performance ([link](https://machinelearningmastery.com/how-to-configure-k-fold-cross-validation/#:~:text=configure%20the%20procedure.-,Sensitivity%20Analysis%20for%20k,evaluate%20models%20is%20k%3D10.)). Although there is some debate about it. We will stick to 10 folds for now
-    #This is very well explained here (https://stackoverflow.com/questions/45969390/difference-between-stratifiedkfold-and-stratifiedshufflesplit-in-sklearn).
+#follow analytics vidha? do pairs of optimization with wide and then narrow searches? it is like optuna but manually
 
-#In the future you could compare different K values and select the best 
-    #you could do a sensitivity analysis
-        #use default parameters
-        #then run several CVs with different number of folds
-        #calculate the average R2 and min-max in the folds
-        #select the number of folds that give the greatest R2
-    #This will automatically select the best number of folds, thus also selecting the selecting the size of the training/evaluation sets. For example, 10 outer folds means that 90% will be used for training and 10% for evaluation.
-    #link
-        #https://machinelearningmastery.com/how-to-configure-k-fold-cross-validation/
 
-#Respect to the repetition because of the stochastic nature of the machine learning models
-    #If a large number of machine learning algorithms and algorithm configurations are being evaluated systematically on a predictive modeling task, it can be a good idea to fix the random seed of the evaluation procedure. Any value will do.
-    #The idea is that each candidate solution (each algorithm or configuration) will be evaluated in an identical manner. This ensures an apples-to-apples comparison. It also allows for the use of paired statistical hypothesis tests later, if needed, to check if differences between algorithms are statistically significant.
-    #This what we are gonna do, as we just want to select a model class. We can consider stochasiticity when working with the selected class, running different models with different seeds and get the average prediction. We will likely have several good models, not only one.
-        #https://machinelearningmastery.com/different-results-each-time-in-machine-learning/
+
+
 
 print_text("select the model class", header=4)
 model_class = "xgboost"
@@ -698,7 +941,7 @@ print(space)
 
 
 print_text("set the number of jobs", header=4)
-n_jobs=200
+n_jobs=10
 pre_dispatch_value="1*n_jobs" 
     #pre_dispatch_value="1*n_jobs" to avoid memory explosion, see below function help
     #When running optuna on Yoruba for first time I had to reduce the number of jobs
@@ -753,6 +996,8 @@ best_params = search_results.best_params_
     #Parameter setting that gave the best results on the hold out data
 print(best_params)
 
+print_text("see best score", header=4)
+print(search_results.best_score_)
 
 print_text("extract the best regressor already fitted", header=4)
 best_model = search_results.best_estimator_
@@ -767,7 +1012,7 @@ y_pred = best_model.predict(X_test)
 print_text("calculate evaluation score in the test set", header=4)
 from sklearn.metrics import r2_score
 score = r2_score(y_test, y_pred)
-print(score)
+#print(score)
 
 
 
