@@ -1067,10 +1067,10 @@ gsearch_sample_2 = GridSearchCV( \
                 eval_metric="rmse", 
                 seed=0))]), 
     param_grid={
-        "regressor__subsample":  [0.8, 0.85, 0.9, 0.95, 1.0], \
-        "regressor__colsample_bytree": [0.8, 0.85, 0.9, 0.95, 1.0], \
-        "regressor__colsample_bylevel": [0.6, 0.65, 0.7, 0.75, 0.8], \
-        "regressor__colsample_bynode": [0.6, 0.65, 0.7, 0.75, 0.8]},
+        "regressor__subsample":  [0.85, 0.9, 0.95, 1.0], \
+        "regressor__colsample_bytree": [0.9, 0.95, 1.0], \
+        "regressor__colsample_bylevel": [0.6, 0.65, 0.7, 0.75], \
+        "regressor__colsample_bynode": [0.6, 0.65, 0.7, 0.75]},
     scoring="neg_root_mean_squared_error",
     n_jobs=10, \
     cv=cv_scheme, \
@@ -1158,10 +1158,11 @@ gsearch_regu_1 = GridSearchCV( \
                 max_depth=14,
                 min_child_weight=23,
                 gamma=0.01,
-                subsample=0.7,
-                colsample_bytree=0.7,
-                colsample_bylevel=1,
-                colsample_bynode=1,
+                subsample=,
+                colsample_bytree=,
+                colsample_bylevel=,
+                colsample_bynode=,
+                max_delta_step=,
                 objective="reg:squarederror",
                 nthread=1, 
                 eval_metric="rmse", 
@@ -1190,10 +1191,11 @@ gsearch_regu_2 = GridSearchCV( \
                 max_depth=14,
                 min_child_weight=23,
                 gamma=0.01,
-                subsample=0.7,
-                colsample_bytree=0.7,
-                colsample_bylevel=1,
-                colsample_bynode=1,
+                subsample=,
+                colsample_bytree=,
+                colsample_bylevel=,
+                colsample_bynode=,
+                max_delta_step=,
                 objective="reg:squarederror",
                 nthread=1, 
                 eval_metric="rmse", 
@@ -1224,6 +1226,7 @@ n_estimators_3 = modelfit(
         colsample_bytree=,
         colsample_bylevel=,
         colsample_bynode=,
+        max_delta_step=,
         reg_lambda=,
         reg_alpha=,
         objective="reg:squarederror",
@@ -1247,6 +1250,7 @@ n_estimators_4 = modelfit(
         colsample_bytree=,
         colsample_bylevel=,
         colsample_bynode=,
+        max_delta_step=,
         reg_lambda=,
         reg_alpha=,
         objective="reg:squarederror",
@@ -1258,239 +1262,40 @@ n_estimators_4 = modelfit(
 
 
 
-##con lr=0.1 and 387 boosters you got -1.87 in the first tunnig, check?
 
 
+print_text("check performance of the final model", header=1)
+print_text("define the final model", header=2)
+final_model = Pipeline( \
+        steps=[ \
+            ('scale', preprocessing.StandardScaler()), \
+            ('regressor', xgb.XGBRegressor(
+                learning_rate=0.01,
+                n_estimators=n_estimators_4,
+                max_depth=14,
+                min_child_weight=23,
+                gamma=0.01,
+                subsample=,
+                colsample_bytree=,
+                colsample_bylevel=,
+                colsample_bynode=,
+                max_delta_step=,
+                reg_lambda=,
+                reg_alpha=,
+                objective="reg:squarederror",
+                nthread=10, 
+                eval_metric="rmse", 
+                seed=0))])
+final_model.fit(train[predictors], train["prob(sweep)"])
 
 
+print_text("predict on the test set", header=2)
+y_pred = final_model.predict(test[predictors])
 
 
+print_text("calculate evaluation score in the test set", header=2)
+score = r2_score(test["prob(sweep)"], y_pred)
+print(score)
 
-
-
-
-
-
-
-
-
-print_text("select the model class", header=4)
-model_class = "xgboost"
-
-print_text("open instance of the model", header=4)
-regressor = eval(dict_models[model_class]["instance"])
-    #we have a dict the code to create a new instance of the model between '""', so we can evaluate it
-print(regressor)
-
-
-print_text("define pipeline with scaling and regressor", header=4)
-from sklearn.pipeline import Pipeline
-from sklearn import preprocessing
-pipeline = Pipeline( \
-    steps=[ \
-    ('scale', preprocessing.StandardScaler()), \
-    ('regressor', regressor)])
-    #Pipeline:
-        #Sequentially apply a list of transforms and a final estimator. Intermediate steps of the pipeline must be 'transforms', that is, they must implement `fit` and `transform` methods. The final estimator only needs to implement `fit`.
-    #We obtain the model instance from the dict of models selecting the corresponding model class
-print(pipeline)
-
-
-print_text("extract dict with HPs for the GridSearch", header=4)
-space = dict_models[model_class]["HPs"]
-print(space)
-
-
-print_text("set the number of jobs", header=4)
-n_jobs=10
-pre_dispatch_value="1*n_jobs" 
-    #pre_dispatch_value="1*n_jobs" to avoid memory explosion, see below function help
-    #When running optuna on Yoruba for first time I had to reduce the number of jobs
-        #Using more jobs we get "The exit codes of the workers are {SIGABRT(-6)}"
-        #A lot of people is having the same problem even RAM seems to be ok. Some solve it by decreasing n_jobs and others by increase RAM usage.    
-        #"Turns out allocating all CPUs can be unstable, specially when there are other independent programs running that can suddenly have an uncontrolled spike in memory usage."
-        #it seems a problem of memory usage with scikit
-            #https://github.com/scikit-learn-contrib/skope-rules/issues/18
-        #In optuna-Yoruba, I detected that the decreasing the number of cores reduces the usage of memory even having the same number_jobs and optuna processes. Using for example 20 cores, I can run 10 optuna processes with number_jobs=2 using just 200GB per core. If I increase the number of cores to 40, things seems to seed up, but I get the workers error. So we are keeping things conservative with just 20 cores.
-
-
-print_text("define the GridSearch", header=4)
-from sklearn.model_selection import GridSearchCV
-search = GridSearchCV( \
-    estimator=pipeline, \
-    param_grid=space, \
-    scoring="r2", \
-    n_jobs=n_jobs, \
-    cv=cv_scheme, \
-    verbose=4,
-    refit=True, \
-    pre_dispatch=pre_dispatch_value) #if n_jobs>1, then pre_dispatch should be "1*n_jobs", if not, the dataset will be copied many times increasing a lot memory usage
-        #Exhaustive search over specified parameter values for an estimator.
-            #The parameters of the estimator used to apply these methods are optimized by cross-validated grid-search over a parameter grid
-        #estimator
-            #This is assumed to implement the scikit-learn estimator interface. Either estimator needs to provide a ``score`` function, or ``scoring`` must be passed.
-        #param_grid
-            #Dictionary with parameters names (`str`) as keys and lists of parameter settings to try as values, or a list of such dictionaries, in which case the grids spanned by each dictionary in the list are explored. This enables searching over any sequence of parameter settings.
-        #scoring
-            #Strategy to evaluate the performance of the cross-validated model on the test set.
-            #It can be one or several (included in a list or dict...)
-        #n_jobs
-            #Number of jobs to run in parallel
-            #we are using only 1 because we are parallelizing per fold*model class combination.
-        #Refit=True
-            #Refit an estimator using the best found parameters on the WHOLE dataset used for training
-        #cv:
-            #Determines the cross-validation splitting strategy.
-        #pre_dispatch:
-            #Controls the number of jobs that get dispatched during parallel execution. Reducing this number can be useful to avoid an explosion of memory consumption when more jobs get dispatched than CPUs can process.
-            #If `n_jobs` was set to a value higher than one, the data is copied for each point in the grid (and not `n_jobs` times). This is done for efficiency reasons if individual jobs take very little time, but may raise errors if the dataset is large and not enough memory is available.  A workaround in this case is to set `pre_dispatch`. Then, the memory is copied only `pre_dispatch` many times. A reasonable value for `pre_dispatch` is `2 * n_jobs`.
-print(search)
-
-
-print_text("run the GridSearch", header=4)
-search_results = search.fit(X_train, y_train)
-print(search_results)
-
-
-print_text("get the parameters of the best model", header=4)
-best_params = search_results.best_params_
-    #Parameter setting that gave the best results on the hold out data
-print(best_params)
-
-print_text("see best score", header=4)
-print(search_results.best_score_)
-
-print_text("extract the best regressor already fitted", header=4)
-best_model = search_results.best_estimator_
-    #Estimator that was chosen by the search, i.e. estimator which gave highest score (or smallest loss if specified) on the left out data. Not available if ``refit=False``.
-print(best_model)
-
-
-print_text("predict on the test set", header=4)
-y_pred = best_model.predict(X_test)
-
-
-print_text("calculate evaluation score in the test set", header=4)
-from sklearn.metrics import r2_score
-score = r2_score(y_test, y_pred)
-#print(score)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-if False:
-        
-    #In the paper, they run 100 independent XGBoost models with the same HPs but changing the random seed
-        #After selecting XGBoost as the best-performing model class for the prediction of anti-AML drug synergy, we then wanted to account for the full diversity of possible good XGBoost models fit to the highly cor- related AML gene expression data. We therefore trained 100 models and explained the ensemble model. Each individual model had both row and column subsampling turned on for each additional tree fit, and the difference between the models in the ensemble was the random seed given to generate the subsampling.
-            #you need to add a DIFFERENT SEED FOR EACH MODEL!!
-    
-    
-    
-    
-    model = xgb.XGBRegressor(
-        max_depth=13, \
-        min_child_weight=1, \
-        subsample=0.7, \
-        colsample_bytree=0.7, \
-        eta=0.01, \
-        n_estimators=1300, #better 1000\
-        n_jobs=10)
-    
-    model.fit(modeling_data.iloc[:, 1:], modeling_data.iloc[:,0])
-    
-    from sklearn.metrics import r2_score
-    
-    r2_score(modeling_data.iloc[:,0], model.predict(modeling_data.iloc[:, 1:]))
-    
-    
-    
-    
-    
-    ###ale plots
-    
-    #ale plots avoids problems with correlated features and we can use it with any model!!!
-    
-    #alibi is much more maintained than aleplot and it is much easier to install in container
-    from alibi.explainers import ALE, plot_ale
-    import matplotlib.pyplot as plt
-    lr_ale = ALE(model.predict, feature_names=modeling_data.iloc[:,1:].columns, target_names=["log(Flex-Sweep probability)"])
-    lr_exp = lr_ale.explain(modeling_data.iloc[:,1:].to_numpy())
-    plot_ale(lr_exp, n_cols=3, fig_kw={'figwidth':40, 'figheight': 30});
-    plt.savefig( \
-        fname="./eso.png")
-    plt.close()
-        #The ALE on the y-axes of the plot above is in the units of the prediction variable.
-    
-    
-    
-        #https://docs.seldon.io/projects/alibi/en/stable/examples/ale_regression_california.html
-    
-    #This also is unable to detect the positive influence of GC content
-    #check prevous results with aleplot package (jupyter notebook)
-    
-    
-    
-    
-    #####tree shap
-    
-    #tree shap also avoids problems with correlated features, but it is only for tree-based methods, this is not the case for the other SHAP methods
-    
-    #we can use treeshap that does not include unlikely instances!!!
-    #Feature dependencies can skew the approximations made by KernelSHAP. The algorithm estimates SHAP values by randomly sampling feature values. The issue is that, when features are correlated, the sampled values can be unlikely. This means that when using SHAP values we can put too much weight on unlikely observations.
-    #TreeSHAP does not have the problem. However, the algorithm has a different issue due to feature dependencies. That is a feature that has no impact on the prediction can get a SHAP value that is non-zero. This can happen when the feature is correlated with another feature that does impact the prediction. In this case, we can make the incorrect conclusion that a feature has contributed to a prediction.
-        #that is ok, if a feature is correlated with recombination, I expect that features to show a signal, but in the case of GC, the positive effect would remain?
-        #https://christophm.github.io/interpretable-ml-book/shap.html
-        #https://towardsdatascience.com/kernelshap-vs-treeshap-e00f3b3a27db
-    
-    
-    #check if shaps gives effect after controling for the rest of factors.
-        #Note that GC content is also negatively associated with selection accoridng to ALE plots!!
-    
-    import shap
-    
-    explainer = shap.TreeExplainer(model)
-    
-    shaps = explainer(modeling_data.iloc[:, 1:])
-    
-    #shap.plots.waterfall(shaps[0])
-    
-    shap.summary_plot(shaps, modeling_data.iloc[:, 1:])
-    import matplotlib.pyplot as plt
-    plt.savefig( \
-        fname="./eso2.png")
-    plt.close()
-    
-    shap.summary_plot(shaps, modeling_data.iloc[:, 1:], plot_type="bar")
-        #VIPs are very low
-    
-    #By default a SHAP bar plot will take the mean absolute value of each feature over all the instances (rows) of the dataset.
-    shap.plots.bar(shaps)
-    
-    
-    
-    #plot per feature and instance
-    modeling_data.columns
-    shap.plots.scatter(shaps[:,"recombination_final_1000kb"], color=shaps)
-    shap.plots.scatter(shaps[:,"cons_elements_1000kb"], color=shaps[:, "recombination_final_1000kb"])
-    shap.plots.scatter(shaps[:,"gc_content_1000kb"], color=shaps[:, "recombination_final_1000kb"])
-        #negative association, this makes sense. If a feature is correlated with a causal feature, it can get non-zero shapely values. I understand then that the impact of a feature is not cleaned from the impact of other features. 
-        #I think this should not be the case for ale plot, but CHECK
-        #maybe combine feature importante of shap with ale plots?
-    shap.plots.scatter(shaps[:,"bat_distance_percentile_1"], color=shaps[:, "recombination_final_1000kb"])
-    shap.plots.scatter(shaps[:,"smt_distance_percentile_1"], color=shaps[:, "recombination_final_1000kb"])
-        #As we go away from BAT and SMT genes, the shapely values tend to zero or negative for genes with high recombination
-        #In constras, close to BAT and SMT genes, we find positive shapely values even for high-recombination genes, suggesting that proximity to these genes has a positive impact on the probability of selection independently of recombination rate.
-        #There is, of course, noise with many genes being close to BAT/SMT genes but still having non-positive shapely values. So we need the bootstrap test.
-    
-    
-    
+#if best model not 0.69, try R2 as scorer
+    #also check what happens if incresing estimators manually
