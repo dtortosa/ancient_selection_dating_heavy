@@ -443,10 +443,10 @@ final_model = Pipeline( \
                 max_depth=14,
                 min_child_weight=23,
                 gamma=0.01,
-                subsample=1,
-                colsample_bytree=1,
-                colsample_bylevel=0.7,
-                colsample_bynode=0.7,
+                subsample=1.0,
+                colsample_bytree=0.9,
+                colsample_bylevel=0.65,
+                colsample_bynode=0.65,
                 max_delta_step=14,
                 reg_lambda=1,
                 reg_alpha=0.5,
@@ -463,9 +463,15 @@ print(score)
 
 
 
+#####PIENSA SI USAR TODO EL SET O SOLO TRAINING, PORQUE SALE DIFERENTE Y PERDEMOS DATOS. SI YA TENEMOS VALDIADO EL MODELO EN EL HELD-OUT...
+
 
 
 print_text("ALE plots", header=1)
+
+run_bash(" \
+    cd ./results/selected_model_class; \
+    mkdir ./ale_plots")
 
 #ale plots avoids problems with correlated features and we can use it with any model!!!
     #see jupyter notebooks for details
@@ -476,11 +482,11 @@ from alibi.explainers import ALE, plot_ale
     #warning numba
     #I think it is ok but check
 import matplotlib.pyplot as plt
-lr_ale = ALE(final_model.predict, feature_names=modeling_data.iloc[:,1:].columns, target_names=["log(Flex-Sweep probability)"])
-lr_exp = lr_ale.explain(modeling_data.iloc[:,1:].to_numpy())
+lr_ale = ALE(final_model.predict, feature_names=train[predictors].columns, target_names=["log(Flex-Sweep probability)"])
+lr_exp = lr_ale.explain(train[predictors].to_numpy())
 plot_ale(lr_exp, n_cols=3, fig_kw={'figwidth':40, 'figheight': 30});
 plt.savefig( \
-    fname="./eso3.png")
+    fname="./results/selected_model_class/ale_plots/aleplots_all_features_train.png")
 plt.close()
     #The ALE on the y-axes of the plot above is in the units of the prediction variable.
 
