@@ -1,5 +1,5 @@
 eso = pd.read_csv("./results/model_comparison/model_class_selection_yoruba_hg19.tsv", sep="\t", header=0)
-
+#if not finished yet, you can load all individual files and then append
 
 import json
 eso["best_params"].apply(lambda x: json.loads(x.replace("\'", "\"")))

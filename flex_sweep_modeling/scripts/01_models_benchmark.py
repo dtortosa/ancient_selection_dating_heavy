@@ -170,7 +170,7 @@ print_text("prepare folder structure", header=1)
 run_bash(" \
     mkdir \
         --parents \
-        ./results/model_comparison; \
+        ./results/model_comparison/individual_results; \
     ls -l ./results")
 
 
@@ -885,7 +885,7 @@ dict_models["neural_nets"]["HPs"] = { \
     "regressor__model__n_layers": [5], \
     "regressor__model__init_mode": ["orthogonal"], \
     "regressor__model__dropout_rate": [0.07], \
-    "regressor__model__activation": ["tanh", "selu"], \
+    "regressor__model__activation": ["tanh"], \
     "regressor__loss": ["mse"], \
     "regressor__epochs": [630], \
     "regressor__batch_size": [10, 100, 200]} #
@@ -972,7 +972,7 @@ print(dict_models["neural_nets"])
         #second optuna attempt
             #selu followed by hard sigmoid
         #solution
-            #tanh and selu
+            #tanh
     #loss function
         #first optuna attempt
             #mse followed by huber and log cosh
@@ -1450,9 +1450,26 @@ def model_evaluation(split, train_index, test_index, model_class):
     score = r2_score(y_test, y_pred)
 
 
-    print_text("return results as a tuple", header=4)
+    print_text("create tuple for results", header=4)
     tuple_results = (split, model_class, best_params, score)
     print(tuple_results)
+
+    print_text("convert the tuple of results to DF", header=3)
+    tuple_results_df = pd.DataFrame([tuple_results], columns=["split", "model_class", "best_params", "score"])
+        #the tuple has to be in a list in order to be transformed to DF
+    print(tuple_results_df)
+
+    print_text("save the table for the selected model and split", header=3)
+    tuple_results_df.to_csv( \
+        "./results/model_comparison/individual_results/selection_yoruba_hg19_" + model_class + "_" + str(split) + ".tsv", \
+        sep='\t', \
+        header=True, \
+        index=False)
+            #header=False because we are appending in a existing file
+            #mode="a"
+                #'a' for appending (which on some Unix systems, means that all writes append to the end of the file regardless of the current seek position).
+
+    #return the tuple so it can be combined with the results of the other models
     return tuple_results
 
 #run it across 2 splits for elastic net only

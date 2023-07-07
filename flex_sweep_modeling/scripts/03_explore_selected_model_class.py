@@ -458,201 +458,201 @@ print(cv_scheme)
 
 
 
-print_text("notes about XGBosot", header=1)
-#general notes about gradient boosting
-    #The idea of boosting came out of the idea of whether a weak learner can be modified to become better. Hypothesis boosting was the idea of filtering observations, leaving those observations that the weak learner can handle and focusing on developing new weak learns to handle the remaining difficult observations.
-    #A first implementation of this was AdaBoost
-        #AdaBoost works by weighting the observations, putting more weight on difficult to classify instances and less on those already handled well. New weak learners are added sequentially that focus their training on the more difficult patterns.
-        #This means that samples that are difficult to classify receive increasing larger weights until the algorithm identifies a model that correctly classifies these samples
-        #Predictions are made by majority vote of the weak learners’ predictions, weighted by their individual accuracy.
-    #This was further developed into Gradient Boosting Machines
-        #the objective is to minimize the loss of the model by adding weak learners using a gradient descent like procedure.
-            #The job of the algorithm is to find a set of internal model parameters (predictors) that perform well against some performance measure such as logarithmic loss or mean squared error. 
-            #Optimization is a type of searching process and you can think of this search as learning. The optimization algorithm is called “gradient descent“, where “gradient” refers to the calculation of an error gradient or slope of error and “descent” refers to the moving down along that slope towards some minimum level of error.
-        #This class of algorithms were described as a stage-wise additive model. This is because one new weak learner is added at a time and existing weak learners in the model are frozen and left unchanged.
-            #Note that this stagewise strategy is different from stepwise approaches that readjust previously entered terms when new ones are added
-        #The generalization allowed arbitrary differentiable loss functions to be used, expanding the technique beyond binary classification problems to support regression, multi-class classification and more.
-    #How gradient boost works
-        #1. A loss function to be optimized, i.e., you calculate the loss based on the predictions of your first tree.
-            #many standard loss functions are supported and you can define your own.
-            #For example, regression may use a squared error and classification may use logarithmic loss.
-            #A benefit of the gradient boosting framework is that a new boosting algorithm does not have to be derived for each loss function that may want to be used, instead, it is a generic enough framework that any differentiable loss function can be used.
-        #2. A weak learner to make predictions.
-            #Decision trees are used as the weak learner in gradient boosting.
-            #We use regression trees. They output real values for splits, thus their output can be added together. This allows to add the output of subsequent models and “correct” the residuals in the predictions.
-            #Trees are constructed in a greedy manner, choosing the best split points based on purity scores like Gini or to minimize the loss.
-            #Initially, such as in the case of AdaBoost, very short decision trees were used that only had a single split, called a decision stump. Larger trees can be used generally with 4-to-8 levels.
-            #It is common to constrain the weak learners in specific ways, such as a maximum number of layers, nodes, splits or leaf nodes. This is to ensure that the learners remain weak, but can still be constructed in a greedy manner. 
-                #THIS SEEMS IMPORTANT, as it seems to reduce overfitting when adding many learners.
-        #3. An additive model to add weak learners to minimize the loss function.
-            #Trees are added one at a time, and existing trees in the model are not changed.
-            #A gradient descent procedure is used to minimize the loss when adding trees.
-            #Traditionally, gradient descent is used to minimize a set of parameters, such as the coefficients in a regression equation or weights in a neural network. After calculating error or loss, the weights are updated to minimize that error.
-            #Instead of parameters, we have weak learner sub-models or more specifically decision trees. After calculating the loss, to perform the gradient descent procedure, we must add a tree to the model that reduces the loss (i.e. follow the gradient). We do this by parameterizing the tree, then modify the parameters of the tree and move in the right direction by reducing the residual loss.
-                #Basically we train the new tree in order to fit the loss of the current set of trees.
-            #The output for the new tree is then added to the output of the existing sequence of trees in an effort to correct or improve the final output of the model.
-                #you combine the existing ensemble of tree with the new tree.
-            #The new ensemble is used to predict and the new loss is then fitted by a new tree.
-            #A fixed number of trees are added and then we stop. We can also stop training stops once loss reaches an acceptable level or no longer improves on an external validation dataset.
-    #summary
-        #steps
-            #you train a decision tree
-            #calculate the loss, 
-            #train a new tree using the LOSS, the error.
-            #add the new trained tree to the ensemble with the previous tree, i.e., you are BOOSTING the previous tree with a new one. Each time you add a new tree is a boosting round.
-            #make predictions again
-            #calculate again the loss
-            #use this loss to train a new tree
-            #and so on...
-                #https://www.youtube.com/watch?v=yw-E__nDkKU&ab_channel=EmmaDing
-        #I think this approach makes process to focus on the parts of the data that are more difficult to learn as you try to fit the residuals of the current model when adding a new tree.
-    #Improvements to Basic Gradient Boosting
-        #Gradient boosting is a greedy algorithm and can overfit a training dataset quickly.
-        #It can benefit from regularization methods that penalize various parts of the algorithm and generally improve the performance of the algorithm by reducing overfitting.
-            #1.Tree Constraints
-                #It is important that the weak learners have skill but remain weak. There are a number of ways that the trees can be constrained.
-                #A good general heuristic is that the more constrained tree creation is, the more trees you will need in the model, and the reverse, where less constrained individual trees, the fewer trees that will be required.
-                #Below are some constraints that can be imposed on the construction of decision trees:
-                    #Number of trees, generally adding more trees to the model can be very slow to overfit. The advice is to keep adding trees until no further improvement is observed.
-                        #This means there is a low-risk of overfitting by adding trees, so just add them until there is no improvement.
-                    #Tree depth, deeper trees are more complex trees and shorter trees are preferred. Generally, better results are seen with 4-8 levels.
-                    #Number of nodes or number of leaves, like depth, this can constrain the size of the tree, but is not constrained to a symmetrical structure if other constraints are used.
-                    #Number of observations per split imposes a minimum constraint on the amount of training data at a training node before a split can be considered
-                    #Minimum improvement to loss is a constraint on the improvement of any split added to a tree.
-            #2.Shrinkage - Weighted Updates
-                #The predictions of each tree are added together sequentially.
-                #The contribution of each tree to this sum (previous ensemble) can be weighted to slow down the learning by the algorithm. This weighting is called a shrinkage or a learning rate.
-                    #Similar to a learning rate in stochastic optimization, shrinkage reduces the influence of each individual tree and leaves space for future trees to improve the model.
-                    #each individual tree has less impact on the global output because you limit how much change an individual tree can make in a single step.
-                #In other words
-                    #The learning rate controls the amount of contribution that each model has on the ensemble prediction.
-                #The effect is that learning is slowed down, in turn require more trees to be added to the model, in turn taking longer to train, providing a configuration trade-off between the number of trees and learning rate.
-                #It is common to have small values in the range of 0.1 to 0.3, as well as values less than 0.1.
-            #3.Random sampling
-                #A big insight into bagging ensembles and random forest was allowing trees to be greedily created from subsamples of the training dataset, so trees and errors are less correlated.
-                #This same benefit can be used to reduce the correlation between the trees in the sequence in gradient boosting models.
-                #This variation of boosting is called stochastic gradient boosting.
-                #at each iteration a subsample of the training data is drawn at random (without replacement) from the full training dataset. The randomly selected subsample is then used, instead of the full sample, to fit the base learner
-                    #I understand the base learner is the weak learner that is being used for boosting.
-                #A few variants of stochastic boosting that can be used:
-                    #Subsample rows before creating each tree.
-                    #Subsample columns before creating each tree
-                    #Subsample columns before considering each split.
-                #Generally, aggressive sub-sampling such as selecting only 50% of the data has shown to be beneficial.
-                #According to user feedback, using column sub-sampling prevents over-fitting even more so than the traditional row sub-sampling
-                    #XGBoost: A Scalable Tree Boosting System, 2016
-            #4.Penalized Learning
-                #Additional constraints can be imposed on the parameterized trees in addition to their structure.
-                #Classical decision trees like CART are not used as weak learners, instead a modified form called a regression tree is used that has numeric values in the leaf nodes (also called terminal nodes). The values in the leaves of the trees can be called weights in some literature.
-                    #In classical decision trees you have a condition like predictor X1 is higher than 30. 
-                    #I understand that in regression trees we have just a number of weight in the node instead of a condition.
-                #As such, the leaf weight values of the trees can be regularized using popular regularization functions, such as:
-                    #L1 regularization of weights.
-                    #L2 regularization of weights.
-                #The additional regularization term helps to smooth the final learnt weights to avoid over-fitting. Intuitively, the regularized objective will tend to select a model employing simple and predictive functions.
-                    #These are the regularization methods of Ridge and Lasso.
-    #links
-        #https://machinelearningmastery.com/gentle-introduction-gradient-boosting-algorithm-machine-learning/
-        #https://youtu.be/yw-E__nDkKU
-#general notes about Extreme Gradient Boosting
-    #Gradient boosting refers to a class of ensemble machine learning algorithms that can be used for classification or regression predictive modeling problems.
-    #Ensembles are constructed from decision tree models. Trees are added one at a time to the ensemble and fit to correct the prediction errors made by prior models. This is a type of ensemble machine learning model referred to as boosting.
-    #Models are fit using any arbitrary differentiable loss function and gradient descent optimization algorithm. This gives the technique its name, “gradient boosting,” as the loss gradient is minimized as the model is fit, much like a neural network.
-    #Extreme Gradient Boosting, or XGBoost for short, is an efficient open-source implementation of the gradient boosting algorithm. As such, XGBoost is an algorithm, an open-source project, and a Python library.
-    #It is designed to be both computationally efficient (e.g. fast to execute) and highly effective, perhaps more effective than other open-source implementations.
-    #The two main reasons to use XGBoost are execution speed and model performance.
-    #XGBoost dominates structured or tabular datasets on classification and regression predictive modeling problems. The evidence is that it is the go-to algorithm for competition winners on the Kaggle competitive data science platform.
-    #link
-        #https://machinelearningmastery.com/xgboost-for-regression/
-#About the HPs
-    #To fully understand their impact see general notes and, in particular, regularization methods used in order to avoid overfitting.
-        #booster: 
-            #The booster to use, you can use trees as base learner or linear models. We use trees as linear does not seem to improver over a simpler linear model
-            #https://stats.stackexchange.com/questions/230388/how-does-linear-base-learner-works-in-boosting-and-how-does-it-works-in-the-xgb
-        #n_estimators: 
-            #An important hyperparameter for the XGBoost ensemble algorithm is the number of decision trees used in the ensemble.
-            #Recall that decision trees are added to the model sequentially in an effort to correct and improve upon the predictions made by prior trees. As such, more trees is often better.
-            #The number of trees can be set via the “n_estimators” argument and defaults to 100.
-            #The number of trees in the ensemble, often increased until no further improvements are seen.
-            #We will explore up to around 1000.
-        #max_depth: 
-            #Varying the depth of each tree added to the ensemble is another important hyperparameter for gradient boosting.
-            #The tree depth controls how specialized each tree is to the training dataset: how general or overfit it might be. Trees are preferred that are not too shallow and general (like AdaBoost) and not too deep and specialized (like bootstrap aggregation [of RF?]).
-            #Gradient boosting generally performs well with trees that have a modest depth, finding a balance between skill and generality.
-            #Tree depth is controlled via the “max_depth” argument and defaults to 6.
-            #The maximum depth of each tree, often values are between 1 and 10. We explore this range along with None (i.e., no depth limitation).
-        #min_child_weight
-            #If the tree partition step results in a leaf node with the sum of instance weight less than min_child_weight, then the building process will give up further partitioning. The larger min_child_weight is, the more conservative the algorithm will be.
-                #https://xgboost.readthedocs.io/en/latest/parameter.html#
-            #For a regression task with squared loss (the default) min_child_weight is just the number of instances in a child.
-                #https://stackoverflow.com/questions/69786993/tuning-xgboost-hyperparameters-with-randomizedsearchcv/69830350#69830350
-                #https://xgboost.readthedocs.io/en/latest/parameter.html#
-            #If, for example, you have 500000 observations, it will probably not make (much of) a difference wether 1, 2, 3 or 4 observations end up in a leaf. So you have to use a number of instances that can be relevant given your sample size.
-            #Used to control over-fitting. Higher values prevent a model from learning relations that might be highly specific to the particular sample selected for a tree.
-            #Too high values can lead to under-fitting; hence, it should be tuned using CV.
-                #https://www.analyticsvidhya.com/blog/2016/03/complete-guide-parameter-tuning-xgboost-with-codes-python/
-            #we will explore 1, 10 and 100 as we have thousands of samples. So I only see impact after setting a minimum of at least tens of samples.
-        #eta:
-            #Learning rate controls the amount of contribution that each model has on the ensemble prediction.
-                #Makes the model more robust by shrinking the weights on each step
-            #Smaller rates may require more decision trees in the ensemble (because each individual tree has less impact).
-            #The learning rate can be controlled via the “eta” argument and defaults to 0.3.
-            #It is common to have small values in the range of 0.1 to 0.3, as well as values less than 0.1 (0.01-0.2). We have also added 0.001 to cover more space.
-        #subsample
-            #The number of samples used to fit each tree can be varied. This means that each tree is fit on a randomly selected subset of the training dataset.
-            #Using fewer samples introduces more variance for each tree, although it can improve the overall performance of the model.
-            #The number of samples used to fit each tree is specified by the “subsample” argument and can be set to a fraction of the training dataset size. By default, it is set to 1.0 to use the entire training dataset.
-            #Typical values: 0.5-1. We will explore from 0.1 to 1 just in case, like in RF.
-        #“colsample_bytree” and “colsample_bylevel”
-            #The number of features used to fit each decision tree can be varied.
-            #Like changing the number of samples, changing the number of features introduces additional variance into the model, which may improve performance, although it might require an increase in the number of trees.
-            #The number of features used by each tree is taken as a random sample and is specified by the “colsample_bytree” argument and defaults to all features in the training dataset, e.g. 100 percent or a value of 1.0. You can also sample columns for each split, and this is controlled by the “colsample_bylevel” argument, but we will not look at this hyperparameter here.
-            #We will explore from 0.1 to 1 like in RF.
+print_text("notes about XGBoost", header=1)
+    #general notes about gradient boosting
+        #The idea of boosting came out of the idea of whether a weak learner can be modified to become better. Hypothesis boosting was the idea of filtering observations, leaving those observations that the weak learner can handle and focusing on developing new weak learns to handle the remaining difficult observations.
+        #A first implementation of this was AdaBoost
+            #AdaBoost works by weighting the observations, putting more weight on difficult to classify instances and less on those already handled well. New weak learners are added sequentially that focus their training on the more difficult patterns.
+            #This means that samples that are difficult to classify receive increasing larger weights until the algorithm identifies a model that correctly classifies these samples
+            #Predictions are made by majority vote of the weak learners’ predictions, weighted by their individual accuracy.
+        #This was further developed into Gradient Boosting Machines
+            #the objective is to minimize the loss of the model by adding weak learners using a gradient descent like procedure.
+                #The job of the algorithm is to find a set of internal model parameters (predictors) that perform well against some performance measure such as logarithmic loss or mean squared error. 
+                #Optimization is a type of searching process and you can think of this search as learning. The optimization algorithm is called “gradient descent“, where “gradient” refers to the calculation of an error gradient or slope of error and “descent” refers to the moving down along that slope towards some minimum level of error.
+            #This class of algorithms were described as a stage-wise additive model. This is because one new weak learner is added at a time and existing weak learners in the model are frozen and left unchanged.
+                #Note that this stagewise strategy is different from stepwise approaches that readjust previously entered terms when new ones are added
+            #The generalization allowed arbitrary differentiable loss functions to be used, expanding the technique beyond binary classification problems to support regression, multi-class classification and more.
+        #How gradient boost works
+            #1. A loss function to be optimized, i.e., you calculate the loss based on the predictions of your first tree.
+                #many standard loss functions are supported and you can define your own.
+                #For example, regression may use a squared error and classification may use logarithmic loss.
+                #A benefit of the gradient boosting framework is that a new boosting algorithm does not have to be derived for each loss function that may want to be used, instead, it is a generic enough framework that any differentiable loss function can be used.
+            #2. A weak learner to make predictions.
+                #Decision trees are used as the weak learner in gradient boosting.
+                #We use regression trees. They output real values for splits, thus their output can be added together. This allows to add the output of subsequent models and “correct” the residuals in the predictions.
+                #Trees are constructed in a greedy manner, choosing the best split points based on purity scores like Gini or to minimize the loss.
+                #Initially, such as in the case of AdaBoost, very short decision trees were used that only had a single split, called a decision stump. Larger trees can be used generally with 4-to-8 levels.
+                #It is common to constrain the weak learners in specific ways, such as a maximum number of layers, nodes, splits or leaf nodes. This is to ensure that the learners remain weak, but can still be constructed in a greedy manner. 
+                    #THIS SEEMS IMPORTANT, as it seems to reduce overfitting when adding many learners.
+            #3. An additive model to add weak learners to minimize the loss function.
+                #Trees are added one at a time, and existing trees in the model are not changed.
+                #A gradient descent procedure is used to minimize the loss when adding trees.
+                #Traditionally, gradient descent is used to minimize a set of parameters, such as the coefficients in a regression equation or weights in a neural network. After calculating error or loss, the weights are updated to minimize that error.
+                #Instead of parameters, we have weak learner sub-models or more specifically decision trees. After calculating the loss, to perform the gradient descent procedure, we must add a tree to the model that reduces the loss (i.e. follow the gradient). We do this by parameterizing the tree, then modify the parameters of the tree and move in the right direction by reducing the residual loss.
+                    #Basically we train the new tree in order to fit the loss of the current set of trees.
+                #The output for the new tree is then added to the output of the existing sequence of trees in an effort to correct or improve the final output of the model.
+                    #you combine the existing ensemble of tree with the new tree.
+                #The new ensemble is used to predict and the new loss is then fitted by a new tree.
+                #A fixed number of trees are added and then we stop. We can also stop training stops once loss reaches an acceptable level or no longer improves on an external validation dataset.
+        #summary
+            #steps
+                #you train a decision tree
+                #calculate the loss, 
+                #train a new tree using the LOSS, the error.
+                #add the new trained tree to the ensemble with the previous tree, i.e., you are BOOSTING the previous tree with a new one. Each time you add a new tree is a boosting round.
+                #make predictions again
+                #calculate again the loss
+                #use this loss to train a new tree
+                #and so on...
+                    #https://www.youtube.com/watch?v=yw-E__nDkKU&ab_channel=EmmaDing
+            #I think this approach makes process to focus on the parts of the data that are more difficult to learn as you try to fit the residuals of the current model when adding a new tree.
+        #Improvements to Basic Gradient Boosting
+            #Gradient boosting is a greedy algorithm and can overfit a training dataset quickly.
+            #It can benefit from regularization methods that penalize various parts of the algorithm and generally improve the performance of the algorithm by reducing overfitting.
+                #1.Tree Constraints
+                    #It is important that the weak learners have skill but remain weak. There are a number of ways that the trees can be constrained.
+                    #A good general heuristic is that the more constrained tree creation is, the more trees you will need in the model, and the reverse, where less constrained individual trees, the fewer trees that will be required.
+                    #Below are some constraints that can be imposed on the construction of decision trees:
+                        #Number of trees, generally adding more trees to the model can be very slow to overfit. The advice is to keep adding trees until no further improvement is observed.
+                            #This means there is a low-risk of overfitting by adding trees, so just add them until there is no improvement.
+                        #Tree depth, deeper trees are more complex trees and shorter trees are preferred. Generally, better results are seen with 4-8 levels.
+                        #Number of nodes or number of leaves, like depth, this can constrain the size of the tree, but is not constrained to a symmetrical structure if other constraints are used.
+                        #Number of observations per split imposes a minimum constraint on the amount of training data at a training node before a split can be considered
+                        #Minimum improvement to loss is a constraint on the improvement of any split added to a tree.
+                #2.Shrinkage - Weighted Updates
+                    #The predictions of each tree are added together sequentially.
+                    #The contribution of each tree to this sum (previous ensemble) can be weighted to slow down the learning by the algorithm. This weighting is called a shrinkage or a learning rate.
+                        #Similar to a learning rate in stochastic optimization, shrinkage reduces the influence of each individual tree and leaves space for future trees to improve the model.
+                        #each individual tree has less impact on the global output because you limit how much change an individual tree can make in a single step.
+                    #In other words
+                        #The learning rate controls the amount of contribution that each model has on the ensemble prediction.
+                    #The effect is that learning is slowed down, in turn require more trees to be added to the model, in turn taking longer to train, providing a configuration trade-off between the number of trees and learning rate.
+                    #It is common to have small values in the range of 0.1 to 0.3, as well as values less than 0.1.
+                #3.Random sampling
+                    #A big insight into bagging ensembles and random forest was allowing trees to be greedily created from subsamples of the training dataset, so trees and errors are less correlated.
+                    #This same benefit can be used to reduce the correlation between the trees in the sequence in gradient boosting models.
+                    #This variation of boosting is called stochastic gradient boosting.
+                    #at each iteration a subsample of the training data is drawn at random (without replacement) from the full training dataset. The randomly selected subsample is then used, instead of the full sample, to fit the base learner
+                        #I understand the base learner is the weak learner that is being used for boosting.
+                    #A few variants of stochastic boosting that can be used:
+                        #Subsample rows before creating each tree.
+                        #Subsample columns before creating each tree
+                        #Subsample columns before considering each split.
+                    #Generally, aggressive sub-sampling such as selecting only 50% of the data has shown to be beneficial.
+                    #According to user feedback, using column sub-sampling prevents over-fitting even more so than the traditional row sub-sampling
+                        #XGBoost: A Scalable Tree Boosting System, 2016
+                #4.Penalized Learning
+                    #Additional constraints can be imposed on the parameterized trees in addition to their structure.
+                    #Classical decision trees like CART are not used as weak learners, instead a modified form called a regression tree is used that has numeric values in the leaf nodes (also called terminal nodes). The values in the leaves of the trees can be called weights in some literature.
+                        #In classical decision trees you have a condition like predictor X1 is higher than 30. 
+                        #I understand that in regression trees we have just a number of weight in the node instead of a condition.
+                    #As such, the leaf weight values of the trees can be regularized using popular regularization functions, such as:
+                        #L1 regularization of weights.
+                        #L2 regularization of weights.
+                    #The additional regularization term helps to smooth the final learnt weights to avoid over-fitting. Intuitively, the regularized objective will tend to select a model employing simple and predictive functions.
+                        #These are the regularization methods of Ridge and Lasso.
         #links
-            #https://machinelearningmastery.com/xgboost-for-regression/ 
-            #https://stackoverflow.com/a/69830350/12772630
-            #https://datascience.stackexchange.com/a/108242
-    #Additional HPs considered
-        #there are more HPs that can be useful to combat overfitting and improve performance like lamba or alpha (for regularization) or gamma. This can be relevant in our case given that we have a distribution with most of the data around the extreme values (close to 0 and close to 1). Therefore, I think we can make good use of a flexible model.
-            #https://www.analyticsvidhya.com/blog/2016/03/complete-guide-parameter-tuning-xgboost-with-codes-python/
-        #more manual tuning if you want
-            #You can also narrow the hyperparametric space by using a sequential approach: All default, just tune max_depth and min_child_weight. See what range of values give the best and select it. Repeat now with subsample and colsample leaving all default except max_depth and min_child_weight. Select the best range for subsample and colsample. Then tune eta and n_estimators.
+            #https://machinelearningmastery.com/gentle-introduction-gradient-boosting-algorithm-machine-learning/
+            #https://youtu.be/yw-E__nDkKU
+    #general notes about Extreme Gradient Boosting
+        #Gradient boosting refers to a class of ensemble machine learning algorithms that can be used for classification or regression predictive modeling problems.
+        #Ensembles are constructed from decision tree models. Trees are added one at a time to the ensemble and fit to correct the prediction errors made by prior models. This is a type of ensemble machine learning model referred to as boosting.
+        #Models are fit using any arbitrary differentiable loss function and gradient descent optimization algorithm. This gives the technique its name, “gradient boosting,” as the loss gradient is minimized as the model is fit, much like a neural network.
+        #Extreme Gradient Boosting, or XGBoost for short, is an efficient open-source implementation of the gradient boosting algorithm. As such, XGBoost is an algorithm, an open-source project, and a Python library.
+        #It is designed to be both computationally efficient (e.g. fast to execute) and highly effective, perhaps more effective than other open-source implementations.
+        #The two main reasons to use XGBoost are execution speed and model performance.
+        #XGBoost dominates structured or tabular datasets on classification and regression predictive modeling problems. The evidence is that it is the go-to algorithm for competition winners on the Kaggle competitive data science platform.
+        #link
+            #https://machinelearningmastery.com/xgboost-for-regression/
+    #About the HPs
+        #To fully understand their impact see general notes and, in particular, regularization methods used in order to avoid overfitting.
+            #booster: 
+                #The booster to use, you can use trees as base learner or linear models. We use trees as linear does not seem to improver over a simpler linear model
+                #https://stats.stackexchange.com/questions/230388/how-does-linear-base-learner-works-in-boosting-and-how-does-it-works-in-the-xgb
+            #n_estimators: 
+                #An important hyperparameter for the XGBoost ensemble algorithm is the number of decision trees used in the ensemble.
+                #Recall that decision trees are added to the model sequentially in an effort to correct and improve upon the predictions made by prior trees. As such, more trees is often better.
+                #The number of trees can be set via the “n_estimators” argument and defaults to 100.
+                #The number of trees in the ensemble, often increased until no further improvements are seen.
+                #We will explore up to around 1000.
+            #max_depth: 
+                #Varying the depth of each tree added to the ensemble is another important hyperparameter for gradient boosting.
+                #The tree depth controls how specialized each tree is to the training dataset: how general or overfit it might be. Trees are preferred that are not too shallow and general (like AdaBoost) and not too deep and specialized (like bootstrap aggregation [of RF?]).
+                #Gradient boosting generally performs well with trees that have a modest depth, finding a balance between skill and generality.
+                #Tree depth is controlled via the “max_depth” argument and defaults to 6.
+                #The maximum depth of each tree, often values are between 1 and 10. We explore this range along with None (i.e., no depth limitation).
+            #min_child_weight
+                #If the tree partition step results in a leaf node with the sum of instance weight less than min_child_weight, then the building process will give up further partitioning. The larger min_child_weight is, the more conservative the algorithm will be.
+                    #https://xgboost.readthedocs.io/en/latest/parameter.html#
+                #For a regression task with squared loss (the default) min_child_weight is just the number of instances in a child.
+                    #https://stackoverflow.com/questions/69786993/tuning-xgboost-hyperparameters-with-randomizedsearchcv/69830350#69830350
+                    #https://xgboost.readthedocs.io/en/latest/parameter.html#
+                #If, for example, you have 500000 observations, it will probably not make (much of) a difference wether 1, 2, 3 or 4 observations end up in a leaf. So you have to use a number of instances that can be relevant given your sample size.
+                #Used to control over-fitting. Higher values prevent a model from learning relations that might be highly specific to the particular sample selected for a tree.
+                #Too high values can lead to under-fitting; hence, it should be tuned using CV.
+                    #https://www.analyticsvidhya.com/blog/2016/03/complete-guide-parameter-tuning-xgboost-with-codes-python/
+                #we will explore 1, 10 and 100 as we have thousands of samples. So I only see impact after setting a minimum of at least tens of samples.
+            #eta:
+                #Learning rate controls the amount of contribution that each model has on the ensemble prediction.
+                    #Makes the model more robust by shrinking the weights on each step
+                #Smaller rates may require more decision trees in the ensemble (because each individual tree has less impact).
+                #The learning rate can be controlled via the “eta” argument and defaults to 0.3.
+                #It is common to have small values in the range of 0.1 to 0.3, as well as values less than 0.1 (0.01-0.2). We have also added 0.001 to cover more space.
+            #subsample
+                #The number of samples used to fit each tree can be varied. This means that each tree is fit on a randomly selected subset of the training dataset.
+                #Using fewer samples introduces more variance for each tree, although it can improve the overall performance of the model.
+                #The number of samples used to fit each tree is specified by the “subsample” argument and can be set to a fraction of the training dataset size. By default, it is set to 1.0 to use the entire training dataset.
+                #Typical values: 0.5-1. We will explore from 0.1 to 1 just in case, like in RF.
+            #“colsample_bytree” and “colsample_bylevel”
+                #The number of features used to fit each decision tree can be varied.
+                #Like changing the number of samples, changing the number of features introduces additional variance into the model, which may improve performance, although it might require an increase in the number of trees.
+                #The number of features used by each tree is taken as a random sample and is specified by the “colsample_bytree” argument and defaults to all features in the training dataset, e.g. 100 percent or a value of 1.0. You can also sample columns for each split, and this is controlled by the “colsample_bylevel” argument, but we will not look at this hyperparameter here.
+                #We will explore from 0.1 to 1 like in RF.
+            #links
+                #https://machinelearningmastery.com/xgboost-for-regression/ 
+                #https://stackoverflow.com/a/69830350/12772630
                 #https://datascience.stackexchange.com/a/108242
+        #Additional HPs considered
+            #there are more HPs that can be useful to combat overfitting and improve performance like lamba or alpha (for regularization) or gamma. This can be relevant in our case given that we have a distribution with most of the data around the extreme values (close to 0 and close to 1). Therefore, I think we can make good use of a flexible model.
                 #https://www.analyticsvidhya.com/blog/2016/03/complete-guide-parameter-tuning-xgboost-with-codes-python/
-        #New HPS
-            #gamma:
-                #A node is split only when the resulting split gives a positive reduction in the loss function. Gamma specifies the minimum loss reduction required to make a split.
-                #Larger values make the algorithm conservative. The values can vary depending on the loss function and should be tuned.
-                #Range: [0, infinite]; default 0
-                #Following analysis vidha, I have explored values between 0 and 1, getting better results with 0.4, so I going to restrict the search to that range.
-            #alpha
-                #L1 regularization term on weight (analogous to Lasso regression)
-                #It can be used in case of very high dimensionality so that the algorithm runs faster when implemented
-                #Increasing this value will make model more conservative.
-                #default 0
-                #I have used the range of values from Analytics Vidhya as template, which is very similar to the range of values I used for L1 in elastic net. I have also added 1e-6 because I got the best results with 1e-5.
-                #I have checked you get the same results with alpha and reg_alpha
-            #lambda:
-                #L2 regularization term on weights (analogous to Ridge regression)
-                #This is used to handle the regularization part of XGBoost. Though many data scientists don’t use it often, it should be explored to reduce overfitting.
-                #Increasing this value will make model more conservative
-                #default 1
-                #i have used the same range than in elastic net for L2 but with less data points
-            #colsample_by*
-                #The parameters specify the percentage of random columns to sample from total columns available. colsample_by parameters work cumulatively, as each tree has different levels which end in nodes. The sampling can be done at each tree, level, and/or node.If you set the sampling to 0.5, you will use half off your columns. For example, the combination {colsample_bytree:0.5, colsample_bylevel: 0.5, colsample_bynode:0.5} with 64 initial features will randomly halve features used by the tree to 32, subsequently halve to 16 at the tree levels, and finally halve to 8 features at the node.
-                    #https://stackoverflow.com/questions/51022822/subsample-colsample-bytree-colsample-bylevel-in-xgbclassifier-python-3-x
-                #Summary
-                    #colsample_bytree is the subsample ratio of columns when constructing each tree. Subsampling occurs once for every tree constructed.
-                    #colsample_bylevel is the subsample ratio of columns for each level. Subsampling occurs once for every new depth level reached in a tree. Columns are subsampled from the set of columns chosen for the current tree.
-                    #colsample_bynode is the subsample ratio of columns for each node (split). Subsampling occurs once every time a new split is evaluated. Columns are subsampled from the set of columns chosen for the current level.
-                #All colsample_by* parameters have a range of (0, 1], the default value of 1, and specify the fraction of columns to be subsampled.
-                #this seems to be specially useful when you have many features, as you can use maany different subsets of features across trees, depth levels and nodes. 
-                #I have used the same range between 0 and 1 for all HPs.
-            #Maximum delta step
-                #this is useful for imbalanced class. I used it anyways because we have a continuous variables with a lot of values in the extremes of the distribution.
-                #If the value is set to 0, it means there is no constraint. If it is set to a positive value, it can help making the update step more conservative. Usually this parameter is not needed, but it might help in logistic regression when class is extremely imbalanced. Set it to value of 1-10 might help control the update.
-                    #https://stats.stackexchange.com/questions/233248/max-delta-step-in-xgboost
-                #we use several values between 1 and 10 as recommended by the help.
+            #more manual tuning if you want
+                #You can also narrow the hyperparametric space by using a sequential approach: All default, just tune max_depth and min_child_weight. See what range of values give the best and select it. Repeat now with subsample and colsample leaving all default except max_depth and min_child_weight. Select the best range for subsample and colsample. Then tune eta and n_estimators.
+                    #https://datascience.stackexchange.com/a/108242
+                    #https://www.analyticsvidhya.com/blog/2016/03/complete-guide-parameter-tuning-xgboost-with-codes-python/
+            #New HPS
+                #gamma:
+                    #A node is split only when the resulting split gives a positive reduction in the loss function. Gamma specifies the minimum loss reduction required to make a split.
+                    #Larger values make the algorithm conservative. The values can vary depending on the loss function and should be tuned.
+                    #Range: [0, infinite]; default 0
+                    #Following analysis vidha, I have explored values between 0 and 1, getting better results with 0.4, so I going to restrict the search to that range.
+                #alpha
+                    #L1 regularization term on weight (analogous to Lasso regression)
+                    #It can be used in case of very high dimensionality so that the algorithm runs faster when implemented
+                    #Increasing this value will make model more conservative.
+                    #default 0
+                    #I have used the range of values from Analytics Vidhya as template, which is very similar to the range of values I used for L1 in elastic net. I have also added 1e-6 because I got the best results with 1e-5.
+                    #I have checked you get the same results with alpha and reg_alpha
+                #lambda:
+                    #L2 regularization term on weights (analogous to Ridge regression)
+                    #This is used to handle the regularization part of XGBoost. Though many data scientists don’t use it often, it should be explored to reduce overfitting.
+                    #Increasing this value will make model more conservative
+                    #default 1
+                    #i have used the same range than in elastic net for L2 but with less data points
+                #colsample_by*
+                    #The parameters specify the percentage of random columns to sample from total columns available. colsample_by parameters work cumulatively, as each tree has different levels which end in nodes. The sampling can be done at each tree, level, and/or node.If you set the sampling to 0.5, you will use half off your columns. For example, the combination {colsample_bytree:0.5, colsample_bylevel: 0.5, colsample_bynode:0.5} with 64 initial features will randomly halve features used by the tree to 32, subsequently halve to 16 at the tree levels, and finally halve to 8 features at the node.
+                        #https://stackoverflow.com/questions/51022822/subsample-colsample-bytree-colsample-bylevel-in-xgbclassifier-python-3-x
+                    #Summary
+                        #colsample_bytree is the subsample ratio of columns when constructing each tree. Subsampling occurs once for every tree constructed.
+                        #colsample_bylevel is the subsample ratio of columns for each level. Subsampling occurs once for every new depth level reached in a tree. Columns are subsampled from the set of columns chosen for the current tree.
+                        #colsample_bynode is the subsample ratio of columns for each node (split). Subsampling occurs once every time a new split is evaluated. Columns are subsampled from the set of columns chosen for the current level.
+                    #All colsample_by* parameters have a range of (0, 1], the default value of 1, and specify the fraction of columns to be subsampled.
+                    #this seems to be specially useful when you have many features, as you can use maany different subsets of features across trees, depth levels and nodes. 
+                    #I have used the same range between 0 and 1 for all HPs.
+                #Maximum delta step
+                    #this is useful for imbalanced class. I used it anyways because we have a continuous variables with a lot of values in the extremes of the distribution.
+                    #If the value is set to 0, it means there is no constraint. If it is set to a positive value, it can help making the update step more conservative. Usually this parameter is not needed, but it might help in logistic regression when class is extremely imbalanced. Set it to value of 1-10 might help control the update.
+                        #https://stats.stackexchange.com/questions/233248/max-delta-step-in-xgboost
+                    #we use several values between 1 and 10 as recommended by the help.
 
 
 
@@ -830,7 +830,7 @@ n_estimators_1 = modelfit(
 
 print_text("Tune max_depth and min_child_weight", header=2)
 print_text("wide search", header=3)
-gsearch1 = GridSearchCV( \
+gsearch_depth_child_1 = GridSearchCV( \
     estimator=Pipeline( \
         steps=[ \
             ('scale', preprocessing.StandardScaler()), \
@@ -846,8 +846,8 @@ gsearch1 = GridSearchCV( \
                 nthread=1, 
                 seed=0))]), 
     param_grid={ \
-        "regressor__max_depth": [i for i in range(1,15,4)] + [None], \
-        "regressor__min_child_weight": [1,5,10,15,100]}, \
+        "regressor__max_depth": [i for i in range(1,24,4)] + [None], \
+        "regressor__min_child_weight": [1,5,10,15,25,30,40,50,100]}, \
     scoring="neg_root_mean_squared_error", #there is no R2 in xgboost. We have here different values respect to XGBoost cv, but it seems to be caused by the 'neg'. I have used mae in both, getting again different results... \
     n_jobs=10, \
     cv=cv_scheme, \
@@ -874,12 +874,12 @@ gsearch1 = GridSearchCV( \
             #Controls the number of jobs that get dispatched during parallel execution. Reducing this number can be useful to avoid an explosion of memory consumption when more jobs get dispatched than CPUs can process.
             #If `n_jobs` was set to a value higher than one, the data is copied for each point in the grid (and not `n_jobs` times). This is done for efficiency reasons if individual jobs take very little time, but may raise errors if the dataset is large and not enough memory is available.  A workaround in this case is to set `pre_dispatch`. Then, the memory is copied only `pre_dispatch` many times. A reasonable value for `pre_dispatch` is `2 * n_jobs`.
             #if n_jobs>1, then pre_dispatch should be "1*n_jobs", if not, the dataset will be copied many times increasing a lot memory usage
-gsearch1.fit(train[predictors],train["prob(sweep)"])
-gsearch1.cv_results_, gsearch1.best_params_, gsearch1.best_score_
+gsearch_depth_child_1.fit(train[predictors],train["prob(sweep)"])
+gsearch_depth_child_1.cv_results_, gsearch_depth_child_1.best_params_, gsearch_depth_child_1.best_score_
 
 
 print_text("narrow search", header=3)
-gsearch2 = GridSearchCV( \
+gsearch_depth_child_2 = GridSearchCV( \
     estimator=Pipeline( \
         steps=[ \
         ('scale', preprocessing.StandardScaler()), \
@@ -896,29 +896,29 @@ gsearch2 = GridSearchCV( \
             eval_metric="rmse", 
             seed=0))]),
     param_grid={ \
-        "regressor__max_depth": [8,9,10,11,12], \
-        "regressor__min_child_weight": [8,9,10,11,12]}, \
+        "regressor__max_depth": [11,12,13,14,15], \
+        "regressor__min_child_weight": [23,24,25,26,27]}, \
     scoring="neg_root_mean_squared_error", \
     n_jobs=10, \
     cv=cv_scheme, \
     verbose=4, \
     refit=True, \
     pre_dispatch="1*n_jobs")
-gsearch2.fit(train[predictors],train["prob(sweep)"])
-gsearch2.cv_results_, gsearch2.best_params_, gsearch2.best_score_
+gsearch_depth_child_2.fit(train[predictors],train["prob(sweep)"])
+gsearch_depth_child_2.cv_results_, gsearch_depth_child_2.best_params_, gsearch_depth_child_2.best_score_
 
 
 print_text("Tune gamma", header=2)
 print_text("wide search", header=3)
-gsearch3 = GridSearchCV( \
+gsearch_gamma_1 = GridSearchCV( \
     estimator=Pipeline( \
         steps=[ \
             ('scale', preprocessing.StandardScaler()), \
             ('regressor', xgb.XGBRegressor(
                 learning_rate=0.1,
                 n_estimators=n_estimators_1,
-                max_depth=10,
-                min_child_weight=10,
+                max_depth=14,
+                min_child_weight=23,
                 gamma=0,
                 subsample=0.7,
                 colsample_bytree=0.7,
@@ -934,20 +934,20 @@ gsearch3 = GridSearchCV( \
     verbose=4,
     refit=True, \
     pre_dispatch="1*n_jobs")
-gsearch3.fit(train[predictors],train["prob(sweep)"])
-gsearch3.cv_results_, gsearch3.best_params_, gsearch3.best_score_
+gsearch_gamma_1.fit(train[predictors],train["prob(sweep)"])
+gsearch_gamma_1.cv_results_, gsearch_gamma_1.best_params_, gsearch_gamma_1.best_score_
 
 
 print_text("narrow search", header=3)
-gsearch4 = GridSearchCV( \
+gsearch_gamma_2 = GridSearchCV( \
     estimator=Pipeline( \
         steps=[ \
             ('scale', preprocessing.StandardScaler()), \
             ('regressor', xgb.XGBRegressor(
                 learning_rate=0.1,
                 n_estimators=n_estimators_1,
-                max_depth=10,
-                min_child_weight=10,
+                max_depth=14,
+                min_child_weight=23,
                 gamma=0,
                 subsample=0.7,
                 colsample_bytree=0.7,
@@ -956,20 +956,45 @@ gsearch4 = GridSearchCV( \
                 eval_metric="rmse", 
                 seed=0))]), 
     param_grid={
-        "regressor__gamma": [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]}, 
+        "regressor__gamma": [0.0,0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09]}, 
     scoring="neg_root_mean_squared_error",
     n_jobs=10, \
     cv=cv_scheme, \
     verbose=4,
     refit=True, \
     pre_dispatch="1*n_jobs")
-gsearch4.fit(train[predictors],train["prob(sweep)"])
-gsearch4.cv_results_, gsearch4.best_params_, gsearch4.best_score_
+gsearch_gamma_2.fit(train[predictors],train["prob(sweep)"])
+gsearch_gamma_2.cv_results_, gsearch_gamma_2.best_params_, gsearch_gamma_2.best_score_
 
 
-##VOY POR GAMMA
-    # {'regressor__gamma': 0.05}, -1.9087708133010413)
-##con 387 boosters you got -1.87, check?
+print_text("narrower search", header=3)
+gsearch_gamma_3 = GridSearchCV( \
+    estimator=Pipeline( \
+        steps=[ \
+            ('scale', preprocessing.StandardScaler()), \
+            ('regressor', xgb.XGBRegressor(
+                learning_rate=0.1,
+                n_estimators=n_estimators_1,
+                max_depth=14,
+                min_child_weight=23,
+                gamma=0,
+                subsample=0.7,
+                colsample_bytree=0.7,
+                objective="reg:squarederror",
+                nthread=1, 
+                eval_metric="rmse", 
+                seed=0))]), 
+    param_grid={
+        "regressor__gamma": [0.0, 0.005, 0.0075, 0.01, 0.0125, 0.015, 0.0175]}, 
+    scoring="neg_root_mean_squared_error",
+    n_jobs=10, \
+    cv=cv_scheme, \
+    verbose=4,
+    refit=True, \
+    pre_dispatch="1*n_jobs")
+gsearch_gamma_3.fit(train[predictors],train["prob(sweep)"])
+gsearch_gamma_3.cv_results_, gsearch_gamma_3.best_params_, gsearch_gamma_3.best_score_
+
 
 
 print_text("re-calibrate the number of boosters", header=2)
@@ -977,9 +1002,9 @@ n_estimators_2 = modelfit(
     xgb.XGBRegressor(
         learning_rate=0.1,
         n_estimators=5000,
-        max_depth=10,
-        min_child_weight=10,
-        gamma=0.0,
+        max_depth=14,
+        min_child_weight=23,
+        gamma=0.01,
         subsample=0.7,
         colsample_bytree=0.7,
         objective="reg:squarederror",
@@ -993,16 +1018,16 @@ n_estimators_2 = modelfit(
 
 print_text("Tune subsample and colsample_bytree", header=2)
 print_text("wide search", header=3)
-gsearch5 = GridSearchCV( \
+gsearch_sample_1 = GridSearchCV( \
     estimator=Pipeline( \
         steps=[ \
             ('scale', preprocessing.StandardScaler()), \
             ('regressor', xgb.XGBRegressor(
                 learning_rate=0.1,
                 n_estimators=n_estimators_2,
-                max_depth=10,
-                min_child_weight=10,
-                gamma=0.0,
+                max_depth=14,
+                min_child_weight=23,
+                gamma=0.01,
                 subsample=0.7,
                 colsample_bytree=0.7,
                 objective="reg:squarederror",
@@ -1020,21 +1045,21 @@ gsearch5 = GridSearchCV( \
     verbose=4,
     refit=True, \
     pre_dispatch="1*n_jobs")
-gsearch5.fit(train[predictors],train["prob(sweep)"])
-gsearch5.cv_results_, gsearch5.best_params_, gsearch5.best_score_
+gsearch_sample_1.fit(train[predictors],train["prob(sweep)"])
+gsearch_sample_1.cv_results_, gsearch_sample_1.best_params_, gsearch_sample_1.best_score_
 
 
 print_text("narrow search", header=3)
-gsearch6 = GridSearchCV( \
+gsearch_sample_2 = GridSearchCV( \
     estimator=Pipeline( \
         steps=[ \
             ('scale', preprocessing.StandardScaler()), \
             ('regressor', xgb.XGBRegressor(
                 learning_rate=0.1,
                 n_estimators=n_estimators_2,
-                max_depth=10,
-                min_child_weight=10,
-                gamma=0.0,
+                max_depth=14,
+                min_child_weight=23,
+                gamma=0.01,
                 subsample=0.7,
                 colsample_bytree=0.7,
                 objective="reg:squarederror",
@@ -1042,33 +1067,33 @@ gsearch6 = GridSearchCV( \
                 eval_metric="rmse", 
                 seed=0))]), 
     param_grid={
-        "regressor__subsample":  [], \
-        "regressor__colsample_bytree": [], \
-        "regressor__colsample_bylevel": [], \
-        "regressor__colsample_bynode": []},
+        "regressor__subsample":  [0.8, 0.85, 0.9, 0.95, 1.0], \
+        "regressor__colsample_bytree": [0.8, 0.85, 0.9, 0.95, 1.0], \
+        "regressor__colsample_bylevel": [0.6, 0.65, 0.7, 0.75, 0.8], \
+        "regressor__colsample_bynode": [0.6, 0.65, 0.7, 0.75, 0.8]},
     scoring="neg_root_mean_squared_error",
     n_jobs=10, \
     cv=cv_scheme, \
     verbose=4,
     refit=True, \
     pre_dispatch="1*n_jobs")
-gsearch6.fit(train[predictors],train["prob(sweep)"])
-gsearch6.cv_results_, gsearch6.best_params_, gsearch6.best_score_
+gsearch_sample_2.fit(train[predictors],train["prob(sweep)"])
+gsearch_sample_2.cv_results_, gsearch_sample_2.best_params_, gsearch_sample_2.best_score_
 
 
 
 print_text("Tune max_delta", header=2)
 print_text("wide search", header=3)
-gsearch7 = GridSearchCV( \
+gsearch_delta_1 = GridSearchCV( \
     estimator=Pipeline( \
         steps=[ \
             ('scale', preprocessing.StandardScaler()), \
             ('regressor', xgb.XGBRegressor(
                 learning_rate=0.1,
                 n_estimators=n_estimators_2,
-                max_depth=10,
-                min_child_weight=10,
-                gamma=0.0,
+                max_depth=14,
+                min_child_weight=23,
+                gamma=0.01,
                 subsample=0.7,
                 colsample_bytree=0.7,
                 colsample_bylevel=1,
@@ -1085,21 +1110,21 @@ gsearch7 = GridSearchCV( \
     verbose=4,
     refit=True, \
     pre_dispatch="1*n_jobs")
-gsearch7.fit(train[predictors],train["prob(sweep)"])
-gsearch7.cv_results_, gsearch7.best_params_, gsearch7.best_score_
+gsearch_delta_1.fit(train[predictors],train["prob(sweep)"])
+gsearch_delta_1.cv_results_, gsearch_delta_1.best_params_, gsearch_delta_1.best_score_
 
 
 print_text("narrow search", header=3)
-gsearch8 = GridSearchCV( \
+gsearch_delta_2 = GridSearchCV( \
     estimator=Pipeline( \
         steps=[ \
             ('scale', preprocessing.StandardScaler()), \
             ('regressor', xgb.XGBRegressor(
                 learning_rate=0.1,
                 n_estimators=n_estimators_2,
-                max_depth=10,
-                min_child_weight=10,
-                gamma=0.0,
+                max_depth=14,
+                min_child_weight=23,
+                gamma=0.01,
                 subsample=0.7,
                 colsample_bytree=0.7,
                 colsample_bylevel=1,
@@ -1116,23 +1141,23 @@ gsearch8 = GridSearchCV( \
     verbose=4,
     refit=True, \
     pre_dispatch="1*n_jobs")
-gsearch8.fit(train[predictors],train["prob(sweep)"])
-gsearch8.cv_results_, gsearch8.best_params_, gsearch8.best_score_
+gsearch_delta_2.fit(train[predictors],train["prob(sweep)"])
+gsearch_delta_2.cv_results_, gsearch_delta_2.best_params_, gsearch_delta_2.best_score_
 
 
 
 print_text("Tune regularization parameters", header=2)
 print_text("wide search", header=3)
-gsearch9 = GridSearchCV( \
+gsearch_regu_1 = GridSearchCV( \
     estimator=Pipeline( \
         steps=[ \
             ('scale', preprocessing.StandardScaler()), \
             ('regressor', xgb.XGBRegressor(
                 learning_rate=0.1,
                 n_estimators=n_estimators_2,
-                max_depth=10,
-                min_child_weight=10,
-                gamma=0.0,
+                max_depth=14,
+                min_child_weight=23,
+                gamma=0.01,
                 subsample=0.7,
                 colsample_bytree=0.7,
                 colsample_bylevel=1,
@@ -1150,21 +1175,21 @@ gsearch9 = GridSearchCV( \
     verbose=4,
     refit=True, \
     pre_dispatch="1*n_jobs")
-gsearch9.fit(train[predictors],train["prob(sweep)"])
-gsearch9.cv_results_, gsearch9.best_params_, gsearch9.best_score_
+gsearch_regu_1.fit(train[predictors],train["prob(sweep)"])
+gsearch_regu_1.cv_results_, gsearch_regu_1.best_params_, gsearch_regu_1.best_score_
 
 
 print_text("narrow search", header=3)
-gsearch10 = GridSearchCV( \
+gsearch_regu_2 = GridSearchCV( \
     estimator=Pipeline( \
         steps=[ \
             ('scale', preprocessing.StandardScaler()), \
             ('regressor', xgb.XGBRegressor(
                 learning_rate=0.1,
                 n_estimators=n_estimators_2,
-                max_depth=10,
-                min_child_weight=10,
-                gamma=0.0,
+                max_depth=14,
+                min_child_weight=23,
+                gamma=0.01,
                 subsample=0.7,
                 colsample_bytree=0.7,
                 colsample_bylevel=1,
@@ -1182,8 +1207,8 @@ gsearch10 = GridSearchCV( \
     verbose=4,
     refit=True, \
     pre_dispatch="1*n_jobs")
-gsearch10.fit(train[predictors],train["prob(sweep)"])
-gsearch10.cv_results_, gsearch10.best_params_, gsearch10.best_score_
+gsearch_regu_2.fit(train[predictors],train["prob(sweep)"])
+gsearch_regu_2.cv_results_, gsearch_regu_2.best_params_, gsearch_regu_2.best_score_
 
 
 
@@ -1192,9 +1217,9 @@ n_estimators_3 = modelfit(
     xgb.XGBRegressor(
         learning_rate=0.1,
         n_estimators=5000,
-        max_depth=10,
-        min_child_weight=10,
-        gamma=0.0,
+        max_depth=14,
+        min_child_weight=23,
+        gamma=0.01,
         subsample=,
         colsample_bytree=,
         colsample_bylevel=,
@@ -1215,9 +1240,9 @@ n_estimators_4 = modelfit(
     xgb.XGBRegressor(
         learning_rate=0.01,
         n_estimators=5000,
-        max_depth=10,
-        min_child_weight=10,
-        gamma=0.0,
+        max_depth=14,
+        min_child_weight=23,
+        gamma=0.01,
         subsample=,
         colsample_bytree=,
         colsample_bylevel=,
@@ -1233,6 +1258,7 @@ n_estimators_4 = modelfit(
 
 
 
+##con lr=0.1 and 387 boosters you got -1.87 in the first tunnig, check?
 
 
 
