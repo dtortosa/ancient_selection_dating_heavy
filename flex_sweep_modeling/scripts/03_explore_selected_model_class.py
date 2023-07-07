@@ -458,248 +458,7 @@ print(cv_scheme)
 
 
 
-
-print_text("Start with the tuning", header=1)
-print_text("Fix the learning rate and number of estimators for tuning tree-based parameters", header=2)
-#for this step I am going to use, not only the sklearn wrapper for XGBoost (XGBRegressor), but also the original xgb package in order to use its cv function.
-#with the cv function of xgb, we can run XGBoost with a pre-define number of boosts, but stopping when the there is no improvement. In this way, we can easily tune the number of estimators.
-#we will update the number of estimator after tunning other parameters.
-import xgboost as xgb
-
-
-print_text("define a function to run CV + early top within xgb package", header=3)
-#alg=xgb.XGBRegressor(objective="reg:squarederror", eval_metric="rmse", nthread=10)
-#train_data=train
-#predictors=[x for x in train.columns if x not in ["prob(sweep)"]]
-#useTrainCV=True
-#early_stopping_rounds=50
-from sklearn.metrics import r2_score
-from sklearn.pipeline import Pipeline
-from sklearn.model_selection import GridSearchCV
-
-def modelfit(alg, train_data, predictors, useTrainCV=True, early_stopping_rounds=50):
-    
-    #if you want CV
-    if useTrainCV:
-
-        #extract the parameters of the XGBoost instance we have opened
-        xgb_param = alg.get_xgb_params()
-
-        #convert data to the structure required by XGBoost
-        xgtrain = xgb.DMatrix(train_data[predictors].values, label=train_data["prob(sweep)"].values)
-            #use predictors and response (label) of training data in the form of numpy array as input
-
-        #define function to preprocess training and evaluation data separately
-        def fpreproc(dtrain, dtest, param):
-            train_array_scaled = preprocessing.scale(dtrain.get_data().toarray().astype(float))
-            eval_array_scaled = preprocessing.scale(dtest.get_data().toarray().astype(float))
-                #UserWarning: Numerical issues were encountered when centering the data and might not be solved. Dataset may contain too large values.
-                    #solved by converting to float
-                        #https://stackoverflow.com/a/64145149/12772630
-
-                #IMPORTANT
-                    #If NAn, get_data().toarray() will considered Nan as zero!!
-                    #https://stackoverflow.com/questions/37309096/convert-python-xgboost-dmatrix-to-numpy-ndarray-or-pandas-dataframe
-
-            dtrain=xgb.DMatrix(train_array_scaled[:,1:], train_array_scaled[:,0])
-            dtest=xgb.DMatrix(eval_array_scaled[:,1:], eval_array_scaled[:,0])
-
-            return (dtrain, dtest, param)
-                #https://xgboost.readthedocs.io/en/stable/python/examples/cross_validation.html
-                #params is the list (or dict?) of params, you do not change anythighn and just return as it was received
-
-        #perform CV within XGBoost
-        cvresult = xgb.cv( \
-            params=xgb_param, \
-            dtrain=xgtrain, \
-            num_boost_round=alg.get_params()["n_estimators"], \
-            folds=cv_scheme, \
-            metrics="rmse", \
-            maximize=False,
-            early_stopping_rounds=early_stopping_rounds, \
-            fpreproc=fpreproc, \
-            seed=0)
-                #params : dict
-                    #Booster params.
-                #dtrain : DMatrix
-                    #Data to be trained.
-                #num_boost_round : int
-                    #Number of boosting iterations. We use the number of estimators previously selected in the XGBoost instance
-                #folds : a KFold or StratifiedKFold instance or list of fold indices
-                #metrics : string or list of strings
-                    #Evaluation metrics to be watched in CV.
-                #maximize : bool
-                    #Whether to maximize evaluation metric.
-                    #False in our case, because we are using root mean squared error, so larger values means more error. We want to minimize.
-                #early_stopping_rounds:
-                    #Activates early stopping. Cross-Validation metric (average of validation metric computed over CV folds) needs to improve at least once in every **early_stopping_rounds** round(s) to continue training. The last entry in the evaluation history will represent the best iteration. If there's more than one metric in the **eval_metric** parameter given in **params**, the last metric will be used for early stopping.
-
-
-
-
-
-        alg.set_params(n_estimators=cvresult.shape[0])
-        print("Number of trees")
-        print(cvresult.shape[0])
-    
-    ###to see R2 you should to do preprocessing here if you want to get visible results as you ahve applied in cv
-
-    #Fit the algorithm on the data
-    alg.fit(train_data[predictors], train_data["prob(sweep)"])
-        
-    #Predict training set:
-    dtrain_predictions = alg.predict(train_data[predictors])
-
-    #Print model report:
-    print("\nModel Report")
-    print("R2 (train): %.4g" % r2_score(train_data["prob(sweep)"].values, dtrain_predictions))
-
-##IMPORTANT
-##now 372 treee after sacling!!!!!!!!
-
-
-predictors = [x for x in train.columns if x not in ["prob(sweep)"]]
-
-##if you cannot do preprocesing in xgb, just use GD search also for this
-
-##rmse!!!
-#not R2!!!
-
-xgb1 = xgb.XGBRegressor(
-    learning_rate=0.1,
-    n_estimators=5000,
-    max_depth=13,
-    min_child_weight=1,
-    gamma=0,
-    subsample=0.7,
-    colsample_bytree=0.7,
-    objective="reg:squarederror",
-    nthread=10, 
-    eval_metric="rmse", 
-    seed=0) #seed is not required when running the whole script (we set the seed at the start), but it is when running interactively just parts
-        #select eval metric to avoid warning
-            #https://stackoverflow.com/questions/66097701/how-can-i-fix-this-warning-in-xgboost
-modelfit(xgb1, train, test, predictors)
-
-
-
-
-print_text("Tune max_depth and min_child_weight", header=2)
-print_text("wide search", header=2)
-param_test1 = {
-    "regressor__max_depth": [i for i in range(1,15,4)] + [None], \
-    "regressor__min_child_weight": [1, 10, 100]}
-xgb2 = xgb.XGBRegressor(
-    learning_rate=0.1,
-    n_estimators=676,
-    max_depth=5,
-    min_child_weight=1,
-    gamma=0,
-    subsample=0.8,
-    colsample_bytree=0.8,
-    objective="reg:squarederror",
-    nthread=1, 
-    eval_metric="rmse", 
-    seed=0)
-gsearch1 = GridSearchCV( \
-    estimator=Pipeline( \
-        steps=[ \
-        ('scale', preprocessing.StandardScaler()), \
-        ('regressor', xgb2)]), 
-    param_grid=param_test1, 
-    scoring="neg_root_mean_squared_error",
-    n_jobs=10, \
-    cv=cv_scheme, \
-    verbose=4,
-    refit=True, \
-    pre_dispatch="1*n_jobs") #if n_jobs>1, then pre_dispatch should be "1*n_jobs", if not, the dataset will be copied many times increasing a lot memory usage
-        #Exhaustive search over specified parameter values for an estimator.
-            #The parameters of the estimator used to apply these methods are optimized by cross-validated grid-search over a parameter grid
-        #estimator
-            #This is assumed to implement the scikit-learn estimator interface. Either estimator needs to provide a ``score`` function, or ``scoring`` must be passed.
-        #param_grid
-            #Dictionary with parameters names (`str`) as keys and lists of parameter settings to try as values, or a list of such dictionaries, in which case the grids spanned by each dictionary in the list are explored. This enables searching over any sequence of parameter settings.
-        #scoring
-            #Strategy to evaluate the performance of the cross-validated model on the test set.
-            #It can be one or several (included in a list or dict...)
-        #n_jobs
-            #Number of jobs to run in parallel
-            #we are using only 1 because we are parallelizing per fold*model class combination.
-        #Refit=True
-            #Refit an estimator using the best found parameters on the WHOLE dataset used for training
-        #cv:
-            #Determines the cross-validation splitting strategy.
-        #pre_dispatch:
-            #Controls the number of jobs that get dispatched during parallel execution. Reducing this number can be useful to avoid an explosion of memory consumption when more jobs get dispatched than CPUs can process.
-            #If `n_jobs` was set to a value higher than one, the data is copied for each point in the grid (and not `n_jobs` times). This is done for efficiency reasons if individual jobs take very little time, but may raise errors if the dataset is large and not enough memory is available.  A workaround in this case is to set `pre_dispatch`. Then, the memory is copied only `pre_dispatch` many times. A reasonable value for `pre_dispatch` is `2 * n_jobs`.
-print(gsearch1)
-
-print_text("run the GridSearch", header=4)
-gsearch1.fit(train[predictors],train["prob(sweep)"])
-gsearch1.cv_results_, gsearch1.best_params_, gsearch1.best_score_
-
-    #we are using neg rmse, so larger values are better because this means less error
-
-
-
-print_text("narrow search", header=3)
-gsearch2 = GridSearchCV( \
-    estimator=Pipeline( \
-        steps=[ \
-        ('scale', preprocessing.StandardScaler()), \
-        ('regressor', xgb.XGBRegressor(
-            learning_rate=0.1,
-            n_estimators=676,
-            max_depth=5,
-            min_child_weight=1,
-            gamma=0,
-            subsample=0.8,
-            colsample_bytree=0.8,
-            objective="reg:squarederror",
-            nthread=1, 
-            eval_metric="rmse", 
-            seed=0))]),
-    param_grid={ \
-        "regressor__max_depth": [8,9,10,11], \
-        "regressor__min_child_weight": [9,10,11,12]}, \
-    scoring="neg_root_mean_squared_error", \
-    n_jobs=10, \
-    cv=cv_scheme, \
-    verbose=4, \
-    refit=True, \
-    pre_dispatch="1*n_jobs")
-print_text("run the GridSearch", header=4)
-gsearch2.fit(train[predictors],train["prob(sweep)"])
-gsearch2.cv_results_, gsearch2.best_params_, gsearch2.best_score_
-
-    ###RUN AGAIN THIS SEARCH 2
-
-#you can also look for R2 after CV just to see where you are
-
-
-
-
-
-
-print_text("prepare the HP optimization", header=1)
-print_text("prepare models and HPs", header=2)
-print_text("define a dict with model instances and grids of HPs", header=3)
-#define a dict
-    #keys:
-        #the name of the model
-    #Values:
-        #the code for creating an instance of the corresponding model with no arguments.
-        #We will use "eval()" to run this line of code and create a new instance of the corresponding model
-        #Note that the reproducibility is ensured as we have set the seeds of python, numpy and tensorflow before.
-import xgboost as xgb
-dict_models = { \
-    "xgboost": {"instance": "xgb.XGBRegressor()"}}
-dict_models
-
-
-print_text("add HPs for gridsearch", header=3)
-#the regressor will be part of a pipeline, so we need to specify the name of the step in the pipeline (i.e., regressor) before the name of the hyperparameter
-print_text("XGboost", header=4)
+print_text("notes about XGBosot", header=1)
 #general notes about gradient boosting
     #The idea of boosting came out of the idea of whether a weak learner can be modified to become better. Hypothesis boosting was the idea of filtering observations, leaving those observations that the weak learner can handle and focusing on developing new weak learns to handle the remaining difficult observations.
     #A first implementation of this was AdaBoost
@@ -805,19 +564,8 @@ print_text("XGboost", header=4)
     #XGBoost dominates structured or tabular datasets on classification and regression predictive modeling problems. The evidence is that it is the go-to algorithm for competition winners on the Kaggle competitive data science platform.
     #link
         #https://machinelearningmastery.com/xgboost-for-regression/
-#set the HPs
-dict_models["xgboost"]["HPs"] = { \
-    "regressor__max_depth": [i for i in range(1,15,4)] + [None], \
-    "regressor__min_child_weight": [1, 10, 100], \
-    "regressor__subsample":  [0.8], \
-    "regressor__colsample_bytree": [0.8], \
-    "regressor__eta": [0.1], \
-    "regressor__n_estimators": [3000], \
-    "regressor__gamma": [0], \
-    "regressor__colsample_bylevel": [0.8], \
-    "regressor__colsample_bynode": [0.8]}
-print(dict_models["xgboost"])
-    #About the HPs. To fully understand their impact see general notes and, in particular, regularization methods used in order to avoid overfitting.
+#About the HPs
+    #To fully understand their impact see general notes and, in particular, regularization methods used in order to avoid overfitting.
         #booster: 
             #The booster to use, you can use trees as base learner or linear models. We use trees as linear does not seem to improver over a simpler linear model
             #https://stats.stackexchange.com/questions/230388/how-does-linear-base-learner-works-in-boosting-and-how-does-it-works-in-the-xgb
@@ -907,7 +655,594 @@ print(dict_models["xgboost"])
                 #we use several values between 1 and 10 as recommended by the help.
 
 
-#follow analytics vidha? do pairs of optimization with wide and then narrow searches? it is like optuna but manually
+
+
+print_text("Start with the tuning", header=1)
+print_text("Fix the learning rate and number of estimators for tuning tree-based parameters", header=2)
+#for this step I am going to use, not only the sklearn wrapper for XGBoost (XGBRegressor), but also the original xgb package in order to use its cv function.
+#with the cv function of xgb, we can run XGBoost with a pre-define number of boosts, but stopping when the there is no improvement. In this way, we can easily tune the number of estimators.
+#we will update the number of estimator after tunning other parameters.
+import xgboost as xgb
+
+
+print_text("define a function to run CV + early top within xgb package", header=3)
+#alg=xgb.XGBRegressor(objective="reg:squarederror", eval_metric="rmse", nthread=10)
+#train_data=train
+#predictors=[x for x in train.columns if x not in ["prob(sweep)"]]
+#useTrainCV=True
+#early_stopping_rounds=50
+#cv_schema=cv_scheme
+from sklearn.metrics import r2_score
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import GridSearchCV
+def modelfit(alg, train_data, predictors, useTrainCV=True, early_stopping_rounds=50, cv_schema=cv_scheme):
+    
+    #check we do not have NANs in the training data
+    non_na_data_check = train_data.dropna().equals(train_data)
+    if non_na_data_check == False:
+        raise ValueError("ERROR: FALSE! WE HAVE NANs IN THE TRAINING DATA, THIS SCRIPT WILL GIVE PROBLEMS WITH NAN BECAUSE OF THE CONVERSION OF XGBOOST DMATRIX TO NUMPY")
+
+    #if you want CV
+    if useTrainCV:
+
+        #extract the parameters of the XGBoost instance we have opened
+        xgb_param = alg.get_xgb_params()
+
+        #convert data to the structure required by XGBoost
+        xgtrain = xgb.DMatrix(train_data[predictors].values, label=train_data["prob(sweep)"].values)
+            #use predictors and response (label) of training data in the form of numpy array as input
+
+        #define function to preprocess training and evaluation data separately within the CV
+            #this function should take (dtrain, dtest, param) and returns transformed versions of those.
+            #if no change is required, just return without change
+        #example_index = [(train_index, test_index) for split, (train_index, test_index) in enumerate(cv_scheme.split(X=train_data)) if split==0][0]
+        #dtrain=xgtrain.slice(example_index[0])
+        #dtest=xgtrain.slice(example_index[1])
+            #get the index of the first split and use them to slice the DMatrix into training and test using slice
+            #Slice the DMatrix and return a new DMatrix that only contains rindex.
+        def fpreproc(dtrain, dtest, param):
+
+            #convert the XGBoost DMatrix to array
+            dtrain_X_array = dtrain.get_data().toarray()
+            dtest_X_array = dtest.get_data().toarray()
+                #get_data():
+                    #Get the predictors from DMatrix as a CSR matrix.
+                #toarray():
+                    #Return a dense ndarray representation of this sparse array.
+            dtrain_y_array = dtrain.get_label()
+            dtest_y_array = dtest.get_label()
+                #get_label()
+                    #Get the label of the DMatrix.
+                #These approaches seem to give problems when having NANs, as these are considered as zero instead of missing. Therefore, it is very important that we do not have NANs in our data
+                    #https://stackoverflow.com/questions/37309096/convert-python-xgboost-dmatrix-to-numpy-ndarray-or-pandas-dataframe
+
+            #check we have the correct number of predictor columns
+            if (dtrain_X_array.shape[1] != modeling_data.shape[1]-1) | (dtest_X_array.shape[1] != modeling_data.shape[1]-1):
+                raise ValueError("ERROR: FALSE! WE HAVE A PROBLEM WITH THE NUMBER OF PREDICTOR COLUMNS IN THE CONVERSION FROM DMATRIX TO NUMPY")
+
+            #use a second approach to do the conversion of predictors
+            from dmatrix2np import dmatrix_to_numpy
+                #https://github.com/aporia-ai/dmatrix2np
+                #https://datascience.stackexchange.com/questions/20340/python-xgboost-dmatrix-get-feature-values-or-convert-to-np-array
+            dtrain_X_array_check = dmatrix_to_numpy(dtrain)
+            dtest_X_array_check = dmatrix_to_numpy(dtest)
+            if (np.array_equal(dtrain_X_array, dtrain_X_array_check)==False) | (np.array_equal(dtest_X_array, dtest_X_array_check)==False):
+                    raise ValueError("ERROR: FALSE! WE HAVE A PROBLEM CONVERTING THE XGBOOST DMATRIX TO NUMPY")
+
+            #open two instances of scaler to scale X and y
+            scaler_X = preprocessing.StandardScaler()
+            scaler_y = preprocessing.StandardScaler()
+
+            #let the scaler learn the mean and sd of the training data
+            scaler_X.fit(dtrain_X_array)
+            scaler_y.fit(dtrain_y_array.reshape(-1,1))
+
+            #transform both the training and the eval sets using the training mean and SD
+            train_X_array_scaled = scaler_X.transform(dtrain_X_array)
+            eval_X_array_scaled = scaler_X.transform(dtest_X_array)
+            train_y_array_scaled = scaler_y.transform(dtrain_y_array.reshape(-1,1))
+            eval_y_array_scaled = scaler_y.transform(dtest_y_array.reshape(-1,1))
+                #pipeline works exactly like this. It calculates the mean and sd of the training data and then use it to transform both training and evaluation data
+
+            #return to DMatrix after preprocesing
+            dtrain=xgb.DMatrix(train_X_array_scaled, label=train_y_array_scaled)
+            dtest=xgb.DMatrix(eval_X_array_scaled, label=eval_y_array_scaled)
+
+            #return the scaled dtrain and dtest, along with the parameters without changes
+            return (dtrain, dtest, param)
+                #https://xgboost.readthedocs.io/en/stable/python/examples/cross_validation.html
+
+        #perform CV within XGBoost
+        cvresult = xgb.cv( \
+            params=xgb_param, \
+            dtrain=xgtrain, \
+            num_boost_round=alg.get_params()["n_estimators"], \
+            folds=cv_schema, \
+            metrics="rmse", \
+            maximize=False,
+            early_stopping_rounds=early_stopping_rounds, \
+            fpreproc=fpreproc, \
+            seed=0, \
+            verbose_eval=100)
+                #params : dict
+                    #Booster params.
+                #dtrain : DMatrix
+                    #Data to be trained.
+                #num_boost_round : int
+                    #Number of boosting iterations. We use the number of estimators previously selected in the XGBoost instance
+                #folds : a KFold or StratifiedKFold instance or list of fold indices
+                #metrics : string or list of strings
+                    #Evaluation metrics to be watched in CV.
+                #maximize : bool
+                    #Whether to maximize evaluation metric.
+                    #False in our case, because we are using root mean squared error, so larger values means more error. We want to minimize.
+                #early_stopping_rounds:
+                    #Activates early stopping. Cross-Validation metric (average of validation metric computed over CV folds) needs to improve at least once in every **early_stopping_rounds** round(s) to continue training. The last entry in the evaluation history will represent the best iteration. If there's more than one metric in the **eval_metric** parameter given in **params**, the last metric will be used for early stopping.
+                #fpreproc : function
+                    #Preprocessing function that takes (dtrain, dtest, param) and returns transformed versions of those.
+                #verbose_eval : bool, int, or None, default None 
+                    #Whether to display the progress. If None, progress will be displayed when np.ndarray is returned. If True, progress will be displayed at boosting stage. If an integer is given, progress will be displayed at every given `verbose_eval` boosting stage.
+
+        #get the number of boosters before stopping
+        alg.set_params(n_estimators=cvresult.shape[0])
+        print("\nNumber of trees")
+        print(cvresult.shape[0])
+    
+    ##use the model with the selected number of boosters to predict the whole training data
+    #Fit the algorithm on the data
+    alg.fit(preprocessing.scale(train_data[predictors]), preprocessing.scale(train_data["prob(sweep)"]))
+        #you have to use the same preprocesing used during CV
+        #no problem to use the whole training data for this because we already did the CV
+
+    #Predict training set:
+    dtrain_predictions = alg.predict(preprocessing.scale(train_data[predictors]))
+
+    #Print model report:
+    print("\nModel Report")
+    print("R2 (train): %.10g" % r2_score(preprocessing.scale(train_data["prob(sweep)"].values), dtrain_predictions))
+
+    #return the number of estimators
+    return cvresult.shape[0]
+
+print_text("run the function", header=3)
+predictors = [x for x in train.columns if x not in ["prob(sweep)"]]
+n_estimators_1 = modelfit(
+    xgb.XGBRegressor(
+        learning_rate=0.1,
+        n_estimators=5000,
+        max_depth=13,
+        min_child_weight=1,
+        gamma=0,
+        subsample=0.7,
+        colsample_bytree=0.7,
+        objective="reg:squarederror",
+        nthread=10, 
+        eval_metric="rmse", 
+        seed=0),
+            #there is no R2 in XGboost
+            #seed is not required when running the whole script (we set the seed at the start), but it is when running interactively just parts
+            #select eval metric to avoid warning
+                #https://stackoverflow.com/questions/66097701/how-can-i-fix-this-warning-in-xgboost
+        train, 
+        predictors)
+
+
+
+print_text("Tune max_depth and min_child_weight", header=2)
+print_text("wide search", header=3)
+gsearch1 = GridSearchCV( \
+    estimator=Pipeline( \
+        steps=[ \
+            ('scale', preprocessing.StandardScaler()), \
+            ('regressor', xgb.XGBRegressor(
+                learning_rate=0.1,
+                n_estimators=n_estimators_1,
+                max_depth=13,
+                min_child_weight=1,
+                gamma=0,
+                subsample=0.7,
+                colsample_bytree=0.7,
+                objective="reg:squarederror",
+                nthread=1, 
+                seed=0))]), 
+    param_grid={ \
+        "regressor__max_depth": [i for i in range(1,15,4)] + [None], \
+        "regressor__min_child_weight": [1,5,10,15,100]}, \
+    scoring="neg_root_mean_squared_error", #there is no R2 in xgboost. We have here different values respect to XGBoost cv, but it seems to be caused by the 'neg'. I have used mae in both, getting again different results... \
+    n_jobs=10, \
+    cv=cv_scheme, \
+    verbose=4,
+    refit=True, \
+    pre_dispatch="1*n_jobs")
+        #Exhaustive search over specified parameter values for an estimator.
+            #The parameters of the estimator used to apply these methods are optimized by cross-validated grid-search over a parameter grid
+        #estimator
+            #This is assumed to implement the scikit-learn estimator interface. Either estimator needs to provide a ``score`` function, or ``scoring`` must be passed.
+        #param_grid
+            #Dictionary with parameters names (`str`) as keys and lists of parameter settings to try as values, or a list of such dictionaries, in which case the grids spanned by each dictionary in the list are explored. This enables searching over any sequence of parameter settings.
+        #scoring
+            #Strategy to evaluate the performance of the cross-validated model on the test set.
+            #It can be one or several (included in a list or dict...)
+        #n_jobs
+            #Number of jobs to run in parallel
+            #we are using only 1 because we are parallelizing per fold*model class combination.
+        #Refit=True
+            #Refit an estimator using the best found parameters on the WHOLE dataset used for training
+        #cv:
+            #Determines the cross-validation splitting strategy.
+        #pre_dispatch:
+            #Controls the number of jobs that get dispatched during parallel execution. Reducing this number can be useful to avoid an explosion of memory consumption when more jobs get dispatched than CPUs can process.
+            #If `n_jobs` was set to a value higher than one, the data is copied for each point in the grid (and not `n_jobs` times). This is done for efficiency reasons if individual jobs take very little time, but may raise errors if the dataset is large and not enough memory is available.  A workaround in this case is to set `pre_dispatch`. Then, the memory is copied only `pre_dispatch` many times. A reasonable value for `pre_dispatch` is `2 * n_jobs`.
+            #if n_jobs>1, then pre_dispatch should be "1*n_jobs", if not, the dataset will be copied many times increasing a lot memory usage
+gsearch1.fit(train[predictors],train["prob(sweep)"])
+gsearch1.cv_results_, gsearch1.best_params_, gsearch1.best_score_
+
+
+print_text("narrow search", header=3)
+gsearch2 = GridSearchCV( \
+    estimator=Pipeline( \
+        steps=[ \
+        ('scale', preprocessing.StandardScaler()), \
+        ('regressor', xgb.XGBRegressor(
+            learning_rate=0.1,
+            n_estimators=n_estimators_1,
+            max_depth=13,
+            min_child_weight=1,
+            gamma=0,
+            subsample=0.7,
+            colsample_bytree=0.7,
+            objective="reg:squarederror",
+            nthread=1, 
+            eval_metric="rmse", 
+            seed=0))]),
+    param_grid={ \
+        "regressor__max_depth": [8,9,10,11,12], \
+        "regressor__min_child_weight": [8,9,10,11,12]}, \
+    scoring="neg_root_mean_squared_error", \
+    n_jobs=10, \
+    cv=cv_scheme, \
+    verbose=4, \
+    refit=True, \
+    pre_dispatch="1*n_jobs")
+gsearch2.fit(train[predictors],train["prob(sweep)"])
+gsearch2.cv_results_, gsearch2.best_params_, gsearch2.best_score_
+
+
+print_text("Tune gamma", header=2)
+print_text("wide search", header=3)
+gsearch3 = GridSearchCV( \
+    estimator=Pipeline( \
+        steps=[ \
+            ('scale', preprocessing.StandardScaler()), \
+            ('regressor', xgb.XGBRegressor(
+                learning_rate=0.1,
+                n_estimators=n_estimators_1,
+                max_depth=10,
+                min_child_weight=10,
+                gamma=0,
+                subsample=0.7,
+                colsample_bytree=0.7,
+                objective="reg:squarederror",
+                nthread=1, 
+                eval_metric="rmse", 
+                seed=0))]), 
+    param_grid={
+        "regressor__gamma": np.arange(0, 1, 0.2)}, 
+    scoring="neg_root_mean_squared_error",
+    n_jobs=10, \
+    cv=cv_scheme, \
+    verbose=4,
+    refit=True, \
+    pre_dispatch="1*n_jobs")
+gsearch3.fit(train[predictors],train["prob(sweep)"])
+gsearch3.cv_results_, gsearch3.best_params_, gsearch3.best_score_
+
+
+print_text("narrow search", header=3)
+gsearch4 = GridSearchCV( \
+    estimator=Pipeline( \
+        steps=[ \
+            ('scale', preprocessing.StandardScaler()), \
+            ('regressor', xgb.XGBRegressor(
+                learning_rate=0.1,
+                n_estimators=n_estimators_1,
+                max_depth=10,
+                min_child_weight=10,
+                gamma=0,
+                subsample=0.7,
+                colsample_bytree=0.7,
+                objective="reg:squarederror",
+                nthread=1, 
+                eval_metric="rmse", 
+                seed=0))]), 
+    param_grid={
+        "regressor__gamma": [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]}, 
+    scoring="neg_root_mean_squared_error",
+    n_jobs=10, \
+    cv=cv_scheme, \
+    verbose=4,
+    refit=True, \
+    pre_dispatch="1*n_jobs")
+gsearch4.fit(train[predictors],train["prob(sweep)"])
+gsearch4.cv_results_, gsearch4.best_params_, gsearch4.best_score_
+
+
+##VOY POR GAMMA
+    # {'regressor__gamma': 0.05}, -1.9087708133010413)
+##con 387 boosters you got -1.87, check?
+
+
+print_text("re-calibrate the number of boosters", header=2)
+n_estimators_2 = modelfit(
+    xgb.XGBRegressor(
+        learning_rate=0.1,
+        n_estimators=5000,
+        max_depth=10,
+        min_child_weight=10,
+        gamma=0.0,
+        subsample=0.7,
+        colsample_bytree=0.7,
+        objective="reg:squarederror",
+        nthread=10, 
+        eval_metric="rmse", 
+        seed=0),
+        train, 
+        predictors)
+
+
+
+print_text("Tune subsample and colsample_bytree", header=2)
+print_text("wide search", header=3)
+gsearch5 = GridSearchCV( \
+    estimator=Pipeline( \
+        steps=[ \
+            ('scale', preprocessing.StandardScaler()), \
+            ('regressor', xgb.XGBRegressor(
+                learning_rate=0.1,
+                n_estimators=n_estimators_2,
+                max_depth=10,
+                min_child_weight=10,
+                gamma=0.0,
+                subsample=0.7,
+                colsample_bytree=0.7,
+                objective="reg:squarederror",
+                nthread=1, 
+                eval_metric="rmse", 
+                seed=0))]), 
+    param_grid={
+        "regressor__subsample":  [i for i in np.arange(0.1,0.8,0.3)]+[1], \
+        "regressor__colsample_bytree": [i for i in np.arange(0.1,0.8,0.3)]+[1], \
+        "regressor__colsample_bylevel": [i for i in np.arange(0.1,0.8,0.3)]+[1], \
+        "regressor__colsample_bynode": [i for i in np.arange(0.1,0.8,0.3)]+[1]},
+    scoring="neg_root_mean_squared_error",
+    n_jobs=10, \
+    cv=cv_scheme, \
+    verbose=4,
+    refit=True, \
+    pre_dispatch="1*n_jobs")
+gsearch5.fit(train[predictors],train["prob(sweep)"])
+gsearch5.cv_results_, gsearch5.best_params_, gsearch5.best_score_
+
+
+print_text("narrow search", header=3)
+gsearch6 = GridSearchCV( \
+    estimator=Pipeline( \
+        steps=[ \
+            ('scale', preprocessing.StandardScaler()), \
+            ('regressor', xgb.XGBRegressor(
+                learning_rate=0.1,
+                n_estimators=n_estimators_2,
+                max_depth=10,
+                min_child_weight=10,
+                gamma=0.0,
+                subsample=0.7,
+                colsample_bytree=0.7,
+                objective="reg:squarederror",
+                nthread=1, 
+                eval_metric="rmse", 
+                seed=0))]), 
+    param_grid={
+        "regressor__subsample":  [], \
+        "regressor__colsample_bytree": [], \
+        "regressor__colsample_bylevel": [], \
+        "regressor__colsample_bynode": []},
+    scoring="neg_root_mean_squared_error",
+    n_jobs=10, \
+    cv=cv_scheme, \
+    verbose=4,
+    refit=True, \
+    pre_dispatch="1*n_jobs")
+gsearch6.fit(train[predictors],train["prob(sweep)"])
+gsearch6.cv_results_, gsearch6.best_params_, gsearch6.best_score_
+
+
+
+print_text("Tune max_delta", header=2)
+print_text("wide search", header=3)
+gsearch7 = GridSearchCV( \
+    estimator=Pipeline( \
+        steps=[ \
+            ('scale', preprocessing.StandardScaler()), \
+            ('regressor', xgb.XGBRegressor(
+                learning_rate=0.1,
+                n_estimators=n_estimators_2,
+                max_depth=10,
+                min_child_weight=10,
+                gamma=0.0,
+                subsample=0.7,
+                colsample_bytree=0.7,
+                colsample_bylevel=1,
+                colsample_bynode=1,
+                objective="reg:squarederror",
+                nthread=1, 
+                eval_metric="rmse", 
+                seed=0))]), 
+    param_grid={
+        "regressor__max_delta_step": np.arange(0, 14, 2)},
+    scoring="neg_root_mean_squared_error",
+    n_jobs=10, \
+    cv=cv_scheme, \
+    verbose=4,
+    refit=True, \
+    pre_dispatch="1*n_jobs")
+gsearch7.fit(train[predictors],train["prob(sweep)"])
+gsearch7.cv_results_, gsearch7.best_params_, gsearch7.best_score_
+
+
+print_text("narrow search", header=3)
+gsearch8 = GridSearchCV( \
+    estimator=Pipeline( \
+        steps=[ \
+            ('scale', preprocessing.StandardScaler()), \
+            ('regressor', xgb.XGBRegressor(
+                learning_rate=0.1,
+                n_estimators=n_estimators_2,
+                max_depth=10,
+                min_child_weight=10,
+                gamma=0.0,
+                subsample=0.7,
+                colsample_bytree=0.7,
+                colsample_bylevel=1,
+                colsample_bynode=1,
+                objective="reg:squarederror",
+                nthread=1, 
+                eval_metric="rmse", 
+                seed=0))]), 
+    param_grid={
+        "regressor__max_delta_step": []},
+    scoring="neg_root_mean_squared_error",
+    n_jobs=10, \
+    cv=cv_scheme, \
+    verbose=4,
+    refit=True, \
+    pre_dispatch="1*n_jobs")
+gsearch8.fit(train[predictors],train["prob(sweep)"])
+gsearch8.cv_results_, gsearch8.best_params_, gsearch8.best_score_
+
+
+
+print_text("Tune regularization parameters", header=2)
+print_text("wide search", header=3)
+gsearch9 = GridSearchCV( \
+    estimator=Pipeline( \
+        steps=[ \
+            ('scale', preprocessing.StandardScaler()), \
+            ('regressor', xgb.XGBRegressor(
+                learning_rate=0.1,
+                n_estimators=n_estimators_2,
+                max_depth=10,
+                min_child_weight=10,
+                gamma=0.0,
+                subsample=0.7,
+                colsample_bytree=0.7,
+                colsample_bylevel=1,
+                colsample_bynode=1,
+                objective="reg:squarederror",
+                nthread=1, 
+                eval_metric="rmse", 
+                seed=0))]), 
+    param_grid={
+        "regressor__alpha": [1e-6, 1e-5, 1e-2, 0.1, 1, 10, 100], \
+        "regressor__lambda": np.arange(0, 1.01, 0.2)},
+    scoring="neg_root_mean_squared_error",
+    n_jobs=10, \
+    cv=cv_scheme, \
+    verbose=4,
+    refit=True, \
+    pre_dispatch="1*n_jobs")
+gsearch9.fit(train[predictors],train["prob(sweep)"])
+gsearch9.cv_results_, gsearch9.best_params_, gsearch9.best_score_
+
+
+print_text("narrow search", header=3)
+gsearch10 = GridSearchCV( \
+    estimator=Pipeline( \
+        steps=[ \
+            ('scale', preprocessing.StandardScaler()), \
+            ('regressor', xgb.XGBRegressor(
+                learning_rate=0.1,
+                n_estimators=n_estimators_2,
+                max_depth=10,
+                min_child_weight=10,
+                gamma=0.0,
+                subsample=0.7,
+                colsample_bytree=0.7,
+                colsample_bylevel=1,
+                colsample_bynode=1,
+                objective="reg:squarederror",
+                nthread=1, 
+                eval_metric="rmse", 
+                seed=0))]), 
+    param_grid={
+        "regressor__alpha": [], \
+        "regressor__lambda": []},
+    scoring="neg_root_mean_squared_error",
+    n_jobs=10, \
+    cv=cv_scheme, \
+    verbose=4,
+    refit=True, \
+    pre_dispatch="1*n_jobs")
+gsearch10.fit(train[predictors],train["prob(sweep)"])
+gsearch10.cv_results_, gsearch10.best_params_, gsearch10.best_score_
+
+
+
+print_text("re-calibrate the number of boosters to see the impact", header=2)
+n_estimators_3 = modelfit(
+    xgb.XGBRegressor(
+        learning_rate=0.1,
+        n_estimators=5000,
+        max_depth=10,
+        min_child_weight=10,
+        gamma=0.0,
+        subsample=,
+        colsample_bytree=,
+        colsample_bylevel=,
+        colsample_bynode=,
+        reg_lambda=,
+        reg_alpha=,
+        objective="reg:squarederror",
+        nthread=10, 
+        eval_metric="rmse", 
+        seed=0),
+        train, 
+        predictors)
+
+
+
+print_text("reduce the learning rate and re-calibrate the number of boosters", header=2)
+n_estimators_4 = modelfit(
+    xgb.XGBRegressor(
+        learning_rate=0.01,
+        n_estimators=5000,
+        max_depth=10,
+        min_child_weight=10,
+        gamma=0.0,
+        subsample=,
+        colsample_bytree=,
+        colsample_bylevel=,
+        colsample_bynode=,
+        reg_lambda=,
+        reg_alpha=,
+        objective="reg:squarederror",
+        nthread=10, 
+        eval_metric="rmse", 
+        seed=0),
+        train, 
+        predictors)
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

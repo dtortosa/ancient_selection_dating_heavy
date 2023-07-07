@@ -95,6 +95,7 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 	python3.9 get-pip.py
 
 	#python3.9 -m pip install future #the "-m" flag search for the last version of the package.
+	python3.9 -m pip install dmatrix2np
 	python3.9 -m pip install alibi
 	python3.9 -m pip install shap
 	python3.9 -m pip install xgboost
