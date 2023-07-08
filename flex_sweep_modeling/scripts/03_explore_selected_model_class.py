@@ -435,6 +435,8 @@ cv_scheme = KFold( \
     shuffle=True)
     #random_state is not required as we have already ensured reproducibility by setting the seeds of python, numpy and tensorflow
 print(cv_scheme)
+#[(train, test) for fold, (train, test) in enumerate(cv_scheme.split(train)) if fold==0]
+
 #we will use k=5 for now for speed
     #it has been seen in many datasets that 10 folds works relatively well to estimate model performance ([link](https://machinelearningmastery.com/how-to-configure-k-fold-cross-validation/#:~:text=configure%20the%20procedure.-,Sensitivity%20Analysis%20for%20k,evaluate%20models%20is%20k%3D10.)). Although there is some debate about it. We will stick to 10 folds for now
     #This is very well explained here (https://stackoverflow.com/questions/45969390/difference-between-stratifiedkfold-and-stratifiedshufflesplit-in-sklearn).
@@ -652,7 +654,13 @@ print_text("notes about XGBoost", header=1)
                     #this is useful for imbalanced class. I used it anyways because we have a continuous variables with a lot of values in the extremes of the distribution.
                     #If the value is set to 0, it means there is no constraint. If it is set to a positive value, it can help making the update step more conservative. Usually this parameter is not needed, but it might help in logistic regression when class is extremely imbalanced. Set it to value of 1-10 might help control the update.
                         #https://stats.stackexchange.com/questions/233248/max-delta-step-in-xgboost
-                    #we use several values between 1 and 10 as recommended by the help.
+                    #It gives me problems, I am not able to find best perofrmance around optimum. Given that and the fact is recommended for logistic regression, I am NOT going to use it.
+
+#you can have slightly different results with XGBoost even setting the seeds
+    #Changing subsample and colsample_bytree  to '1' and increasing early_stopping_rounds to '1000' (or whatever n_estimators is set to) should do the trick - let me know if this solves your problem or not. – 
+        #https://stackoverflow.com/questions/61764057/how-to-get-reproducible-results-from-xgboostregressor-random-state-has-no-effec
+    #I have checked that increasing the number of rounds in the final model makes things more stable.
+
 
 
 
@@ -1082,70 +1090,6 @@ gsearch_sample_2.cv_results_, gsearch_sample_2.best_params_, gsearch_sample_2.be
 
 
 
-print_text("Tune max_delta", header=2)
-print_text("wide search", header=3)
-gsearch_delta_1 = GridSearchCV( \
-    estimator=Pipeline( \
-        steps=[ \
-            ('scale', preprocessing.StandardScaler()), \
-            ('regressor', xgb.XGBRegressor(
-                learning_rate=0.1,
-                n_estimators=n_estimators_2,
-                max_depth=14,
-                min_child_weight=23,
-                gamma=0.01,
-                subsample=1.0,
-                colsample_bytree=0.9,
-                colsample_bylevel=0.65,
-                colsample_bynode=0.65,
-                objective="reg:squarederror",
-                nthread=1, 
-                eval_metric="rmse", 
-                seed=0))]), 
-    param_grid={
-        "regressor__max_delta_step": np.arange(0, 14, 2)},
-    scoring="neg_root_mean_squared_error",
-    n_jobs=10, \
-    cv=cv_scheme, \
-    verbose=4,
-    refit=True, \
-    pre_dispatch="1*n_jobs")
-gsearch_delta_1.fit(train[predictors],train["prob(sweep)"])
-gsearch_delta_1.cv_results_, gsearch_delta_1.best_params_, gsearch_delta_1.best_score_
-
-
-print_text("narrow search", header=3)
-gsearch_delta_2 = GridSearchCV( \
-    estimator=Pipeline( \
-        steps=[ \
-            ('scale', preprocessing.StandardScaler()), \
-            ('regressor', xgb.XGBRegressor(
-                learning_rate=0.1,
-                n_estimators=n_estimators_2,
-                max_depth=14,
-                min_child_weight=23,
-                gamma=0.01,
-                subsample=1.0,
-                colsample_bytree=0.9,
-                colsample_bylevel=0.65,
-                colsample_bynode=0.65,
-                objective="reg:squarederror",
-                nthread=1, 
-                eval_metric="rmse", 
-                seed=0))]), 
-    param_grid={
-        "regressor__max_delta_step": []},
-    scoring="neg_root_mean_squared_error",
-    n_jobs=10, \
-    cv=cv_scheme, \
-    verbose=4,
-    refit=True, \
-    pre_dispatch="1*n_jobs")
-gsearch_delta_2.fit(train[predictors],train["prob(sweep)"])
-gsearch_delta_2.cv_results_, gsearch_delta_2.best_params_, gsearch_delta_2.best_score_
-
-
-
 print_text("Tune regularization parameters", header=2)
 print_text("wide search", header=3)
 gsearch_regu_1 = GridSearchCV( \
@@ -1162,13 +1106,12 @@ gsearch_regu_1 = GridSearchCV( \
                 colsample_bytree=0.9,
                 colsample_bylevel=0.65,
                 colsample_bynode=0.65,
-                max_delta_step=,
                 objective="reg:squarederror",
                 nthread=1, 
                 eval_metric="rmse", 
                 seed=0))]), 
     param_grid={
-        "regressor__alpha": [1e-6, 1e-5, 1e-2, 0.1, 1, 10, 100], \
+        "regressor__alpha": [0, 1e-8, 1e-6, 1e-5, 1e-2, 1, 10, 100], \
         "regressor__lambda": np.arange(0, 1.01, 0.2)},
     scoring="neg_root_mean_squared_error",
     n_jobs=10, \
@@ -1195,14 +1138,13 @@ gsearch_regu_2 = GridSearchCV( \
                 colsample_bytree=0.9,
                 colsample_bylevel=0.65,
                 colsample_bynode=0.65,
-                max_delta_step=,
                 objective="reg:squarederror",
                 nthread=1, 
                 eval_metric="rmse", 
                 seed=0))]), 
     param_grid={
-        "regressor__alpha": [], \
-        "regressor__lambda": []},
+        "regressor__alpha": [2.5e-7, 5e-7, 7.5e-7, 1e-6, 2.5e-6, 5e-6, 7.5e-6], \
+        "regressor__lambda": [0.15, 0.175, 0.2, 0.225, 0.25]},
     scoring="neg_root_mean_squared_error",
     n_jobs=10, \
     cv=cv_scheme, \
@@ -1211,7 +1153,8 @@ gsearch_regu_2 = GridSearchCV( \
     pre_dispatch="1*n_jobs")
 gsearch_regu_2.fit(train[predictors],train["prob(sweep)"])
 gsearch_regu_2.cv_results_, gsearch_regu_2.best_params_, gsearch_regu_2.best_score_
-
+    #the best parameters for lambda and alpha are sligly worse than the model without these parameters
+    #not sure why because I have already included the default in the wide search. Maybe random differences due to sampling and low number of booster interations...
 
 
 print_text("re-calibrate the number of boosters to see the impact", header=2)
@@ -1226,9 +1169,8 @@ n_estimators_3 = modelfit(
         colsample_bytree=0.9,
         colsample_bylevel=0.65,
         colsample_bynode=0.65,
-        max_delta_step=,
-        reg_lambda=,
-        reg_alpha=,
+        reg_lambda=0.2,
+        reg_alpha=1e-6,
         objective="reg:squarederror",
         nthread=10, 
         eval_metric="rmse", 
@@ -1242,7 +1184,7 @@ print_text("reduce the learning rate and re-calibrate the number of boosters", h
 n_estimators_4 = modelfit(
     xgb.XGBRegressor(
         learning_rate=0.01,
-        n_estimators=5000,
+        n_estimators=100000, #needed to increase this because it was still improving at 5000 (the original value)
         max_depth=14,
         min_child_weight=23,
         gamma=0.01,
@@ -1250,16 +1192,15 @@ n_estimators_4 = modelfit(
         colsample_bytree=0.9,
         colsample_bylevel=0.65,
         colsample_bynode=0.65,
-        max_delta_step=,
-        reg_lambda=,
-        reg_alpha=,
+        reg_lambda=0.2,
+        reg_alpha=1e-6,
         objective="reg:squarederror",
         nthread=10, 
         eval_metric="rmse", 
         seed=0),
         train, 
         predictors)
-
+        #After 5000 improvements are very slow, from 0.608 to 0.606 after 14300 iterations. Probably not worth it.
 
 
 
@@ -1279,9 +1220,8 @@ final_model = Pipeline( \
                 colsample_bytree=0.9,
                 colsample_bylevel=0.65,
                 colsample_bynode=0.65,
-                max_delta_step=,
-                reg_lambda=,
-                reg_alpha=,
+                reg_lambda=0.2,
+                reg_alpha=1e-6,
                 objective="reg:squarederror",
                 nthread=10, 
                 eval_metric="rmse", 
