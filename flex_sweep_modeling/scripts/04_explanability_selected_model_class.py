@@ -425,17 +425,11 @@ print(train.shape)
 print(test.shape)
 print((train.shape[1] == modeling_data.shape[1]) & (test.shape[1] == modeling_data.shape[1]))
 print(train.shape[0]+test.shape[0] == modeling_data.shape[0])
+    #we are using 20% of test instead of 10% like in the model class comparison. 
+        #In that case, we needed to repeated HPs optimization several times under pre-defined train/eval/test sets so we have exposed different model classes to the same data partitions randomly selected. As we increase the number of splits (repetitions), we increase the number of folds as we do 10 folds, each time 9 folds for training/eval and 1 for test and you repeat 10 times. The test set is only 10%. This is basically a nested CV where we need to repeat several times in order to get a good sense of the model performance of different classes.
+        #Now, we only have 1 model class that we have already tuned and we just need to combine several instances of the model to get the final estimator. We need to know how good is this final estimator. As we get a larger test set, we should get a more robust measurement about the generalization ability of the model.
 
 
-
-#Christopher says that "The partial dependence plot shows how the model output changes based on changes of the feature and does not rely on the generalization error. It does not matter whether the PDP is computed with training or test data.". I think this also applies for ALE plots as they do not use the performence, i.e., an error metric from the model obtained by comparing observed and predicted, but they show changes in the prediction as the feature changes in certain data points.
-#In addition, I saw the follwing comment "Partial dependence plots can be performed over either the training or validation set, and examples of both cases can be found. For instance, fastbook uses the validation set, whereas Interpretable Machine Learning: A Guide for Making Black Box Models Explainable, in chapter 8.1 4, uses the training set. Frankly, in my experience, it ultimately does not matter which strategy you choose, and there are only a couple of important considerations. First, if the training set is large, PDP may take excessively long, in which case you can use a small chunk of it or resort to the validation set. Second, if the validation set is too small, PDP’s results would understandably be not very reliable, so the training set might be the wiser option."
-#Therefore, we could apply this approach to data that has been already seen by the model, i.e., training or full dataset (training+test).
-
-
-
-#https://datascience.stackexchange.com/questions/62913/shap-explanations-in-case-of-repeated-train-test-split
-#https://datascience.stackexchange.com/questions/61395/shap-value-analysis-gives-different-feature-importance-on-train-and-test-set
 
 
 
@@ -449,7 +443,7 @@ final_model = Pipeline( \
             ('scale', preprocessing.StandardScaler()), \
             ('regressor', xgb.XGBRegressor(
                 learning_rate=0.01,
-                n_estimators=826,
+                n_estimators=5000,
                 max_depth=14,
                 min_child_weight=23,
                 gamma=0.01,
@@ -478,6 +472,8 @@ from sklearn.ensemble import VotingRegressor
 #people do gridsearch on the weights of voting, so you can select the best importance for each model. In stack, you do CV to se how the meta-learne does selecting the best wegihts for each base learner
 
 
+'''
+
 final_model = Pipeline( \
     steps=[ \
             ('scale', preprocessing.StandardScaler()), \
@@ -491,13 +487,22 @@ y_pred=final_model.predict(test[predictors])
 from sklearn.metrics import r2_score
 score = r2_score(test["prob(sweep)"], y_pred)
 print(score)
-
+'''
 
 
 
 
 from sklearn.ensemble import StackingRegressor
-estimators = [("est_"+str(seed), xgb.XGBRegressor( learning_rate=0.01, n_estimators=5000, max_depth=14, min_child_weight=23, gamma=0.01, subsample=1.0, colsample_bytree=0.9, colsample_bylevel=0.65, colsample_bynode=0.65, max_delta_step=14, reg_lambda=0.2, reg_alpha=1e-6, objective="reg:squarederror", nthread=10,  eval_metric="rmse",  seed=seed)) for seed in range(0,5,1)]
+stack_pipeline = Pipeline( \
+    steps=[ \
+            ('scale', preprocessing.StandardScaler()), \
+            ("regressor", StackingRegressor( \
+                estimators=[("est_"+str(seed), xgb.XGBRegressor( learning_rate=0.01, n_estimators=5000, max_depth=14, min_child_weight=23, gamma=0.01, subsample=1.0, colsample_bytree=0.9, colsample_bylevel=0.65, colsample_bynode=0.65, max_delta_step=14, reg_lambda=0.2, reg_alpha=1e-6, objective="reg:squarederror", nthread=10,  eval_metric="rmse",  seed=seed)) for seed in range(0,5,1)], \
+                final_estimator=Ridge(), \
+                cv=cv_scheme))])
+
+#I think this goes sequential, first base model, second base model....
+
 from sklearn.linear_model import Ridge
     #Often simple ensembling models (e.g. simple average of predicted probabilities, weighted average of predicted probabilities or logistic regression of logits - possibly with regularization towards a simple average) perform a lot better than trying to fit fancier models on the second level
         #https://stats.stackexchange.com/questions/561584/why-is-my-stacking-meta-learning-not-outperforming-the-best-base-model
@@ -505,15 +510,15 @@ from sklearn.model_selection import KFold
 cv_scheme = KFold( \
     n_splits=5,  \
     shuffle=True)
-reg = StackingRegressor(estimators=estimators, final_estimator=Ridge(), cv=cv_scheme)
-reg.fit(train[predictors], train["prob(sweep)"]).score(test[predictors], test["prob(sweep)"])
+#reg = StackingRegressor(estimators=estimators, final_estimator=Ridge(), cv=cv_scheme)
+stack_pipeline.fit(train[predictors], train["prob(sweep)"]).score(test[predictors], test["prob(sweep)"])
     #Note that estimators_ are fitted on the full X while final_estimator_ is trained using cross-validated predictions of the base estimators using cross_val_predict.
 
-    #0.2 of improve with 800, try with 5000!
+    #getting 0.67 with 5000! we have gained 1%!!
     
 
-    #falta el scaling!!!
-
+    #bigger test size implies more robust/stable measure of generalizibilty?
+        #https://www.google.com/search?q=size+of+the+test+set&oq=size+of+the+test+set&gs_lcrp=EgZjaHJvbWUyBggAEEUYOTIMCAEQIRgPGBYYHRge0gEJMTM3NTlqMGo3qAIAsAIA&sourceid=chrome&ie=UTF-8
 
 predictors = [x for x in train.columns if x not in ["prob(sweep)"]]
 final_model.fit(train[predictors], train["prob(sweep)"])
@@ -529,6 +534,18 @@ print(score)
 
 
 #####PIENSA SI USAR TODO EL SET O SOLO TRAINING, PORQUE SALE DIFERENTE Y PERDEMOS DATOS. SI YA TENEMOS VALDIADO EL MODELO EN EL HELD-OUT...
+
+#Christopher says that "The partial dependence plot shows how the model output changes based on changes of the feature and does not rely on the generalization error. It does not matter whether the PDP is computed with training or test data.". I think this also applies for ALE plots as they do not use the performence, i.e., an error metric from the model obtained by comparing observed and predicted, but they show changes in the prediction as the feature changes in certain data points.
+#In addition, I saw the follwing comment "Partial dependence plots can be performed over either the training or validation set, and examples of both cases can be found. For instance, fastbook uses the validation set, whereas Interpretable Machine Learning: A Guide for Making Black Box Models Explainable, in chapter 8.1 4, uses the training set. Frankly, in my experience, it ultimately does not matter which strategy you choose, and there are only a couple of important considerations. First, if the training set is large, PDP may take excessively long, in which case you can use a small chunk of it or resort to the validation set. Second, if the validation set is too small, PDP’s results would understandably be not very reliable, so the training set might be the wiser option."
+#Therefore, we could apply this approach to data that has been already seen by the model, i.e., training or full dataset (training+test).
+    #https://christophm.github.io/interpretable-ml-book/feature-importance.html#feature-importance-data
+
+
+#https://datascience.stackexchange.com/questions/62913/shap-explanations-in-case-of-repeated-train-test-split
+#https://datascience.stackexchange.com/questions/61395/shap-value-analysis-gives-different-feature-importance-on-train-and-test-set
+
+
+
 
 #you can have slightly different results with XGBoost even setting the seeds
     #Changing subsample and colsample_bytree  to '1' and increasing early_stopping_rounds to '1000' (or whatever n_estimators is set to) should do the trick - let me know if this solves your problem or not. – 

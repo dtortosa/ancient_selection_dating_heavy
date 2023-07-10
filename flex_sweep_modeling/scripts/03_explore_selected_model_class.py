@@ -426,6 +426,9 @@ print(train.shape)
 print(test.shape)
 print((train.shape[1] == modeling_data.shape[1]) & (test.shape[1] == modeling_data.shape[1]))
 print(train.shape[0]+test.shape[0] == modeling_data.shape[0])
+    #we are using 20% of test instead of 10% like in the model class comparison. 
+        #In that case, we needed to repeated HPs optimization several times under pre-defined train/eval/test sets so we have exposed different model classes to the same data partitions randomly selected. As we increase the number of splits (repetitions), we increase the number of folds as we do 10 folds, each time 9 folds for training/eval and 1 for test and you repeat 10 times. The test set is only 10%. This is basically a nested CV where we need to repeat several times in order to get a good sense of the model performance of different classes.
+        #Now, we only have 1 model class that we are going to tune, so we can tune HPs in training/eval set with CV and then check the performance in the held-out test. As we get a larger test set, we should get a more robust measurement about the generalization ability of the model.
 
 
 print_text("set the CV scheme for the training set", header=2)
@@ -1184,7 +1187,7 @@ print_text("reduce the learning rate and re-calibrate the number of boosters", h
 n_estimators_4 = modelfit(
     xgb.XGBRegressor(
         learning_rate=0.01,
-        n_estimators=100000, #needed to increase this because it was still improving at 5000 (the original value)
+        n_estimators=5000,
         max_depth=14,
         min_child_weight=23,
         gamma=0.01,
@@ -1236,6 +1239,4 @@ y_pred = final_model.predict(test[predictors])
 print_text("calculate evaluation score in the test set", header=2)
 score = r2_score(test["prob(sweep)"], y_pred)
 print(score)
-
-#if best model not 0.69, try R2 as scorer
-    #also check what happens if incresing estimators manually
+#We get R2=0.66, instead of 0.69 like in the model class comparison. The difference is caused by the size of the test set, as in this case we are using 20% while in the first case we used the 10% (9 folds for training/evaluation and 1 for test). If we decrease the test size to 10%, then we got R2=0.705!! so we gained predictive power after doing all this manual tuning.
