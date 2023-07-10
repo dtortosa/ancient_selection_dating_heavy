@@ -1207,9 +1207,8 @@ n_estimators_4 = modelfit(
 
 
 
-
-print_text("check performance of the final model", header=1)
-print_text("define the final model", header=2)
+print_text("check performance after tunning XGBoost parameters", header=2)
+print_text("define the model", header=3)
 final_model = Pipeline( \
         steps=[ \
             ('scale', preprocessing.StandardScaler()), \
@@ -1232,11 +1231,156 @@ final_model = Pipeline( \
 final_model.fit(train[predictors], train["prob(sweep)"])
 
 
-print_text("predict on the test set", header=2)
+print_text("predict on the test set", header=3)
 y_pred = final_model.predict(test[predictors])
 
 
-print_text("calculate evaluation score in the test set", header=2)
+print_text("calculate evaluation score in the test set", header=3)
 score = r2_score(test["prob(sweep)"], y_pred)
 print(score)
 #We get R2=0.66, instead of 0.69 like in the model class comparison. The difference is caused by the size of the test set, as in this case we are using 20% while in the first case we used the 10% (9 folds for training/evaluation and 1 for test). If we decrease the test size to 10%, then we got R2=0.705!! so we gained predictive power after doing all this manual tuning.
+
+
+
+
+
+print_text("combine different instance of XGBoost with same best HP combination but different seeds", header=1)
+#As Janizek et al 2023 did, we want to consider the variability associated with multiple good fitting models. Following their example, we will run several XBoost models with the best HP combination (already defined) but different seed, so the sampling of samples and features across iterations will be different between trees. 
+    #After selecting XGBoost as the best-performing model class for the prediction of anti-AML drug synergy, we then wanted to account for the full diversity of possible good XGBoost models fit to the highly cor- related AML gene expression data. We therefore trained 100 models and explained the ensemble model. Each individual model had both row and column subsampling turned on for each additional tree fit, and the difference between the models in the ensemble was the random seed given to generate the subsampling
+        #Note that you can have slightly different results with XGBoost even setting the seeds
+            #Changing subsample and colsample_bytree  to '1' and increasing early_stopping_rounds to '1000' (or whatever n_estimators is set to) is used to increase stability        
+                #https://stackoverflow.com/questions/61764057/how-to-get-reproducible-results-from-xgboostregressor-random-state-has-no-effec
+        #so it makes sense to run several models with different seeds.
+    #After identifying GBMs as the best-performing model class for our dataset, we ensembled individual models until the ensemble model attributions were stable, leading to a final ensemble of 100 XGBoost models (see Supplementary Fig. 2 and Methods). We then analysed the resultant ensemble model attributions to look for genes with ‘global’ importance for drug combination synergy, that is, genes whose expres- sion is related to synergy across many different drug pairs in our data- set18.
+    #These steps are described in the script "ensemble_explanations.py" of this manuscript
+#We are using just 5 XGBoost instance because of 
+    #computation time limitations. We have to use around 5K booster iterations per XGBoost instance, so this makes things slower.
+    #using a low number of boosters, I have checked what happens by adding 10 instead of 5 models (i.e., instances), and there is no improvement.
+    #maybe check in the future
+#This approach of combining models with different seeds for improving performance is not strange. See this comment form Analytics Vidhya
+    #As I mentioned in the end, techniques like feature engineering and blending have a much greater impact than parameter tuning. For instance, I generally do some parameter tuning and then run 10 different models on same parameters but different seeds. Averaging their results generally gives a good boost to the performance of the model. Hope this helps. Please share your thoughts.
+        #https://www.analyticsvidhya.com/blog/2016/03/complete-guide-parameter-tuning-xgboost-with-codes-python/
+#People says that this is usually useful when you have very different models, but as I said, other people and papers also use this to combine different instances of the same model buth with different seed. I have seen 1% of improvement in R2 using this approach.
+    #Stacking is appropriate when multiple different machine learning models have skill on a dataset, but have skill in different ways. Another way to say this is that the predictions made by the models or the errors in predictions made by the models are uncorrelated or have a low correlation.
+    #https://machinelearningmastery.com/stacking-ensemble-machine-learning-with-python/
+    #https://www.thekerneltrip.com/python/stacking-an-introduction/
+#Voting regressor vs stacking
+#The fundamental difference between voting and stacking is how the final aggregation is done. In voting, user-specified weights are used to combine the classifiers whereas stacking performs this aggregation by using a blender/meta classifier. In other words, stacking uses a meta-estimator to model what weight you have to give to the prediction of each individual model in order to obtain a global prediction similar to the observed. You are modeling the response as a function of the individual predictions of each base estimator.
+    #https://towardsdatascience.com/ensemble-methods-comparing-scikit-learns-voting-classifier-to-the-stacking-classifier-f5ab1ed1a29d
+#I have found better results with stacking and I do not have to define the combinations of importance between estimators, so I am going to use it.
+#Super-learner
+#this is an special type of stacking, but it seems to be used when you have hundreds of models.
+    #https://machinelearningmastery.com/super-learner-ensemble-in-python/
+
+
+
+print_text("run GS for tuning the meta-estimator", header=2)
+print_text("define the CV schema for stacking", header=3)
+cv_stacking = KFold( \
+    n_splits=5,  \
+    shuffle=True)
+#The final stacked model will be evaluated using the previous defined CV schema with 5 folds, but we need an additional CV schema in order to train the meta-estimator with the predictions of the base estimators. See explanations above for further details
+    #https://machinelearningmastery.com/stacking-ensemble-machine-learning-with-python/
+
+#it seems that the cv of StackingRegressor finds parameters of the meta-estimator, i.e., the importance given to each base estimator, so the HPs of the base estimators are not optimized, nor the HPs of the meta-estimator (in case it has, for example alpha for Ridge)
+    #https://machinelearningmastery.com/stacking-ensemble-machine-learning-with-python/  
+
+#info from scikit learn
+#During training, the estimators are fitted on the whole training data X_train. They will be used when calling predict or predict_proba. To generalize and avoid over-fitting, the final_estimator is trained on out-samples using sklearn.model_selection.cross_val_predict internally.
+    #https://scikit-learn.org/stable/modules/ensemble.html#stacking
+
+#the prediction of a base estimator is done knowing the mean/sd of the whole training data, yes, but it would also know about the training data even if we do not scale because StackingRegressor fit the base estimators using the whole training data, while use CV fitting the meta-estimator on the predictions of the base estimators.
+    #note that we are using another CV schema on top of the stackingregressor schema, so in each repetition, one fold is not used for any of the base estimators, so the prediction in that fold would give info about generalization ability. We are predicting exactly in the same fold we have predicted when doing HP tunning for XGBoost
+
+
+
+
+print_text("run the stacked model and evaluate", header=2)
+#LinearRegression as meta-estimator
+#The meta-model is often simple, providing a smooth interpretation of the predictions made by the base models. As such, linear models are often used as the meta-model, such as linear regression for regression tasks (predicting a numeric value) and logistic regression for classification tasks (predicting a class label). Although this is common, it is not required.
+#The level-1 model or meta-model is provided via the “final_estimator” argument. By default, this is set to LinearRegression for regression and LogisticRegression for classification, and these are sensible defaults that you probably do not want to change.
+    #https://machinelearningmastery.com/stacking-ensemble-machine-learning-ith-python/
+#Often simple ensembling models (e.g. simple average of predicted probabilities, weighted average of predicted probabilities or logistic regression of logits - possibly with regularization towards a simple average) perform a lot better than trying to fit fancier models on the second level
+    #https://stats.stackexchange.com/questions/561584/why-is-my-stacking-meta-learning-not-outperforming-the-best-base-model
+from sklearn.ensemble import StackingRegressor
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import cross_val_score
+score_stacking = cross_val_score( \
+    estimator=Pipeline( \
+        steps=[ \
+                ('scale', preprocessing.StandardScaler()), \
+                ("regressor", StackingRegressor( \
+                    estimators=[( \
+                        "est_"+str(seed), \
+                        xgb.XGBRegressor( \
+                            learning_rate=0.01,
+                            n_estimators=n_estimators_4,
+                            max_depth=14,
+                            min_child_weight=23,
+                            gamma=0.01,
+                            subsample=1.0,
+                            colsample_bytree=0.9,
+                            colsample_bylevel=0.65,
+                            colsample_bynode=0.65,
+                            reg_lambda=0.2,
+                            reg_alpha=1e-6,
+                            objective="reg:squarederror",
+                            nthread=1, 
+                            eval_metric="rmse",  
+                            seed=seed)) \
+                        for seed in range(0,10,1)], \
+                    final_estimator=LinearRegression(), \
+                    cv=cv_stacking, \
+                    n_jobs=1))]), \
+    X=train[predictors],
+    y=train["prob(sweep)"], 
+    scoring="neg_root_mean_squared_error", \
+    cv=cv_scheme, \
+    n_jobs=10, \
+    verbose=4, error_score='raise', \
+    pre_dispatch="1*n_jobs")
+        #StackingRegressor, passthrough=False as default
+            #Sometimes, better performance can be achieved if the dataset prepared for the meta-model also includes inputs to the level-0 models, e.g. the input training data. This can be achieved by setting the “passthrough” argument to True and is not enabled by default.
+print(f"Mean neg_root_mean_squared_error across repetitions {np.mean(score_stacking)}")
+    #the lowest value obtained during HP tuning in XGBoost was -1.8744
+
+
+
+print_text("check performance after stacking", header=2)
+print_text("define the model using the best estimator from the last GS", header=3)
+final_model_stacking = Pipeline( \
+        steps=[ \
+            ('scale', preprocessing.StandardScaler()), \
+            ("regressor", StackingRegressor( \
+                estimators=[( \
+                    "est_"+str(seed), \
+                    xgb.XGBRegressor( \
+                        learning_rate=0.01,
+                        n_estimators=n_estimators_4,
+                        max_depth=14,
+                        min_child_weight=23,
+                        gamma=0.01,
+                        subsample=1.0,
+                        colsample_bytree=0.9,
+                        colsample_bylevel=0.65,
+                        colsample_bynode=0.65,
+                        reg_lambda=0.2,
+                        reg_alpha=1e-6,
+                        objective="reg:squarederror",
+                        nthread=1, 
+                        eval_metric="rmse",  
+                        seed=seed)) \
+                    for seed in range(0,10,1)], \
+                final_estimator=LinearRegression(), \
+                cv=cv_stacking, \
+                n_jobs=10))])
+final_model_stacking.fit(train[predictors], train["prob(sweep)"])
+
+
+print_text("predict on the test set", header=3)
+y_pred_stacking = final_model_stacking.predict(test[predictors])
+
+
+print_text("calculate evaluation score in the test set", header=3)
+score_stacking = r2_score(test["prob(sweep)"], y_pred_stacking)
+print(score_stacking)
