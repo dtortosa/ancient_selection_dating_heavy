@@ -175,7 +175,7 @@ print_text("prepare folder structure", header=1)
 run_bash(" \
     mkdir \
         --parents \
-        ./results/selected_model_class; \
+        ./results/selected_model_class/ale_plots/; \
     ls -l ./results")
 
 
@@ -398,16 +398,6 @@ print_text("Explanations about the non-independence of genes", header=4)
 
 
 
-
-print_text("prepare split data", header=1)
-#It is VERY important that we avoid overfitting given the use we are going to make of the models.
-    #In the future, we will use the final model to obtain a probability of selection considering genomic factors and then use it to select genes with the same expected probability of selection (according to these factors) than our genes of interest. The idea is that the interest genes should have the same probability of selection based on genomic features (predicted probability), but if they are target of a selective pressure, their observed probability of selection should be higher. If predicted and observed are exactly the same, there is no room for enrichment of selection in interest genes after controling for confounding factors, and this would be an methodological artifact due to a model that just fit the observed data without any generalization. This can be a problem with algorithms like RF or in deep learning. In other words, more overfitting, less power to detect the impact of selective pressures.
-
-#Held out part of the dataset in each CV round (i.e., test set) 
-    #This part will not be used for parameter optimization, but for the final validation after the final model has been optimized. In this way, we avoid potential overfiting in the evaluation sets ([see link](https://scikit-learn.org/stable/modules/cross_validation.html#cross-validation)). If you use train in a set of the data and then evaluate in other, you can see if the model trained is not overfitting to the training data and is flexible enough to predict the evaluation data. The problem is that in parameter optimization, we select the best parameters based on the evaluation metrics in the evaluation sets, thus we could get a model that fit too much the evaluation dataset, loosing generalization and thus making the evaluation metrics no longer metrics of generalization. To avoid this, we leave out a set of the data for final evaluation, i.e., the test set. This set will be NOT used in parameter optimization. Once we have selected the best parameters to train a model in the training dataset and predict well in the evaluation datasets of the CV, we use these parameter to create a final model, fit to the whole training data and then predict in the final evaluation dataset, which was not used for anything before. If the model works well, it means it is generalizable and it is not overfitting the data, so, in our case, we can say that it is explaining the variance in selection that it is really explained by the genomic factors and the rest would be variance that could be explained by selective pressures. If there is overfitting, the model fit too much the data, there is not non-explained variance.
-
-
-
 print_text("check feature explanations in training/test/whole?", header=2)
 #Christopher says that "The partial dependence plot shows how the model output changes based on changes of the feature and does not rely on the generalization error. It does not matter whether the PDP is computed with training or test data.". I think this also applies for ALE plots as they do not use the performence, i.e., an error metric from the model obtained by comparing observed and predicted, but they show changes in the prediction as the feature changes in certain data points. Christopher talks in length about the problem of calculating feature importance by perturbation because it requires to calculate changes in predictive power.
     #https://christophm.github.io/interpretable-ml-book/feature-importance.html#feature-importance-data
@@ -418,19 +408,18 @@ print_text("check feature explanations in training/test/whole?", header=2)
 
 
 
-#feature importance with shap is based on error? if that is the case, then we should think about training/test
-    #https://datascience.stackexchange.com/questions/62913/shap-explanations-in-case-of-repeated-train-test-split
-    #https://datascience.stackexchange.com/questions/61395/shap-value-analysis-gives-different-feature-importance-on-train-and-test-set
+print_text("Load the final model", header=1)
+import joblib
+final_model=joblib.load("./results/selected_model_class/yoruba_hg19_stack_5_xgboost_fit_to_full_dataset.pkl.gz")
+print(final_model)
+
+
+
 
 
 
 print_text("ALE plots", header=1)
 
-run_bash(" \
-    cd ./results/selected_model_class; \
-    mkdir \
-        --parents \
-        ./ale_plots")
 
 #ale plots avoids problems with correlated features and we can use it with any model!!!
     #see jupyter notebooks for details
@@ -440,20 +429,53 @@ run_bash(" \
 #The ALE value can be interpreted as the main effect of the feature at a certain value compared to the average prediction of the data. This interpretation is made possible because ALE plots are centered at zero so each point of the ALE curve represents the difference with mean prediction.[4] For instance, an ALE value of 5 for a feature value 12.2 would mean that if the feature of interest equals 12.2, the prediction it would yield is higher by 5 than the average prediction ([link](https://towardsdatascience.com/explainable-ai-xai-methods-part-3-accumulated-local-effects-ale-cf6ba3387fde))
 
 #alibi is much more maintained than aleplot and it is much easier to install in container
+predictors=[x for x in modeling_data.columns if x not in ["prob(sweep)"]]
 from alibi.explainers import ALE, plot_ale
     #warning numba
     #I think it is ok but check
-import matplotlib.pyplot as plt
-lr_ale = ALE(final_model.predict, feature_names=modeling_data[predictors].columns, target_names=["log(Flex-Sweep probability)"])
+lr_ale = ALE(final_model.predict, feature_names=modeling_data[predictors].columns)
 
-lr_exp = lr_ale.explain(modeling_data[predictors].to_numpy(), features=[16,17,18])
+
+
+
+lr_exp = lr_ale.explain(modeling_data[predictors].to_numpy(), features=[15,16,17,18])
     #DECIDE NUMBER OF INTERVALS!!
         #ALE plots can become a bit shaky (many small ups and downs) with a high number of intervals. In this case, reducing the number of intervals makes the estimates more stable, but also smoothes out and hides some of the true complexity of the prediction model. There is no perfect solution for setting the number of intervals. If the number is too small, the ALE plots might not be very accurate. If the number is too high, the curve can become shaky.
-plot_ale(lr_exp, n_cols=3, fig_kw={'figwidth':20, 'figheight': 15});
+
+
+
+#ale_plot has a few arguments, so in order to modify parameters of the plot, we need to modify default parameters of matplotlib. You can see the default and the name of each parameter in "mpl.rcParams.keys()"
+
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+#mpl.rcParams['lines.linewidth'] = 0.2
+#mpl.rcParams['lines.markersize'] = 0.05
+#mpl.rcParams['lines.markeredgewidth'] = 0.05
+#mpl.rcParams['markers.fillstyle'] = "none"
+
+
+import matplotlib.pyplot as plt
+
+plot_ale(lr_exp, features=[2], n_cols=1, fig_kw={'figwidth':5, 'figheight':2.5}, line_kw={"linewidth":0.2, "markersize":0.05, "markeredgewidth":0.05,"fillstyle":"none"}, sharey="all")
+    #you can change arguments of plot using fig and line_kw
+        #look posibilities in "plt.rcParams.keys()"
 plt.savefig( \
-    fname="./results/selected_model_class/ale_plots/aleplots_all_features_train.png")
+    fname="./results/selected_model_class/ale_plots/aleplot_bat_distance.png")
 plt.close()
     #The ALE on the y-axes of the plot above is in the units of the prediction variable.
+
+#remove legend
+#make plot of each selective pressure (not smt) plus recombination and conserved elements
+
+
+
+
+
+
+
+#the ALe plot of VIP makes sense, the prediction gets below the average as we move far wawy from VIPs, then increase but when the data starts to get very disperse
+#The ALE plot of BAT shows that the predictions tend to be above average close to BAT genes. There is dispersion, but for most of the points is the case. Once we get away from BAT genes, the predictions to be in the average or below average. Then, as data is more disperse, we get more noisy pattern around the average.
+#For thermogenic and SMT genes there is no clear pattern, predictions tend to be around the average.
 
 
 #I understand that the bins are calculated as percentiles, the 50% is the percentile 50, i.e., the number that separate the data in two parts with the same size. 10% would be the first 10% of the data.
@@ -481,11 +503,17 @@ plt.close()
     #https://towardsdatascience.com/kernelshap-vs-treeshap-e00f3b3a27db
 
 
+#feature importance with shap is based on error? if that is the case, then we should think about training/test
+    #https://datascience.stackexchange.com/questions/62913/shap-explanations-in-case-of-repeated-train-test-split
+    #https://datascience.stackexchange.com/questions/61395/shap-value-analysis-gives-different-feature-importance-on-train-and-test-set
+
+
 #check if shaps gives effect after controling for the rest of factors.
     #Note that GC content is also negatively associated with selection accoridng to ALE plots!!
 
 import shap
 
+#https://mail.google.com/mail/u/0/?tab=rm&ogbl#inbox/FMfcgzGtwCtShmTtxhBvnFxjKGtNtvbh
 explainer = shap.TreeExplainer(final_model.named_steps['regressor'], feature_names=train[predictors].columns)
     #errors numpy
         #module 'numpy' has no attribute 'int'.

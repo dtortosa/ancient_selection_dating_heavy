@@ -1328,7 +1328,7 @@ score_stacking = cross_val_score( \
                             nthread=1, 
                             eval_metric="rmse",  
                             seed=seed)) \
-                        for seed in range(0,10,1)], \
+                        for seed in range(0,5,1)], \
                     final_estimator=LinearRegression(), \
                     cv=cv_stacking, \
                     n_jobs=1))]), \
@@ -1337,16 +1337,26 @@ score_stacking = cross_val_score( \
     scoring="neg_root_mean_squared_error", \
     cv=cv_scheme, \
     n_jobs=10, \
-    verbose=4, error_score='raise', \
+    verbose=4, \
+    error_score='raise', \
     pre_dispatch="1*n_jobs")
         #StackingRegressor, passthrough=False as default
             #Sometimes, better performance can be achieved if the dataset prepared for the meta-model also includes inputs to the level-0 models, e.g. the input training data. This can be achieved by setting the “passthrough” argument to True and is not enabled by default.
 print(f"Mean neg_root_mean_squared_error across repetitions {np.mean(score_stacking)}")
     #the lowest value obtained during HP tuning in XGBoost was -1.8744
+    #we get here under the same CV scheme an average of -1.837 across 5 folds. Results per split are:
+        #[CV] END ... score: (test=-1.800) total time=70.3min
+        #[CV] END ... score: (test=-1.807) total time=70.3min
+        #[CV] END ... score: (test=-1.860) total time=70.5min
+        #[CV] END ... score: (test=-1.896) total time=70.6min
+        #[CV] END ... score: (test=-1.824) total time=70.7min
+        #Mean neg_root_mean_squared_error across repetitions -1.8372924401780832
+            #it took a few hours (not 10), because each split was run in parallel (10 jobs)
 
 
 
-print_text("check performance after stacking", header=2)
+
+print_text("check performance after stacking in test set", header=2)
 print_text("define the model using the best estimator from the last GS", header=3)
 final_model_stacking = Pipeline( \
         steps=[ \
@@ -1370,17 +1380,87 @@ final_model_stacking = Pipeline( \
                         nthread=1, 
                         eval_metric="rmse",  
                         seed=seed)) \
-                    for seed in range(0,10,1)], \
+                    for seed in range(0,5,1)], \
                 final_estimator=LinearRegression(), \
                 cv=cv_stacking, \
                 n_jobs=10))])
 final_model_stacking.fit(train[predictors], train["prob(sweep)"])
+import joblib
+joblib.dump(final_model_stacking, "./results/selected_model_class/yoruba_hg19_stack_5_xgboost_fit_to_training_dataset.pkl.gz", compress=("gzip", True))
+    #https://stackoverflow.com/questions/34143829/sklearn-how-to-save-a-model-created-from-a-pipeline-and-gridsearchcv-using-jobli
+#final_model_stacking=joblib.load("./results/selected_model_class/yoruba_hg19_stack_5_xgboost_fit_to_training_dataset.pkl.gz")
 
 
-print_text("predict on the test set", header=3)
-y_pred_stacking = final_model_stacking.predict(test[predictors])
+print_text("predict on the training and test set", header=3)
+y_pred_stacking_train = final_model_stacking.predict(train[predictors])
+y_pred_stacking_test = final_model_stacking.predict(test[predictors])
+
+print_text("calculate evaluation scores", header=3)
+final_model_stacking_score_train = r2_score(train["prob(sweep)"], y_pred_stacking_train)
+final_model_stacking_score_test = r2_score(test["prob(sweep)"], y_pred_stacking_test)
+print(f"R2 of final model on train set: {final_model_stacking_score_train}")
+print(f"R2 of final model on test set: {final_model_stacking_score_test}")
+#R2 of final model on train set: 0.9913054963448299
+#R2 of final model on test set: 0.6760527299906672
 
 
-print_text("calculate evaluation score in the test set", header=3)
-score_stacking = r2_score(test["prob(sweep)"], y_pred_stacking)
-print(score_stacking)
+print_text("plot predicted vs observes in training and test sets", header=3)
+import matplotlib.pyplot as plt
+fig, (ax1, ax2) = plt.subplots(2, 1)
+fig.suptitle("Predicted vs observed")
+ax1.scatter(train["prob(sweep)"], y_pred_stacking_train, s=0.5)
+ax1.set_ylabel("Predicted log(Flex-Sweep)")
+ax1.yaxis.set_label_coords(-0.11, -0.1)
+ax1.annotate("Training set R2: " + str(np.round(final_model_stacking_score_train, 4)), xy=(0.05, 0.85), xycoords='axes fraction')
+ax2.scatter(test["prob(sweep)"], y_pred_stacking_test, s=0.5)
+ax2.set_xlabel("Observed log(Flex-Sweep)")
+ax2.annotate("Test set R2: " + str(np.round(final_model_stacking_score_test, 4)), xy=(0.05, 0.85), xycoords='axes fraction')
+plt.savefig( \
+    fname="./results/selected_model_class/yoruba_hg19_stack_5_xgboost_scatter.png")
+plt.close()
+    #Increased error at top sweep candidated
+        #There is an increase in the residuals (error) as we get closer to high Flex-Sweep values, specifically, the residuals tend to be more negative, i.e., predicted values tend to be smaller than observed.
+        #My intuition is the following: 
+            #At low-medium flex-sweep values, genomic features like recombination rate or conserved elements density explain well the distribution of sweep signals. Lower recombination makes easier to detect sweep like higher conservation increase the probability of having regions with phenotypic relevance. 
+            #However, as we get closer to top flex-sweep candidates, these features are not enough. We have here genes whose functions are likely target of different selective pressures, so they have more sweep signals compared to other genes with similar genomic features. We have not included all selective pressures influencing the human genome, thus it is not surprising that we have unexplained variability in strong sweep candidates.
+    #predicted probability above 1
+        #There are some genes with a predicted value above 0, meaning flex-sweep probability above 1. This is caused because the distribution of flexsweep is veery skewed, with a very high and narrow peak at 0.99-1.
+        #Therefore, it is not surprising that the model smooth that peak making it a bit wider and then surpassing zero a bit. 
+        #Note, anyways, that most of the genes at that level (top sweep candidates) are predicted to have less (not more) flex-sweep probabilities, supporting the explanation of the previous point.
+
+
+
+print_text("prepare the TRUE final model", header=1)
+print_text("write the final model from scratch and fit to the whole data", header=2)
+final_model_stacking_full_data = Pipeline( \
+        steps=[ \
+            ('scale', preprocessing.StandardScaler()), \
+            ("regressor", StackingRegressor( \
+                estimators=[( \
+                    "est_"+str(seed), \
+                    xgb.XGBRegressor( \
+                        learning_rate=0.01,
+                        n_estimators=n_estimators_4,
+                        max_depth=14,
+                        min_child_weight=23,
+                        gamma=0.01,
+                        subsample=1.0,
+                        colsample_bytree=0.9,
+                        colsample_bylevel=0.65,
+                        colsample_bynode=0.65,
+                        reg_lambda=0.2,
+                        reg_alpha=1e-6,
+                        objective="reg:squarederror",
+                        nthread=1, 
+                        eval_metric="rmse",  
+                        seed=seed)) \
+                    for seed in range(0,5,1)], \
+                final_estimator=LinearRegression(), \
+                cv=cv_stacking, \
+                n_jobs=10))])
+final_model_stacking_full_data.fit(modeling_data[predictors], modeling_data["prob(sweep)"])
+print_text("save the model", header=2)
+import joblib
+joblib.dump(final_model_stacking_full_data, "./results/selected_model_class/yoruba_hg19_stack_5_xgboost_fit_to_full_dataset.pkl.gz", compress=("gzip", True))
+    #https://stackoverflow.com/questions/34143829/sklearn-how-to-save-a-model-created-from-a-pipeline-and-gridsearchcv-using-jobli
+#final_model_stacking_full_data=joblib.load("./results/selected_model_class/yoruba_hg19_stack_5_xgboost_fit_to_full_dataset.pkl.gz")
