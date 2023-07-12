@@ -402,7 +402,7 @@ print_text("check feature explanations in training/test/whole?", header=2)
 #Christopher says that "The partial dependence plot shows how the model output changes based on changes of the feature and does not rely on the generalization error. It does not matter whether the PDP is computed with training or test data.". I think this also applies for ALE plots as they do not use the performence, i.e., an error metric from the model obtained by comparing observed and predicted, but they show changes in the prediction as the feature changes in certain data points. Christopher talks in length about the problem of calculating feature importance by perturbation because it requires to calculate changes in predictive power.
     #https://christophm.github.io/interpretable-ml-book/feature-importance.html#feature-importance-data
 #In addition, I saw the follwing comment "Partial dependence plots can be performed over either the training or validation set, and examples of both cases can be found. For instance, fastbook uses the validation set, whereas Interpretable Machine Learning: A Guide for Making Black Box Models Explainable, in chapter 8.1 4, uses the training set. Frankly, in my experience, it ultimately does not matter which strategy you choose, and there are only a couple of important considerations. First, if the training set is large, PDP may take excessively long, in which case you can use a small chunk of it or resort to the validation set. Second, if the validation set is too small, PDP’s results would understandably be not very reliable, so the training set might be the wiser option."
-#Therefore, we could apply this approach to data that has been already seen by the model, i.e., training or full dataset (training+test).
+#Therefore, we could apply this approach to data that has been already seen by the model, i.e., training or full dataset (training+test). And we can use all the data is available.
 
 
 
@@ -419,16 +419,42 @@ print(final_model)
 
 
 print_text("ALE plots", header=1)
+#Accumulated local effects describe how features influence the prediction of a machine learning model on average. ALE plots are a faster and unbiased alternative to partial dependence plots (PDPs). Given that we have correlated features (see above), we have to consider this bias. 
+    #ALE explanations obtained from this book: https://christophm.github.io/interpretable-ml-book/ale.html
+#If features of a machine learning model are correlated, the partial dependence plot cannot be trusted. The computation of a partial dependence plot for a feature that is strongly correlated with other features involves averaging predictions of artificial data instances (samples) that are unlikely in reality. This can greatly bias the estimated feature effect. Imagine calculating partial dependence plots for a machine learning model that predicts the value of a house depending on the number of rooms and the size of the living area. We are interested in the effect of the living area on the predicted value. As a reminder, the recipe for partial dependence plots is: 1) Select feature. 2) Define grid of values of the feature to be tested. 3) Per grid value: a) Replace feature with the selected grid value in each samples and b) average predictions across samples; repeate with another values of the grid... 4) Draw curve across grid values. In this way, you can see what happens with the prediction across a range of values of the feature of interest.
+#For the calculation of the first grid value of the PDP – say 30 m2 – we replace the living area for all samples by 30 m2, even for houses with 10 rooms. Sounds to me like a very unusual house, 10 rooms but only 30 m2?. The partial dependence plot includes these unrealistic houses in the feature effect estimation and pretends that everything is fine.
+#In figure 8.5 of the tutorial you can see this with two continuous variables: When analyzing the value of x1=0.75, all samples get a value of 0.75 for this feature, including those with a x2=0.2. If you see the relationship between the 2 features, there are no samples with x1=0.75 and x=0.2, this is a combination that does not exist in the data because when x1 is high, x2 is also high (both features are positively correlated). 
+#In our case, for example, a very low coding density with very high number of genes is unlikely, if this is not present in the dataset, specially if this is the whole dataset, it does not make ansy sense to predict selection considering this combination to check the impact of high number of genes in the predictions.
+#What can we do to get a feature effect estimate that respects the correlation of the features? We could average over the conditional distribution of the feature, meaning at a grid value of x1, we average the predictions of instances with a similar x1 value. The solution for calculating feature effects using the conditional distribution is called Marginal Plots, or M-Plots (confusing name, since they are based on the conditional, not the marginal distribution). Wait, did I not promise you to talk about ALE plots? M-Plots are not the solution we are looking for. Why do M-Plots not solve our problem? If we average the predictions of all houses of about 30 m2, we estimate the combined effect of living area and of number of rooms, because of their correlation. If number of rooms and area are correlated, houses with around 30 m2 will tend to have a similar number of rooms. Suppose that the living area has no effect on the predicted value of a house, only the number of rooms has. The M-Plot would still show that the size of the living area increases the predicted value, since the number of rooms increases with the living area.
+#Figure 8.6 shows for two correlated features how M-Plots work. Now, we change to x1=0.75 for only those with x2 around 0.8, which are the ones actually having values close x1=0.75, so we avoid unlikely combinations of the features,like x1=0.75 and x2=0.2 but, again, the effect on the prediction is because x1=0.75 or because x2 is equal to 0.8?
+#Just to clarify: We take samples with x1 around 0.75. For each one, we change x1 to 0.75 and make a prediction. Then average across all predicitons for these samples. Repeate with samples having x1 around 0.77, 0.79 and so on. Imagine that the average prediction is higher in samples around x1=0.79 compared to samples with x1 around 0.75. This means that the model has learned to use x1 as a positive predictor? Not necessarily, becuase the samples with x1 around 0.79 also tend to have higher values of x2 compared to the samples around x1=0.75, as we said, x1 and x2 are positively correlated. Therefore, what is causing the increase in the prediction, x1 or x2?
+#M-Plots avoid averaging predictions of unlikely data instances, but they mix the effect of a feature with the effects of all correlated features. ALE plots solve this problem by calculating – also based on the conditional distribution of the features – differences in predictions instead of averages. For the effect of living area at 30 m2, the ALE method uses all houses with about 30 m2, gets the model predictions pretending these houses were 31 m2 minus the prediction pretending they were 29 m2. This gives us the pure effect of the living area and is not mixing the effect with the effects of correlated features. The use of differences blocks the effect of other features. The rest of features are fixed!
+#Just to clarify: In each interval, we have houses with similar values for the feature of interest, i.e., area. We will only use these houses, their area and the corresponding number of rooms, which will be also similar. Therefore, we are selecting real combinations of the two features. Now, we change the area for each of the datapoints inside this intervals and see what happens with the prediction. It only make two changes, the lowest and the highest area of all points in the interval. We change the value of all sample to the lowest. Then, repeate with the highest value obtaining a new set of predictions. Calculate the difference between the lowest and the highest prediction for each sample, and average across all samples within the interval.
+#These samples will also have similar values of the correlated second feature, i.e., number of rooms. BUT we ae not calculating the average prediction in these samples, instead, we are checking what happens if, within samples with similar area and hence similar number of rooms, we increase and decrease the area. So the impact on the prediction is only caused by the change in area, not by the number of rooms. In other words, we are actually modifying the value of the feature of interest, area, within a set of samples that have similar number of rooms and we are just looking at the average price in these data points. Therefore, the prediction change is caused only by area, as we have similar rooms for the analyzed datapoints. In addition, we are only looking at combinations of area and rooms that are observed in the data. In summary, we can see how THE MODEL HAS LEARNED to use area in order to predict the price, independently of the number of rooms. This is exacly what we want. Figure 8.7 shows this.
+#But is it not interesting to see that our model behaves oddly at x1 > 0.7 and x2 < 0.3? Well, yes and no. Since these are data instances that might be physically impossible or at least extremely unlikely, it is usually irrelevant to look into these instances. But if you suspect that your test distribution might be slightly different and some instances are actually in that range, then it would be interesting to include this area in the calculation of feature effects. But it has to be a conscious decision to include areas where we have not observed data yet and it should not be a side-effect of the method of choice like PDP. If you suspect that the model will later be used with differently distributed data, I recommend to use ALE plots and simulate the distribution of data you are expecting.
+#first-order effects
+    #Therefore, the ALE value can be interpreted as the main effect of the feature at a certain value compared to the AVERAGE PREDICTION OF THE DATA. This interpretation is made possible because ALE plots are centered at zero so each point of the ALE curve represents the difference with mean prediction.[4] For instance, an ALE value of 5 for a feature value 12.2 would mean that if the feature of interest equals 12.2, the prediction it would yield is higher by 5 than the average prediction.
+        #https://towardsdatascience.com/explainable-ai-xai-methods-part-3-accumulated-local-effects-ale-cf6ba3387fde
+    #The number of instances is the same in ALL INTERVALS, thanks to the use of quantiles as grid, but in some areas there will be many short intervals and the ALE curve will consist of many more estimates. But for long intervals, which can make up a big part of the entire curve, there are comparatively fewer instances. This happened in the cervical cancer prediction ALE plot for high age for example.
+    #ALE plots can become a bit shaky (many small ups and downs) with a high number of intervals. In this case, reducing the number of intervals makes the estimates more stable, but also smoothes out and hides some of the true complexity of the prediction model. There is no perfect solution for setting the number of intervals. If the number is too small, the ALE plots might not be very accurate. If the number is too high, the curve can become shaky.
+    #Second order effects
+        #The second-order effect is the additional interaction effect of the features after we have accounted for the main effects of the features.
+        #Second-order effect plots can be a bit annoying to interpret, as you always have to keep the main effects in mind. It is tempting to read the heat maps as the total effect of the two features, but it is only the additional effect of the interaction. The pure second-order effect is interesting for discovering and exploring interactions, but for interpreting what the effect looks like, I think it makes more sense to integrate the main effects into the plot
+#Important limitation
+    #However, ALE plots do have their limitations as well. It is trickier to interpret than PDPs or ICE plots. The interpretation also is usually limited within the “window” or “interval” defined. If the features are highly correlated (which is often the case), interpreting an effect across intervals is impossible. Keep in mind that the effects are calculated within each interval and that each interval contains different sets of data points. These calculated effects are accumulated (hence the name “Accumulated” Local Effects) only for the sake smoothing the line.
+#Summary. To summarize how each type of plot (PDP, M, ALE) calculates the effect of a feature at a certain grid value v:
+    #Partial Dependence Plots: “Let me show you what the model predicts on average when each data instance has the value v for that feature (i.e., all samples have v for the feature). I ignore whether the value v makes sense for all data instances.”
+    #M-Plots: “Let me show you what the model predicts on average for data instances that have values close to v for that feature. The effect could be due to that feature, but also due to correlated features.”
+    #ALE plots: “Let me show you how the model predictions change in a small ”window” of the feature around v for data instances in that window.”
 
 
-#ale plots avoids problems with correlated features and we can use it with any model!!!
-    #see jupyter notebooks for details
-    #https://christophm.github.io/interpretable-ml-book/ale.html
 
 
-#The ALE value can be interpreted as the main effect of the feature at a certain value compared to the average prediction of the data. This interpretation is made possible because ALE plots are centered at zero so each point of the ALE curve represents the difference with mean prediction.[4] For instance, an ALE value of 5 for a feature value 12.2 would mean that if the feature of interest equals 12.2, the prediction it would yield is higher by 5 than the average prediction ([link](https://towardsdatascience.com/explainable-ai-xai-methods-part-3-accumulated-local-effects-ale-cf6ba3387fde))
+#por aqui!!!
+
 
 #alibi is much more maintained than aleplot and it is much easier to install in container
+    #https://docs.seldon.io/projects/alibi/en/stable/index.html
 predictors=[x for x in modeling_data.columns if x not in ["prob(sweep)"]]
 from alibi.explainers import ALE, plot_ale
     #warning numba
@@ -438,34 +464,66 @@ lr_ale = ALE(final_model.predict, feature_names=modeling_data[predictors].column
 
 
 
-lr_exp = lr_ale.explain(modeling_data[predictors].to_numpy(), features=[15,16,17,18])
+lr_exp = lr_ale.explain(modeling_data[predictors].to_numpy(), min_bin_points=4) ##CHECK HTHIS 10!! THE DEFAULT IS 4!!!
     #DECIDE NUMBER OF INTERVALS!!
+        #The explain method has a default argument, min_bin_points=4, which determines the number of bins the range of each feature is subdivided into so that the ALE estimate for each bin is made with at least min_bin_points. Smaller values can result in less accurate local estimates while larger values can also result in less accurate estimates by averaging across large parts of the feature range.
         #ALE plots can become a bit shaky (many small ups and downs) with a high number of intervals. In this case, reducing the number of intervals makes the estimates more stable, but also smoothes out and hides some of the true complexity of the prediction model. There is no perfect solution for setting the number of intervals. If the number is too small, the ALE plots might not be very accurate. If the number is too high, the curve can become shaky.
 
 
+#Think this!!!
+# If the features are highly correlated (which is often the case), interpreting an effect across intervals is impossible. Keep in mind that the effects are calculated within each interval and that each interval contains different sets of data points. These calculated effects are accumulated (hence the name “Accumulated” Local Effects) only for the sake smoothing the line.
 
-#ale_plot has a few arguments, so in order to modify parameters of the plot, we need to modify default parameters of matplotlib. You can see the default and the name of each parameter in "mpl.rcParams.keys()"
+
+#think this!!!
+#At this point, I do not see any reason to not use training+test set for ALE plots but, from what I have seen, people use to calculate these plots on the training data, and this is the recommendation of the two python packages that implement this approach (ALEPython package and in Alibi). So, for now, I am going to calculate these plots in the training set, we can check what happens with the whole dataset or in the test set in the future.
+
+
+
+import pickle
+pickle.dump(lr_exp, open("./results/selected_model_class/ale_plots/saved_explained/yoruba_hg19_stack_5_xgboost_fit_to_full_dataset_alibi_explanations.sav", 'wb'))
+#lr_exp = pickle.load(open("./results/selected_model_class/ale_plots/saved_explained/yoruba_hg19_stack_5_xgboost_fit_to_full_dataset_alibi_explanations.sav", 'rb'))
+    #https://machinelearningmastery.com/save-load-machine-learning-models-python-scikit-learn/
+
+
+
+
+
 
 import matplotlib.pyplot as plt
-import matplotlib as mpl
-#mpl.rcParams['lines.linewidth'] = 0.2
-#mpl.rcParams['lines.markersize'] = 0.05
-#mpl.rcParams['lines.markeredgewidth'] = 0.05
-#mpl.rcParams['markers.fillstyle'] = "none"
 
 
-import matplotlib.pyplot as plt
+dict_features_to_plot = {
+    "recombination_final_1000kb": "Recombination rate (cM/Mb)", \
+    "cons_elements_1000kb": "Density of conserved elements", \
+    "thermogenic_distance": "Distance to the closest thermogenic gene (pair base)", \
+    "vip_distance": "Distance to the closest VIP (pair base)", \
+    "bat_distance_percentile_1": "Distance to the closest BAT gene (pair base)", \
+    "smt_distance_percentile_1": "Distance to the closest SMT gene (pair base)"}
 
-plot_ale(lr_exp, features=[2], n_cols=1, fig_kw={'figwidth':5, 'figheight':2.5}, line_kw={"linewidth":0.2, "markersize":0.05, "markeredgewidth":0.05,"fillstyle":"none"}, sharey="all")
-    #you can change arguments of plot using fig and line_kw
-        #look posibilities in "plt.rcParams.keys()"
-plt.savefig( \
-    fname="./results/selected_model_class/ale_plots/aleplot_bat_distance.png")
-plt.close()
-    #The ALE on the y-axes of the plot above is in the units of the prediction variable.
+#feature=[feature for (pos,feature) in enumerate(dict_features_to_plot.keys()) if pos==4][0]
+for feature in dict_features_to_plot.keys():
+    ax=plot_ale( \
+        exp=lr_exp, \
+        features=np.where(modeling_data[predictors].columns == feature)[0].tolist(), \
+        n_cols=1, \
+        fig_kw={'figwidth':6, 'figheight':3}, \
+        line_kw={"linewidth":0.2, "markersize":2, "markeredgewidth":0.25,"fillstyle":"none"}, \
+        sharey="all")[0][0]
+        #you can change arguments of plot using fig and line_kw
+            #look posibilities in "plt.rcParams.keys()"
+    ax.update({"xlabel": dict_features_to_plot[feature]})
+        #https://www.geeksforgeeks.org/matplotlib-axes-axes-update-in-python/
+    ax.update({"ylabel": "Change average prediction"})
+        #The ALE on the y-axes of the plot above is in the units of the prediction variable.
+    ax.get_legend().remove()
+        #https://stackoverflow.com/questions/59352887/how-to-remove-legend-from-an-image-plot
+    plt.savefig( \
+        fname="./results/selected_model_class/ale_plots/aleplot_" + feature + ".png", dpi=300)
+    plt.close()
 
-#remove legend
-#make plot of each selective pressure (not smt) plus recombination and conserved elements
+
+
+
 
 
 
@@ -485,13 +543,23 @@ plt.close()
 
     #https://docs.seldon.io/projects/alibi/en/stable/examples/ale_regression_california.html
 
-#This also is unable to detect the positive influence of GC content
-#check prevous results with aleplot package (jupyter notebook)
+#This also is unable to detect the positive influence of GC content, just like we saw with ale_plots of the first DL model
+
+
+
+
+
+
 
 
 
 
 #####tree shap
+
+
+#only feature importance?
+    #we need feature importance not based on error! so we can show BAT genes are important
+
 
 #tree shap also avoids problems with correlated features, but it is only for tree-based methods, this is not the case for the other SHAP methods
 
