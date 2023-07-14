@@ -175,7 +175,10 @@ print_text("prepare folder structure", header=1)
 run_bash(" \
     mkdir \
         --parents \
-        ./results/selected_model_class/ale_plots/; \
+        ./results/selected_model_class/ale_plots/saved_explained; \
+    mkdir \
+        --parents \
+        ./results/selected_model_class/permutation_importance; \
     ls -l ./results")
 
 
@@ -398,22 +401,271 @@ print_text("Explanations about the non-independence of genes", header=4)
 
 
 
-print_text("check feature explanations in training/test/whole?", header=2)
-#Christopher says that "The partial dependence plot shows how the model output changes based on changes of the feature and does not rely on the generalization error. It does not matter whether the PDP is computed with training or test data.". I think this also applies for ALE plots as they do not use the performence, i.e., an error metric from the model obtained by comparing observed and predicted, but they show changes in the prediction as the feature changes in certain data points. Christopher talks in length about the problem of calculating feature importance by perturbation because it requires to calculate changes in predictive power.
+
+
+print_text("feature explanations in training/test/whole?", header=2)
+#Permutation importance
     #https://christophm.github.io/interpretable-ml-book/feature-importance.html#feature-importance-data
-#In addition, I saw the follwing comment "Partial dependence plots can be performed over either the training or validation set, and examples of both cases can be found. For instance, fastbook uses the validation set, whereas Interpretable Machine Learning: A Guide for Making Black Box Models Explainable, in chapter 8.1 4, uses the training set. Frankly, in my experience, it ultimately does not matter which strategy you choose, and there are only a couple of important considerations. First, if the training set is large, PDP may take excessively long, in which case you can use a small chunk of it or resort to the validation set. Second, if the validation set is too small, PDP’s results would understandably be not very reliable, so the training set might be the wiser option."
-#Therefore, we could apply this approach to data that has been already seen by the model, i.e., training or full dataset (training+test). And we can use all the data is available.
+    #the case for using test data
+        #This is a simple case: Model error estimates based on training data are garbage -> feature importance relies on model error estimates -> feature importance based on training data is garbage. Really, it is one of the first things you learn in machine learning: If you measure the model error (or performance) on the same data on which the model was trained, the measurement is usually too optimistic, which means that the model seems to work much better than it does in reality. And since the permutation feature importance relies on measurements of the model error, we should use unseen test data. The feature importance based on training data makes us mistakenly believe that features are important for the predictions, when in reality the model was just overfitting and the features were not important at all.
+    #the case for using training data
+        #The arguments for using training data are somewhat more difficult to formulate, but are IMHO just as compelling as the arguments for using test data. We take another look at our garbage SVM. Based on the training data, the most important feature was X42. Let us look at a partial dependence plot of feature X42. The partial dependence plot shows how the model output changes based on changes of the feature and does not rely on the generalization error. It does not matter whether the PDP is computed with training or test data.
+        #The plot clearly shows that the SVM has learned to rely on feature X42 for its predictions, but according to the feature importance based on the test data (1), it is not important. Based on the training data, the importance is 1.19, reflecting that the model has learned to use this feature. Feature importance based on the training data tells us which features are important for the model in the sense that it depends on them for making predictions.
+        #As part of the case for using training data, I would like to introduce an argument against test data. In practice, you want to use all your data to train your model to get the best possible model in the end. This means no unused test data is left to compute the feature importance. You have the same problem when you want to estimate the generalization error of your model. If you would use (nested) cross-validation for the feature importance estimation, you would have the problem that the feature importance is not calculated on the final model with all the data, but on models with subsets of the data that might behave differently.
+        #However, in the end I recommend to use test data for permutation feature importance. Because if you are interested in how much the model’s predictions are influenced by a feature, you should use other importance measures such as SHAP importance.
+#ALE plots and PDPs
+    #Christopher says that "The partial dependence plot shows how the model output changes based on changes of the feature and does not rely on the generalization error. It does not matter whether the PDP is computed with training or test data.". I think this also applies for ALE plots as they do not use the performence, i.e., an error metric from the model obtained by comparing observed and predicted, but they show changes in the prediction as the feature changes in certain data points. Christopher talks in length about the problem of calculating feature importance by perturbation because it requires to calculate changes in predictive power. See previous section
+    #In addition, I saw the follwing comment "Partial dependence plots can be performed over either the training or validation set, and examples of both cases can be found. For instance, fastbook uses the validation set, whereas Interpretable Machine Learning: A Guide for Making Black Box Models Explainable, in chapter 8.1 4, uses the training set. Frankly, in my experience, it ultimately does not matter which strategy you choose, and there are only a couple of important considerations. First, if the training set is large, PDP may take excessively long, in which case you can use a small chunk of it or resort to the validation set. Second, if the validation set is too small, PDP’s results would understandably be not very reliable, so the training set might be the wiser option."
+    #Therefore, we can use data previously used for training in ALE plots, but in permutation test, which is based in changes in predictive power, we should use the test set.
 
 
 
 
 
-print_text("Load the final model", header=1)
+print_text("permutation importance", header=2)
+#The concept is really straightforward: We measure the importance of a feature by calculating the increase in the model’s prediction error after permuting the feature. A feature is “important” if shuffling its values increases the model error, because in this case the model relied on the feature for the prediction. A feature is “unimportant” if shuffling its values leaves the model error unchanged, because in this case the model ignored the feature for the prediction. 
+    #https://christophm.github.io/interpretable-ml-book/feature-importance.html#feature-importance-data
+#It should be used in the test set (or CV see previous section)
+#Important limitations for us
+    #If features are correlated, the permutation feature importance can be biased by unrealistic data instances. The problem is the same as with partial dependence plots: The permutation of features produces unlikely data instances when two or more features are correlated. In other words, for the permutation feature importance of a correlated feature, we consider how much the model performance decreases when we exchange the feature with values we would never observe in reality. 
+    #Another tricky thing: Adding a correlated feature can decrease the importance of the associated feature by splitting the importance between both features.
+    #The permutation is random, so the results can be different across runs.
+    #WE SOLVE THIS PROBLEMS WITH SHAP IN THE FUTURE
+
+
+
+print_text("split train/test set", header=2)
+#permutation importance should be done on test set! so we use the same test set we used for test after HP tuning.
+from sklearn.model_selection import train_test_split
+train, test = train_test_split(
+    modeling_data,
+    test_size=0.20, #train size is automatically calculated using this value 
+    #random_state=54, #we have already set the seed, so this is not required
+    shuffle=True)
+        #this function uses internally ShuffleSplit
+        #so it can randomly split a dataset in training and evaluation
+        #but instead of getting an interable (like in ShuffleSplit), 
+        #you directly get the datasets splitted
+            #https://stackoverflow.com/questions/66757902/differnce-between-train-test-split-and-stratifiedshufflesplit
+print("Do we have the correct shapes")
+print(train.shape)
+print(test.shape)
+print((train.shape[1] == modeling_data.shape[1]) & (test.shape[1] == modeling_data.shape[1]))
+print(train.shape[0]+test.shape[0] == modeling_data.shape[0])
+    #we are using 20% of test instead of 10% like in the model class comparison. 
+        #In that case, we needed to repeated HPs optimization several times under pre-defined train/eval/test sets so we have exposed different model classes to the same data partitions randomly selected. As we increase the number of splits (repetitions), we increase the number of folds as we do 10 folds, each time 9 folds for training/eval and 1 for test and you repeat 10 times. The test set is only 10%. This is basically a nested CV where we need to repeat several times in order to get a good sense of the model performance of different classes.
+        #Now, we only have 1 model class that we are going to tune, so we can tune HPs in training/eval set with CV and then check the performance in the held-out test. As we get a larger test set, we should get a more robust measurement about the generalization ability of the model.
+
+
+
+print_text("load the final model fit to the training data", header=2)
 import joblib
-final_model=joblib.load("./results/selected_model_class/yoruba_hg19_stack_5_xgboost_fit_to_full_dataset.pkl.gz")
-print(final_model)
+final_model_training=joblib.load("./results/selected_model_class/yoruba_hg19_stack_5_xgboost_fit_to_training_dataset.pkl.gz")
+print(final_model_training)
 
 
+
+print_text("run permutation importance", header=2)
+print_text("define function for using rmse as loss function", header=3)
+#This is the same metric we have used for CV in the training set. R2 orders the features in the same way but strangely, we get a lot of variability (large error bar) for recombination rate. Therefore, we are using rmse, which does not have this problem and produce similar results for the rest. 
+from sklearn.metrics import mean_squared_error
+def loss_rmse(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    return mean_squared_error(y_true=y_true, y_pred=y_pred, squared=False)
+        #alibi requires to define the signature of the function. The signatures is number and type of input arguments the function takes and the type of the result the function returns.
+            #inputs
+                #y_true is the array of ground-truth values, 
+                #y_pred is the output of the predictor used in the initialization of the explainer
+            #outputs
+                #a float
+            #https://stackoverflow.com/a/72789090/12772630
+        #sklearn.metrics has a mean_squared_error function with a squared kwarg (defaults to True). Setting squared to False will return the RMSE.
+            #y_true
+                #Ground truth (correct) target values.
+            #y_pred
+                #Estimated target values.
+            #sample_weight=None
+                #Sample weights.
+            #multioutput=’uniform_average’
+                #Defines aggregating of multiple output values.
+                    #‘uniform_average’ :
+                        #Errors of all outputs are averaged with uniform weight.
+            #squared=True
+                #If True returns MSE value, if False returns RMSE value.
+            #https://stackoverflow.com/a/18623635/12772630
+
+
+print_text("get feature names in a nice format", header=3)
+dict_nice_feature_names={
+    "chip_density_1000kb": "Regulatory density (ChIP-seq)",
+    "chip_immune_1000kb": "Immune regulatory density (ChIP-seq)",
+    "chip_testis_1000kb": "Testis regulatory density (ChIP-seq)",
+    "coding_density_1000kb": "Coding density",
+    "cons_elements_1000kb": "Density of conserved elements",
+    "gc_content_1000kb": "GC-content",
+    "expression_all_tissues": "Gene expression across multiple tissues",
+    "testis_expression": "Gene expression in testis",
+    "lympho_expression": "Gene expression in lymphocytes",
+    "gene_length": "Gene length",
+    "gene_number_1000kb": "Gene number",
+    "n_dis_1000kb": "Number of Mendelian disease variants",
+    "pip_v3": "Number of protein-protein interactions",
+    "recombination_final_1000kb": "Recombination rate",
+    "tbfs_density_1000kb": "Regulatory density (DNAseI)",
+    "thermogenic_distance": "Distance to thermogenic genes",
+    "vip_distance": "Distance to VIPs",
+    "bat_distance_percentile_1": "Distance to BAT genes",
+    "smt_distance_percentile_1": "Distance SMT genes"}
+print("check that the keys in the dict are the features in the same order than in the data")
+predictors=[i for i in modeling_data.columns if i not in ["prob(sweep)"]]
+predictors_nice=[dict_nice_feature_names[i] for i in modeling_data.columns if i not in ["prob(sweep)"]]
+print(predictors_nice)
+
+
+print_text("Initialize the permutation feature importance", header=3)
+from alibi.explainers import PermutationImportance
+#Implementation of the permutation feature importance for tabular datasets. The method measure the importance of a feature as the relative increase/decrease in the loss/score function when the feature values are permuted. Supports black-box models.
+    #https://docs.seldon.io/projects/alibi/en/stable/examples/permutation_importance_classification_leave.html
+    #https://docs.seldon.io/projects/alibi/en/stable/methods/PermutationImportance.html
+    #https://docs.seldon.io/projects/alibi/en/stable/api/alibi.explainers.html#alibi.explainers.PermutationImportance
+explainer_perm = PermutationImportance( \
+    predictor=final_model_training.predict, \
+    loss_fns={"rmse": loss_rmse}, \
+    score_fns=None, \
+    feature_names=predictors_nice, \
+    verbose=True)
+    #Initialize the permutation feature importance.
+        #https://docs.seldon.io/projects/alibi/en/stable/api/alibi.explainers.html#alibi.explainers.PermutationImportance
+        #predictor:
+            #A PREDICTION FUNCTION which receives as input a `numpy` array of size `N x F`, and outputs a | `numpy` array of size `N` (i.e. `(N, )`) or `N x T`, where `N ` is the number of input instances, `F` is the number of features, and `T` is the number of targets.
+        #loss_fns=None
+            #loss function, or a dictionary of loss functions
+            #options: 
+                #[‘mean_absolute_error’, ‘mean_squared_error’, ‘mean_squared_log_error’, ‘mean_absolute_percentage_error’, ‘log_loss’],
+        #score_fns=None
+            #scorer function
+            #options:
+                #[‘mean_absolute_error’, ‘mean_squared_error’, ‘mean_squared_log_error’, ‘mean_absolute_percentage_error’, ‘log_loss’]
+        #Note about the metrics
+            #Note that based on the metric used, the importance of the features, and implicitly their ordering can differ.
+            #I have checked that in our case RMSE and R2 give the same order
+        #feature_names
+            #A list of feature names used for displaying results.
+        #verbose=False
+            #Whether to print the progress of the explainer.
+    #Note:
+        #Remember that the PermutationImportance explainer measures the importance of a feature f as the degradation of the model when the feature values of f are permuted. The degradation of the model can thus be quantified as either the increase in the loss function or the decrease in the score function. Although one can transform a loss function into a score function an vice-versa (i.e., simply negate the value and optionally add an offset), the equivalent representation might not be always be natural to interpret (e.g., transforming mean squared error loss into the equivalent score given by the negative mean squared error). Thus, the alibi API allows the user to provide the suitable metric either as a loss or a score function.
+
+
+print_text("compute permutation importance", header=3)
+perm_exp = explainer_perm.explain( \
+    X=test[predictors].to_numpy(),  \
+    y=test["prob(sweep)"].to_numpy(),  \
+    method="estimate",  \
+    kind="ratio", \
+    n_repeats=50)
+        #Computes the permutation feature importance for each feature with respect to the given loss or score functions and the dataset (X, y).
+            #X (ndarray)
+                #A N x F input feature dataset used to calculate the permutation feature importance. This is typically the test dataset.
+            #y (ndarray) 
+                #Ground-truth labels array of size N (i.e. (N, )) corresponding the input feature X.
+            #features 
+                #An optional list of features or tuples of features for which to compute the permutation feature importance. If not provided, the permutation feature importance will be computed for every single features in the dataset. Some example of features would be: [0, 2]
+            #method="estimate"
+                #[‘estimate’, ‘exact’])
+                #The method to be used to compute the feature importance. 
+                #If set to 'exact', a “switch” operation is performed across all observed pairs, by excluding pairings that are actually observed in the original dataset. This operation is quadratic in the number of samples (N x (N - 1) samples) and thus can be computationally intensive. 
+                #If set to 'estimate', the dataset will be divided in half. The values of the first half containing the ground-truth labels the rest of the features (i.e. features that are left intact) is matched with the values of the second half of the permuted features, and the other way around. This method is computationally lighter and provides estimate error bars given by the standard deviation. Note that for some specific loss and score functions, the estimate does not converge to the exact metric value.
+                    #In other words, "the dataset is divided in half and the first and half values for Y and X2 (the predictor not permuted) are matched with the second half values of X1, and the other way around. Besides the light computation, this approach can provide confidence intervals by computing the estimates over multiple data splits."
+                    #so you just make one split of the data and match Y from 1 half to X1 values of the other side. This should be faster and you can ran several iterations with different random sets, then obtaining an average and SD
+                        #https://docs.seldon.io/projects/alibi/en/stable/methods/PermutationImportance.html 
+            #kind=ratio
+                #[‘ratio’, ‘difference’]
+                #Whether to report the importance as the loss/score ratio or the loss/score difference.
+                    #i.e., difference between the base value and the value after permutation, or calculate the ratio.
+                #if ratio
+                    #importance of 1 means that a feature not relevant for the model (i.e., we are using the ratio between the base and permuted score and a ratio close to 1 means that the original score and the permuted score are approximately the same).
+            #n_repeats=50
+                #Number of times to permute the feature values. Considered only when method='estimate'.
+            #sample_weight
+                #Optional weight for each sample instance.
+
+
+print_text("save permutations with pickle", header=3)
+import pickle
+pickle.dump(perm_exp, open("./results/selected_model_class/permutation_importance/yoruba_hg19_stack_5_xgboost_permutation_importance_test_set.sav", 'wb'))
+#import pickle; perm_exp = pickle.load(open("./results/selected_model_class/permutation_importance/yoruba_hg19_stack_5_xgboost_permutation_importance_test_set.sav", 'rb'))
+
+
+print_text("plot results with Recombination", header=3)
+import matplotlib.pyplot as plt
+from alibi.explainers import plot_permutation_importance
+ax=plot_permutation_importance( \
+    exp=perm_exp, \
+    features="all", \
+    metric_names="all", \
+    n_cols=1, \
+    sort=True, \
+    top_k=None, \
+    ax=None, \
+    bar_kw=None, \
+    fig_kw={'figwidth': 14, 'figheight': 6})[0][0]
+    #exp
+        #An Explanation object produced by a call to the alibi.explainers.permutation_importance.PermutationImportance.explain() method.
+    #features="all"
+        #A list of feature entries provided in feature_names argument to the alibi.explainers.permutation_importance.PermutationImportance.explain() method, or 'all' to plot all the explained features. You have to use numbers.
+    #metric_names="all"
+        #A list of metric entries in the exp.data[‘metrics’] to plot the permutation feature importance for, or 'all' to plot the permutation feature importance for all metrics (i.e., loss and score functions). The ordering is given by the concatenation of the loss metrics followed by the score metrics.
+    #n_cols
+        #Number of columns to organize the resulting plot into.
+    #sort=True
+        #Boolean flag whether to sort the values in descending order.
+    #top_k=None
+        #Number of top k values to be displayed if the sort=True. If not provided, then all values will be displayed.
+    #ax
+        #A matplotlib axes object or a numpy array of matplotlib axes to plot on
+        #you can add this figure to a axis already defined
+    #bar_kw
+        #Keyword arguments passed to the matplotlib.pyplot.barh function.
+    #fig_kw –
+        #Keyword arguments passed to the matplotlib.figure.set function.
+ax.update({"xlim": (1, 1.8)})
+    #update the axis to change the xlim and focus on values above 1
+    #https://www.geeksforgeeks.org/matplotlib-axes-axes-update-in-python/
+ax.set_title("", fontsize=18)
+ax.xaxis.label.set_size(12.5)
+plt.savefig( \
+    fname="./results/selected_model_class/permutation_importance/permutation_importance_all.png", dpi=300)
+plt.close()
+
+
+print_text("plot results with Recombination", header=3)
+ax=plot_permutation_importance( \
+    exp=perm_exp, \
+    features=[pos for pos, feature in enumerate(predictors) if feature != "recombination_final_1000kb"], \
+    metric_names="all", \
+    n_cols=1, \
+    sort=True, \
+    top_k=None, \
+    ax=None, \
+    bar_kw=None, \
+    fig_kw={'figwidth': 14, 'figheight': 6})[0][0]
+ax.update({"xlim": (1, 1.15)})
+    #update the axis to change the xlim and focus on values around 1.1
+ax.set_title("", fontsize=18)
+ax.xaxis.label.set_size(12.5)
+plt.savefig( \
+    fname="./results/selected_model_class/permutation_importance/permutation_importance_non_recomb.png", dpi=300)
+plt.close()
+    #RESULTS:
+        #As expected, recombination rate is the most important feature by far. the we have the density of conserved elements.
+        #BAT and SMT are the next more important features according to permutation and then we have mulitple features that are expected to be in the top like GC-content or regulatory density (DNAseI).
+        #VIPs are relatively low, this can be explained by the correlation between features. If two features are correlated, their importance is split, maybe this makes VIPs to be reduced because we have VIPs in BAT and thermogenic genes.
+            #404 out 923 thermogenic genes are VIPs
+                #modeling_data.loc[(modeling_data["thermogenic_distance"]==0) & (modeling_data["vip_distance"]==0), ["vip_distance", "bat_distance_percentile_1"]]
+            #53 out 149 BAT genes are VIPs
+                #modeling_data.loc[(modeling_data["bat_distance_percentile_1"]==0) & (modeling_data["vip_distance"]==0), ["vip_distance", "bat_distance_percentile_1"]]
+            #69 out 143 SMT genes are VIPs
+                #modeling_data.loc[(modeling_data["smt_distance_percentile_1"]==0) & (modeling_data["vip_distance"]==0), ["vip_distance", "bat_distance_percentile_1"]]
 
 
 
@@ -440,8 +692,21 @@ print_text("ALE plots", header=1)
     #Second order effects
         #The second-order effect is the additional interaction effect of the features after we have accounted for the main effects of the features.
         #Second-order effect plots can be a bit annoying to interpret, as you always have to keep the main effects in mind. It is tempting to read the heat maps as the total effect of the two features, but it is only the additional effect of the interaction. The pure second-order effect is interesting for discovering and exploring interactions, but for interpreting what the effect looks like, I think it makes more sense to integrate the main effects into the plot
-#Important limitation
-    #However, ALE plots do have their limitations as well. It is trickier to interpret than PDPs or ICE plots. The interpretation also is usually limited within the “window” or “interval” defined. If the features are highly correlated (which is often the case), interpreting an effect across intervals is impossible. Keep in mind that the effects are calculated within each interval and that each interval contains different sets of data points. These calculated effects are accumulated (hence the name “Accumulated” Local Effects) only for the sake smoothing the line.
+#Important note about interpretation
+    #The main interpretation of the ALE plot is qualitative—fixing the feature value and looking at the ALE plot as a function at that point, the tangent at that point (or THE SLOPE OF LINEAR INTERPOLATION BETWEEN THE CLOSEST BIN ENDPOINTS) shows how sensitive the target prediction is with respect to small changes of the feature value. Since we have a linear regression model, the tangent/slope is the same across the whole feature range so the feature sensitivity is identical at any point in the feature range.
+    #Using this, we can see the average effect for datapoints close to the feature value of interest (inside the bin).
+        #from info of alibi
+    #an example of alibi
+        #We can also say a few more quantitative things about this plot (https://docs.seldon.io/projects/alibi/en/stable/examples/ale_regression_california.html). The ALE value for the point MedInc(median income)=6 ($60,000) is ~1 which has the interpretation that for areas with this median income the model predicts an up-lift of ~$100,000 with respect to the average effect of MedInc (in y axis, 1 is 100,000). This is because the ALE plots are centered such that the average effect of the feature across the whole range of it is zero.
+        #On the other hand, for neighbourhoods with MedInc=4 ($40,000), the ALE value is ~0 which indicates that the effect of the feature at this point is the same as the average effect of the feature. For even lower values of MedInc, below $40,000, the feature effect becomes less than the average effect, i.e. a smaller median income in the area brings the predicted house value down with respect to the average feature effect.
+        #An additional feature of the ALE plot is that it shows feature deciles on the x-axis (https://docs.seldon.io/projects/alibi/en/stable/_images/examples_ale_regression_california_44_0.png). This helps understand in which regions there is low data density so the ALE plot is interpolating. For example, for the AveOccup feature (average number of household members), there appears to be an outlier in the data at over ~1,200 which causes the plot to linearly interpolate over a large range where there is no data. Note that this can also be seen by the lack of markers on the plot within that large range.
+    #But there is a PROBLEM WITH CORRELATED FEATURES:
+        #ALE plots do have their limitations as well. It is trickier to interpret than PDPs or ICE plots. The interpretation also is usually limited within the “window” or “interval” defined. If the features are highly correlated (which is often the case), interpreting an effect across intervals is impossible. Keep in mind that the effects are calculated within each interval and that each interval contains different sets of data points. These calculated effects are accumulated (hence the name “Accumulated” Local Effects) only for the sake smoothing the line.
+            #info from Christopher
+    #I do not fully understand this point. 
+        #If within a given interval, we have points with the similar values of the correlated feature, and we change the values of the interest feature, then I am seeing the impact on the predictions of the first feature, not the second one (in contrast with M-plots; see above). 
+        #If within a given interval I can quantify the impact on the predictions of my feature of interest, I could go interval by interval checking if higher values of my feature consistently do the same to the prediction.
+        #I will do as alibi says, just look at the interpolation line between the interval of interest and the closest interval, to see how sensitive the target prediction is with respect to small changes of the feature value in that interval.
 #Summary. To summarize how each type of plot (PDP, M, ALE) calculates the effect of a feature at a certain grid value v:
     #Partial Dependence Plots: “Let me show you what the model predicts on average when each data instance has the value v for that feature (i.e., all samples have v for the feature). I ignore whether the value v makes sense for all data instances.”
     #M-Plots: “Let me show you what the model predicts on average for data instances that have values close to v for that feature. The effect could be due to that feature, but also due to correlated features.”
@@ -450,7 +715,30 @@ print_text("ALE plots", header=1)
 
 
 
-#por aqui!!!
+
+
+
+#Because the model is no longer linear, the ALE plots are non-linear also and in some cases also non-monotonic. The interpretation of the plots is still the same—the ALE value at a point is the relative feature effect with respect to the mean feature effect, however the non-linear model used shows that the feature effects differ both in shape and magnitude when compared to the linear model.
+    #https://docs.seldon.io/projects/alibi/en/stable/examples/ale_regression_california.html
+
+
+
+
+
+
+#think this!!!
+#At this point, I do not see any reason to not use training+test set for ALE plots but, from what I have seen, people use to calculate these plots on the training data, and this is the recommendation of the two python packages that implement this approach (ALEPython package and in Alibi). So, for now, I am going to calculate these plots in the training set, we can check what happens with the whole dataset or in the test set in the future.
+
+
+
+
+
+
+print_text("Load the final model fit to the whole dataset (training+set)", header=2)
+import joblib
+final_model=joblib.load("./results/selected_model_class/yoruba_hg19_stack_5_xgboost_fit_to_full_dataset.pkl.gz")
+print(final_model)
+
 
 
 #alibi is much more maintained than aleplot and it is much easier to install in container
@@ -470,18 +758,12 @@ lr_exp = lr_ale.explain(modeling_data[predictors].to_numpy(), min_bin_points=4) 
         #ALE plots can become a bit shaky (many small ups and downs) with a high number of intervals. In this case, reducing the number of intervals makes the estimates more stable, but also smoothes out and hides some of the true complexity of the prediction model. There is no perfect solution for setting the number of intervals. If the number is too small, the ALE plots might not be very accurate. If the number is too high, the curve can become shaky.
 
 
-#Think this!!!
-# If the features are highly correlated (which is often the case), interpreting an effect across intervals is impossible. Keep in mind that the effects are calculated within each interval and that each interval contains different sets of data points. These calculated effects are accumulated (hence the name “Accumulated” Local Effects) only for the sake smoothing the line.
-
-
-#think this!!!
-#At this point, I do not see any reason to not use training+test set for ALE plots but, from what I have seen, people use to calculate these plots on the training data, and this is the recommendation of the two python packages that implement this approach (ALEPython package and in Alibi). So, for now, I am going to calculate these plots in the training set, we can check what happens with the whole dataset or in the test set in the future.
 
 
 
 import pickle
 pickle.dump(lr_exp, open("./results/selected_model_class/ale_plots/saved_explained/yoruba_hg19_stack_5_xgboost_fit_to_full_dataset_alibi_explanations.sav", 'wb'))
-#lr_exp = pickle.load(open("./results/selected_model_class/ale_plots/saved_explained/yoruba_hg19_stack_5_xgboost_fit_to_full_dataset_alibi_explanations.sav", 'rb'))
+#import pickle; lr_exp = pickle.load(open("./results/selected_model_class/ale_plots/saved_explained/yoruba_hg19_stack_5_xgboost_fit_to_full_dataset_alibi_explanations.sav", 'rb'))
     #https://machinelearningmastery.com/save-load-machine-learning-models-python-scikit-learn/
 
 
@@ -554,8 +836,15 @@ for feature in dict_features_to_plot.keys():
 
 
 
+
 #####tree shap
 
+#you cannot you stacking with tree shap!!
+    #you could check what they did in the deep learning paper
+
+
+        #The short answer to your question is yes, if you are taking the mean of the 10 XGBoost model outputs (margin outputs), then you can average the 10 SHAP values matrices and get the right answer. Just make sure you are averaging the margin outputs and not the probabilities if it’s for classification
+            #https://github.com/slundberg/shap/issues/112
 
 #only feature importance?
     #we need feature importance not based on error! so we can show BAT genes are important

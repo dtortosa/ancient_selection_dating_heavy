@@ -1396,10 +1396,31 @@ y_pred_stacking_train = final_model_stacking.predict(train[predictors])
 y_pred_stacking_test = final_model_stacking.predict(test[predictors])
 
 print_text("calculate evaluation scores", header=3)
+from sklearn.metrics import mean_squared_error
+final_model_stacking_rmse_train = mean_squared_error(train["prob(sweep)"], y_pred_stacking_train, squared=False)
+final_model_stacking_rmse_test = mean_squared_error(test["prob(sweep)"], y_pred_stacking_test, squared=False)
+    #sklearn.metrics has a mean_squared_error function with a squared kwarg (defaults to True). Setting squared to False will return the RMSE.
+        #y_true
+            #Ground truth (correct) target values.
+        #y_pred
+            #Estimated target values.
+        #sample_weight=None
+            #Sample weights.
+        #multioutput=’uniform_average’
+            #Defines aggregating of multiple output values.
+                #‘uniform_average’ :
+                    #Errors of all outputs are averaged with uniform weight.
+        #squared=True
+            #If True returns MSE value, if False returns RMSE value.
+        #https://stackoverflow.com/a/18623635/12772630
 final_model_stacking_score_train = r2_score(train["prob(sweep)"], y_pred_stacking_train)
 final_model_stacking_score_test = r2_score(test["prob(sweep)"], y_pred_stacking_test)
+print(f"RMSE of final model on train set: {final_model_stacking_rmse_train}")
+print(f"RMSE of final model on test set: {final_model_stacking_rmse_test}")
 print(f"R2 of final model on train set: {final_model_stacking_score_train}")
 print(f"R2 of final model on test set: {final_model_stacking_score_test}")
+#RMSE of final model on train set: 0.2842961032821582
+#RMSE of final model on test set: 1.7297735272800812
 #R2 of final model on train set: 0.9913054963448299
 #R2 of final model on test set: 0.6760527299906672
 
@@ -1411,10 +1432,12 @@ fig.suptitle("Predicted vs observed")
 ax1.scatter(train["prob(sweep)"], y_pred_stacking_train, s=0.5)
 ax1.set_ylabel("Predicted log(Flex-Sweep)")
 ax1.yaxis.set_label_coords(-0.11, -0.1)
-ax1.annotate("Training set R2: " + str(np.round(final_model_stacking_score_train, 4)), xy=(0.05, 0.85), xycoords='axes fraction')
+ax1.annotate("RMSE (training): " + str(np.round(final_model_stacking_rmse_train, 4)), xy=(0.025, 0.85), xycoords='axes fraction')
+ax1.annotate("R2 (training): " + str(np.round(final_model_stacking_score_train, 4)), xy=(0.025, 0.75), xycoords='axes fraction')
 ax2.scatter(test["prob(sweep)"], y_pred_stacking_test, s=0.5)
 ax2.set_xlabel("Observed log(Flex-Sweep)")
-ax2.annotate("Test set R2: " + str(np.round(final_model_stacking_score_test, 4)), xy=(0.05, 0.85), xycoords='axes fraction')
+ax2.annotate("RMSE (test): " + str(np.round(final_model_stacking_rmse_test, 4)), xy=(0.025, 0.85), xycoords='axes fraction')
+ax2.annotate("R2 (test): " + str(np.round(final_model_stacking_score_test, 4)), xy=(0.025, 0.75), xycoords='axes fraction')
 plt.savefig( \
     fname="./results/selected_model_class/yoruba_hg19_stack_5_xgboost_scatter.png")
 plt.close()
