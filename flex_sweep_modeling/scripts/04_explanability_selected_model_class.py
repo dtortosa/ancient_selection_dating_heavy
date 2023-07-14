@@ -693,9 +693,10 @@ print_text("ALE plots", header=1)
         #The second-order effect is the additional interaction effect of the features after we have accounted for the main effects of the features.
         #Second-order effect plots can be a bit annoying to interpret, as you always have to keep the main effects in mind. It is tempting to read the heat maps as the total effect of the two features, but it is only the additional effect of the interaction. The pure second-order effect is interesting for discovering and exploring interactions, but for interpreting what the effect looks like, I think it makes more sense to integrate the main effects into the plot
 #Important note about interpretation
-    #The main interpretation of the ALE plot is qualitative—fixing the feature value and looking at the ALE plot as a function at that point, the tangent at that point (or THE SLOPE OF LINEAR INTERPOLATION BETWEEN THE CLOSEST BIN ENDPOINTS) shows how sensitive the target prediction is with respect to small changes of the feature value. Since we have a linear regression model, the tangent/slope is the same across the whole feature range so the feature sensitivity is identical at any point in the feature range.
-    #Using this, we can see the average effect for datapoints close to the feature value of interest (inside the bin).
-        #from info of alibi
+    #The main interpretation of the ALE plot is qualitative—fixing the feature value and looking at the ALE plot as a function at that point, the tangent at that point (or THE SLOPE OF LINEAR INTERPOLATION BETWEEN THE CLOSEST BIN ENDPOINTS) shows how sensitive the target prediction is with respect to small changes of the feature value. Since we have a linear regression model, the tangent/slope is the same across the whole feature range so the feature sensitivity is identical at any point in the feature range.Using this, we can see the average effect for datapoints close to the feature value of interest (inside the bin).
+    #The ALE value at a point is the relative feature effect with respect to the mean feature effect. The interpretation of the ALE plot is that, given a feature value, the ALE value corresponding to that feature value is the difference to the mean effect of that feature. Put differently, the ALE value is the relative feature effect on the prediction at that feature value.
+    #Comparing the ALE plots of multiple models on the same axis should be done with care. In general, we can only make qualitative comparisons of the plots between different intervals of the feature values as we have done here (see example below).
+        #https://docs.seldon.io/projects/alibi/en/stable/examples/ale_regression_california.html
     #an example of alibi
         #We can also say a few more quantitative things about this plot (https://docs.seldon.io/projects/alibi/en/stable/examples/ale_regression_california.html). The ALE value for the point MedInc(median income)=6 ($60,000) is ~1 which has the interpretation that for areas with this median income the model predicts an up-lift of ~$100,000 with respect to the average effect of MedInc (in y axis, 1 is 100,000). This is because the ALE plots are centered such that the average effect of the feature across the whole range of it is zero.
         #On the other hand, for neighbourhoods with MedInc=4 ($40,000), the ALE value is ~0 which indicates that the effect of the feature at this point is the same as the average effect of the feature. For even lower values of MedInc, below $40,000, the feature effect becomes less than the average effect, i.e. a smaller median income in the area brings the predicted house value down with respect to the average feature effect.
@@ -711,51 +712,52 @@ print_text("ALE plots", header=1)
     #Partial Dependence Plots: “Let me show you what the model predicts on average when each data instance has the value v for that feature (i.e., all samples have v for the feature). I ignore whether the value v makes sense for all data instances.”
     #M-Plots: “Let me show you what the model predicts on average for data instances that have values close to v for that feature. The effect could be due to that feature, but also due to correlated features.”
     #ALE plots: “Let me show you how the model predictions change in a small ”window” of the feature around v for data instances in that window.”
-
-
-
-
-
-
-
-#Because the model is no longer linear, the ALE plots are non-linear also and in some cases also non-monotonic. The interpretation of the plots is still the same—the ALE value at a point is the relative feature effect with respect to the mean feature effect, however the non-linear model used shows that the feature effects differ both in shape and magnitude when compared to the linear model.
-    #https://docs.seldon.io/projects/alibi/en/stable/examples/ale_regression_california.html
-
-
-
-
-
-
-#think this!!!
-#At this point, I do not see any reason to not use training+test set for ALE plots but, from what I have seen, people use to calculate these plots on the training data, and this is the recommendation of the two python packages that implement this approach (ALEPython package and in Alibi). So, for now, I am going to calculate these plots in the training set, we can check what happens with the whole dataset or in the test set in the future.
-
-
-
-
-
-
+#training vs test
+    #At this point, I do not see any reason to not use training+test set for ALE plots. Remember that is mandatory to use the test set if the approach relies on error measurements, which is NOT the case for ALE plots.
+    #Alibi docs say that X is "An N x F tabular dataset used to calculate the ALE curves. This is typically the training dataset or a representative sample"
+    #See this thread about using training or set for shap values.
+        #https://datascience.stackexchange.com/a/97522
+        #They say that if you just want model explanations (I guess how the model has learnt to predict the response), you can just refit to the whole dataset, being this the final model used in "production".
+        #In constrast, if you are interested in data explanations, you have to check how good proxy are model explanations for data explanations. In that case, you need "globally how importance is attributed to each feature, and how variable those importances are". 
+            #We do that with permutation importance across different splits of the test set. We get how important is a feature for the model in order to generalize and how this changes as the data changes.
+            #Remember we have done this in test set, not in the whole dataset, and making 50 random splits of the test set for each feature.
+    #I think we can just use the whole dataset for ALE plots in order to get the maximum amount of information to learn how the model uses the features to predict flex sweep.
 print_text("Load the final model fit to the whole dataset (training+set)", header=2)
 import joblib
-final_model=joblib.load("./results/selected_model_class/yoruba_hg19_stack_5_xgboost_fit_to_full_dataset.pkl.gz")
-print(final_model)
+final_model_full_data=joblib.load("./results/selected_model_class/yoruba_hg19_stack_5_xgboost_fit_to_full_dataset.pkl.gz")
+print(final_model_full_data)
 
 
 
+print_text("initialize ALE plots using alibi", header=2)
 #alibi is much more maintained than aleplot and it is much easier to install in container
+#we have already used this package for permutation importance
     #https://docs.seldon.io/projects/alibi/en/stable/index.html
-predictors=[x for x in modeling_data.columns if x not in ["prob(sweep)"]]
 from alibi.explainers import ALE, plot_ale
+    
+#POOR AQUI
+
     #warning numba
     #I think it is ok but check
-lr_ale = ALE(final_model.predict, feature_names=modeling_data[predictors].columns)
+lr_ale = ALE( \
+    predictor=final_model_full_data.predict, \
+    feature_names=predictors_nice, \
+    low_resolution_threshold=10)
+
+
+#modify low_resolution_threshold to avoid jumps? 100 does not work, maybe 500?
+    #In general, the ALE for a non-linear model doesn’t have to be monotonic, although in this case there are only very small departures from monotonicity which may be due to artifacts from the grid-size used to calculate the ALE. It may be useful to experiment with different resolutions of the grid size
 
 
 
+#https://docs.seldon.io/projects/alibi/en/stable/api/alibi.explainers.ale.html#alibi.explainers.ale.ALE
 
-lr_exp = lr_ale.explain(modeling_data[predictors].to_numpy(), min_bin_points=4) ##CHECK HTHIS 10!! THE DEFAULT IS 4!!!
+lr_exp = lr_ale.explain(modeling_data[predictors].to_numpy(), min_bin_points=4) ##CHECK HTHIS 100!! THE DEFAULT IS 4!!!
     #DECIDE NUMBER OF INTERVALS!!
         #The explain method has a default argument, min_bin_points=4, which determines the number of bins the range of each feature is subdivided into so that the ALE estimate for each bin is made with at least min_bin_points. Smaller values can result in less accurate local estimates while larger values can also result in less accurate estimates by averaging across large parts of the feature range.
         #ALE plots can become a bit shaky (many small ups and downs) with a high number of intervals. In this case, reducing the number of intervals makes the estimates more stable, but also smoothes out and hides some of the true complexity of the prediction model. There is no perfect solution for setting the number of intervals. If the number is too small, the ALE plots might not be very accurate. If the number is too high, the curve can become shaky.
+
+    #In general, the ALE for a non-linear model doesn’t have to be monotonic, although in this case there are only very small departures from monotonicity which may be due to artifacts from the grid-size used to calculate the ALE. It may be useful to experiment with different resolutions of the grid size
 
 
 
@@ -803,7 +805,7 @@ for feature in dict_features_to_plot.keys():
         fname="./results/selected_model_class/ale_plots/aleplot_" + feature + ".png", dpi=300)
     plt.close()
 
-
+    #if different Y axis lims, say that in the poster! not the same 0.5-0.6 than 0.1-0.9
 
 
 
