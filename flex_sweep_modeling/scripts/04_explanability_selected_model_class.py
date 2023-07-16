@@ -628,7 +628,7 @@ ax=plot_permutation_importance( \
         #Keyword arguments passed to the matplotlib.pyplot.barh function.
     #fig_kw –
         #Keyword arguments passed to the matplotlib.figure.set function.
-ax.update({"xlim": (1, 1.8)})
+ax.update({"xlim": (1, 1.8), "xlabel": "Permutation importance (original RMSE / permuted RMSE)"})
     #update the axis to change the xlim and focus on values above 1
     #https://www.geeksforgeeks.org/matplotlib-axes-axes-update-in-python/
 ax.set_title("", fontsize=18)
@@ -649,7 +649,7 @@ ax=plot_permutation_importance( \
     ax=None, \
     bar_kw=None, \
     fig_kw={'figwidth': 14, 'figheight': 6})[0][0]
-ax.update({"xlim": (1, 1.15)})
+ax.update({"xlim": (1, 1.15), "xlabel": "Permutation importance (original RMSE / permuted RMSE)"})
     #update the axis to change the xlim and focus on values around 1.1
 ax.set_title("", fontsize=18)
 ax.xaxis.label.set_size(12.5)
@@ -728,116 +728,176 @@ final_model_full_data=joblib.load("./results/selected_model_class/yoruba_hg19_st
 print(final_model_full_data)
 
 
+print_text("define dict with nice axes names for ALE", header=2)
+dict_nice_feature_names_ale={
+    "chip_density_1000kb": "Regulatory density (ChIP-seq)",
+    "chip_immune_1000kb": "Immune regulatory density (ChIP-seq)",
+    "chip_testis_1000kb": "Testis regulatory density (ChIP-seq)",
+    "coding_density_1000kb": "Coding density",
+    "cons_elements_1000kb": "Density of conserved elements",
+    "gc_content_1000kb": "GC-content (%)",
+    "expression_all_tissues": "Gene expression across multiple tissues (log TPM)",
+    "testis_expression": "Gene expression in testis (log TPM)",
+    "lympho_expression": "Gene expression in lymphocytes (log TPM)",
+    "gene_length": "Gene length (pair base)",
+    "gene_number_1000kb": "Gene number",
+    "n_dis_1000kb": "Number of Mendelian disease variants",
+    "pip_v3": "Number of protein-protein interactions (log interactions)",
+    "recombination_final_1000kb": "Recombination rate (cM/Mb)",
+    "tbfs_density_1000kb": "Regulatory density (DNAseI)",
+    "thermogenic_distance": "Distance to thermogenic genes (pair base)",
+    "vip_distance": "Distance to VIPs (pair base)",
+    "bat_distance_percentile_1": "Distance to BAT genes (pair base)",
+    "smt_distance_percentile_1": "Distance SMT genes (pair base)"}
+print("check that the keys in the dict are the features in the same order than in the data")
+predictors_ale=[i for i in modeling_data.columns if i not in ["prob(sweep)"]]
+predictors_nice_ale=[dict_nice_feature_names_ale[i] for i in modeling_data.columns if i not in ["prob(sweep)"]]
+print(predictors_nice_ale)
+
+
 
 print_text("initialize ALE plots using alibi", header=2)
 #alibi is much more maintained than aleplot and it is much easier to install in container
 #we have already used this package for permutation importance
     #https://docs.seldon.io/projects/alibi/en/stable/index.html
 from alibi.explainers import ALE, plot_ale
-    
-#POOR AQUI
-
-    #warning numba
-    #I think it is ok but check
+#we have a warning when importing alibi: "NumbaDeprecationWarning: The 'nopython' keyword argument was not supplied to the 'numba.jit' decorator."
+    #It seems that this is ok and it is related to shap. This is going to be solved in new versions of shap and we are not using shap anyways.
+        #https://github.com/slundberg/shap/issues/2909
 lr_ale = ALE( \
     predictor=final_model_full_data.predict, \
-    feature_names=predictors_nice, \
-    low_resolution_threshold=10)
+    feature_names=predictors_ale, \
+    target_names=None, \
+    check_feature_resolution=True, \
+    low_resolution_threshold=10, \
+    extrapolate_constant=True, \
+    extrapolate_constant_perc=10.0, \
+    extrapolate_constant_min=0.1)
+    #Accumulated Local Effects for tabular datasets. Current implementation supports first order feature effects of numerical features.
+        #https://docs.seldon.io/projects/alibi/en/stable/api/alibi.explainers.ale.html#alibi.explainers.ale.ALE
+        #predictor
+            #A callable that takes in an N x F array as input and outputs an N x T array (N - number of data points, F - number of features, T - number of outputs/targets (e.g. 1 for single output regression, >=2 for classification)).
+        #feature_names=None
+            #A list of feature names used for displaying results.
+        #target_names=None
+            #A list of target/output names used for displaying results.
+        #check_feature_resolution=True
+            #If True, the number of unique values is calculated for each feature and if it is less than low_resolution_threshold then the feature values are used for grid-points instead of quantiles. This may increase the runtime of the algorithm for large datasets. Only used for features without custom grid-points specified in alibi.explainers.ale.ALE.explain().
+        #low_resolution_threshold=10 
+            #If a feature has at most this many unique values, these are used as the grid points instead of quantiles. This is to avoid situations when the quantile algorithm returns quantiles between discrete values which can result in jumps in the ALE plot obscuring the true effect. Only used if check_feature_resolution is True and for features without custom grid-points specified in alibi.explainers.ale.ALE.explain().
+            #this and the previous argument are used to determine whether to use the quantile algorithm or just use the unique values of the feature as grid points.
+                #I do not fully understand the quantile algorithm, but given we have over 15K points, I think we will always have enough data points for each feature.
+                #we will use the default.
+        #extrapolate_constant=True
+            #If a feature is constant, only one quantile exists where all the data points lie. In this case the ALE value at that point is zero, however this may be misleading if the feature does have an effect on the model. If this parameter is set to True, the ALE values are calculated on an interval surrounding the constant value. The interval length is controlled by the extrapolate_constant_perc and extrapolate_constant_min arguments.
+                #I guess you use values of the feature around its constant value to see how the prediction change, so we have points outside zero if the feature has effect.
+        #extrapolate_constant_perc
+            #Percentage by which to extrapolate a constant feature value to create an interval for ALE calculation. If q is the constant feature value, creates an interval [q - q/extrapolate_constant_perc, q + q/extrapolate_constant_perc] for which ALE is calculated. Only relevant if extrapolate_constant is set to True.
+        #extrapolate_constant_min
+            #Controls the minimum extrapolation length for constant features. An interval constructed for constant features is guaranteed to be 2 x extrapolate_constant_min wide centered on the feature value. This allows for capturing model behaviour around constant features which have small value so that extrapolate_constant_perc is not so helpful. Only relevant if extrapolate_constant is set to True.
 
 
-#modify low_resolution_threshold to avoid jumps? 100 does not work, maybe 500?
-    #In general, the ALE for a non-linear model doesn’t have to be monotonic, although in this case there are only very small departures from monotonicity which may be due to artifacts from the grid-size used to calculate the ALE. It may be useful to experiment with different resolutions of the grid size
+
+print_text("calculate ALE curves", header=2)
+lr_exp = lr_ale.explain( \
+    X=modeling_data[predictors].to_numpy(), \
+    features=None, \
+    min_bin_points=4, \
+    grid_points=None) 
+    #Calculate the ALE curves for each feature with respect to the dataset X.
+        #X
+            #An N x F tabular dataset used to calculate the ALE curves. This is typically the training dataset or a representative sample.
+        #features
+            #Features for which to calculate ALE.
+        #min_bin_points
+            #Minimum number of points each discretized interval should contain to ensure more precise ALE estimation. Only relevant for adaptive grid points (i.e., features without an entry in the grid_points dictionary).
+            #This argument determines the number of bins the range of each feature is subdivided into so that the ALE estimate for each bin is made with at least min_bin_points. Smaller values can result in less accurate local estimates while larger values can also result in less accurate estimates by averaging across large parts of the feature range.
+            #In general, the ALE for a non-linear model doesn’t have to be monotonic, although small departures from monotonicity which may be due to artifacts from the grid-size used to calculate the ALE. It may be useful to experiment with different resolutions of the grid size
+            #as you increase this number, you get less intervals because more points are required per interval.
+            #According to Christopher Molnar: "ALE plots can become a bit shaky (many small ups and downs) with a high number of intervals. In this case, reducing the number of intervals makes the estimates more stable, but also smoothes out and hides some of the true complexity of the prediction model. There is no perfect solution for setting the number of intervals. If the number is too small, the ALE plots might not be very accurate. If the number is too high, the curve can become shaky."
+            #so we can check different number of minimum number of points per interval and hence different number of intervals and see if the pattern is clear.
+        #grid_points
+            #Custom grid points. Must be a dict where the keys are features indices and the values are monotonically increasing numpy arrays defining the grid points for each feature. See the Notes section for the default behavior when potential edge-cases arise when using grid-points. If no grid points are specified (i.e. the feature is missing from the grid_points dictionary), deciles discretization is used instead.
 
 
 
-#https://docs.seldon.io/projects/alibi/en/stable/api/alibi.explainers.ale.html#alibi.explainers.ale.ALE
-
-lr_exp = lr_ale.explain(modeling_data[predictors].to_numpy(), min_bin_points=4) ##CHECK HTHIS 100!! THE DEFAULT IS 4!!!
-    #DECIDE NUMBER OF INTERVALS!!
-        #The explain method has a default argument, min_bin_points=4, which determines the number of bins the range of each feature is subdivided into so that the ALE estimate for each bin is made with at least min_bin_points. Smaller values can result in less accurate local estimates while larger values can also result in less accurate estimates by averaging across large parts of the feature range.
-        #ALE plots can become a bit shaky (many small ups and downs) with a high number of intervals. In this case, reducing the number of intervals makes the estimates more stable, but also smoothes out and hides some of the true complexity of the prediction model. There is no perfect solution for setting the number of intervals. If the number is too small, the ALE plots might not be very accurate. If the number is too high, the curve can become shaky.
-
-    #In general, the ALE for a non-linear model doesn’t have to be monotonic, although in this case there are only very small departures from monotonicity which may be due to artifacts from the grid-size used to calculate the ALE. It may be useful to experiment with different resolutions of the grid size
-
-
-
-
-
+print_text("save the explanations into pickle", header=2)
 import pickle
-pickle.dump(lr_exp, open("./results/selected_model_class/ale_plots/saved_explained/yoruba_hg19_stack_5_xgboost_fit_to_full_dataset_alibi_explanations.sav", 'wb'))
-#import pickle; lr_exp = pickle.load(open("./results/selected_model_class/ale_plots/saved_explained/yoruba_hg19_stack_5_xgboost_fit_to_full_dataset_alibi_explanations.sav", 'rb'))
+pickle.dump(lr_exp, open("./results/selected_model_class/ale_plots/saved_explained/yoruba_hg19_stack_5_xgboost_fit_to_full_dataset_ale_alibi_explanations.sav", 'wb'))
+#import pickle; lr_exp = pickle.load(open("./results/selected_model_class/ale_plots/saved_explained/yoruba_hg19_stack_5_xgboost_fit_to_full_dataset_ale_alibi_explanations.sav", 'rb'))
     #https://machinelearningmastery.com/save-load-machine-learning-models-python-scikit-learn/
 
 
 
-
-
-
+print_text("make ale plots", header=2)
 import matplotlib.pyplot as plt
-
-
-dict_features_to_plot = {
-    "recombination_final_1000kb": "Recombination rate (cM/Mb)", \
-    "cons_elements_1000kb": "Density of conserved elements", \
-    "thermogenic_distance": "Distance to the closest thermogenic gene (pair base)", \
-    "vip_distance": "Distance to the closest VIP (pair base)", \
-    "bat_distance_percentile_1": "Distance to the closest BAT gene (pair base)", \
-    "smt_distance_percentile_1": "Distance to the closest SMT gene (pair base)"}
-
-#feature=[feature for (pos,feature) in enumerate(dict_features_to_plot.keys()) if pos==4][0]
-for feature in dict_features_to_plot.keys():
+#Plotting ale_values against feature_values recovers the ALE curves. For convenience we include a plotting function plot_ale which automatically produces ALE plots using matplotlib:
+#Note that the ALE is estimated for each interval edge and linearly interpolated in between, for real applications it is important to have a sufficiently fine grid but also one that has enough points into each interval for accurate estimates. 
+#Important
+    #The x-axis also shows feature deciles of the feature to help judge in which parts of the feature space the ALE plot is interpolating more and the estimate might be less trustworthy.
+    #Therefore, first bar is percentile 10%, second bar is percentile 20%, and so on...
+#feature=[feature for (pos,feature) in enumerate(dict_nice_feature_names_ale.keys()) if pos==4][0]
+for feature in dict_nice_feature_names_ale.keys():
     ax=plot_ale( \
         exp=lr_exp, \
-        features=np.where(modeling_data[predictors].columns == feature)[0].tolist(), \
+        features=np.where(np.array(predictors_ale) == feature)[0].tolist(), \
+        targets="all", \
         n_cols=1, \
+        sharey="all", \
+        constant=False, \
+        ax=None,
         fig_kw={'figwidth':6, 'figheight':3}, \
-        line_kw={"linewidth":0.2, "markersize":2, "markeredgewidth":0.25,"fillstyle":"none"}, \
-        sharey="all")[0][0]
+        line_kw={"linewidth":0.2, "markersize":2, "markeredgewidth":0.25,"fillstyle":"none"})[0][0]
         #you can change arguments of plot using fig and line_kw
             #look posibilities in "plt.rcParams.keys()"
-    ax.update({"xlabel": dict_features_to_plot[feature]})
+    ax.update({"xlabel": dict_nice_feature_names_ale[feature], "ylabel": "Change average prediction"})
         #https://www.geeksforgeeks.org/matplotlib-axes-axes-update-in-python/
-    ax.update({"ylabel": "Change average prediction"})
         #The ALE on the y-axes of the plot above is in the units of the prediction variable.
     ax.get_legend().remove()
         #https://stackoverflow.com/questions/59352887/how-to-remove-legend-from-an-image-plot
     plt.savefig( \
         fname="./results/selected_model_class/ale_plots/aleplot_" + feature + ".png", dpi=300)
     plt.close()
-
-    #if different Y axis lims, say that in the poster! not the same 0.5-0.6 than 0.1-0.9
-
-
-
-
-
-
-
-
-
+        #exp
+            #An Explanation object produced by a call to the alibi.explainers.ale.ALE.explain() method.
+            #features
+                #A list of features for which to plot the ALE curves or 'all' for all features. Can be a mix of integers denoting feature index or strings denoting entries in exp.feature_names. Defaults to 'all'.
+        #targets
+            #A list of targets for which to plot the ALE curves or 'all' for all targets. Can be a mix of integers denoting target index or strings denoting entries in exp.target_names. Defaults to 'all'.
+        #n_cols
+            #Number of columns to organize the resulting plot into.
+        #sharey
+            #A parameter specifying whether the y-axis of the ALE curves should be on the same scale for several features. Possible values are: 'all' | 'row' | None.
+        #constant
+            #A parameter specifying whether the constant zeroth order effects should be added to the ALE first order effects.
+        #ax
+            #A matplotlib axes object or a numpy array of matplotlib axes to plot on.
+        #line_kw
+            #Keyword arguments passed to the plt.plot function.
+        #fig_kw
+            #Keyword arguments passed to the fig.set function.
+#Results
 #the ALe plot of VIP makes sense, the prediction gets below the average as we move far wawy from VIPs, then increase but when the data starts to get very disperse
-#The ALE plot of BAT shows that the predictions tend to be above average close to BAT genes. There is dispersion, but for most of the points is the case. Once we get away from BAT genes, the predictions to be in the average or below average. Then, as data is more disperse, we get more noisy pattern around the average.
-#For thermogenic and SMT genes there is no clear pattern, predictions tend to be around the average.
-
-
-#I understand that the bins are calculated as percentiles, the 50% is the percentile 50, i.e., the number that separate the data in two parts with the same size. 10% would be the first 10% of the data.
-#Therefore, each interval has the same number of datapoints, so longer intervals means less data density
-#You can see this for recombination. 50% is the median, while the last interval 90-100 is percentile 90 to 100. You can see this interval is much longer,from 2.6 (percentile 0.9) to 6.2 (percentile 1 or max value), because of this the bin is larger. The last 10% of the data is spread across a larger range. We have more sparse data there.
-
-
-    #https://docs.seldon.io/projects/alibi/en/stable/examples/ale_regression_california.html
-
-#This also is unable to detect the positive influence of GC content, just like we saw with ale_plots of the first DL model
+#The ALE plot of BAT shows that the predictions tend to be above average close to BAT genes. There is dispersion, but for most of the points is the case. Note that most of the data is in this part, supporting this pattern. Once we get away from BAT genes, the predictions tend to be in the average or below average. Then, as data is more disperse, we get more noisy pattern around the average. The lowest value is observed just before the percentile 90%. After that percentile, data is MUCH more disperse.
+    #Yes, the pattern is noisy, but check the pattern of testis regulatory density. There is a decrease of selection but very noisy even the permutation importance is also not low. We know from our previous model that this variable is strongly and negatively associated with iHS, likely caused by recombination fine scale patterns. We are detecting here the same effect but with more noise. 
+    #therefore, the pattern of BAT can be still legit.
+#For thermogenic and SMT genes there is no clear pattern, predictions tend to be around the average. In the case of thermogenic, there is some pattern at the beginning but we have much less accumulation of points compared to the case of BAT genes.
 
 
 
 
+print_text("plot flex-sweep distribution", header=1)
+import matplotlib.pyplot as plt
+plt.hist(modeling_data["prob(sweep)"], bins=50, color="blue", alpha=0.4)
+plt.title("Observed log(Flex-Sweep probability)")
+plt.savefig( \
+    fname="./results/selected_model_class/yoruba_hg19_observed_log_flex_sweep.png", dpi=300)
+plt.close()
 
 
 
-
-
-
+'''
+#shap for the future
 
 #####tree shap
 
@@ -921,10 +981,5 @@ shap.plots.scatter(shaps[:,"smt_distance_percentile_1"], color=shaps[:, "recombi
     #As we go away from BAT and SMT genes, the shapely values tend to zero or negative for genes with high recombination
     #In constras, close to BAT and SMT genes, we find positive shapely values even for high-recombination genes, suggesting that proximity to these genes has a positive impact on the probability of selection independently of recombination rate.
     #There is, of course, noise with many genes being close to BAT/SMT genes but still having non-positive shapely values. So we need the bootstrap test.
-
-    
-##for the future
-    #we could do like in the DL paper, they ran 100 independent XGBoost models with the same HPs but changing the random seed
-        #After selecting XGBoost as the best-performing model class for the prediction of anti-AML drug synergy, we then wanted to account for the full diversity of possible good XGBoost models fit to the highly cor- related AML gene expression data. We therefore trained 100 models and explained the ensemble model. Each individual model had both row and column subsampling turned on for each additional tree fit, and the difference between the models in the ensemble was the random seed given to generate the subsampling.
-            #you need to add a DIFFERENT SEED FOR EACH MODEL!!
+'''
     
