@@ -2,7 +2,7 @@
 ##THIS WAS DONE BEFORE FERRARA
 #We got very interesting results from these analyses. 
     #Mainly, that XGBoost is good enough to model flexsweep prob and be around R2=0.7 in unseen data, when MDR is able to do 0.7 on the whole data iHS dataset!!! 
-    #We have found similar patterns between the genomic factors in XGBoost flex-sweep and MDR iHS, suggesting that XGBoost is not doing nothing crazy. 
+    #We have found similar patterns between the genomic factors in XGBoost flex-sweep and MDR iHS, suggesting that XGBoost is not doing nothing crazy. Note that we detected this with ALE plots, which are not influenced by the many limitations of permutation tests. 
     #We have detected a (noisy) deficit of selection away from the BAT connectome, that is indeed similarly noisy compared to VIPs. 
     #We have found an understimation of selection on top Flex-sweep candidates suggesting that maybe these genes are actual targets of positive selection but we have not included the implicated selective pressures
 #next, once you have flex-sweep probs plus hg38 genomic factors

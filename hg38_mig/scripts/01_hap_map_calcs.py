@@ -18,8 +18,6 @@
 
 #We are going to migrate to hg38 as the new release of 1KGP matches this genome reference version (https://www.internationalgenome.org/data-portal/data-collection/30x-grch38). This script is going to take the VCF files for SNPs in the hg38 high coverage data from 1000GP and obtain hap and map files that will be used as input by flex sweep.
 
-#We are going to migrate to hg38 as the new release of 1KGP matches this genome reference version.
-
 #The general repo page for this release (http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage) and general readme (http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/README_111822.pdf).
 
 #It says that "20220422_3202_phased_SNV_INDEL_SV" is "the most up-to-date version of the phased panel based on the high-coverage 1kGP WGS data which includes SNV, INDEL, and SV calls across 3,202 samples"
@@ -373,9 +371,9 @@ print("\n#######################################\n##############################
 print("check in detail if we have duos/trios inside the original 2504 sample")
 print("#######################################")
 #we are going to look for samples of the original 2504 set that are sons of samples already included in this dataset.
-#these are the problematic cases, we do not care if a sample is in the original set and then, in the high coverage, they add his parents. These parents are not in our original sample, so when we select for 2504 samples, they will be filtered out.
+#these are the problematic cases, we do not care if a sample is in the original set and then, in the high coverage, they add his parents. These parents are not in our original sample, so when we select for 2504 samples, these parents will be filtered out.
 
-#first merge the original set of samples and the last ped with new duos-trios
+#first merge the original set of samples and the last ped with new duos-trios selecting only samples included in both datasets
 merge_parents_original = pd.merge(
     right=original_unrel_ped,
     left=samples_pedigree,
@@ -432,6 +430,7 @@ print(gazal_imbreeding.loc[ \
     gazal_imbreeding["IID"].isin(original_unrelated_parents_inside["fatherID"]) | \
     gazal_imbreeding["IID"].isin(original_unrelated_parents_inside["motherID"])])
     #Table S3 from Gazal (41598_2015_BFsrep17453_MOESM2_ESM.xls) shows that these 4 relations (PO) are included, correctly showing the corresponding duos.
+    #These 4 samples are not included in the cleaned datasets of Gazal, suggesting that they were detected as inbreeding cases. The parents, in contrast, were retained in the dataset.
 
 
 ##summary
@@ -472,7 +471,7 @@ print("known related samples in the original dataset")
 print(known_related_in_original_dataset)
 #see if no sample in the original dataset is included in the dataset with known related samples 
 print("Do the check:")
-unrelated_samples.loc[unrelated_samples["sample"].isin(known_related_in_original_dataset["Sample"]), :].shape[0] == 0
+print(unrelated_samples.loc[unrelated_samples["sample"].isin(known_related_in_original_dataset["Sample"]), :].shape[0] == 0)
 
 #
 print("\n#######################################\n#######################################")
@@ -1450,7 +1449,7 @@ run_bash(" \
         #see hap file calculation of the real data to see details about hap format.
 
 
-###POR AQUI, several months ago I started the pollarization of the alleles. I installed VEP and used one of its plugins to estimate the ancestral allele of each SNP within a new VCF file. Then, I started working with AWK to convert to upper case the new column with the ancestral allele, so we have high and low-confidence ancestral alleles and they can be used in conditions. In other words, I am selecting those snps for which REF is not Ancestral in bcftools, and for that I need the same case, as the conditions of bcftools are case sensitive.
+###POR AQUI, several months ago I started the pollarization of the alleles. I installed VEP and used one of its plugins to estimate the ancestral allele of each SNP within a new VCF file. Then, I started working with AWK to convert to upper case the new column with the ancestral allele, so we have high and low-confidence ancestral alleles and they can be used in conditionals. In other words, I am selecting those snps for which REF is not Ancestral in bcftools, and for that I need the same case, as the conditions of bcftools are case sensitive.
 
 #see email from Jesus about VEP installation, and answer once you have solved the upper case problem
     #https://mail.google.com/mail/u/0/?tab=rm&ogbl#drafts/QgrcJHsHpDRJdfjndBxlCjQHdCNBwJJqNSl 
