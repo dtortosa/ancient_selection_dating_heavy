@@ -587,8 +587,6 @@ run_bash(" \
             #the first ALT is not present, indeed all samples are homozigous for the second ALT (T) except the last that has one T and then missing.
             #the first row (0|0 0|0 .|.) and the second (1|1 1|1 1|.) should be removed. Our approach will consder both as monomorphic as in the first case AC=0 and in the second AC=AN.
 
-###POR AQUII CHECKING
-
 #
 print("\n#######################################\n#######################################")
 print("select only two samples to check whether AC, AN and AF changes")
@@ -657,6 +655,8 @@ run_bash(" \
             #is equal to the total number of alleles, i.e., all alleles are ALT
             #is equal to zero, i.e., there is no ALT so all alleles are REF 
         #https://www.biostars.org/p/360620/
+
+##POR AQUII
 
 #
 print("\n#######################################\n#######################################")
