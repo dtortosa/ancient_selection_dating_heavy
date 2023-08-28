@@ -1,0 +1,14 @@
+Lmod has detected the following error: The following module(s) are unknown:
+"singularity"
+
+Please check the spelling or version number. Also try "module spider ..."
+It is also possible your cache file is out-of-date; it may help to try:
+  $ module --ignore-cache load "singularity"
+
+Also make sure that all modulefiles written in TCL start with the string
+#%Module
+
+
+
+Aug 17 19:46:59.79837  43031 slurmstepd   0x2ac86ca23700: error: *** JOB 7746842 ON r1u03n2 CANCELLED AT 2023-08-17T19:46:59 DUE TO TIME LIMIT ***
+Aug 17 19:46:59.137431 43031 slurmstepd   0x2ac8677b4a00: error: Detected 9 oom_kill events in StepId=7746842.batch. Some of the step tasks have been OOM Killed.

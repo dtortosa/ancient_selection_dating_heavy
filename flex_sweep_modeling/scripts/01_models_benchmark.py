@@ -1515,3 +1515,6 @@ results_df.to_csv( \
     sep='\t', \
     header=True, \
     index=False)
+
+##THIS IS TOO SLOW DUE TO THE NEURAL NETWORKS, ALL MODELS FINISH EXCEPT NEURAL NETS. FROM THE MODELS FINSHED, XGBOOS IS THE BEST, AND ALSO HAS MUCH HIGHE R2 THAN WHAT I SAW WITH OPTUNA AND DEEP NETS BEFORE. IT IS AROUND 0.7!!
+#MAYBE IT WOULD BE A GOOD IDEA TO DO THE BENCHMARK USING RMSE INSTEAD R2, you used RMSE for the fine tuning of the selected model class (i.e., XGBOOST; 03_explore_selected_model_class.py).

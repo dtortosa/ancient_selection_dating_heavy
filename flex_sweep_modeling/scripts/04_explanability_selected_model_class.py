@@ -513,8 +513,8 @@ dict_nice_feature_names={
     "tbfs_density_1000kb": "Regulatory density (DNAseI)",
     "thermogenic_distance": "Distance to thermogenic genes",
     "vip_distance": "Distance to VIPs",
-    "bat_distance_percentile_1": "Distance to BAT genes",
-    "smt_distance_percentile_1": "Distance SMT genes"}
+    "bat_distance_percentile_1": "Distance to Brown Adipose Tissue (BAT) genes",
+    "smt_distance_percentile_1": "Distance Skeletal Muscle Tissue (SMT) genes"}
 print("check that the keys in the dict are the features in the same order than in the data")
 predictors=[i for i in modeling_data.columns if i not in ["prob(sweep)"]]
 predictors_nice=[dict_nice_feature_names[i] for i in modeling_data.columns if i not in ["prob(sweep)"]]
@@ -632,29 +632,10 @@ ax.update({"xlim": (1, 1.8), "xlabel": "Permutation importance (original RMSE / 
     #update the axis to change the xlim and focus on values above 1
     #https://www.geeksforgeeks.org/matplotlib-axes-axes-update-in-python/
 ax.set_title("", fontsize=18)
-ax.xaxis.label.set_size(12.5)
+ax.xaxis.label.set_size(13.5)
+ax.tick_params(axis='y', labelsize=11)
 plt.savefig( \
     fname="./results/selected_model_class/permutation_importance/permutation_importance_all.png", dpi=300)
-plt.close()
-
-
-print_text("plot results with Recombination", header=3)
-ax=plot_permutation_importance( \
-    exp=perm_exp, \
-    features=[pos for pos, feature in enumerate(predictors) if feature != "recombination_final_1000kb"], \
-    metric_names="all", \
-    n_cols=1, \
-    sort=True, \
-    top_k=None, \
-    ax=None, \
-    bar_kw=None, \
-    fig_kw={'figwidth': 14, 'figheight': 6})[0][0]
-ax.update({"xlim": (1, 1.15), "xlabel": "Permutation importance (original RMSE / permuted RMSE)"})
-    #update the axis to change the xlim and focus on values around 1.1
-ax.set_title("", fontsize=18)
-ax.xaxis.label.set_size(12.5)
-plt.savefig( \
-    fname="./results/selected_model_class/permutation_importance/permutation_importance_non_recomb.png", dpi=300)
 plt.close()
     #RESULTS:
         #As expected, recombination rate is the most important feature by far. the we have the density of conserved elements.
@@ -745,10 +726,10 @@ dict_nice_feature_names_ale={
     "pip_v3": "Number of protein-protein interactions (log interactions)",
     "recombination_final_1000kb": "Recombination rate (cM/Mb)",
     "tbfs_density_1000kb": "Regulatory density (DNAseI)",
-    "thermogenic_distance": "Distance to thermogenic genes (pair base)",
-    "vip_distance": "Distance to VIPs (pair base)",
-    "bat_distance_percentile_1": "Distance to BAT genes (pair base)",
-    "smt_distance_percentile_1": "Distance SMT genes (pair base)"}
+    "thermogenic_distance": "Distance to thermogenic genes (pb)",
+    "vip_distance": "Distance to VIPs (pb)",
+    "bat_distance_percentile_1": "Distance to BAT genes (pb)",
+    "smt_distance_percentile_1": "Distance SMT genes (pb)"}
 print("check that the keys in the dict are the features in the same order than in the data")
 predictors_ale=[i for i in modeling_data.columns if i not in ["prob(sweep)"]]
 predictors_nice_ale=[dict_nice_feature_names_ale[i] for i in modeling_data.columns if i not in ["prob(sweep)"]]
@@ -760,7 +741,7 @@ print_text("initialize ALE plots using alibi", header=2)
 #alibi is much more maintained than aleplot and it is much easier to install in container
 #we have already used this package for permutation importance
     #https://docs.seldon.io/projects/alibi/en/stable/index.html
-from alibi.explainers import ALE, plot_ale
+from alibi.explainers import ALE
 #we have a warning when importing alibi: "NumbaDeprecationWarning: The 'nopython' keyword argument was not supplied to the 'numba.jit' decorator."
     #It seems that this is ok and it is related to shap. This is going to be solved in new versions of shap and we are not using shap anyways.
         #https://github.com/slundberg/shap/issues/2909
@@ -837,6 +818,7 @@ import matplotlib.pyplot as plt
     #The x-axis also shows feature deciles of the feature to help judge in which parts of the feature space the ALE plot is interpolating more and the estimate might be less trustworthy.
     #Therefore, first bar is percentile 10%, second bar is percentile 20%, and so on...
 #feature=[feature for (pos,feature) in enumerate(dict_nice_feature_names_ale.keys()) if pos==4][0]
+from alibi.explainers import plot_ale
 for feature in dict_nice_feature_names_ale.keys():
     ax=plot_ale( \
         exp=lr_exp, \
@@ -850,9 +832,11 @@ for feature in dict_nice_feature_names_ale.keys():
         line_kw={"linewidth":0.2, "markersize":2, "markeredgewidth":0.25,"fillstyle":"none"})[0][0]
         #you can change arguments of plot using fig and line_kw
             #look posibilities in "plt.rcParams.keys()"
-    ax.update({"xlabel": dict_nice_feature_names_ale[feature], "ylabel": "Change average prediction"})
+    ax.update({"xlabel": dict_nice_feature_names_ale[feature], "ylabel": "Change in prediction"})
         #https://www.geeksforgeeks.org/matplotlib-axes-axes-update-in-python/
         #The ALE on the y-axes of the plot above is in the units of the prediction variable.
+    ax.xaxis.label.set_size(12)
+    ax.yaxis.label.set_size(13.5)
     ax.get_legend().remove()
         #https://stackoverflow.com/questions/59352887/how-to-remove-legend-from-an-image-plot
     plt.savefig( \
@@ -888,8 +872,8 @@ for feature in dict_nice_feature_names_ale.keys():
 
 print_text("plot flex-sweep distribution", header=1)
 import matplotlib.pyplot as plt
-plt.hist(modeling_data["prob(sweep)"], bins=50, color="blue", alpha=0.4)
-plt.title("Observed log(Flex-Sweep probability)")
+plt.hist(modeling_data["prob(sweep)"], bins=50, color="blue", alpha=0.4, label="Observed log(Flex-sweep probability)")
+plt.legend(loc="upper left")
 plt.savefig( \
     fname="./results/selected_model_class/yoruba_hg19_observed_log_flex_sweep.png", dpi=300)
 plt.close()

@@ -1,0 +1,69 @@
+
+##THIS WAS DONE BEFORE FERRARA
+#We got very interesting results from these analyses. 
+    #Mainly, that XGBoost is good enough to model flexsweep prob and be around R2=0.7 in unseen data, when MDR is able to do 0.7 on the whole data iHS dataset!!! 
+    #We have found similar patterns between the genomic factors in XGBoost flex-sweep and MDR iHS, suggesting that XGBoost is not doing nothing crazy. 
+    #We have detected a (noisy) deficit of selection away from the BAT connectome, that is indeed similarly noisy compared to VIPs. 
+    #We have found an understimation of selection on top Flex-sweep candidates suggesting that maybe these genes are actual targets of positive selection but we have not included the implicated selective pressures
+#next, once you have flex-sweep probs plus hg38 genomic factors
+    #you can read this file where you will see options for improvement of the modeling
+    #you can decide whether just go for XGBoost or try to make a faster benchmark where DNNs have time to finish
+    #then you can apply David's pipeline for BAT (or other set) genes that are enriched in selection in some pops
+
+
+####plan
+    #get class model selection completely done in a week
+        #check R2 and plots of the best models
+            #When interpreting the R-Squared it is almost always a good idea to plot the data. That is, create a plot of the observed data and the predicted values of the data. This can reveal situations where R-Squared is highly misleading. For example, if the observed and predicted values do not appear as a cloud formed around a straight line, then the R-Squared, and the model itself, will be misleading. Similarly, outliers can make the R-Squared statistic be exaggerated or be much smaller than is appropriate to describe the overall pattern in the data.
+                #https://www.displayr.com/8-tips-for-interpreting-r-squared/#:~:text=Don't%20use%20R%2DSquared%20to%20compare%20models&text=There%20are%20two%20different%20reasons,the%20variables%20are%20being%20transformed.
+        #results for now
+            #R2=0.5 in evaluation and test sets, which is usually considered OK
+                #https://stephenallwright.com/good-r-squared-value/
+            #the problem is that we have more error for strong sweep candidates (log probability close to zero). In classification occurs the same, as we have more false negatives than false positives (lower recall than precision). 
+            #the MDR for iHS has around 0.7 for the whole dataset (we are above here) but fit very well the distribution of iHS, while here we have a problem with the right tail.
+            #R2 or MSE/MAE for optimization?
+                #https://machinelearningmastery.com/regression-metrics-for-machine-learning/
+            #maybe this is a result itself, the genomic features considered cannot fully explain all sweeps predicted by flex-sweep. This makes sense because we do not have included all selective pressures affecting the human genome, so functions that have been targeted by these pressures would have an excess of sweep probability based on their genomic features.
+                #we have strong sweep candidates that have less probability, but their probability is not zero. The model is predictiing some probability of sweep, but there is something else doing these genes enriched in sweep probability, maybe something related with their function.
+        #results about BAT
+            #bat 1% without no other selective pressure shows a clear decrease in the probability of selection as we move away from the BAT connectome genes. Note that there is a peak, an increase in the probability of selection at 717kb of distance from BAT genes. This is still relatively close. Remember that we consider the impact of genomic factors on the probability of selection of a gene that are up to 500kb from the center of the gene (500+500=1000kb windows) and then there is a clear decrease.
+            #whean adding vip, thermogenic and smt distance, the pattern is much more CLEAR with a decrease of flex-sweep probability. With specific combinations of these predictors, bAT pattern is not super clear, but it is with all of them. This is not a problem to me becuase alone this factor already shows pattern. and we adding other factors, i.e., controlling for then we see even clearer impact.
+            #note that the differences respect to the average prediction are similar to those of VIP distance! so I see potential in BAT set!!! We have this set validated, knowjing that is cohesive...!
+    #then select the three/four best models in the selected class
+        #variability of results across best models
+            #just using predictive power is not a good idea in order to do inference
+        #in the deep learning paper (Janizek et al 2023)
+            #they used the combination of shapely values across models, and they know that shapely fails with multicolinearty! check what the did to control for that
+        #RecJanizekombination will be stable and possibly VIPs and BAT
+    #variable importance
+        #ale plots
+        #check also
+            #https://arxiv.org/abs/2302.02024
+    #speculative explanation for BAT vs thermogenic
+        #I do not know where Yoruba ancestors were located in the past, but around the current Yorubaland there are areas with considerable diurnal variation in temperature.
+        #this could be relevant to explain why BAT but not thermogenic distance show a pattern. The second set of genes includes genes implicated in both short- and long-term regulation of body temperature while the BAT set is focused on non-shivering thermogenesis mediated by brown-adipose tissue, which is related to short-term responses to temperature changes.
+        #Maybe populations exposed to diurnal rather than seasonal changes of temperatures tend to specifically adapt through faster, short-term pathways of temperature control.
+        #I think remember that Australian Aborigenes shows signs of adaptation night cold temperatures. So maybe this has also happen for other pops in warm climates.
+    #next steps
+        #explore feature engineering? they say it can have a great impact on performance
+        #select models based on mse instead of R2? 
+            #some say that you cannot use R2 calculated from the test set because of the formula used by scikit learn
+                #https://stats.stackexchange.com/questions/590199/how-to-motivate-the-definition-of-r2-in-sklearn-metrics-r2-score
+            #Janizek et al 2023 uses "mse"
+        #use optuna instead gridsearchCV, using less HPs for neural nets...
+        #once we have selected a model class, 
+            #try to combine the predictions of several models in order to get average pattern
+                #use more than 5 models? maybe leave many cores running in order to cover more models?
+                #we can also use this to consider stochasticity (different seeds give different results)
+                    #When using machine learning algorithms that have a stochastic learning algorithm, it is good practice to evaluate them by averaging their performance across multiple runs or repeats of cross-validation. When fitting a final model, it may be desirable to either increase the number of trees until the variance of the model is reduced across repeated evaluations, or to fit multiple final models and average their predictions.
+                        #https://machinelearningmastery.com/different-results-each-time-in-machine-learning/
+            #use optuna in detail for this model class
+        #analyze other populations, specifically from higher latitudes where maybe adaptation to seasonal temperature variation was more relevant
+        #use overall probability of selection in the bootstrap test
+        #use shap values to overcome problems of permutation importance
+            #tree shap does not work for stack regressor
+                #you could check what they did in the deep learning paper in order to combine output of different XGBoost models
+                #christopher book
+                    #However, in the end I recommend to use test data for permutation feature importance. Because if you are interested in how much the model’s predictions are influenced by a feature, you should use other importance measures such as SHAP importance.
+
+
