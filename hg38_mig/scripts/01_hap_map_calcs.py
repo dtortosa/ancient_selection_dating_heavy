@@ -656,8 +656,6 @@ run_bash(" \
             #is equal to zero, i.e., there is no ALT so all alleles are REF 
         #https://www.biostars.org/p/360620/
 
-##POR AQUII
-
 #
 print("\n#######################################\n#######################################")
 print("see monomorphic snps after subseting two first samples: rs6054249 is now considered monomorphic because it has 0|0 0|0 1|., being 1|. removed after filtering out the third sample. We get a warning after subsetting because --sampls updated AC, but for splitted multiallelic snps, we have several allele counts in each line, so the first time it sees this (rs6040355), print warning and no more. But AC is correctly updated anyway, leaving just one count, thus breaking the connection between the allele counts of the lines of a given multiallelic snp.")
@@ -713,7 +711,7 @@ run_bash(" \
 
 #
 print("\n#######################################\n#######################################")
-print("see what missing definition uses bcftools in stats: Stats considers as missing both '.|.' and '0|.', resulting in 5 missing for the third sample (3 cases with .|. and 2 cases with 1|.). This makes sense because we are looking for the proportion of genotypes with missing data, '0|.' has missing data besides the allele '0'. Therefore, it should be counted as missing. We will consider this using GT='mis' (see below)")
+print("see what missing definition uses bcftools in stats: Stats considers as missing both '.|.' and '0|.', resulting in 5 missing for the third sample (3 cases with .|. and 2 cases with 1|.). This makes sense because we are looking for the proportion of genotypes with missing data, '0|.' has missing data besides the allele '0'. Therefore, it should be counted as missing. We can consider this using GT='mis' (see below). Note that we are not going to filter by missingness anyways because the 1KGP data is already filtered for 5% missingness and David said that we should stick to that.")
 print("#######################################\n#######################################")
 run_bash(" \
     bcftools norm \
@@ -731,7 +729,7 @@ run_bash(" \
 
 #
 print("\n#######################################\n#######################################")
-print("filter by frequency of missing. This approach counts the number of missing genotypes with GT='mis' ('.|.', '.', '0|.') and divided by the number of samples, so you get the proportion of samples with missing genotypes. The strength of this approach over calculating the tag F_MISSING (+fill-tags) is that you are counting anything with '.', so even '1|.' would be considered missing. To me this is more correct because we are filtering by genotype missingness, i.e., the proportion of genotypes with missing. Therefore, '1|.' has missing even though it has one allele. It is different in previous filters when we want to check if a SNP is monomorphic. In that situation, having 0|0 1|. is not monomorphic if we count the last allele in the genotype with missing. At the same time the genotype has missing (it should be count for missingness) and has an ALT allele (it is not monomorphic), we should consider both aspects")
+print("filter by frequency of missing. This approach counts the number of missing genotypes with GT='mis' ('.|.', '.', '0|.') and divided by the number of samples, so you get the proportion of samples with missing genotypes. The strength of this approach over calculating the tag F_MISSING (+fill-tags) is that you are counting anything with '.', so even '1|.' would be considered missing. To me this is more correct because we are filtering by genotype missingness, i.e., the proportion of genotypes with missing. Therefore, '1|.' has missing even though it has one allele. It is different in previous filters when we want to check if a SNP is monomorphic. In that situation, having 0|0 1|. is not monomorphic if we count the last allele in the genotype with missing. At the same time the genotype has missing (it should be count for missingness) and has an ALT allele (it is not monomorphic), we should consider both aspects. Note that we are not going to filter by missingness anyways because the 1KGP data is already filtered for 5% missingness and David said that we should stick to that.")
 print("#######################################\n#######################################")
 print("#### SNPs with 1/3 or more of missing: we have snps with 1 out of 3 missing genotypes (e.g., rs6040358) and variants with 2 out of 3 missing (rs6054250) ####")
 run_bash(" \
@@ -816,7 +814,7 @@ run_bash(" \
         --rm-dup exact | \
     bcftools query \
         -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
-        #remove those snps that are exact duplicates, meaning identical chr, pos, ref, and alt. As you can see for rs6040359, it does not matter the ID or the genotypes, this command only targets chr, pos, ref, and alt. 
+        #remove those snps that are exact duplicates, meaning identical chr, pos, ref, and alt. As you can see for rs6040360, it does not matter the ID or the genotypes, this command only targets chr, pos, ref, and alt. 
         #bcftools norm --rm-dup exact selects only the first appearance and remove the next. Consequently, rs6040360_copy is filtered out, retaining rs6040360.
             #https://github.com/samtools/bcftools/issues/1089
         #https://samtools.github.io/bcftools/bcftools.html#norm
@@ -864,7 +862,7 @@ run_bash(" \
 
 #
 print("\n#######################################\n#######################################")
-print("check what happens if we remove the third sample and then rs6040355 have no REF anymore, only two ALTs: Despite losing the REF, both lines of rs6040355 are merged into a multiallelic SNP, thus it can be removed with --max-alleles 2. This makes sense because --multiallelics +snps looks for snps with the same position and same REF or ALT")
+print("check what happens if we remove the third sample and then rs6040355 have no REF anymore, only two ALTs: Despite losing the REF, both lines of rs6040355 are merged into a multiallelic SNP, thus it can be removed with --max-alleles 2. This makes sense because --multiallelics +snps looks for snps with the same position and same REF or ALT columns")
 print("#######################################\n#######################################")
 run_bash(" \
     bcftools norm \
@@ -886,7 +884,6 @@ run_bash(" \
         --multiallelic +snps | \
     bcftools query \
         -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
-        #.
 
 #
 print("\n#######################################\n#######################################")
@@ -918,6 +915,7 @@ run_bash(" \
         #--min-alleles/--max-alleles INT  
             #Minimum/maximum number of alleles listed in REF and ALT
         #This looks at REF/ALT, so we need these columns updated in order to use this. If you just do this when the multiallelic SNPs are splitted across different lines, then you would not remove them, because each one is presented like a biallelic SNP.
+        #As explained above, it seems we cannot have more than 1 allele in REF, but we can have several allele in the ALT column, thus we are indeed filtering here those SNPs with a given number of ALT alleles.
 
 #   
 print("\n#######################################\n#######################################")
@@ -948,11 +946,11 @@ run_bash(" \
         --phased | \
     bcftools query \
         -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
-        #rs6040360 has "1|1 0/0 0|1" as GT, thus the second sample does not have phased data.
+        #rs6040361 has "1|1 0/0 0|1" as GT, thus the second sample does not have phased data.
         #it is removed after applying the phased filter.
-        #I separated phased from --max/min-allele filter to be completely sure that first we remove multiallelic snps, and then we remove those snps with unphased data for any sample.
+        #We separate --phased from --max/min-allele filter to be completely sure that first we remove multiallelic snps, and then we remove those snps with unphased data for any sample.
         #I guess it is not mandatory to do it in this order because if a SNP that is multiallelic has also unphased data, will be removed anyways, and biallelic and phased SNPs will not be affected. 
-        #The order is more important in the case of samples, as you could remove a SNP that has unphased data for some samples, but any of those samples are included in the subset, so you are removing it while it has complete phased data for the samples you selected.
+        #The order is more important in the case of --samples, as you could remove a SNP that has unphased data for some samples, but any of those samples are included in the subset, so you are removing it while it has complete phased data for the samples you selected.
 
 #   
 print("\n#######################################\n#######################################")
@@ -1047,6 +1045,7 @@ run_bash(" \
                 #Unlike -r, targets can be prefixed with "^" to request logical complement. For example, "^X,Y,MT" indicates that sequences X, Y and MT should be skipped.
                 #Another difference is that using --regions, the existence of overlapping regions within FILE can result in duplicated out of order positions in the output.
                     #In other words, the resulting order of the vcf is compromised, but this does not seem to be the case for --targets.
+                    #I have also check this in the dummy file with two overlapped intervals, seeing that there is no duplication of SNPs because of this.
                     #https://github.com/samtools/bcftools/issues/57
                 #Yet another difference between the -t/-T and -r/-R is that -r/-R checks for proper overlaps and considers both POS and the end position of an indel, while -t/-T considers the POS coordinate only (by default; see also --regions-overlap and --targets-overlap).
                     #This is the default behaviour that can be changed using --targets-overlap
@@ -1165,21 +1164,21 @@ run_bash(" \
                     #allele count in genotypes, for each ALT allele, in the same order as listed
             #INFO/AC_Hom: Allele counts in homozygous genotypes
             #INFO/AC_Het: Allele counts in heterozygous genotypes
-            #INFO/AF: Allele frequency from FMT/GT or AC,AN if FMT/GT is not present
+            #INFO/AF: Allele frequency from FORMAT/GT or AC,AN if FORMAT/GT is not present
             #INFO/MAF: Frequency of the second most common allele
             #INFO/ExcHet: Test excess heterozygosity; 1=good, 0=bad
             #INFO/HWE: HWE test (PMID:15789306); 1=good, 0=bad
             #INFO/NS: Number of samples with data
         #This works after selecting the two first individuals, see for example:
-            #rs6054257
-                #GT: 1|0 1|1
-                #AN=4
-                #AC=3
-                #AC_Hom=2
+            #rs6054250
+                #GT: 1|0 .|.
+                #AN=2
+                #AC=1
+                #AC_Hom=0
                 #AC_Het=1
-                #AF=0.75
-                #MAF=0.25
-                #NS=2
+                #AF=0.5
+                #MAF=0.5
+                #NS=1
             #rs6040357
                 #GT: 1|1 2|2
                 #AN=4
@@ -1336,7 +1335,7 @@ run_bash(" \
         -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
     bcftools head")
         #the new header shows 
-            #the fields of the previous VCF file.
+            #the fields of the previous VCF file that remain.
             #every bcftools command used in order, along with the flags, the version, the date.
             #the new fields generated with +fill-tags
             #version of +fill-tags, flags selected
@@ -1394,7 +1393,7 @@ print("#######################################\n################################
 run_bash(" \
     bcftools head \
         ./data/dummy_vcf_files/dummy_example_cleaned.vcf.gz")
-    #we get first the fields of FILTER and FORMAT that have been not removed (you only removed INFO field and all FORMAT except GT). 
+    #we get first the fields of FILTER and FORMAT that have been not removed (you removed INFO fields and all FORMAT except GT). 
     #Then we get all the commands we have run and the fields we have added.
 
 #
@@ -1445,6 +1444,10 @@ run_bash(" \
         --hapsample ./data/dummy_vcf_files/dummy_example_IMPUTE2_raw; \
     gunzip -c ./data/dummy_vcf_files/dummy_example_IMPUTE2_raw.hap.gz")
         #see hap file calculation of the real data to see details about hap format.
+
+
+
+
 
 
 ###POR AQUI, several months ago I started the pollarization of the alleles. I installed VEP and used one of its plugins to estimate the ancestral allele of each SNP within a new VCF file. Then, I started working with AWK to convert to upper case the new column with the ancestral allele, so we have high and low-confidence ancestral alleles and they can be used in conditionals. In other words, I am selecting those snps for which REF is not Ancestral in bcftools, and for that I need the same case, as the conditions of bcftools are case sensitive.
