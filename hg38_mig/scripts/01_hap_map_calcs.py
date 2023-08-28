@@ -531,17 +531,17 @@ run_bash(" \
                 #SNP rs6054248 chr20 14290 C A 5 0 0.2 GTs: 0|0 0|0 1|.
                 #SNP rs6054249 chr20 14300 C A 5 1 0.2 GTs: 0|0 0|0 1|.
                 #SNP rs6054250 chr20 14310 C A 3 0 0 GTs: 1|0 .|. .|.
-                #SNP rs6054251 chr20 14320 C A 5 1 0.2 GTs: 0|0 0|0 1|1
+                #SNP rs6054251 chr20 14320 C A 6 2 0.333 GTs: 0|0 0|0 1|1
                 #SNP rs6054252 chr20 14350 C A 4 2 0.5 GTs: 1|0 1|0 .|.
                 #SNP rs6054257 chr20 14370 G A 6 3 0.5 GTs: 1|0 1|1 0|0
                 #SNP rs6054255 chr20 14371 G C 6 3 0.667 GTs: 0|1 1|1 1|0
                 #SNP rs6040351 chr20 17330 T A 6 2 0.333 GTs: 0|0 1|0 1|0
             #Multiallelic SNPs:
                 #SNP rs6040355 chr20 1110696 A G,T 6 2,2 0.333,0.333 GTs: 1|1 2|2 0|0
-                #SNP rs6040356 chr20 1110697 A G,T 6 2,1 0.333,0 GTs: 1|1 0|0 0|0
+                #SNP rs6040356 chr20 1110697 A C,T 6 2,1 0.333,0 GTs: 1|1 0|0 0|0
                 #SNP rs6040357 chr20 1110698 A G,T 6 3,3 0.5,0.5 GTs: 1|1 2|2 1|2
-                #SNP rs6040358 chr20 1110699 A G,T 6 2,0 0.333,0 GTs: 1|1 0|0 .|.
-                #SNP rs6040359 chr20 1110700 A G,T 5 0,3 0,0.6 GTs: 2|2 2|2 .|.
+                #SNP rs6040358 chr20 1110699 G A,T 6 2,0 0.333,0 GTs: 1|1 0|0 .|.
+                #SNP rs6040359 chr20 1110700 A G,T 4 0,3 0,0.6 GTs: 2|2 2|2 2|.
             #Exact duplicate SNPs, i.e., pos, chr, REF, alt
                 #SNP rs6040360 chr20 1110701 A G 6 3 0.5 GTs: 1|1 0|0 0|1
                 #SNP rs6040360_copy chr20 1110701 A G 6 3 0.5 GTs: 1|1 1|0 0|1
@@ -573,7 +573,7 @@ run_bash(" \
             #http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/README_1kGP_phased_panel_110722.pdf 
         #First scenario: rs6040355
             #the first line shows the genotypes for A and G, so a sample that is G|G would be 1|1, but a T|T sample would be 0|0, so A and T gets 0 in this line. This is ok, because the next line shows genotypes for A and T, and that T|T sample will be 1|1.
-                #This case is multiallelic, so we should remove both lines. We can just combine these two lines with norm --multiallelic, as it looks for snps with same pos and similar REF to merge (see when --multiallelic +snps is first used).
+                #This case is multiallelic, so we should remove both lines. We can just combine these two lines with norm --multiallelic, as it looks for snps with same pos and similar REF to merge (see when --multiallelic +snps is first used in this script).
         #Second scenario: rs6040356
             #we could also have a case where the second ALT does not exist in our subpop, then the first line would be 0s (for A) and 1s (for G), while the second one would be all zeros, because T (1) is not present.
                 #We need to retain the first row but not the second. This can be solved removing monomorphic so the second row with all 0 is removed, then pass duplicates filter, which should not affect the first line, as its "sister" row has been removed. When then we combine lines with multiallelic +snps, this remaining line should not have any other line with the same position and REF/ALT.
@@ -587,9 +587,7 @@ run_bash(" \
             #the first ALT is not present, indeed all samples are homozigous for the second ALT (T) except the last that has one T and then missing.
             #the first row (0|0 0|0 .|.) and the second (1|1 1|1 1|.) should be removed. Our approach will consder both as monomorphic as in the first case AC=0 and in the second AC=AN.
 
-#note about the output of bcftools norm
-    #Lines   total/split/realigned/skipped: 12/5/0/0
-    #12 is the total number of snps, while 5 is the number of snps that are multiallelic so have been splitted
+###POR AQUII CHECKING
 
 #
 print("\n#######################################\n#######################################")

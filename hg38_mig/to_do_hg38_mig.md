@@ -1,19 +1,5 @@
-- ASK DAVID FIRST ABOUT hgdp + 1000kgp
-	- A new preprint has been posted about the harmonization of 1000KP high coverage and the HGDP. 
-		- A harmonized public resource of deeply sequenced diverse human genomes
-		- https://www.biorxiv.org/content/10.1101/2023.01.23.525248v2.full
-	- we could gain populations at higher latitudes in eurasia, which could be useful for the climate adaptation paper. 
-	- although I do not know if we would need new simulations for these pops...
-	- do you think it is worth it?
-		- For the future could be interesting, but FIRST we need to know if flex sweep works well with 1000GP and its number of indidividuals
-		- Then, in the future, we can check whether Flexsweep works with smaller population sizes, as the HGDP has less samples in many populations.
-
-- calculate map file using genetic distance from decode hg38 original
-	- check the original map is hg38
-		- it says it is hg38 in the origina file, aau1043_DataS3.gz
-	- check if the data is 1 or 0 based
-
 - Ask jesus 
+	- about VEP
 	- about what accesibility masks is he using: L, Z and Q? also H?
 		- These masks help to identify regions of the genome that are more or less accesible to next generation sequencing methods using short reads.
 		- David say to avoid regions with a very low depth when it is not possible to do variant call.
@@ -34,3 +20,19 @@
 		- http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/1kGP.3202_samples.pedigree_info.txt
 
 
+- calculate map file using genetic distance from decode hg38 original
+	- check the original map is hg38
+		- it says it is hg38 in the origina file, aau1043_DataS3.gz
+	- check if the data is 1 or 0 based
+
+
+- ASK DAVID FIRST ABOUT hgdp + 1000kgp
+	- A new preprint has been posted about the harmonization of 1000KP high coverage and the HGDP. 
+		- A harmonized public resource of deeply sequenced diverse human genomes
+		- https://www.biorxiv.org/content/10.1101/2023.01.23.525248v2.full
+	- we could gain populations at higher latitudes in eurasia, which could be useful for the climate adaptation paper. 
+	- although I do not know if we would need new simulations for these pops...
+	- do you think it is worth it?
+		- For the future could be interesting, but FIRST we need to know if flex sweep works well with 1000GP and its number of indidividuals
+		- Then, in the future, we can check whether Flexsweep works with smaller population sizes, as the HGDP has less samples in many populations.
+		- Months later, David sent to you again this paper! He forgot that we talked about this, and he thought that it could be interesting for me! So in the future it would be worth it to mention it and check if flex-sweep works with this smaller sample size.
