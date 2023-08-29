@@ -5,7 +5,7 @@
 
 Bootstrap: library #It determines the bootstrap agent that will be used to create the base operating system you want to use. For example, the library bootstrap agent will pull a container from the Container Library. 
 
-From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword becomes valid. You indicate the container you want from the library. This will be downloaded and build. 
+From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword becomes valid. You indicate the container you want from the library. This will be downloaded and build. #it seem deadsnakes for downloading python does not work anymore with ubuntu 18.04, so we use ubuntu 20.04 #https://stackoverflow.com/a/64353748/12772630 
 
 
 
@@ -94,13 +94,13 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
 	#install apache spark, pyspark will connect to spark
 		#https://stackoverflow.com/questions/33887227/how-to-upgrade-spark-to-newer-version/33914992#33914992
 	#download apache spark in usr/local/bin
-	wget -P /usr/local/bin https://dlcdn.apache.org/spark/spark-3.3.2/spark-3.3.2-bin-hadoop3.tgz
-		#https://www.apache.org/dyn/closer.lua/spark/spark-3.3.2/spark-3.3.2-bin-hadoop3.tgz
+	wget -P /usr/local/bin https://dlcdn.apache.org/spark/spark-3.3.3/spark-3.3.3-bin-hadoop3.tgz
+		#https://www.apache.org/dyn/closer.lua/spark/spark-3.3.3/spark-3.3.3-bin-hadoop3.tgz
 	#unzip
-	tar -zxf /usr/local/bin/spark-3.3.2-bin-hadoop3.tgz -C /usr/local/bin
+	tar -zxf /usr/local/bin/spark-3.3.3-bin-hadoop3.tgz -C /usr/local/bin
 	#set the path of spark as environmental variable in our bash profile, so it is always present
 	#echo "#spark setup" >> ~/.bashrc
-	#echo "export SPARK_HOME=/usr/local/bin/spark-3.3.2-bin-hadoop3" >> ~/.bashrc
+	#echo "export SPARK_HOME=/usr/local/bin/spark-3.3.3-bin-hadoop3" >> ~/.bashrc
 		#https://stackoverflow.com/questions/46613651/how-to-setup-spark-home-variable
 		#we do this better in env, because singualirty uses its own bashrc file
 
@@ -290,6 +290,8 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
 
 	export BCFTOOLS_PLUGINS=/opt/bcftools-1.17/plugins #In order to use the BCFtools plugins, this environment variable must be set and point to the correct location (https://www.biostars.org/p/9473775/), env variables are set in %environment for singularity containers
 
+	export PATH=/opt/htslib-1.17:$PATH #so you can call functions of htslib (e.g., bgzip) from any place
+
 	export PERL_MM_USE_DEFAULT=1 #answer yes for all questions during perl modules installation (https://stackoverflow.com/questions/18458194/install-perl-module-with-assume-yes-for-given-options-non-interactively)
 
     export PERL5LIB=$PERL5LIB:/opt/cpanm/lib/perl5 #indicate path where to install perl modules
@@ -330,14 +332,14 @@ From: ubuntu:18.04 #When using the library bootstrap agent, the From keyword bec
 
 #Command to build, enter interactively or run
 	#now apply the definition file final_test_def for creating a container
-		#sudo singularity build /home/dftortosa/singularity/dating_climate_adaptation/hg38_mig/01_ubuntu_18_04_hg38_mig_hap_map.sif /home/dftortosa/singularity/dating_climate_adaptation/hg38_mig/scripts/recipes/01_ubuntu_18_04_hg38_mig_hap_map.def
+		#sudo singularity build /home/dftortosa/singularity/dating_climate_adaptation/hg38_mig/01_ubuntu_20_04_hg38_mig_hap_map.sif /home/dftortosa/singularity/dating_climate_adaptation/hg38_mig/scripts/recipes/01_ubuntu_20_04_hg38_mig_hap_map.def
 			#In the definition file is indicate that we will take an Ubuntu 20.04 container from the Singularity library. We do not need anything else. We do not need a previous image in the host system! The definition file has the instructions to get the required container from the library.
 	#you can run this image interactively with shell. For that you have to be in a specific folder in order to have the scripts workingnter in the container
 		#cd /home/dftortosa/singularity/dating_climate_adaptation/hg38_mig
-		#sudo singularity shell /home/dftortosa/singularity/dating_climate_adaptation/hg38_mig/01_ubuntu_18_04_hg38_mig_hap_map.sif
+		#sudo singularity shell /home/dftortosa/singularity/dating_climate_adaptation/hg38_mig/01_ubuntu_20_04_hg38_mig_hap_map.sif
 	#to run the container. For that you have to be in a specific folder in order to have the scripts workingnter in the container
 		#cd /home/dftortosa/singularity/dating_climate_adaptation/hg38_mig
-		#sudo singularity run /home/dftortosa/singularity/dating_climate_adaptation/hg38_mig/01_ubuntu_18_04_hg38_mig_hap_map.sif
+		#sudo singularity run /home/dftortosa/singularity/dating_climate_adaptation/hg38_mig/01_ubuntu_20_04_hg38_mig_hap_map.sif
 
 %labels
     Author dftortosa

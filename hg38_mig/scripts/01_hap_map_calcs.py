@@ -1569,6 +1569,10 @@ run_bash("\
         ./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38.tar.gz \
         homo_sapiens_ancestor_GRCh38/homo_sapiens_ancestor_2.fa | \
     head -500")
+    #tar
+        #z for gzip files, x to extract files, O for sending to stdout, v for verbose and f for specifying the compressed file name
+            #https://unix.stackexchange.com/questions/61461/how-to-extract-specific-files-from-tar-gz
+            #https://www.gnu.org/software/tar/manual/html_node/Writing-to-Standard-Output.html
     #fasta file format (https://en.wikipedia.org/wiki/FASTA_format):
         #A sequence begins with a greater-than character (">") followed by a description of the sequence (all in a single line).
             #in our case is ">ANCESTOR_for_chromosome:GRCh38:2:1:242193529:1" 
@@ -1580,9 +1584,8 @@ run_bash("\
                 #-: the extant species contains an insertion at this postion
                 #.: no coverage in the alignment
 
-##por aquii
-
-#For optimal retrieval speed, you should pre-process the FASTA files into a single bgzipped file that can be accessed via the perl module Bio::DB::HTS::Faidx (installed by VEP's INSTALL.pl):
+#For optimal retrieval speed, you should pre-process the FASTA files into a single bgzipped file that can be accessed via the perl module Bio::DB::HTS::Faidx (installed by VEP's INSTALL.pl). Therefore, we need to use bgzip (from HTSlib) to compress the fast file.
+    #https://www.htslib.org/doc/bgzip.html
 run_bash("\
     cd ./data/fasta_ancestral/; \
     tar \
