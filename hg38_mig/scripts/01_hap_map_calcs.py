@@ -1584,7 +1584,7 @@ run_bash("\
                 #-: the extant species contains an insertion at this postion
                 #.: no coverage in the alignment
 
-#For optimal retrieval speed, you should pre-process the FASTA files into a single bgzipped file that can be accessed via the perl module Bio::DB::HTS::Faidx (installed by VEP's INSTALL.pl). Therefore, we need to use bgzip (from HTSlib) to compress the fast file.
+#For optimal retrieval speed, you should pre-process the FASTA files into a single bgzipped file that can be accessed via the perl module Bio::DB::HTS::Faidx (installed by VEP's INSTALL.pl). Therefore, we need to use bgzip (from HTSlib) to compress the fast file. We are using the uncompressed file because id does not work if we compress with bgzip
     #https://www.htslib.org/doc/bgzip.html
 run_bash("\
     cd ./data/fasta_ancestral/; \
@@ -1592,14 +1592,8 @@ run_bash("\
         --extract \
         --gunzip \
         --file ./homo_sapiens_ancestor_GRCh38.tar.gz; \
-    cat ./homo_sapiens_ancestor_GRCh38/*.fa | \
-    bgzip \
-        --stdout \
-    > ./homo_sapiens_ancestor_GRCh38_final.fa.gz; \
-    gunzip \
-        --keep \
-        --force \
-        ./homo_sapiens_ancestor_GRCh38_final.fa.gz; \
+    cat ./homo_sapiens_ancestor_GRCh38/*.fa \
+    > ./homo_sapiens_ancestor_GRCh38_final.fa; \
     rm \
         --recursive \
         --force \
@@ -1608,71 +1602,55 @@ run_bash("\
         #print all fasta files and bgzipped them sending to standard output, save as a file
         #remove the folder with all the fasta files
 
-
-run_bash("\
-    bcftools view \
-        --no-header \
-        /home/dftortosa/Desktop/chr1_TSI.vcf.gz | \
-    head -10")
-
-run_bash("\
-    gunzip \
-        --stdout ./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38_final.fa.gz | \
-    head -50")
-
-
+#see the number of lines of the combined fasta file
 run_bash("\
     cd ./data/fasta_ancestral/; \
-    gunzip \
-        --force \
-        --keep \
-        homo_sapiens_ancestor_GRCh38_final.fa.gz")
+    awk \
+        'END{print NR}' \
+        homo_sapiens_ancestor_GRCh38_final.fa")
 
+#see first 10 lines of the combined fasta file
+run_bash("\
+    cd ./data/fasta_ancestral/; \
+    awk \
+        '{if(NR>=1 && NR <=500){print $0}}' \
+        homo_sapiens_ancestor_GRCh38_final.fa")
+
+#see the number of the line of the second chromosome so we can then check the first lines for that chromosome in the combined file
+run_bash("\
+    cd ./data/fasta_ancestral/; \
+    awk \
+        '{if(/>ANCESTOR_for_chromosome:GRCh38:2:/){print NR}}' \
+        homo_sapiens_ancestor_GRCh38_final.fa")
+        #https://stackoverflow.com/questions/17908555/printing-with-sed-or-awk-a-line-following-a-matching-pattern
+
+#print the 500 rows after the second chromosome starts in the combined fasta file
+run_bash("\
+    cd ./data/fasta_ancestral/; \
+    awk \
+        '{if(NR>=12871036 && NR<=12871536){print $0}}' \
+        homo_sapiens_ancestor_GRCh38_final.fa")
 
 #run VEP's plugin ancestral allele on the cleaned VCF file
-
-
-run_bash("\
-    vep \
-        --cache \
-        --plugin AncestralAllele,./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38_final.fa \
-        --input_file ./data/dummy_vcf_files/dummy_example_cleaned.vcf.gz \
-        --output_file eso.txt")
-    
-    #WARNING: Failed to instantiate plugin AncestralAllele: ERROR: Bio::DB::HTS required to access compressed FASTA file ./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38.fa.gz
-        #not in the format the program wants 
-
-    #if not compressed, works! this is used by Bio::DB::Fasta, while Bio::DB::HTS uses compressed fasta files
-
-    #I have removed these perl modules from container
-    #modules maybe useful for AncestralAllele plugin
-    #cpanm --local-lib /opt/cpanm Bio::DB::HTS &
-    #sleep 60
-    #find /root/.cpanm/work/ -type f -name "build.log" -execdir cat "{}" \;
-    #    #https://superuser.com/questions/566198/linux-command-find-files-and-run-command-on-them
-    #cpanm --local-lib /opt/cpanm Bio::DB::Fasta
-    #cpanm --local-lib /opt/cpanm Bio::DB::HTS::Faidx
-    #cpanm --local-lib /opt/cpanm PerlIO::gzip
-
-
-
 run_bash("\
     vep \
         --input_file ./data/dummy_vcf_files/dummy_example_cleaned.vcf.gz \
         --format vcf \
-        --cache \
-        --plugin AncestralAllele,./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38_final.fa \
+        --output_file ./data/dummy_vcf_files/dummy_example_cleaned_vep.vcf \
         --vcf \
         --fields Uploaded_variation,Location,Allele,Gene,Feature,Feature_type,Consequence,STRAND,AA \
-        --output_file ./data/dummy_vcf_files/dummy_example_cleaned_vep.vcf \
+        --force_overwrite \
         --dir_plugins /home/dftortosa/.vep/Plugins \
-        --force_overwrite")
+        --plugin AncestralAllele,./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38_final.fa \
+        --cache")
         #set the input file, which can be a compressed VCF file or a tab separated file (each field including ancestral allele in different columns)
+            #WARNING: Failed to instantiate plugin AncestralAllele: ERROR: Bio::DB::HTS required to access compressed FASTA file ./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38.fa.gz
+            #if not compressed, works! this is used by Bio::DB::Fasta, while Bio::DB::HTS uses compressed fasta files.
+            #we are going to use uncompressed fasta files
         #--format
             #Input file format - one of "ensembl", "vcf", "hgvs", "id", "region", "spdi". By default, VEP auto-detects the input file format. Using this option you can specify the input file is Ensembl, VCF, IDs, HGVS, SPDI or region format. Can use compressed version (gzipped) of any file format listed above. Auto-detects format by default
         #--output-file
             #Output file name. Results can write to STDOUT by specifying 'STDOUT' as the output file name - this will force quiet mode. Default = "variant_effect_output.txt"   
-
         #--vcf
             #Writes output in VCF format. Consequences are added in the INFO field of the VCF file, using the key "CSQ". Data fields are encoded separated by "|"; the order of fields is written in the VCF header. Output fields in the "CSQ" INFO field can be selected by using --fields.
             #IF THE INPUT FORMAT WAS VCF, THE FILE WILL REMAIN UNCHANGED SAVE FOR THE ADDITION OF THE CSQ FIELD (unless using any filtering).
@@ -1681,10 +1659,20 @@ run_bash("\
                 #https://useast.ensembl.org/info/docs/tools/vep/script/vep_options.html
         #--force_overwrite
             #to force saving the new summary
-
         #we get different transcripts for each SNP
             #VEP me da para cada SNP información de la strand, alelo ancestral, e impacto para diferentes transcritos de un mismo gen en los que "cae" dicho SNP. Así, algunas filas pone protein coding, nonsense... y tienen diferentes strands (1/-1). Para los casos que he mirado, todas las filas del mismo SNP tienen el mismo alelo Ancestral, así que entiendo que podría coger cualquier
 
+#Note that for the installation of VEP, I have removed some perl modules from the container that could be useful
+    #cpanm --local-lib /opt/cpanm Bio::DB::HTS &
+    #sleep 60
+    #find /root/.cpanm/work/ -type f -name "build.log" -execdir cat "{}" \;
+    #    #https://superuser.com/questions/566198/linux-command-find-files-and-run-command-on-them
+    #cpanm --local-lib /opt/cpanm Bio::DB::HTS::Faidx
+    #cpanm --local-lib /opt/cpanm PerlIO::gzip
+
+
+
+###CAChÉ!!??
 
 
 
