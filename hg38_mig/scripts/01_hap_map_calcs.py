@@ -1564,13 +1564,14 @@ run_bash("\
 #see fasta file of the second chromosome
 #you can extract one specific file but typing its path and name within the compressed file
 run_bash("\
-    gunzip \
-        --stdout \
-        ./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38_final.fa.gz homo_sapiens_ancestor_GRCh38/homo_sapiens_ancestor_2.fa | \
-    head -1000")
+    tar \
+        -zxOvf \
+        ./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38.tar.gz \
+        homo_sapiens_ancestor_GRCh38/homo_sapiens_ancestor_2.fa | \
+    head -500")
     #fasta file format (https://en.wikipedia.org/wiki/FASTA_format):
         #A sequence begins with a greater-than character (">") followed by a description of the sequence (all in a single line).
-            #in our case is ">ANCESTOR_for_chromosome:GRCh38:10:1:133797422:1" 
+            #in our case is ">ANCESTOR_for_chromosome:GRCh38:2:1:242193529:1" 
         #The next lines immediately following the description line are the sequence representation, with one letter per amino acid or nucleic acid, and are typically no more than 80 characters in length.
             #In our case, shows support for considering a base as ancestral, based on the comparison with the human-chimp-macaque ancestor (see above).
                 #ACTG: high-confidence call, ancestral state supported by the other two sequences
@@ -1578,6 +1579,8 @@ run_bash("\
                 #N: failure, the ancestral state is not supported by any other sequence
                 #-: the extant species contains an insertion at this postion
                 #.: no coverage in the alignment
+
+##por aquii
 
 #For optimal retrieval speed, you should pre-process the FASTA files into a single bgzipped file that can be accessed via the perl module Bio::DB::HTS::Faidx (installed by VEP's INSTALL.pl):
 run_bash("\
