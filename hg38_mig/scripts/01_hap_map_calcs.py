@@ -1450,17 +1450,22 @@ run_bash(" \
 
 
 
-###POR AQUI, several months ago I started the pollarization of the alleles. I installed VEP and used one of its plugins to estimate the ancestral allele of each SNP within a new VCF file. Then, I started working with AWK to convert to upper case the new column with the ancestral allele, so we have high and low-confidence ancestral alleles and they can be used in conditionals. In other words, I am selecting those snps for which REF is not Ancestral in bcftools, and for that I need the same case, as the conditions of bcftools are case sensitive.
+###POR AQUI
+#several months ago I started the pollarization of the alleles. I installed VEP and used one of its plugins to estimate the ancestral allele of each SNP within a new VCF file. Then, I started working with AWK to convert to upper case the new column with the ancestral allele, so we have high and low-confidence ancestral alleles and they can be used in conditionals. In other words, I am selecting those snps for which REF is not Ancestral in bcftools, and for that I need the same case, as the conditions of bcftools are case sensitive.
 
 #see email from Jesus about VEP installation, and answer once you have solved the upper case problem
     #https://mail.google.com/mail/u/0/?tab=rm&ogbl#drafts/QgrcJHsHpDRJdfjndBxlCjQHdCNBwJJqNSl 
 
 #then you should go to the actual data
+
+
+
+
 #
 print("\n#######################################\n#######################################")
 print("polarize alleles")
 print("#######################################\n#######################################")
-#REF/ALT in 1000 genomes project is not referring to Ancestral/Derived, so we need to polarize the alleles according to Jesus. I have checked the README and the README and the paper and there is no informatin about ancestral, so it seems to be the case. According to Jesus, I have to use a combination of VEP and bcftools to update the VCF files.
+#REF/ALT in 1000 genomes project is not referring to Ancestral/Derived, so we need to polarize the alleles according to Jesus. I have checked the README and the paper and there is no information about ancestral, so it seems to be the case that they did not polarize the alleles. According to Jesus, I have to use a combination of VEP and bcftools to update the VCF files.
 #VEP (Variant Effect Predictor) and AncestralAllele plugin (https://useast.ensembl.org/info/docs/tools/vep/script/vep_plugins.html#ancestralallele):
     #VEP plugin that retrieves ancestral allele sequences from a FASTA file.
     #Ensembl produces FASTA file dumps of the ancestral sequences of key species, including humans
@@ -1469,7 +1474,7 @@ print("#######################################\n################################
     #In the VEP paper
         #they say "In Ensembl, we infer genome-wide ancestral sequences (Paten et al., 2008) for different groups of species. Select the “Ancestral Allele” option (Figure 5) to obtain the ancestral ALLELE PREDICTED FROM THE ALIGNMENT OF 12 PRIMATE SPECIES, INCLUDING HOMO SAPIENS."
             #https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7613081/
-    #Indeed, in the supplementary file of the paper for 1KGP phase 3 (section 8), they say they polarized alleles using ensembl data from "ftp://ftp.ensembl.org/pub/release-74/fasta/ancestral_alleles/homo_sapiens_ancestor_GRCh37_e71.tar.bz2", which is an old version of the data indicated in VEP webpage.
+    #Indeed, in the supplementary file of the paper for 1KGP phase 3 (previous hg19 version; section 8), they say they polarized alleles using ensembl data from "ftp://ftp.ensembl.org/pub/release-74/fasta/ancestral_alleles/homo_sapiens_ancestor_GRCh37_e71.tar.bz2", which is an old version of the data indicated in VEP webpage.
         #https://static-content.springer.com/esm/art%3A10.1038%2Fnature15393/MediaObjects/41586_2015_BFnature15393_MOESM86_ESM.pdf
     #In both, the supplementary and the README of hg19 (https://ftp.ensembl.org/pub/release-75/fasta/ancestral_alleles/homo_sapiens_ancestor_GRCh37_e71.README), they say these ancestral alleles are obtained using the EPO pipeline:
         #In the EPO (Enredo-Pecan-Ortheus) pipeline, Ortheus infers ancestral states from the Pecan alignments. The confidence in the ancestral call is determined by comparing the call to the ancestor of the ancestral sequence as well as the 'sister' sequence of the query species. For instance, using a human-chimp- macaque alignment to get the ancestral state of human, the human-chimp ancestor sequence is compared to the chimp and to the human-chimp-macaque ancestor. A high-confidence call is made when all three sequences agree. If the ancestral sequence agrees with one of the other two sequences only, we tag the call as a low-confidence call. If there is more disagreement, the call is not made.
