@@ -1486,7 +1486,8 @@ print("#######################################\n################################
             #.: no coverage in the alignment
 
 #install VEP
-    #https://useast.ensembl.org/info/docs/tools/vep/script/vep_download.html
+    #the next steps show the commands to install VEP in David's laptop. If you need to install it in a singularity container, then go an check the .def file "01_ubuntu_20_04_hg38_mig_hap_map.def"
+        #https://useast.ensembl.org/info/docs/tools/vep/script/vep_download.html
     #install HTSLib (from SAMtools)
         #download the last version in March 2023
             #wget https://github.com/samtools/htslib/releases/download/1.17/htslib-1.17.tar.bz2
@@ -1532,7 +1533,7 @@ print("#######################################\n################################
                     #a: API + perl module Bio::DB::HTS/htslib
                     #c: download cache, do not needed because we will just use a fasta file downloaded with ancestral alleles for human in hg38
                         #Using a cache (--cache) is the fastest and most efficient way to use VEP, as in most cases only a single initial network connection is made and most data is read from local disk. Use offline mode to eliminate all network connections for speed and/or privacy.
-                        #By default the installer will download the latest version of VEP caches and FASTA files (currently 109).
+                        #By default the installer will download the latest version of VEP caches and FASTA files (currently 110).
                         #We strongly recommend that you download/use the VEP Cache version which corresponds to your Ensembl VEP installation, i.e. the VEP Cache version 109 should be used with the Ensembl VEP tool version 109.
                         #SO INSTALL CACHE EACH TIME YOU INSTALL VEP
                             #https://useast.ensembl.org/info/docs/tools/vep/script/vep_cache.html#cache
@@ -1545,6 +1546,21 @@ print("#######################################\n################################
                         #https://useast.ensembl.org/info/docs/tools/vep/script/vep_other.html#assembly
             #--PLUGINS AncestralAllele
             #--SPECIES "homo_sapiens"
+    #IMPORTANT information about the cache
+        #correspondence between versions
+            #We strongly recommend that you download/use the VEP Cache version which corresponds to your Ensembl VEP installation,i.e. the VEP Cache version 110 should be used with the Ensembl VEP tool version 110.
+            #This is mainly due to the fact that the VEP Cache (data content and structure) is generated every Ensembl release, regarding the data and API updates for this release, therefore the cache data format might differ between versions (and be incompatible with a newer version of the Ensembl VEP tool).
+            #Therefore, the cache should be installed in "/home/dftortosa/.vep/homo_sapiens/" and should be named as "110_GRCh38" at least by August 30th.
+        #download cache
+            #automatically
+                #Ensembl creates cache files for every species for each Ensembl release. They can be automatically downloaded and configured using INSTALL.pl.
+            #manually
+                #It is also simple to download and set up caches without using the installer. By default, VEP searches for caches in $HOME/.vep; to use a different directory when running VEP, use --dir_cache.
+                #Essential for human and other species with large sets of variant data
+                    #cd $HOME/.vep
+                    #curl -O https://ftp.ensembl.org/pub/release-110/variation/indexed_vep_cache/homo_sapiens_vep_110_GRCh38.tar.gz
+                    #tar xzf homo_sapiens_vep_110_GRCh38.tar.gz
+        #https://useast.ensembl.org/info/docs/tools/vep/script/vep_cache.html#cache
 
 #download the fasta files with the ancestral alleles
 #https://useast.ensembl.org/info/docs/tools/vep/script/vep_plugins.html#ancestralallele
@@ -1640,6 +1656,7 @@ run_bash("\
         --vcf \
         --fields Uploaded_variation,Location,Allele,Gene,Feature,Feature_type,Consequence,STRAND,AA \
         --force_overwrite \
+        --dir_cache \
         --dir_plugins /home/dftortosa/.vep/Plugins \
         --plugin AncestralAllele,./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38_final.fa \
         --cache")
@@ -1659,20 +1676,24 @@ run_bash("\
                 #https://useast.ensembl.org/info/docs/tools/vep/script/vep_options.html
         #--force_overwrite
             #to force saving the new summary
+        #--dir-cache
+            #The --dir_cache flag must be passed when running the VEP if a non-default cache directory is given
+        #--dir_plugins
+            #The --dir_plugins flag must be passed when running the VEP if a non-default plugins directory is given
         #we get different transcripts for each SNP
             #VEP me da para cada SNP información de la strand, alelo ancestral, e impacto para diferentes transcritos de un mismo gen en los que "cae" dicho SNP. Así, algunas filas pone protein coding, nonsense... y tienen diferentes strands (1/-1). Para los casos que he mirado, todas las filas del mismo SNP tienen el mismo alelo Ancestral, así que entiendo que podría coger cualquier
 
-#Note that for the installation of VEP, I have removed some perl modules from the container that could be useful
-    #cpanm --local-lib /opt/cpanm Bio::DB::HTS &
-    #sleep 60
-    #find /root/.cpanm/work/ -type f -name "build.log" -execdir cat "{}" \;
-    #    #https://superuser.com/questions/566198/linux-command-find-files-and-run-command-on-them
-    #cpanm --local-lib /opt/cpanm Bio::DB::HTS::Faidx
-    #cpanm --local-lib /opt/cpanm PerlIO::gzip
+
+#IMPORTANT
+    #specify the folders with
+        #plugins
+        #cache
+            #default for cache is $HOME/.vep
+    #download cache outside of here and upload it just one time, is 26GB
+    #you need an automiatic check for the same version in VEP and cache
 
 
 
-###CAChÉ!!??
 
 
 

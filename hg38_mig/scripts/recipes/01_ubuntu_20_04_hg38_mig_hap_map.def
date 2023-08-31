@@ -117,10 +117,10 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 	python3.9 get-pip.py
 
 	#python3.9 -m pip install future #the "-m" flag search for the last version of the package.
-	python3.9 -m pip install cyvcf2
+	#python3.9 -m pip install cyvcf2
 	#python3.9 -m pip install pyspark
 	#python3.9 -m pip install PyArrow #for pandas group by functions in pyspark
-	python3.9 -m pip install openpyxl
+	#python3.9 -m pip install openpyxl
 	python3.9 -m pip install natsort
 	#python3.9 -m pip install scikit-learn
 	#python3.9 -m pip install eli5
@@ -136,7 +136,6 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 		#Check its webpage to have alternatives: 
 			#https://github.com/bpython/bpython
 			#https://github.com/prompt-toolkit/ptpython
-
 		#I got a warning: ERROR: After October 2020 you may experience errors when installing or updating packages. This is because pip will change the way that it resolves dependency conflicts. We recommend you use --use-feature=2020-resolver to test your packages with the new resolver before it becomes the default.
 
 	##bcftools installation
@@ -208,7 +207,6 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
         #you have to answer some questions here, so maybe this is problematic for container
         #http://www.cpan.org/modules/INSTALL.html
     #create folder to save modules
-    mkdir -p cpanm
     #install library required for one of the modules (DBD::mysql)
     apt -y install libmysqlclient-dev
     	#https://askubuntu.com/questions/1286842/perl-install-dbdmysql-failed-on-ubuntu-20-04
@@ -216,11 +214,15 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 	apt -y install libexpat1-dev
 		#https://superuser.com/a/670341
     #modules required for VEP
-    cpanm --local-lib /opt/cpanm DBI
-    cpanm --local-lib /opt/cpanm DBD::mysql
-    cpanm --local-lib /opt/cpanm Archive::Zip
-	cpanm --local-lib /opt/cpanm Bio::DB::Fasta
-    	#indicate the local lib where to install
+    #cpanm Module::Build
+	#cpanm Bio::DB::HTS
+    cpanm DBI
+    cpanm DBD::mysql
+    cpanm Archive::Zip
+    cpanm Archive::Extract
+	cpanm Bio::DB::Fasta
+	cpanm Bio::DB::HTS::Tabix
+    	#we are not indicating the local lib where to install because this gives problems. VEP cannot find where the modules are even if we set an environmental variable with the path, so we use all default, and VEP knows how to find the modules then.
 	#go out of this directory to the directories outside the container
 	cd
 
@@ -237,7 +239,7 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 	#go to the repo
 	cd ensembl-vep
 	#install vep
-	perl INSTALL.pl --AUTO ap --PLUGINS AncestralAllele --ASSEMBLY GRCh38 --SPECIES "homo_sapiens"
+	perl INSTALL.pl --AUTO ap --NO_HTSLIB --PLUGINS AncestralAllele --ASSEMBLY GRCh38 --SPECIES "homo_sapiens"
 	    #--AUTO acp
 	        #Run installer without prompts
 	        #install also
@@ -248,10 +250,13 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 	                #We strongly recommend that you download/use the VEP Cache version which corresponds to your Ensembl VEP installation, i.e. the VEP Cache version 109 should be used with the Ensembl VEP tool version 109.
 	                #SO INSTALL CACHE EACH TIME YOU INSTALL VEP
 	                    #https://useast.ensembl.org/info/docs/tools/vep/script/vep_cache.html#cache
+	            #We are not using "c". We download it outside of this and uploading it to the HPC just one time. Then check versions.
 	            #f: download fasta files
 	                #I do not think I have to download all fasta files as we are only going to use ancestral alleles, which are in a specific fasta file.
 	                #https://useast.ensembl.org/info/docs/tools/vep/script/vep_cache.html#fasta
 	            #p: install plugins indicated with --PLUGINS
+	    #--NO_HTSLIB
+	    	#"--AUTO a" install the API Bio::DB::HTS and htslib (samtools) because Bio::DB::HTS reads files using HTSlib, but we already have hstlib, so we avoid installing it again.
 	    #--ASSEMBLY GRCh38
 	        #If using the --AUTO functionality to install without prompts, remember to add the assembly version required using e.g. "--ASSEMBLY GRCh38"
 	                #https://useast.ensembl.org/info/docs/tools/vep/script/vep_other.html#assembly
@@ -297,11 +302,11 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 
 	export PERL_MM_USE_DEFAULT=1 #answer yes for all questions during perl modules installation (https://stackoverflow.com/questions/18458194/install-perl-module-with-assume-yes-for-given-options-non-interactively)
 
-    export PERL5LIB=/opt/cpanm/lib/perl5 #indicate path where to install perl modules
-    export PERL5LIB="/home/u2/dftortosa/.cpan/build:$PERL5LIB"
+    #export PERL5LIB=/opt/cpanm/lib/perl5 #indicate path where to install perl modules
+    	#we do not need this, because we are just using the default location of perl without indicanting a non-default, local folder for cpan installations. In this way, VEP can find the path to the modules.
     	#https://stackoverflow.com/questions/1557959/how-can-i-find-out-where-a-perl-module-is-installed
     	#https://unix.stackexchange.com/questions/265479/bash-script-cant-locate-perl-module
-    	#cpanm instead of cpan?
+    	#if you want to check all the path considered by Pearl to look for modules, you can do 'perl -e "use WRONG_PACKAGE_NAME"', and you will see an error with the whole list. If you use a correct module name that is installed, you will no output. For example: perl -e "use Bio::DB::Fasta" or perl -e "use DBI" gives no error.
 
     export HTSLIB_DIR=/opt/htslib-1.17 #indicate where HTSLib is installed to avoid errors installing the perl module "Bio::DB::HTS"
 
