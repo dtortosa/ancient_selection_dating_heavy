@@ -1656,7 +1656,7 @@ run_bash("\
         --vcf \
         --fields Uploaded_variation,Location,Allele,Gene,Feature,Feature_type,Consequence,STRAND,AA \
         --force_overwrite \
-        --dir_cache \
+        --dir_cache ./data/vep_cache/cache_110 \
         --dir_plugins /home/dftortosa/.vep/Plugins \
         --plugin AncestralAllele,./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38_final.fa \
         --cache")
@@ -1687,12 +1687,13 @@ run_bash("\
 #IMPORTANT
     #specify the folders with
         #plugins
+            #default for cache is $HOME/.vep
         #cache
             #default for cache is $HOME/.vep
     #download cache outside of here and upload it just one time, is 26GB
     #you need an automiatic check for the same version in VEP and cache
 
-
+###CHANGE HOME TO OPT (EXPORT HOME=/OPT) AND THEN SET PERL ENV VARIABLE 
 
 
 
