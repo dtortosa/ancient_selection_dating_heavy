@@ -1653,14 +1653,34 @@ run_bash("\
         '{if(NR>=12871036 && NR<=12871536){print $0}}' \
         homo_sapiens_ancestor_GRCh38_final.fa")
 
-#run VEP's plugin ancestral allele on the cleaned VCF file
-
-
+#bgzip the fasta file with ancestral alleles because this should make things faster when running VEP (see documentation below)
 run_bash("\
     cd ./data/fasta_ancestral/; \
     bgzip \
         --keep \
+        --force \
+        --threads 1 \
         homo_sapiens_ancestor_GRCh38_final.fa")
+        #--force
+            #overwrite files without asking
+        #--keep
+            #don't delete input files during operation
+        #--threads
+            #number of compression threads to use
+
+#check integrity of the bgzipped file
+run_bash("\
+    cd ./data/fasta_ancestral/; \
+    bgzip \
+        --test \
+        homo_sapiens_ancestor_GRCh38_final.fa.gz")
+        #--test
+            #test integrity of compressed file
+            #NO OUTPUT?
+
+#run VEP's plugin ancestral allele on the cleaned VCF file
+
+
 
 
 run_bash("\
@@ -1678,7 +1698,7 @@ run_bash("\
         --compress_output gzip \
         --cache \
         --dir_cache ./data/vep_cache/cache_110 \
-        --plugin AncestralAllele,./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38_final.fa \
+        --plugin AncestralAllele,./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38_final.fa.gz \
         --dir_plugins /opt/ensembl-vep/vep_plugins")
         #https://useast.ensembl.org/info/docs/tools/vep/script/vep_options.html
         #--offline
@@ -1718,32 +1738,30 @@ run_bash("\
             #Specify the plugin directory to use. Default = "$HOME/.vep/"
             #The --dir_plugins flag must be passed when running the VEP if a non-default plugins directory is given
         #AncestralAllele plugin
+            #https://useast.ensembl.org/info/docs/tools/vep/script/vep_plugins.html#ancestralallele
             #A VEP plugin that retrieves ancestral allele sequences from a FASTA file.
             #Ensembl produces FASTA file dumps of the ancestral sequences of key species.
                 #Data files for GRCh37 are available from https://ftp.ensembl.org/pub/release-75/fasta/ancestral_alleles/
                 #Data files for GRCh38 are available from https://ftp.ensembl.org/pub/current_fasta/ancestral_alleles/
             #For optimal retrieval speed, you should pre-process the FASTA files into a single bgzipped file that can be accessed via Bio::DB::HTS::Faidx (installed by VEP's INSTALL.pl):
-
-
-        #INTENTA BGZIPPED FASTA
-            #WHY IS SLOWER?
-            #CHECK WITH REAL VCF FILE
-
-
+            #Data file is only available for GRCh38.
+            #The plugin is also compatible with Bio::DB::Fasta and an uncompressed FASTA file.
+            #Note the first time you run the plugin with a newly generated FASTA file it will spend some time indexing the file. DO NOT INTERRUPT THIS PROCESS, particularly if you do not have Bio::DB::HTS installed.
+            #Special cases:
+                #"-" represents an insertion
+                #"?" indicates the chromosome could not be looked up in the FASTA
 #we get different transcripts for each SNP
     #VEP me da para cada SNP información de la strand, alelo ancestral, e impacto para diferentes transcritos de un mismo gen en los que "cae" dicho SNP. Así, algunas filas pone protein coding, nonsense... y tienen diferentes strands (1/-1). Para los casos que he mirado, todas las filas del mismo SNP tienen el mismo alelo Ancestral, así que entiendo que podría coger cualquier
 
 
-#IMPORTANT
-    #specify the folders with
-        #plugins
-            #default for cache is $HOME/.vep
-        #cache
-            #default for cache is $HOME/.vep
-    #download cache outside of here and upload it just one time, is 26GB
-    #you need an automiatic check for the same version in VEP and cache
 
-#you should also check the number of variants for which polarization could not be done and hence are lost due to this.
+
+#INTENTA BGZIPPED FASTA
+    #it is slower the first time because it is indexing the fasta file with ancestral alleles, but then is fast again
+
+
+#you need an automiatic check for the same version in VEP and cache
+
 
 
 vep_version_raw = run_bash(" \
@@ -1758,6 +1776,9 @@ vep_version_raw
 
 #vep does not change the vcf file, only add the CSQ field. Therefore, we could process the original vcf files and then process with our cleaning
 
+
+
+#you should also check the number of variants for which polarization could not be done and hence are lost due to this.
 
 
 
