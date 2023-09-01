@@ -1527,13 +1527,17 @@ print("#######################################\n################################
         #git clone https://github.com/Ensembl/ensembl-vep.git
         #cd ensembl-vep
         #perl INSTALL.pl --AUTO ap --PLUGINS AncestralAllele --ASSEMBLY GRCh38 --SPECIES "homo_sapiens"
-            #--AUTO acp
+            #https://useast.ensembl.org/info/docs/tools/vep/script/vep_download.html
+            #--ASSEMBLY GRCh38
+                #If using the --AUTO functionality to install without prompts, remember to add the assembly version required using e.g. "--ASSEMBLY GRCh38"
+                        #https://useast.ensembl.org/info/docs/tools/vep/script/vep_other.html#assembly
+            #--AUTO ap
                 #Run installer without prompts
                 #install also
                     #a: API + perl module Bio::DB::HTS/htslib
-                    #c: download cache, do not needed because we will just use a fasta file downloaded with ancestral alleles for human in hg38
+                    #c: download cache, not needed here because I have downloaded the last cache version in the a separated bash script in my laptop. This cache has been then sent to the HPC, just one time. YOU HAVE TO USE THE SAME VERSION FOR VEP AND CACHE
                         #Using a cache (--cache) is the fastest and most efficient way to use VEP, as in most cases only a single initial network connection is made and most data is read from local disk. Use offline mode to eliminate all network connections for speed and/or privacy.
-                        #By default the installer will download the latest version of VEP caches and FASTA files (currently 110).
+                        #By default the installer will download the latest version of VEP caches and FASTA files.
                         #We strongly recommend that you download/use the VEP Cache version which corresponds to your Ensembl VEP installation, i.e. the VEP Cache version 109 should be used with the Ensembl VEP tool version 109.
                         #SO INSTALL CACHE EACH TIME YOU INSTALL VEP
                             #https://useast.ensembl.org/info/docs/tools/vep/script/vep_cache.html#cache
@@ -1541,12 +1545,14 @@ print("#######################################\n################################
                         #I do not think I have to download all fasta files as we are only going to use ancestral alleles, which are in a specific fasta file.
                         #https://useast.ensembl.org/info/docs/tools/vep/script/vep_cache.html#fasta
                     #p: install plugins indicated with --PLUGINS
-            #--ASSEMBLY GRCh38
-                #If using the --AUTO functionality to install without prompts, remember to add the assembly version required using e.g. "--ASSEMBLY GRCh38"
-                        #https://useast.ensembl.org/info/docs/tools/vep/script/vep_other.html#assembly
             #--PLUGINS AncestralAllele
+                #Comma-separated list of plugins to install when using --AUTO. To install all available plugins, use --PLUGINS all.
+            #--PLUGINSDIR
+                #By default the script will install the plugins files in the "Plugins" subdirectory of the --CACHEDIR directory. This option configures where the plugins files are installed.
+                #The --dir_plugins flag must be passed when running the VEP if a non-default plugins directory is given.
             #--SPECIES "homo_sapiens"
-    #IMPORTANT information about the cache
+                #Comma-separated list of species to install when using --AUTO. To install the RefSeq cache, add "_refseq" to the species name, e.g. "homo_sapiens_refseq", or "_merged" to install the merged Ensembl/RefSeq cache. Remember to use --refseq or --merged when running the VEP with the relevant cache!
+                #Use all to install data for all available species.    #IMPORTANT information about the cache
         #correspondence between versions
             #We strongly recommend that you download/use the VEP Cache version which corresponds to your Ensembl VEP installation,i.e. the VEP Cache version 110 should be used with the Ensembl VEP tool version 110.
             #This is mainly due to the fact that the VEP Cache (data content and structure) is generated every Ensembl release, regarding the data and API updates for this release, therefore the cache data format might differ between versions (and be incompatible with a newer version of the Ensembl VEP tool).
@@ -1648,40 +1654,84 @@ run_bash("\
         homo_sapiens_ancestor_GRCh38_final.fa")
 
 #run VEP's plugin ancestral allele on the cleaned VCF file
+
+
+run_bash("\
+    cd ./data/fasta_ancestral/; \
+    bgzip \
+        --keep \
+        homo_sapiens_ancestor_GRCh38_final.fa")
+
+
 run_bash("\
     vep \
+        --offline \
+        --verbose \
+        --species 'homo_sapiens' \
+        --assembly GRCh38 \
         --input_file ./data/dummy_vcf_files/dummy_example_cleaned.vcf.gz \
         --format vcf \
-        --output_file ./data/dummy_vcf_files/dummy_example_cleaned_vep.vcf \
+        --output_file ./data/dummy_vcf_files/dummy_example_cleaned_vep.vcf.gz \
+        --force_overwrite \
         --vcf \
         --fields Uploaded_variation,Location,Allele,Gene,Feature,Feature_type,Consequence,STRAND,AA \
-        --force_overwrite \
+        --compress_output gzip \
+        --cache \
         --dir_cache ./data/vep_cache/cache_110 \
-        --dir_plugins /home/dftortosa/.vep/Plugins \
         --plugin AncestralAllele,./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38_final.fa \
-        --cache")
-        #set the input file, which can be a compressed VCF file or a tab separated file (each field including ancestral allele in different columns)
-            #WARNING: Failed to instantiate plugin AncestralAllele: ERROR: Bio::DB::HTS required to access compressed FASTA file ./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38.fa.gz
-            #if not compressed, works! this is used by Bio::DB::Fasta, while Bio::DB::HTS uses compressed fasta files.
-            #we are going to use uncompressed fasta files
+        --dir_plugins /opt/ensembl-vep/vep_plugins")
+        #https://useast.ensembl.org/info/docs/tools/vep/script/vep_options.html
+        #--offline
+            #Enable offline mode. No database connections will be made, and a cache file or GFF/GTF file is required for annotation. Add --refseq to use the refseq cache (if installed). Not used by default
+        #--verbose
+            #Print out a bit more information while running. Not used by default
+        #--species
+            #Species for your data. This can be the latin name e.g. "homo_sapiens" or any Ensembl alias e.g. "mouse". Specifying the latin name can speed up initial database connection as the registry does not have to load all available database aliases on the server. Default = "homo_sapiens"
+        #assembly
+            #Select the assembly version to use if more than one available. If using the cache, you must have the appropriate assembly's cache file installed. If not specified and you have only 1 assembly version installed, this will be chosen by default. Default = use found assembly version.
+        #--input_file
+            #Input file name. If not specified, VEP will attempt to read from STDIN. Can use compressed file (gzipped).
         #--format
             #Input file format - one of "ensembl", "vcf", "hgvs", "id", "region", "spdi". By default, VEP auto-detects the input file format. Using this option you can specify the input file is Ensembl, VCF, IDs, HGVS, SPDI or region format. Can use compressed version (gzipped) of any file format listed above. Auto-detects format by default
         #--output-file
-            #Output file name. Results can write to STDOUT by specifying 'STDOUT' as the output file name - this will force quiet mode. Default = "variant_effect_output.txt"   
+            #Output file name. Results can write to STDOUT by specifying 'STDOUT' as the output file name - this will force quiet mode. Default = "variant_effect_output.txt"
+        #--force_overwrite
+            #By default, VEP will fail with an error if the output file already exists. You can force the overwrite of the existing file by using this flag.
         #--vcf
             #Writes output in VCF format. Consequences are added in the INFO field of the VCF file, using the key "CSQ". Data fields are encoded separated by "|"; the order of fields is written in the VCF header. Output fields in the "CSQ" INFO field can be selected by using --fields.
             #IF THE INPUT FORMAT WAS VCF, THE FILE WILL REMAIN UNCHANGED SAVE FOR THE ADDITION OF THE CSQ FIELD (unless using any filtering).
+            #Custom data added with --custom are added as separate fields, using the key specified for each data file.
+            #Commas in fields are replaced with ampersands (&) to preserve VCF format.
         #--fields
             #Configure the output format using a comma separated list of fields. Can only be used with tab (--tab) or VCF format (--vcf) output. For the tab format output, the selected fields may be those present in the default output columns, or any of those that appear in the Extra column (including those added by plugins or custom annotations) if the appropriate output is available (e.g. use --show_ref_allele to access 'REF_ALLELE'). Output remains tab-delimited. For the VCF format output, the selected fields are those present within the "CSQ" INFO field.
                 #https://useast.ensembl.org/info/docs/tools/vep/script/vep_options.html
-        #--force_overwrite
-            #to force saving the new summary
-        #--dir-cache
+        #--compress_output
+            #Writes output compressed using either gzip or bgzip. Not used by default
+        #cache
+            #Enables use of the cache. Add --refseq or --merged to use the refseq or merged cache, (if installed).
+        #--dir_cache
+            #Specify the cache directory to use. Default = "$HOME/.vep/"
             #The --dir_cache flag must be passed when running the VEP if a non-default cache directory is given
+        #--plugin
+            #Use named plugin. Plugin modules should be installed in the Plugins subdirectory of the VEP cache directory (defaults to $HOME/.vep/) or where indicated in --dir-plugins. Multiple plugins can be used by supplying the --plugin flag multiple times. See plugin documentation. Not used by default
         #--dir_plugins
+            #Specify the plugin directory to use. Default = "$HOME/.vep/"
             #The --dir_plugins flag must be passed when running the VEP if a non-default plugins directory is given
-        #we get different transcripts for each SNP
-            #VEP me da para cada SNP información de la strand, alelo ancestral, e impacto para diferentes transcritos de un mismo gen en los que "cae" dicho SNP. Así, algunas filas pone protein coding, nonsense... y tienen diferentes strands (1/-1). Para los casos que he mirado, todas las filas del mismo SNP tienen el mismo alelo Ancestral, así que entiendo que podría coger cualquier
+        #AncestralAllele plugin
+            #A VEP plugin that retrieves ancestral allele sequences from a FASTA file.
+            #Ensembl produces FASTA file dumps of the ancestral sequences of key species.
+                #Data files for GRCh37 are available from https://ftp.ensembl.org/pub/release-75/fasta/ancestral_alleles/
+                #Data files for GRCh38 are available from https://ftp.ensembl.org/pub/current_fasta/ancestral_alleles/
+            #For optimal retrieval speed, you should pre-process the FASTA files into a single bgzipped file that can be accessed via Bio::DB::HTS::Faidx (installed by VEP's INSTALL.pl):
+
+
+        #INTENTA BGZIPPED FASTA
+            #WHY IS SLOWER?
+            #CHECK WITH REAL VCF FILE
+
+
+#we get different transcripts for each SNP
+    #VEP me da para cada SNP información de la strand, alelo ancestral, e impacto para diferentes transcritos de un mismo gen en los que "cae" dicho SNP. Así, algunas filas pone protein coding, nonsense... y tienen diferentes strands (1/-1). Para los casos que he mirado, todas las filas del mismo SNP tienen el mismo alelo Ancestral, así que entiendo que podría coger cualquier
 
 
 #IMPORTANT
@@ -1693,8 +1743,20 @@ run_bash("\
     #download cache outside of here and upload it just one time, is 26GB
     #you need an automiatic check for the same version in VEP and cache
 
-###CHANGE HOME TO OPT (EXPORT HOME=/OPT) AND THEN SET PERL ENV VARIABLE 
+#you should also check the number of variants for which polarization could not be done and hence are lost due to this.
 
+
+vep_version_raw = run_bash(" \
+    vep | \
+    grep ensembl-vep", return_value=True)
+
+vep_version_raw
+
+#in vep
+    #--show_cache_info Show source version information for selected cache and quit
+
+
+#vep does not change the vcf file, only add the CSQ field. Therefore, we could process the original vcf files and then process with our cleaning
 
 
 

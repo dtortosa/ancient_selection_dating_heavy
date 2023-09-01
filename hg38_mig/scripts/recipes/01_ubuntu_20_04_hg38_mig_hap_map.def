@@ -235,33 +235,38 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 	git clone https://github.com/Ensembl/ensembl-vep.git
 	#go to the repo
 	cd ensembl-vep
+	#make folder to save vep plugins
+	mkdir ./vep_plugins
 	#install vep
-	perl INSTALL.pl --AUTO ap --PLUGINS AncestralAllele --ASSEMBLY GRCh38 --SPECIES "homo_sapiens"
-	    #--AUTO acp
+	perl INSTALL.pl --ASSEMBLY GRCh38 --AUTO ap --PLUGINS AncestralAllele --PLUGINSDIR ./vep_plugins --SPECIES "homo_sapiens"
+		#https://useast.ensembl.org/info/docs/tools/vep/script/vep_download.html
+	    #--ASSEMBLY GRCh38
+	        #If using the --AUTO functionality to install without prompts, remember to add the assembly version required using e.g. "--ASSEMBLY GRCh38"
+	                #https://useast.ensembl.org/info/docs/tools/vep/script/vep_other.html#assembly
+	    #--AUTO ap
 	        #Run installer without prompts
 	        #install also
 	            #a: API + perl module Bio::DB::HTS/htslib
-	            #c: download cache, do not needed because we will just use a fasta file downloaded with ancestral alleles for human in hg38
+	            #c: download cache, not needed here because I have downloaded the last cache version in the a separated bash script in my laptop. This cache has been then sent to the HPC, just one time. YOU HAVE TO USE THE SAME VERSION FOR VEP AND CACHE
 	                #Using a cache (--cache) is the fastest and most efficient way to use VEP, as in most cases only a single initial network connection is made and most data is read from local disk. Use offline mode to eliminate all network connections for speed and/or privacy.
-	                #By default the installer will download the latest version of VEP caches and FASTA files (currently 109).
+	                #By default the installer will download the latest version of VEP caches and FASTA files.
 	                #We strongly recommend that you download/use the VEP Cache version which corresponds to your Ensembl VEP installation, i.e. the VEP Cache version 109 should be used with the Ensembl VEP tool version 109.
 	                #SO INSTALL CACHE EACH TIME YOU INSTALL VEP
 	                    #https://useast.ensembl.org/info/docs/tools/vep/script/vep_cache.html#cache
-	            #We are not using "c". We download it outside of this and uploading it to the HPC just one time. Then check versions.
 	            #f: download fasta files
 	                #I do not think I have to download all fasta files as we are only going to use ancestral alleles, which are in a specific fasta file.
 	                #https://useast.ensembl.org/info/docs/tools/vep/script/vep_cache.html#fasta
 	            #p: install plugins indicated with --PLUGINS
-	    #--ASSEMBLY GRCh38
-	        #If using the --AUTO functionality to install without prompts, remember to add the assembly version required using e.g. "--ASSEMBLY GRCh38"
-	                #https://useast.ensembl.org/info/docs/tools/vep/script/vep_other.html#assembly
 	    #--PLUGINS AncestralAllele
+	    	#Comma-separated list of plugins to install when using --AUTO. To install all available plugins, use --PLUGINS all.
+	    #--PLUGINSDIR
+	    	#By default the script will install the plugins files in the "Plugins" subdirectory of the --CACHEDIR directory. This option configures where the plugins files are installed.
+	    	#The --dir_plugins flag must be passed when running the VEP if a non-default plugins directory is given.
 	    #--SPECIES "homo_sapiens"
+	    	#Comma-separated list of species to install when using --AUTO. To install the RefSeq cache, add "_refseq" to the species name, e.g. "homo_sapiens_refseq", or "_merged" to install the merged Ensembl/RefSeq cache. Remember to use --refseq or --merged when running the VEP with the relevant cache!
+			#Use all to install data for all available species.
 	#go out of this directory to the directories outside the container
 	cd
-	#recompile all perl modules so we avoid problems with vep due to different perl versions
-	#perl -MCPAN -e 'recompile()'
-		#https://stackoverflow.com/questions/50442448/cwd-c-loadable-library-and-perl-binaries-are-mismatched-got-handshake-key-0xdb
 
 
 	##give rights to run script
@@ -300,8 +305,9 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 
 	export PERL_MM_USE_DEFAULT=1 #answer yes for all questions during perl modules installation (https://stackoverflow.com/questions/18458194/install-perl-module-with-assume-yes-for-given-options-non-interactively)
 
+	#indicate PERL5LIB to avoid confusion between perl versions by VEP
 	export PERL5LIB=PERL_LOCAL_LIB_ROOT=cpan
-	#export HOME=/opt
+		#https://stackoverflow.com/a/52126231/12772630
 
     #export PERL5LIB=/opt/cpanm/lib/perl5 #indicate path where to install perl modules
     	#we do not need this, because we are just using the default location of perl without indicanting a non-default, local folder for cpan installations. In this way, VEP can find the path to the modules.
