@@ -33,7 +33,7 @@
 cd /home/dftortosa/singularity/dating_climate_adaptation/hg38_mig
 
 #save the working directory
-path_working_dir="./data/fasta_ancestral/fasta_ancestral"
+path_working_dir="./data/fasta_ancestral"
 
 #set the working directory
 mkdir -p $path_working_dir

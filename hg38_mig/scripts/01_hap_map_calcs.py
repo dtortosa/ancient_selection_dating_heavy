@@ -1570,10 +1570,7 @@ print("#######################################\n################################
 
 #download the fasta files with the ancestral alleles
 #https://useast.ensembl.org/info/docs/tools/vep/script/vep_plugins.html#ancestralallele
-run_bash("\
-    mkdir -p ./data/fasta_ancestral; \
-    cd ./data/fasta_ancestral; \
-    wget https://ftp.ensembl.org/pub/current_fasta/ancestral_alleles/homo_sapiens_ancestor_GRCh38.tar.gz")
+#we have done it in a separate bash script in David's laptop ("00c_download_fasta_ancestral.sh")
 
 #list the files in the compressed file
 run_bash("\
@@ -1623,6 +1620,7 @@ run_bash("\
         #use tar to unzip a tar.gz file generating a folder with all the fasta files
         #print all fasta files and bgzipped them sending to standard output, save as a file
         #remove the folder with all the fasta files
+        #https://useast.ensembl.org/info/docs/tools/vep/script/vep_plugins.html#ancestralallele
 
 #see the number of lines of the combined fasta file
 run_bash("\
@@ -1692,10 +1690,10 @@ run_bash("\
         --input_file ./data/dummy_vcf_files/dummy_example_cleaned.vcf.gz \
         --format vcf \
         --output_file ./data/dummy_vcf_files/dummy_example_cleaned_vep.vcf.gz \
-        --force_overwrite \
         --vcf \
-        --fields Uploaded_variation,Location,Allele,Gene,Feature,Feature_type,Consequence,STRAND,AA \
         --compress_output gzip \
+        --force_overwrite \
+        --fields Uploaded_variation,Location,Allele,Gene,Feature,Feature_type,Consequence,STRAND,AA \
         --cache \
         --dir_cache ./data/vep_cache/cache_110 \
         --plugin AncestralAllele,./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38_final.fa.gz \
@@ -1715,18 +1713,18 @@ run_bash("\
             #Input file format - one of "ensembl", "vcf", "hgvs", "id", "region", "spdi". By default, VEP auto-detects the input file format. Using this option you can specify the input file is Ensembl, VCF, IDs, HGVS, SPDI or region format. Can use compressed version (gzipped) of any file format listed above. Auto-detects format by default
         #--output-file
             #Output file name. Results can write to STDOUT by specifying 'STDOUT' as the output file name - this will force quiet mode. Default = "variant_effect_output.txt"
-        #--force_overwrite
-            #By default, VEP will fail with an error if the output file already exists. You can force the overwrite of the existing file by using this flag.
         #--vcf
             #Writes output in VCF format. Consequences are added in the INFO field of the VCF file, using the key "CSQ". Data fields are encoded separated by "|"; the order of fields is written in the VCF header. Output fields in the "CSQ" INFO field can be selected by using --fields.
             #IF THE INPUT FORMAT WAS VCF, THE FILE WILL REMAIN UNCHANGED SAVE FOR THE ADDITION OF THE CSQ FIELD (unless using any filtering).
             #Custom data added with --custom are added as separate fields, using the key specified for each data file.
             #Commas in fields are replaced with ampersands (&) to preserve VCF format.
+        #--compress_output
+            #Writes output compressed using either gzip or bgzip. Not used by default
+        #--force_overwrite
+            #By default, VEP will fail with an error if the output file already exists. You can force the overwrite of the existing file by using this flag.
         #--fields
             #Configure the output format using a comma separated list of fields. Can only be used with tab (--tab) or VCF format (--vcf) output. For the tab format output, the selected fields may be those present in the default output columns, or any of those that appear in the Extra column (including those added by plugins or custom annotations) if the appropriate output is available (e.g. use --show_ref_allele to access 'REF_ALLELE'). Output remains tab-delimited. For the VCF format output, the selected fields are those present within the "CSQ" INFO field.
                 #https://useast.ensembl.org/info/docs/tools/vep/script/vep_options.html
-        #--compress_output
-            #Writes output compressed using either gzip or bgzip. Not used by default
         #cache
             #Enables use of the cache. Add --refseq or --merged to use the refseq or merged cache, (if installed).
         #--dir_cache
@@ -1756,8 +1754,11 @@ run_bash("\
 
 
 
+
 #INTENTA BGZIPPED FASTA
     #it is slower the first time because it is indexing the fasta file with ancestral alleles, but then is fast again
+
+    #the indexing creates two files in the folder of the fasta file: homo_sapiens_ancestor_GRCh38_final.fa.gz.fai and homo_sapiens_ancestor_GRCh38_final.fa.gz.gzi
 
 
 #you need an automiatic check for the same version in VEP and cache
@@ -1768,7 +1769,18 @@ vep_version_raw = run_bash(" \
     vep | \
     grep ensembl-vep", return_value=True)
 
-vep_version_raw
+vep_version=vep_version_raw.strip().split("ensembl-vep          : ")[1]
+vep_version
+
+run_bash(" \
+    vep \
+        --show_cache \
+        --cache \
+        --dir_cache ./data/vep_cache/cache_110")
+        #I do not see something like the VEP version!
+
+        #as you know the version of the cache because you manually downolodad, you could just use 110 to select the cache folder and also to check this is the version of VEP
+        
 
 #in vep
     #--show_cache_info Show source version information for selected cache and quit
