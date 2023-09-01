@@ -1669,20 +1669,20 @@ run_bash("\
             #number of compression threads to use
 
 #check integrity of the bgzipped file
-run_bash("\
+fasta_ancestra_integrity_test = run_bash("\
     cd ./data/fasta_ancestral/; \
     bgzip \
         --test \
-        homo_sapiens_ancestor_GRCh38_final.fa.gz")
+        homo_sapiens_ancestor_GRCh38_final.fa.gz", return_value=True)
         #--test
             #test integrity of compressed file
-            #NO OUTPUT?
+#check
+if fasta_ancestra_integrity_test == "":
+    print("The integrity of the bgzipped fasta file with ancestral allele estimations is OK")
+else:
+    raise ValueError("SERIOUS ERROR! There is a problem with the integrity of the bgzipped fasta file with ancestral allele estimations")
 
 #run VEP's plugin ancestral allele on the cleaned VCF file
-
-
-
-
 run_bash("\
     vep \
         --offline \
