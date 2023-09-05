@@ -1,0 +1,380 @@
+
+#######################################
+#######################################
+see working directory
+#######################################
+#######################################
+/home/dftortosa/singularity/dating_climate_adaptation/hg38_mig/scripts
+
+
+#######################################
+#######################################
+list files/folders there
+#######################################
+#######################################
+00a_download_hg38_data.out
+00a_download_hg38_data.sh
+00b_download_vep_cache.out
+00b_download_vep_cache.sh
+00c_download_fasta_ancestral.out
+00c_download_fasta_ancestral.sh
+01a_selecting_pedegree.out
+01a_selecting_pedegree.py
+01b_vep_ancestral.py
+01c_check_masks_overlap.R
+01c_check_masks_overlap.Rout
+01d_hap_map_calcs.out
+01d_hap_map_calcs.py
+01_hap_map_calcs_outputs
+recipes
+scripts
+scripts_jesus
+
+
+#######################################
+#######################################
+check that sample IDs in the original pedigree are all included in peds of high coverage dataset
+#######################################
+#######################################
+[ True]
+[ True]
+
+#######################################
+#######################################
+check that we have the same sex values in the three peds
+#######################################
+#######################################
+###### male ######
+[ True]
+[ True]
+###### female ######
+[ True]
+[ True]
+
+#######################################
+#######################################
+check that we have the same number of samples per pop
+#######################################
+#######################################
+###### GBR ######
+[ True]
+###### FIN ######
+[ True]
+###### CHS ######
+[ True]
+###### PUR ######
+[ True]
+###### CDX ######
+[ True]
+###### CLM ######
+[ True]
+###### IBS ######
+[ True]
+###### PEL ######
+[ True]
+###### PJL ######
+[ True]
+###### KHV ######
+[ True]
+###### ACB ######
+[ True]
+###### GWD ######
+[ True]
+###### ESN ######
+[ True]
+###### BEB ######
+[ True]
+###### MSL ######
+[ True]
+###### STU ######
+[ True]
+###### ITU ######
+[ True]
+###### CEU ######
+[ True]
+###### YRI ######
+[ True]
+###### CHB ######
+[ True]
+###### JPT ######
+[ True]
+###### LWK ######
+[ True]
+###### ASW ######
+[ True]
+###### MXL ######
+[ True]
+###### TSI ######
+[ True]
+###### GIH ######
+[ True]
+
+#######################################
+#######################################
+Do we have 1598 males in the latest ped?
+#######################################
+#######################################
+True
+     sampleID fatherID motherID  sex
+0     HG00096        0        0    1
+4     HG00101        0        0    1
+6     HG00103        0        0    1
+7     HG00105        0        0    1
+9     HG00107        0        0    1
+...       ...      ...      ...  ...
+3192  NA21128        0        0    1
+3193  NA21129        0        0    1
+3194  NA21130        0        0    1
+3195  NA21133        0        0    1
+3196  NA21135        0        0    1
+
+[1598 rows x 4 columns]
+
+#######################################
+#######################################
+Do we have 1604 females in the latest ped?
+#######################################
+#######################################
+True
+     sampleID fatherID motherID  sex
+1     HG00097        0        0    2
+2     HG00099        0        0    2
+3     HG00100        0        0    2
+5     HG00102        0        0    2
+8     HG00106        0        0    2
+...       ...      ...      ...  ...
+3197  NA21137        0        0    2
+3198  NA21141        0        0    2
+3199  NA21142        0        0    2
+3200  NA21143        0        0    2
+3201  NA21144        0        0    2
+
+[1604 rows x 4 columns]
+
+#######################################
+#######################################
+Do we have the correct number of samples per superpopulation in the high-coverage ped with pop names?
+#######################################
+#######################################
+## AFR: True
+## EUR: True
+## EAS: True
+## SAS: True
+## AMR: True
+
+#######################################
+#######################################
+Do we have 602 trios in the latest ped?
+#######################################
+#######################################
+True
+     sampleID fatherID motherID  sex
+187   HG00405  HG00403  HG00404    2
+190   HG00408  HG00406  HG00407    2
+195   HG00420  HG00418  HG00419    1
+198   HG00423  HG00421  HG00422    2
+201   HG00429  HG00427  HG00428    1
+...       ...      ...      ...  ...
+2953  NA19983  NA19982  NA19713    2
+2957  NA20128  NA20126  NA20127    2
+2958  NA20129  NA19920  NA19921    2
+2962  NA20279  NA20278  NA20282    1
+2988  NA20358  NA20356  NA20357    1
+
+[602 rows x 4 columns]
+
+#######################################
+#######################################
+Do we have 6 duos in the latest ped?
+#######################################
+#######################################
+True
+     sampleID fatherID motherID  sex
+1252  HG02569        0  HG02568    1
+2504  NA18913        0  NA19238    1
+2941  NA19913  NA19904        0    2
+2974  NA20318        0  NA20317    1
+2985  NA20355        0  NA20334    2
+2990  NA20362        0  NA20359    1
+
+#######################################
+#######################################
+Do we have 608 duos and trios in the latest ped?
+#######################################
+#######################################
+True
+
+#######################################
+#######################################
+Do we have 2594 samples with no trios/duos in the latest ped?
+#######################################
+#######################################
+True
+     sampleID fatherID motherID  sex
+0     HG00096        0        0    1
+1     HG00097        0        0    2
+2     HG00099        0        0    2
+3     HG00100        0        0    2
+4     HG00101        0        0    1
+...       ...      ...      ...  ...
+3197  NA21137        0        0    2
+3198  NA21141        0        0    2
+3199  NA21142        0        0    2
+3200  NA21143        0        0    2
+3201  NA21144        0        0    2
+
+[2594 rows x 4 columns]
+
+#######################################
+#######################################
+The 90 samples added on top of the original 2504 are related!! See script for details
+#######################################
+
+#######################################
+#######################################
+check in detail if we have duos/trios inside the original 2504 sample
+#######################################
+
+Do we have 2504 samples when merging the original 2504 sample and the new ped? If True, we have only the original 2504 unrelated samples
+True
+[ True]
+
+See the merged file
+     sampleID fatherID motherID  sex   sample  pop super_pop  gender
+0     HG00096        0        0    1  HG00096  GBR       EUR    male
+1     HG00097        0        0    2  HG00097  GBR       EUR  female
+2     HG00099        0        0    2  HG00099  GBR       EUR  female
+3     HG00100        0        0    2  HG00100  GBR       EUR  female
+4     HG00101        0        0    1  HG00101  GBR       EUR    male
+...       ...      ...      ...  ...      ...  ...       ...     ...
+2499  NA21137        0        0    2  NA21137  GIH       SAS  female
+2500  NA21141        0        0    2  NA21141  GIH       SAS  female
+2501  NA21142        0        0    2  NA21142  GIH       SAS  female
+2502  NA21143        0        0    2  NA21143  GIH       SAS  female
+2503  NA21144        0        0    2  NA21144  GIH       SAS  female
+
+[2504 rows x 8 columns]
+
+Now select those samples of the original dataset whose parents are included that original dataset. One of the cases (NA20318) is mentioned in known-issues of phase 3
+     sampleID fatherID motherID  sex   sample  pop super_pop  gender
+2251  NA19913  NA19904        0    2  NA19913  ASW       AFR  female
+2277  NA20318        0  NA20317    1  NA20318  ASW       AFR    male
+2288  NA20355        0  NA20334    2  NA20355  ASW       AFR  female
+2292  NA20362        0  NA20359    1  NA20362  ASW       AFR    male
+
+#######################################
+#######################################
+exploring inmbreeding according to Gazal et al. (2015) in phase 3
+#######################################
+types of inmbreeding according to Gazal et al. (2015): ['OUT' '2C' nan '1C' '2x1C' 'AV']
+
+See Gazal data for the 4 samples with parents insides the original unrealted 2504 dataset
+
+See the data of these samples in the new ped
+     sampleID fatherID motherID  sex   sample  pop super_pop  gender
+2251  NA19913  NA19904        0    2  NA19913  ASW       AFR  female
+2277  NA20318        0  NA20317    1  NA20318  ASW       AFR    male
+2288  NA20355        0  NA20334    2  NA20355  ASW       AFR  female
+2292  NA20362        0  NA20359    1  NA20362  ASW       AFR    male
+
+Samples with parents inside the original 2504 unrelated dataset
+         IID SUPER POP  POP  GENDER  ...  p-value  Mating type  TGP2457 TGP2261
+114  NA19913       AFR  ASW  female  ...    0.975          OUT       NO      NO
+140  NA20318       AFR  ASW    male  ...    0.975          OUT       NO      NO
+151  NA20355       AFR  ASW  female  ...    0.975          OUT       NO      NO
+155  NA20362       AFR  ASW    male  ...    0.975          OUT       NO      NO
+
+[4 rows x 10 columns]
+
+See their parents
+         IID SUPER POP  POP  GENDER  ...  p-value  Mating type  TGP2457 TGP2261
+111  NA19904       AFR  ASW    male  ...    0.975          OUT      YES      NO
+139  NA20317       AFR  ASW  female  ...    0.975          OUT      YES     YES
+144  NA20334       AFR  ASW  female  ...    0.975          OUT      YES     YES
+154  NA20359       AFR  ASW  female  ...    0.975          OUT      YES     YES
+
+[4 rows x 10 columns]
+
+#######################################
+#######################################
+see final pedigree data with only unrelated samples
+#######################################
+#######################################
+       sample  pop super_pop  gender
+0     HG00096  GBR       EUR    male
+1     HG00097  GBR       EUR  female
+2     HG00099  GBR       EUR  female
+3     HG00100  GBR       EUR  female
+4     HG00101  GBR       EUR    male
+...       ...  ...       ...     ...
+2499  NA21137  GIH       SAS  female
+2500  NA21141  GIH       SAS  female
+2501  NA21142  GIH       SAS  female
+2502  NA21143  GIH       SAS  female
+2503  NA21144  GIH       SAS  female
+
+[2500 rows x 4 columns]
+
+#######################################
+#######################################
+check that final pedigree does NOT have any previously known related individual according to phase 3 data. These should be out from the original 2504 dataset
+#######################################
+#######################################
+known related samples in the original dataset
+     Sample Population  Gender  Reason for exclusion
+0   HG00124        GBR  female  Second Order:HG00119
+1   HG00501        CHS  female       Sibling:HG00524
+2   HG00635        CHS  female       Sibling:HG00581
+3   HG00702        CHS  female       Sibling:HG00658
+4   HG00733        PUR  female  trio:HG00731,HG00732
+5   HG01983        PEL  female  Second Order:HG01936
+6   HG02024        KHV  female  trio:HG02025,HG02026
+7   HG02046        KHV  female       Sibling:HG02067
+8   HG02363        CDX    male  Second Order:HG02353
+9   HG02372        CDX    male        Parent:HG02371
+10  HG02377        CDX    male  Second Order:HG02250
+11  HG02381        CDX    male       Sibling:HG02373
+12  HG02387        CDX    male  Second Order:HG02386
+13  HG02388        CDX    male  Second Order:HG02375
+14  HG03715        ITU    male        Parent:HG03713
+15  HG03948        STU  female        Parent:HG03673
+16  NA19240        YRI  female  trio:NA19238,NA19239
+17  NA19311        LWK    male  Second Order:NA19027
+18  NA19313        LWK  female        Parent:NA19331
+19  NA19660        MXL  female  Second Order:NA19664
+20  NA19675        MXL  female  trio:NA19678,NA19679
+21  NA19685        MXL    male        Parent:NA19661
+22  NA19985        ASW  female       Sibling:NA19713
+23  NA20322        ASW  female       Sibling:NA20321
+24  NA20336        ASW  female       Sibling:NA20334
+25  NA20341        ASW  female       Sibling:NA20289
+26  NA20344        ASW  female       Sibling:NA20334
+27  NA20526        TSI  female       Sibling:NA20792
+28  NA20871        GIH    male        Parent:NA20868
+29  NA20893        GIH  female  Second Order:NA20895
+30  NA20898        GIH    male        Parent:NA20886
+Do the check:
+True
+
+#######################################
+#######################################
+Do we have 26 pops in the final pedigree?
+#######################################
+#######################################
+True
+['GBR' 'FIN' 'CHS' 'PUR' 'CDX' 'CLM' 'IBS' 'PEL' 'PJL' 'KHV' 'ACB' 'GWD'
+ 'ESN' 'BEB' 'MSL' 'STU' 'ITU' 'CEU' 'YRI' 'CHB' 'JPT' 'LWK' 'ASW' 'MXL'
+ 'TSI' 'GIH']
+
+#######################################
+#######################################
+save the final pedigree
+#######################################
+#######################################
+1kGP.3202_samples.pedigree_info.txt
+20130606_g1k_3202_samples_ped_population.txt
+20140625_related_individuals.txt
+gazal_relatedness_phase3_data
+integrated_call_samples_v3.20130502.ALL.panel.txt
+unrelated_samples.tsv
+

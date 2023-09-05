@@ -38,7 +38,7 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 %files
 
 	#copy scripts
-    /home/dftortosa/singularity/dating_climate_adaptation/hg38_mig/scripts/01a_vep_ancestral.py /opt/scripts/01a_vep_ancestral.py
+    /home/dftortosa/singularity/dating_climate_adaptation/hg38_mig/scripts/01b_vep_ancestral.py /opt/scripts/01b_vep_ancestral.py
 
     #From the original folder in the host, we copy a R script to a new folder in the container called scripts. NEVER PUT ANYTHING ELSE IN THE LINE WITH SOURCE AND DESTINATION, GIVES ERROR.
     #https://groups.google.com/a/lbl.gov/forum/#!topic/singularity/4NFDsohnxgg
@@ -270,7 +270,7 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 
 
 	##give rights to run script
-	#chmod +x ./opt/scripts/01a_vep_ancestral.py
+	#chmod +x ./opt/scripts/01b_vep_ancestral.py
 
 
 
@@ -338,7 +338,7 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 %runscript
 
 	#run scripts. NOT USE "&", each script have to be run after the previous one have been run
-	./opt/scripts/01_hap_map_calcs.py > ./opt/scripts/01_hap_map_calcs.out 2>&1
+	./opt/scripts/01b_vep_ancestral.py > ./opt/scripts/01b_vep_ancestral.out 2>&1
 		#to get output and errors in the same file
 		#see bash script for details
 

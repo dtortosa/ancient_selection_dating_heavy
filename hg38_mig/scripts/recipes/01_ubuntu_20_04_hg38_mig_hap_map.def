@@ -38,7 +38,7 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 %files
 
 	#copy scripts
-    /home/dftortosa/singularity/dating_climate_adaptation/hg38_mig/scripts/01a_hap_map_calcs.py /opt/scripts/01a_hap_map_calcs.py
+    /home/dftortosa/singularity/dating_climate_adaptation/hg38_mig/scripts/01d_hap_map_calcs.py /opt/scripts/01d_hap_map_calcs.py
 
     #From the original folder in the host, we copy a R script to a new folder in the container called scripts. NEVER PUT ANYTHING ELSE IN THE LINE WITH SOURCE AND DESTINATION, GIVES ERROR.
     #https://groups.google.com/a/lbl.gov/forum/#!topic/singularity/4NFDsohnxgg
@@ -199,78 +199,9 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 	#go out of this directory to the directories outside the container
 	cd
 
-	##install perl modules required for VEP
-	#go to opt to save there
-	cd /opt
-    #tool for easily installing modules
-    cpan App::cpanminus
-        #you have to answer some questions here, so maybe this is problematic for container
-        #http://www.cpan.org/modules/INSTALL.html
-    #create folder to save modules
-    #install library required for one of the modules (DBD::mysql)
-    apt -y install libmysqlclient-dev
-    	#https://askubuntu.com/questions/1286842/perl-install-dbdmysql-failed-on-ubuntu-20-04
-	apt -y install expat
-	apt -y install libexpat1-dev
-		#https://superuser.com/a/670341
-    #modules required for VEP
-    cpanm DBI
-    cpanm DBD::mysql
-    cpanm Archive::Zip
-    cpanm Archive::Extract
-	cpanm Bio::DB::Fasta
-    	#we are not indicating the local lib where to install because this gives problems. VEP cannot find where the modules are even if we set an environmental variable with the path, so we use all default, and VEP knows how to find the modules then.
-	#go out of this directory to the directories outside the container
-	cd
-
-
-    ##install VEP,
-    #this tool includes a plugin for determining the ancestral allele of each SNP
-    #https://useast.ensembl.org/info/docs/tools/vep/script/vep_download.html#installer
-	#go to opt to save there
-	cd /opt
-	#install git
-	apt -y install git
-	#download the git repo
-	git clone https://github.com/Ensembl/ensembl-vep.git
-	#go to the repo
-	cd ensembl-vep
-	#make folder to save vep plugins
-	mkdir ./vep_plugins
-	#install vep
-	perl INSTALL.pl --ASSEMBLY GRCh38 --AUTO ap --PLUGINS AncestralAllele --PLUGINSDIR ./vep_plugins --SPECIES "homo_sapiens"
-		#https://useast.ensembl.org/info/docs/tools/vep/script/vep_download.html
-	    #--ASSEMBLY GRCh38
-	        #If using the --AUTO functionality to install without prompts, remember to add the assembly version required using e.g. "--ASSEMBLY GRCh38"
-	                #https://useast.ensembl.org/info/docs/tools/vep/script/vep_other.html#assembly
-	    #--AUTO ap
-	        #Run installer without prompts
-	        #install also
-	            #a: API + perl module Bio::DB::HTS/htslib
-	            #c: download cache, not needed here because I have downloaded the last cache version in the a separated bash script in my laptop. This cache has been then sent to the HPC, just one time. YOU HAVE TO USE THE SAME VERSION FOR VEP AND CACHE
-	                #Using a cache (--cache) is the fastest and most efficient way to use VEP, as in most cases only a single initial network connection is made and most data is read from local disk. Use offline mode to eliminate all network connections for speed and/or privacy.
-	                #By default the installer will download the latest version of VEP caches and FASTA files.
-	                #We strongly recommend that you download/use the VEP Cache version which corresponds to your Ensembl VEP installation, i.e. the VEP Cache version 109 should be used with the Ensembl VEP tool version 109.
-	                #SO INSTALL CACHE EACH TIME YOU INSTALL VEP
-	                    #https://useast.ensembl.org/info/docs/tools/vep/script/vep_cache.html#cache
-	            #f: download fasta files
-	                #I do not think I have to download all fasta files as we are only going to use ancestral alleles, which are in a specific fasta file.
-	                #https://useast.ensembl.org/info/docs/tools/vep/script/vep_cache.html#fasta
-	            #p: install plugins indicated with --PLUGINS
-	    #--PLUGINS AncestralAllele
-	    	#Comma-separated list of plugins to install when using --AUTO. To install all available plugins, use --PLUGINS all.
-	    #--PLUGINSDIR
-	    	#By default the script will install the plugins files in the "Plugins" subdirectory of the --CACHEDIR directory. This option configures where the plugins files are installed.
-	    	#The --dir_plugins flag must be passed when running the VEP if a non-default plugins directory is given.
-	    #--SPECIES "homo_sapiens"
-	    	#Comma-separated list of species to install when using --AUTO. To install the RefSeq cache, add "_refseq" to the species name, e.g. "homo_sapiens_refseq", or "_merged" to install the merged Ensembl/RefSeq cache. Remember to use --refseq or --merged when running the VEP with the relevant cache!
-			#Use all to install data for all available species.
-	#go out of this directory to the directories outside the container
-	cd
-
 
 	##give rights to run script
-	#chmod +x ./opt/scripts/01a_hap_map_calcs.py
+	#chmod +x ./opt/scripts/01d_hap_map_calcs.py
 
 
 
@@ -303,22 +234,6 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 
 	export PATH=/opt/htslib-1.17:$PATH #so you can call functions of htslib (e.g., bgzip) from any place
 
-	export PERL_MM_USE_DEFAULT=1 #answer yes for all questions during perl modules installation (https://stackoverflow.com/questions/18458194/install-perl-module-with-assume-yes-for-given-options-non-interactively)
-
-	#indicate PERL5LIB to avoid confusion between perl versions by VEP
-	export PERL5LIB=PERL_LOCAL_LIB_ROOT=cpan
-		#https://stackoverflow.com/a/52126231/12772630
-
-    #export PERL5LIB=/opt/cpanm/lib/perl5 #indicate path where to install perl modules
-    	#we do not need this, because we are just using the default location of perl without indicanting a non-default, local folder for cpan installations. In this way, VEP can find the path to the modules.
-    	#https://stackoverflow.com/questions/1557959/how-can-i-find-out-where-a-perl-module-is-installed
-    	#https://unix.stackexchange.com/questions/265479/bash-script-cant-locate-perl-module
-    	#if you want to check all the path considered by Pearl to look for modules, you can do 'perl -e "use WRONG_PACKAGE_NAME"', and you will see an error with the whole list. If you use a correct module name that is installed, you will no output. For example: perl -e "use Bio::DB::Fasta" or perl -e "use DBI" gives no error.
-
-    export HTSLIB_DIR=/opt/htslib-1.17 #indicate where HTSLib is installed to avoid errors installing the perl module "Bio::DB::HTS"
-
-	export PATH=$PATH:/opt/ensembl-vep #set path where VEP will be installed
-
 
 
 ####################################
@@ -338,7 +253,7 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 %runscript
 
 	#run scripts. NOT USE "&", each script have to be run after the previous one have been run
-	./opt/scripts/01a_hap_map_calcs.py > ./opt/scripts/01a_hap_map_calcs.out 2>&1
+	./opt/scripts/01d_hap_map_calcs.py > ./opt/scripts/01d_hap_map_calcs.out 2>&1
 		#to get output and errors in the same file
 		#see bash script for details
 
