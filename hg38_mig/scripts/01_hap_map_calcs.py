@@ -1562,11 +1562,31 @@ print("#######################################\n################################
                 #Ensembl creates cache files for every species for each Ensembl release. They can be automatically downloaded and configured using INSTALL.pl.
             #manually
                 #It is also simple to download and set up caches without using the installer. By default, VEP searches for caches in $HOME/.vep; to use a different directory when running VEP, use --dir_cache.
-                #Essential for human and other species with large sets of variant data
+                #Essential for human and other species with large sets of variant data. These lines download cache 110 (August 2023)! check the version you need to download if update VEP!!
                     #cd $HOME/.vep
                     #curl -O https://ftp.ensembl.org/pub/release-110/variation/indexed_vep_cache/homo_sapiens_vep_110_GRCh38.tar.gz
                     #tar xzf homo_sapiens_vep_110_GRCh38.tar.gz
+                    #CHANGE VERSION CACHE TO THE NEW VEP VERSION IF YOU UPDATE!
         #https://useast.ensembl.org/info/docs/tools/vep/script/vep_cache.html#cache
+
+#set cache version
+print("IMPORTANT: We are setting the cache version manually, using this time version 110, which is ok for VEP 110 (August 2023). If you update VEP, you will need to download the new cache version")
+cache_version="110"
+    #set the cache version
+
+#check we have the same VEP and cache versions
+print("Do we have the same version for VEP and the cache?")
+vep_version_raw = run_bash(" \
+    vep | \
+    grep ensembl-vep", return_value=True)
+    #run VEP and get the line with the VEP version
+vep_version=vep_version_raw.strip().split("ensembl-vep          : ")[1].split(".")[0]
+    #extract the version removing unnecessary text
+if vep_version == cache_version:
+    print("GOOD TO GO! Both VEP and the cache have the same version")
+else:
+    raise ValueError("SERIOUS ERROR! The version of VEP and the cache are not the same. You HAVE TO download the new version of the cache. Check script ('install VEP' section) and go to 'https://useast.ensembl.org/info/docs/tools/vep/script/vep_cache.html#cache'")
+    #do the check
 
 #download the fasta files with the ancestral alleles
 #https://useast.ensembl.org/info/docs/tools/vep/script/vep_plugins.html#ancestralallele
@@ -1680,6 +1700,19 @@ if fasta_ancestra_integrity_test == "":
 else:
     raise ValueError("SERIOUS ERROR! There is a problem with the integrity of the bgzipped fasta file with ancestral allele estimations")
 
+#remove previous indexes of the fasta file if they are present
+#these are created the first time VEP is run on the files, so just to be sure we are using the correct index, we remove those existing previously
+print("Remove previous indexes of the fasta file if they are present")
+run_bash(" \
+    cd ./data/fasta_ancestral/; \
+    n_prev_fasta_index=$(ls -l | grep 'fai\|gzi' | wc -l); \
+    if [[ $n_prev_fasta_index -gt 0 ]];then \
+        echo 'We have fasta index previously generated, removing it...'; \
+        rm *fai; \
+        rm *gzi; \
+    fi; \
+    ls -l")
+
 #run VEP's plugin ancestral allele on the cleaned VCF file
 run_bash("\
     vep \
@@ -1695,9 +1728,13 @@ run_bash("\
         --force_overwrite \
         --fields Uploaded_variation,Location,Allele,Gene,Feature,Feature_type,Consequence,STRAND,AA \
         --cache \
-        --dir_cache ./data/vep_cache/cache_110 \
+        --dir_cache ./data/vep_cache/cache_" + cache_version + " \
         --plugin AncestralAllele,./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38_final.fa.gz \
-        --dir_plugins /opt/ensembl-vep/vep_plugins")
+        --dir_plugins /opt/ensembl-vep/vep_plugins; \
+    gunzip \
+        --stdout \
+        ./data/dummy_vcf_files/dummy_example_cleaned_vep.vcf.gz | \
+    head -50")
         #https://useast.ensembl.org/info/docs/tools/vep/script/vep_options.html
         #--offline
             #Enable offline mode. No database connections will be made, and a cache file or GFF/GTF file is required for annotation. Add --refseq to use the refseq cache (if installed). Not used by default
@@ -1745,45 +1782,31 @@ run_bash("\
             #Data file is only available for GRCh38.
             #The plugin is also compatible with Bio::DB::Fasta and an uncompressed FASTA file.
             #Note the first time you run the plugin with a newly generated FASTA file it will spend some time indexing the file. DO NOT INTERRUPT THIS PROCESS, particularly if you do not have Bio::DB::HTS installed.
+                #the indexing creates two files in the folder of the fasta file: homo_sapiens_ancestor_GRCh38_final.fa.gz.fai and homo_sapiens_ancestor_GRCh38_final.fa.gz.gzi
+                #thanks to these files, the second time you run it, it is much faster.
             #Special cases:
                 #"-" represents an insertion
                 #"?" indicates the chromosome could not be looked up in the FASTA
 #we get different transcripts for each SNP
     #VEP me da para cada SNP información de la strand, alelo ancestral, e impacto para diferentes transcritos de un mismo gen en los que "cae" dicho SNP. Así, algunas filas pone protein coding, nonsense... y tienen diferentes strands (1/-1). Para los casos que he mirado, todas las filas del mismo SNP tienen el mismo alelo Ancestral, así que entiendo que podría coger cualquier
 
+#do some checks
+print("perform some checks about whether we have used the correct data using the row added to the header in the VCF file by VEP")
+line_checks_after = run_bash(" \
+    gunzip \
+        --stdout \
+        ./data/dummy_vcf_files/dummy_example_cleaned_vep.vcf.gz | \
+    grep '##VEP='", return_value=True)
+    #extract the row of the header with that information
+line_checks_after_split = line_checks_after.split(" ")
+    #split the different fields
+print("Do we have the correct VEP version in the VCF file?")
+print('##VEP="v'+vep_version+'\"' in line_checks_after_split)
+print("Do we have the correct cache and assembly version in the VCF file?")
+print(line_checks_after_split[np.where(['ensembl=' in field for field in line_checks_after_split])[0][0]].split(".")[0] == 'ensembl='+cache_version)
+print(line_checks_after_split[np.where(['assembly=' in field for field in line_checks_after_split])[0][0]].split(".")[0] == 'assembly="GRCh38')
+    #select the field including "ensemble" or "assembly", then split by "." to have only the general number version and then check that number is the correct one.
 
-
-
-
-#INTENTA BGZIPPED FASTA
-    #it is slower the first time because it is indexing the fasta file with ancestral alleles, but then is fast again
-
-    #the indexing creates two files in the folder of the fasta file: homo_sapiens_ancestor_GRCh38_final.fa.gz.fai and homo_sapiens_ancestor_GRCh38_final.fa.gz.gzi
-
-
-#you need an automiatic check for the same version in VEP and cache
-
-
-
-vep_version_raw = run_bash(" \
-    vep | \
-    grep ensembl-vep", return_value=True)
-
-vep_version=vep_version_raw.strip().split("ensembl-vep          : ")[1]
-vep_version
-
-run_bash(" \
-    vep \
-        --show_cache \
-        --cache \
-        --dir_cache ./data/vep_cache/cache_110")
-        #I do not see something like the VEP version!
-
-        #as you know the version of the cache because you manually downolodad, you could just use 110 to select the cache folder and also to check this is the version of VEP
-        
-
-#in vep
-    #--show_cache_info Show source version information for selected cache and quit
 
 
 #vep does not change the vcf file, only add the CSQ field. Therefore, we could process the original vcf files and then process with our cleaning
@@ -1791,6 +1814,9 @@ run_bash(" \
 
 
 #you should also check the number of variants for which polarization could not be done and hence are lost due to this.
+
+
+#you need to save in upper case the ancestral allele and save the VCF files in a new folder, indicate in that folder that the REF is not yet ancestral. You will do the polarization within each populatin. We need only biallelic snps (to easily exchange ref by alt if needed), and we need to do this within pop, porque an allele can be biallelic for one pop but not for other.
 
 
 
