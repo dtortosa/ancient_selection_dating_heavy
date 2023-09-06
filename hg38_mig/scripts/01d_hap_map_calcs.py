@@ -18,13 +18,7 @@
 
 #We are going to migrate to hg38 as the new release of 1KGP matches this genome reference version (https://www.internationalgenome.org/data-portal/data-collection/30x-grch38). This script is going to take the VCF files for SNPs in the hg38 high coverage data from 1000GP and obtain hap and map files that will be used as input by flex sweep.
 
-#The general repo page for this release (http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage) and general readme (http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/README_111822.pdf).
-
-#It says that "20220422_3202_phased_SNV_INDEL_SV" is "the most up-to-date version of the phased panel based on the high-coverage 1kGP WGS data which includes SNV, INDEL, and SV calls across 3,202 samples"
-
-#High coverage and phased data can be found in the general repo, working folder and then 20220422_3202_phased_SNV_INDEL_SV (http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/). This phased data includes single nucleotide variants, indels, SV in vcf files per chromosome. See its specific readme (http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/README_1kGP_phased_panel_110722.pdf). This is the repo used by Jesus Murga. 
-
-#According to the general readme, the pedigree information is in the file "1kGP.3202_samples.pedigree_info.txt" (http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/1kGP.3202_samples.pedigree_info.txt). This includes the ID of each sample.
+#For information about the download of the pedigrees and the VCF files, see 01a_selecting_pedegree.py and 01b_vep_ancestral.py, respectively.
 
 
 
@@ -137,10 +131,12 @@ run_bash("ls")
 ###############
 
 #save name of path including input vcf files
-input_vcfs_path = "data/vcf_files_hg38"
+input_vcfs_path = "results/00_vep_vcf_files"
 
 #create folders to save the results
 run_bash(" \
+    mkdir \
+        -p ./data/dummy_vcf_files/01_dummy_vcf_files_clean \
     mkdir \
         -p ./results/hap_map_files_raw; \
     mkdir \
@@ -188,7 +184,7 @@ samples_pedigree_pop = pd.read_csv(
 #load the final pedigree we will use to select samples per pop
 unrelated_samples = pd.read_csv(
     "/data/pedigrees/unrelated_samples.tsv", 
-    sep=" ", 
+    sep="\t", 
     header=0, 
     low_memory=False)
 
@@ -1626,11 +1622,13 @@ def master_processor(chr_pop_combination):
 
 
     ##por aqui checking the code
+    #this was done in may, maybe a good idea to start from the begining
     #added pop name to bed file cleaned, check that the mask is correctly called in the next lines
     #error with "list_snps_with_gen_pos.txt"
         #this should have the chromosome and pop name to avoid interefernece
         #check that all files are correctly named
 
+    #be sure to use the vcf files with the AA field
 
 
     #
