@@ -1,5 +1,6 @@
 - Ask jesus 
-	- about VEP
+	- about VEP 
+		- should I also use ancestral alleles that are lower case? i.e., they have low confidence?
 	- about what accesibility masks is he using: L, Z and Q? also H?
 		- These masks help to identify regions of the genome that are more or less accesible to next generation sequencing methods using short reads.
 		- David say to avoid regions with a very low depth when it is not possible to do variant call.

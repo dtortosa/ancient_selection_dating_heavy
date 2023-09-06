@@ -169,10 +169,15 @@ input_vcfs_path = "data/vcf_files_hg38"
 #create folders to save the results
 run_bash(" \
     mkdir \
-        -p ./data/dummy_vcf_files/00_dummy_vcf_files_vep/00_dummy_vcf_files_vep \
+        -p ./data/dummy_vcf_files/00_dummy_vcf_files_vep \
     mkdir \
         -p ./results/00_vep_vcf_files")
     #-p: no error if the folder already exists, make parent directories as needed
+
+#add readme file
+run_bash(" \
+    cd ./results/00_vep_vcf_files; \
+    echo 'These VCF files include an INFO field with the Ancestral Allele of each variant, BUT this has not been updated in the REF/ALT fields, meaning that the REF alleles in these files can be derived. We will polarize variants in the next script where VCF cleaning will be done within each population.' > README.txt")
 
 
 
@@ -239,9 +244,7 @@ run_bash("bcftools -v")
 ####################################################
 print_text("Check bcftools's behaviour with a dummy vcf file", header=1)
 print_text("We are going to use dummy vcf file to check the behaviour of bcftools", header=2)
-
-#
-print_text("see the dummy variants", header=2)
+print_text("see the dummy variants", header=3)
 run_bash(" \
     bcftools view \
         data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example.vcf | \
@@ -271,6 +274,17 @@ run_bash(" \
                 #SNP rs6040361 chr20 1110702 A G 6 3 0.5 GTs: 1|1 0/0 0|1
             #microsatellite (indel)
                 #INDEL microsat1 chr20 1110703 GTC G,GTCT . . . GTs: 0/1 0/2 1/1
+
+
+print_text("compress the dummy file", header=3)
+run_bash("\
+    cd ./data/dummy_vcf_files/00_dummy_vcf_files_vep/; \
+    bgzip \
+        --keep \
+        --force \
+        --threads 1 \
+        dummy_example.vcf; \
+    ls -l")
 
 
 
@@ -483,11 +497,6 @@ run_bash(" \
         #remove the folder with all the fasta files
         #https://useast.ensembl.org/info/docs/tools/vep/script/vep_plugins.html#ancestralallele
 
-
-##por aquii
-
-
-#
 print_text("see the number of lines of the combined fasta file", header=4)
 run_bash("\
     cd ./data/fasta_ancestral/; \
@@ -495,14 +504,14 @@ run_bash("\
         'END{print NR}' \
         homo_sapiens_ancestor_GRCh38_final.fa")
 
-#see first 10 lines of the combined fasta file
+print_text("see first 500 lines of the combined fasta file", header=4)
 run_bash("\
     cd ./data/fasta_ancestral/; \
     awk \
         '{if(NR>=1 && NR <=500){print $0}}' \
         homo_sapiens_ancestor_GRCh38_final.fa")
 
-#see the number of the line of the second chromosome so we can then check the first lines for that chromosome in the combined file
+print_text("see the number of the line of the second chromosome so we can then check the first lines for that chromosome in the combined file", header=4)
 run_bash("\
     cd ./data/fasta_ancestral/; \
     awk \
@@ -510,21 +519,22 @@ run_bash("\
         homo_sapiens_ancestor_GRCh38_final.fa")
         #https://stackoverflow.com/questions/17908555/printing-with-sed-or-awk-a-line-following-a-matching-pattern
 
-#print the 500 rows after the second chromosome starts in the combined fasta file
+print_text("print the 500 rows after the second chromosome starts in the combined fasta file", header=4)
 run_bash("\
     cd ./data/fasta_ancestral/; \
     awk \
         '{if(NR>=12871036 && NR<=12871536){print $0}}' \
         homo_sapiens_ancestor_GRCh38_final.fa")
 
-#bgzip the fasta file with ancestral alleles because this should make things faster when running VEP (see documentation below)
+print_text("bgzip the fasta file with ancestral alleles because this should make things faster when running VEP (see documentation below)", hader=4)
 run_bash("\
     cd ./data/fasta_ancestral/; \
     bgzip \
         --keep \
         --force \
         --threads 1 \
-        homo_sapiens_ancestor_GRCh38_final.fa")
+        homo_sapiens_ancestor_GRCh38_final.fa; \
+    ls -l")
         #--force
             #overwrite files without asking
         #--keep
@@ -532,7 +542,7 @@ run_bash("\
         #--threads
             #number of compression threads to use
 
-#check integrity of the bgzipped file
+print_text("check integrity of the bgzipped file", header=4)
 fasta_ancestra_integrity_test = run_bash("\
     cd ./data/fasta_ancestral/; \
     bgzip \
@@ -540,35 +550,34 @@ fasta_ancestra_integrity_test = run_bash("\
         homo_sapiens_ancestor_GRCh38_final.fa.gz", return_value=True)
         #--test
             #test integrity of compressed file
-#check
 if fasta_ancestra_integrity_test == "":
     print("The integrity of the bgzipped fasta file with ancestral allele estimations is OK")
 else:
     raise ValueError("SERIOUS ERROR! There is a problem with the integrity of the bgzipped fasta file with ancestral allele estimations")
 
-#remove previous indexes of the fasta file if they are present
-#these are created the first time VEP is run on the files, so just to be sure we are using the correct index, we remove those existing previously
-print("Remove previous indexes of the fasta file if they are present")
+print_text("remove previous indexes of the fasta file if they are present. These are created the first time VEP is run on the files, so just to be sure we are using the correct index, we remove those existing previously", header=4)
 run_bash(" \
     cd ./data/fasta_ancestral/; \
     n_prev_fasta_index=$(ls -l | grep 'fai\|gzi' | wc -l); \
     if [[ $n_prev_fasta_index -gt 0 ]];then \
-        echo 'We have fasta index previously generated, removing it...'; \
+        echo 'We have fasta index previously generated, removing related files...'; \
         rm *fai; \
         rm *gzi; \
     fi; \
     ls -l")
 
-#run VEP's plugin ancestral allele on the cleaned VCF file
+
+print_text("run VEP's plugin ancestral allele on the cleaned VCF file", header=3)
+print_text("make a run of VEP", header=4)
 run_bash("\
     vep \
         --offline \
         --verbose \
         --species 'homo_sapiens' \
         --assembly GRCh38 \
-        --input_file ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_cleaned.vcf.gz \
+        --input_file ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example.vcf.gz \
         --format vcf \
-        --output_file ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_cleaned_vep.vcf.gz \
+        --output_file ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep.vcf.gz \
         --vcf \
         --compress_output gzip \
         --force_overwrite \
@@ -576,11 +585,7 @@ run_bash("\
         --cache \
         --dir_cache ./data/vep_cache/cache_" + cache_version + " \
         --plugin AncestralAllele,./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38_final.fa.gz \
-        --dir_plugins /opt/ensembl-vep/vep_plugins; \
-    gunzip \
-        --stdout \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_cleaned_vep.vcf.gz | \
-    head -50")
+        --dir_plugins /opt/ensembl-vep/vep_plugins")
         #https://useast.ensembl.org/info/docs/tools/vep/script/vep_options.html
         #--offline
             #Enable offline mode. No database connections will be made, and a cache file or GFF/GTF file is required for annotation. Add --refseq to use the refseq cache (if installed). Not used by default
@@ -636,12 +641,18 @@ run_bash("\
 #we get different transcripts for each SNP
     #VEP me da para cada SNP información de la strand, alelo ancestral, e impacto para diferentes transcritos de un mismo gen en los que "cae" dicho SNP. Así, algunas filas pone protein coding, nonsense... y tienen diferentes strands (1/-1). Para los casos que he mirado, todas las filas del mismo SNP tienen el mismo alelo Ancestral, así que entiendo que podría coger cualquier
 
-#do some checks
-print("perform some checks about whether we have used the correct data using the row added to the header in the VCF file by VEP")
+print_text("see first lines of the generated VCF file", header=4)
+run_bash(" \
+    gunzip \
+        --stdout \
+        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep.vcf.gz | \
+    head -50")
+
+print_text("do some checks about about whether we have used the correct data using the row added to the header in the VCF file by VEP", header=4)
 line_checks_after = run_bash(" \
     gunzip \
         --stdout \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_cleaned_vep.vcf.gz | \
+        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep.vcf.gz | \
     grep '##VEP='", return_value=True)
     #extract the row of the header with that information
 line_checks_after_split = line_checks_after.split(" ")
@@ -649,89 +660,100 @@ line_checks_after_split = line_checks_after.split(" ")
 print("Do we have the correct VEP version in the VCF file?")
 print('##VEP="v'+vep_version+'\"' in line_checks_after_split)
 print("Do we have the correct cache and assembly version in the VCF file?")
+import numpy as np
 print(line_checks_after_split[np.where(['ensembl=' in field for field in line_checks_after_split])[0][0]].split(".")[0] == 'ensembl='+cache_version)
 print(line_checks_after_split[np.where(['assembly=' in field for field in line_checks_after_split])[0][0]].split(".")[0] == 'assembly="GRCh38')
     #select the field including "ensemble" or "assembly", then split by "." to have only the general number version and then check that number is the correct one.
 
+print_text("see what happens with multiallelic snps", header=4)
+run_bash(" \
+    bcftools view \
+        --max-alleles 10  \
+        --min-alleles 3 \
+        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep.vcf.gz | \
+    bcftools query \
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %CSQ\n'")
+print("The ancestral allele is selected even if it is one of the multiple derived alleles. Therefore, no problem.")
+
+print_text("According to the VEP manual, vep does not change the vcf file, only add the CSQ field. Therefore, we could process the original vcf files and then process with our cleaning. Let's check if the VCF is exactly the same if we avoid the CSQ field, which is the one added by AncestralAllele plugin of VEP", header=4)
+run_bash(" \
+    cd ./data/dummy_vcf_files/00_dummy_vcf_files_vep; \
+    bcftools query \
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %QUAL %FILTER %INFO/AN %INFO/AC %INFO/AF %INFO/NS %INFO/DP %INFO/AA %INFO/DB %INFO/H2 GTs:[ %GT]\n' \
+        ./dummy_example.vcf.gz > file_check_1.txt; \
+    bcftools query \
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %QUAL %FILTER %INFO/AN %INFO/AC %INFO/AF %INFO/NS %INFO/DP %INFO/AA %INFO/DB %INFO/H2 GTs:[ %GT]\n' \
+        ./dummy_example_vep.vcf.gz > file_check_2.txt; \
+    echo '##See head first check file:'; head file_check_1.txt; \
+    echo '##See head second check file:'; head file_check_2.txt; \
+    check_status=$(cmp --silent file_check_1.txt file_check_2.txt; echo $?); \
+    echo '##Do the check'; \
+    if [[ $check_status -eq 0 ]]; then \
+        echo 'TRUE'; \
+    else \
+        echo 'FALSE'; \
+    fi")
 
 
-#vep does not change the vcf file, only add the CSQ field. Therefore, we could process the original vcf files and then process with our cleaning
-
-
-
-#you should also check the number of variants for which polarization could not be done and hence are lost due to this.
-
-
-#you need to save in upper case the ancestral allele and save the VCF files in a new folder, indicate in that folder that the REF is not yet ancestral. You will do the polarization within each populatin. We need only biallelic snps (to easily exchange ref by alt if needed), and we need to do this within pop, porque an allele can be biallelic for one pop but not for other.
-
-
-
-
-#several months ago I started the pollarization of the alleles. I installed VEP and used one of its plugins to estimate the ancestral allele of each SNP within a new VCF file. Then, I started working with AWK to convert to upper case the new column with the ancestral allele, so we have high and low-confidence ancestral alleles and they can be used in conditionals. In other words, I am selecting those snps for which REF is not Ancestral in bcftools, and for that I need the same case, as the conditions of bcftools are case sensitive.
-
-#see email from Jesus about VEP installation, and answer once you have solved the upper case problem
-    #https://mail.google.com/mail/u/0/?tab=rm&ogbl#drafts/QgrcJHsHpDRJdfjndBxlCjQHdCNBwJJqNSl 
-
-#then you should go to the actual data
-
-
-run_bash("\
-    bcftools +split-vep \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_cleaned_vep.vcf \
-        --list")
-
+print_text("Create a new AA field using the ancestral allele stored in CSQ/AA", header=3)
+print_text("see the header of the VCF file after VEP processing", header=4)
 run_bash("\
     bcftools head \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_cleaned_vep.vcf")
+        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep.vcf.gz")
 
+print_text("see all the tags in the CSQ field", header=4)
 run_bash("\
     bcftools +split-vep \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_cleaned_vep.vcf \
+        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep.vcf.gz \
+        --list")
+
+print_text("make tags inside CSQ available", header=4)
+run_bash("\
+    bcftools +split-vep \
+        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep.vcf.gz \
         --annotation CSQ \
         --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n'")
         #--annotation
             #INFO annotation to parse, being CSQ the default
-        #you now can directly ask for AA and other tags added by VEP in the CSQ field
+        #you now can directly ask for AA and other tags added by VEP in the CSQ field using --columns (see below)
 
-
+print_text("check we can call AA from CSQ and use it to filter", header=4)
+print("exclude those SNPs for which the REF allele IS NOT the ancestral")
 run_bash("\
     bcftools +split-vep \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_cleaned_vep.vcf \
+        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep.vcf.gz \
+        --annotation CSQ \
+        --exclude REF==AA \
+        --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n'")
+print("exclude those SNPs for which the REF allele IS the ancestral")
+run_bash("\
+    bcftools +split-vep \
+        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep.vcf.gz \
+        --annotation CSQ \
+        --include 'REF=AA'\
+        --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n'")
+print("As you can see, we can just filter by the ancestral allele using AA and it does not consider C, C, C.... but only C, see below")
+
+print_text("extract AA tag from CSQ and then remove CSQ", header=4)
+run_bash("\
+    bcftools +split-vep \
+        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep.vcf.gz \
         --annotation CSQ \
         --columns AA:String | \
     bcftools annotate \
         --remove INFO/CSQ | \
     bcftools view")
+    #bcftools +split-vep
+        #--columns
+            #Extract the fields listed either as indexes or names. The default type of the new annotation is String but can be also Integer/Int or Float/Real.
+    #bcftools annotate
+        #--remove
+            #List of annotations to remove. Use "FILTER" to remove all filters or "FILTER/SomeFilter" to remove a specific filter. Similarly, "INFO" can be used to remove all INFO tags and "FORMAT" to remove all FORMAT tags except GT. To remove all INFO tags except "FOO" and "BAR", use "^INFO/FOO,INFO/BAR" (and similarly for FORMAT and FILTER). "INFO" can be abbreviated to "INF" and "FORMAT" to "FMT".
 
-    #you create a INFO field called AA, that is no longer inside CSQ!!
-    #then you can remove the INFO/CSQ field
-
+print_text("select SNPs for which the ancestral allele is ACGT or acgt, avoiding cases where AA='.' or '-'", header=4)
 run_bash("\
     bcftools +split-vep \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_cleaned_vep.vcf \
-        --annotation CSQ \
-        --exclude 'REF=AA'\
-        --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n'")
-
-run_bash("\
-    bcftools +split-vep \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_cleaned_vep.vcf \
-        --annotation CSQ \
-        --include 'REF=AA'\
-        --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n'")
-    #we can just filter by the ancestral allele using AA, it does not consider C, C, C.... but only C, see below
-        #CHECK
-
-
-
-
-
-
-
-#select SNPs for which the ancestral allele is ACGT or acgt
-run_bash("\
-    bcftools +split-vep \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_cleaned_vep.vcf \
+        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep.vcf.gz \
         --annotation CSQ \
         --include 'AA=\"A,C,G,T,a,c,g,t\"'\
         --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n'")
@@ -758,10 +780,9 @@ run_bash("\
                 #https://useast.ensembl.org/info/docs/tools/vep/script/vep_plugins.html#ancestralallele
         #Therefore, we only want to consider cases for which the ancestral allele is inferred.
 
-#
-print("\n#######################################\n#######################################")
-print("now manually change ancestral of the first SNP from '.' to 'c,c,c' to check whether our expression catch it: We can see how the first SNP now with AA=c is included by the expression AA='ACTGactg', so we are targeting ancestral alleles with high and low confidence")
-print("#######################################\n#######################################")
+print_text("now manually change ancestral of the first SNP from '.' to 'c,c,c' to check whether our expression catch it: We can see how the first SNP now with AA=c is included by the expression AA='ACTGactg', so we are targeting ancestral alleles with high and low confidence", header=4)
+
+
 #find and replace
 run_bash(" \
     sed \
@@ -1141,14 +1162,21 @@ run_bash("\
     #https://github.com/Ensembl/Bio-DB-HTS/issues/91
 
 
+#several months ago I started the pollarization of the alleles. I installed VEP and used one of its plugins to estimate the ancestral allele of each SNP within a new VCF file. Then, I started working with AWK to convert to upper case the new column with the ancestral allele, so we have high and low-confidence ancestral alleles and they can be used in conditionals. In other words, I am selecting those snps for which REF is not Ancestral in bcftools, and for that I need the same case, as the conditions of bcftools are case sensitive.
+
+#see email from Jesus about VEP installation, and answer once you have solved the upper case problem
+    #https://mail.google.com/mail/u/0/?tab=rm&ogbl#drafts/QgrcJHsHpDRJdfjndBxlCjQHdCNBwJJqNSl 
+
+#then you should go to the actual data
+
+
+#you should also check the number of variants for which polarization could not be done and hence are lost due to this.
 
 
 
 
 
 
-#SUMMARY: 
-    #With all these commands, we have recreated the scenario we have in 1KGP data, with multiallelic SNPs separated into different lines, select some samples, we then select snps, exclude those SNPs that have the same allele for all samples (considering alleles in genotypes with missing, e.g., 0|.), remove those with genotype missingness < 5%, remove exact duplicates (this does not touch different lines of the same multiallelic snp because they have different ALT). Then we combine all lines of each multiallelic snp and now they have ALT column with several alleles, so we can filter them using --max-alleles 2. Add filter for selecting phased data only. Select only those variants included in interest regions (mask). We also use bcftools +fill-tags to update important fields for each SNP, so if a SNP was multiallelic, but it is not multiallelic in the subset population (i.e., only REF and 1 ALT), we no longer will have two allele frequencies, two allele counts.... for the remainder biallelic SNP in the subset. although in 1KGP data, multiallelic SNPs are already separated and have only 1 value for these fields (see below).
 
 #Note about the update of the INFO fields
     #it is important to be sure that the fields you are using for filtering, are updated after subseting samples. Of course, type="snp" will be always "snp" irrespectively of the samples we select, but this is not the case of the number of alleles, because you can have SNPs with 3 alleles considering all 26 populations, but then in GBR they can have only 2 or 1. We are interested in SNPs that are biallelic within the selected population.
@@ -2845,3 +2873,6 @@ pool.close()
     #run the script 
     #check the redirection of stdout
     #check the whole script in the meantime
+
+
+#you need to save in upper case the ancestral allele and save the VCF files in a new folder, indicate in that folder that the REF is not yet ancestral. You will do the polarization within each populatin. We need only biallelic snps (to easily exchange ref by alt if needed), and we need to do this within pop, porque an allele can be biallelic for one pop but not for other.
