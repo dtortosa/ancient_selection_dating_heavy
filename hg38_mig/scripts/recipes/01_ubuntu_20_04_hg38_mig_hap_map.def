@@ -234,6 +234,8 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 
 	export PATH=/opt/htslib-1.17:$PATH #so you can call functions of htslib (e.g., bgzip) from any place
 
+    export HTSLIB_DIR=/opt/htslib-1.17 #indicate where HTSLib is installed
+
 
 
 ####################################
