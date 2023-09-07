@@ -692,7 +692,9 @@ run_bash(" \
         echo 'TRUE'; \
     else \
         echo 'FALSE'; \
-    fi")
+    fi; \
+    rm file_check_1.txt; rm file_check_2.txt; \
+    ls -l")
 
 
 print_text("Create a new AA field using the ancestral allele stored in CSQ/AA", header=3)
@@ -780,83 +782,65 @@ run_bash("\
                 #https://useast.ensembl.org/info/docs/tools/vep/script/vep_plugins.html#ancestralallele
         #Therefore, we only want to consider cases for which the ancestral allele is inferred.
 
-print_text("now manually change ancestral of the first SNP from '.' to 'c,c,c' to check whether our expression catch it: We can see how the first SNP now with AA=c is included by the expression AA='ACTGactg', so we are targeting ancestral alleles with high and low confidence", header=4)
-
-
-#find and replace
+print_text("now manually change ancestral of the a SNP (rs6054257) from '.' to 'c' to check whether our expression catch it: We can see how the first SNP now with AA=c is included by the expression AA='ACTGactg', so we are targeting ancestral alleles with high and low confidence.", header=4)
 run_bash(" \
+    cd ./data/dummy_vcf_files/00_dummy_vcf_files_vep/; \
+    gunzip \
+        --stdout \
+        dummy_example_vep.vcf.gz | \
     sed \
-        --in-place \
-        --expression 's/chr20:14370|A||||intergenic_variant||./chr20:14370|A||||intergenic_variant||c/g' \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_cleaned_vep.vcf")
-        #change "." by "c,c,c" in a specific SNP, modify in place
-        #https://stackoverflow.com/questions/525592/find-and-replace-inside-a-text-file-from-a-bash-command
-#filter
+        --expression 's/chr20:14370|A||||intergenic_variant||./chr20:14370|A||||intergenic_variant||c/g' > dummy_example_vep_2.vcf")
+        #decompress the VCF file to avoid problems with sed
+        #change "." by "c" in a specific SNP
+            #https://stackoverflow.com/questions/525592/find-and-replace-inside-a-text-file-from-a-bash-command
+        #then save as a new file
 run_bash("\
     bcftools +split-vep \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_cleaned_vep.vcf \
+        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2.vcf \
         --annotation CSQ \
         --include 'AA=\"A,C,G,T,a,c,g,t\"'\
         --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n'")
-#reverse the modification of the VCF file
+print("see how rs6054257 now it is included within those with ancestral allele. We will maintain this change to have lower case ancestral allele and learn to deal with that (see below)")
 run_bash(" \
-    sed \
-        --in-place \
-        --expression 's/chr20:14370|A||||intergenic_variant||c/chr20:14370|A||||intergenic_variant||./g' \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_cleaned_vep.vcf")
+    cd ./data/dummy_vcf_files/00_dummy_vcf_files_vep/; \
+    bgzip \
+        --force \
+        --keep \
+        dummy_example_vep_2.vcf; \
+    ls -l")
 
-#
-print("\n#######################################\n#######################################")
-print("exclude SNPs whose ancestral allele is ACGT or acgt: We get a SNP with ancestral = '.'")
-print("#######################################\n#######################################")
+print_text("after selecting SNPs with ACGT-acgt ancestral allele, select those whose REF is not equal to ancestral. We can see how rs6054257 is not included in this list even having AA=c and REF=G. There is a problem with the case because bcftools filters are case sensitive", header=4)
 run_bash("\
     bcftools +split-vep \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_cleaned_vep.vcf \
-        --annotation CSQ \
-        --exclude 'AA=\"A,C,G,T,a,c,g,t\"'\
-        --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n'")
-
-#
-print("\n#######################################\n#######################################")
-print("after selecting SNPs with ACGT-acgt ancestral allele, select those whose REF is not equal to ancestral")
-print("#######################################\n#######################################")
-run_bash("\
-    bcftools +split-vep \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_cleaned_vep.vcf \
+        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2.vcf.gz \
         --annotation CSQ \
         --include 'AA=\"A,C,G,T,a,c,g,t\" && REF!=AA && ALT=AA' \
         --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n'")
     #select those SNPs for which 
-        #we have actual ancestral allele infered ("N", "."...) AND 
+        #we have actual ancestral allele infered (instead of "N", "."...) AND 
         #the REF is different from that ancestral allele AND 
         #the ALT is the ancestral. These are the SNPs we have to switch.
     #I use && instead of & because only one & looks for variants satisfying the condition within sample.
         #For example, say our VCF contains the per-sample depth and genotype quality annotations per SNP and we want to include only sites where ONE OR MORE samples have big enough coverage (DP>10) and genotype quality (GQ>20). The expression -i 'FMT/DP>10 & FMT/GQ>20'. This would select variants for which at least one sample has good coverage and genotype quality.  
-        #but we do not want this. We want to select SNPs that fullfill certain requirements across all samples, not just within at least one sample. We want to match the whole record, using features that are similar across samples, like REF, ALT and AA.
+        #but we do not want this. We want to select SNPs that fulfill certain requirements across all samples, not just within at least one sample. We want to match the whole record, using features that are similar across samples, like REF, ALT and AA.
             #http://samtools.github.io/bcftools/howtos/filtering.html
 
-
-
-
-#ANSWER JESUS WHEN FINISHED THIS PART
+print_text("Problem upper vs. lower case ancestral allele", header=4)
+print("We have a problem with case sensitive: if ALT=C and AA=c, ALT is NOT equal to AA. So I am creating a new AA field with all alleles as upper case, so we avoid this problem.")
 
 
 ##por aqui
-    #we have a problem with case sensitive: if ALT=C and AA=c, ALT is NOT equal to AA
-    #so I am creating a new AA field with all alleles as upper case, so we avoid this problem.
-    #check what to do with cases like "." because they are not updated in the new AA field, but this should not be a problem, right? They would be out after selecting for ACTG
-    #check the new field is the same with case insensitive
-    #then you should update the previous code with the new options like extracting AA from CSQ and then remove CSQ
-    #then create the list of SNPs for which REF is not AA
-    #then you can go to -fixref and use it to switch these snps in the original VCF file
-    #check and then go to the real data
+#another problem!!! 
+#SNP rs6040361 chr20 1110702 A G C,C,C,C,C,C,C
+#this snp has C as AA, but is not REF nor ALT, this could occurr in a pop for a multiallleic snp, where the ancestral is not present!!!
 
 
 
-#create a tab separated file with the position info and ancestral allele in upper case of each SNP. Then create an index for this tab-delimited file using tabix.
+print_text("working on the upper vs. lower case problem", header=3)
+print_text("create a tab separated file with the position info and ancestral allele in upper case of each SNP. Then create an index for this tab-delimited file using tabix.", header=4)
 run_bash(" \
     bcftools +split-vep \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_cleaned_vep.vcf \
+        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep.vcf.gz \
         --annotation CSQ \
         --columns AA:String | \
     bcftools annotate \
@@ -939,18 +923,19 @@ run_bash(" \
                     #in our case we use "#" to comment the first line with the header
                 #http://www.htslib.org/doc/tabix.html
 
-#take the indexed and tab-delimited file with the ancestral alleles in upper case and the position to create a new field with upper ancestral alleles, save the new VCF file
+print_text("take the indexed and tab-delimited file with the ancestral alleles in upper case and the position to create a new field with upper ancestral alleles, save the new VCF file", header=4)
 run_bash(" \
+    cd ./data/dummy_vcf_files/00_dummy_vcf_files_vep/; \
     bcftools +split-vep \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_cleaned_vep.vcf \
+        ./dummy_example_vep.vcf.gz \
         --annotation CSQ \
         --columns AA:String | \
     bcftools annotate \
         --remove INFO/CSQ \
-        --annotations ./data/dummy_vcf_files/00_dummy_vcf_files_vep/anc_alleles_uppercase.tsv.gz \
+        --annotations ./anc_alleles_uppercase.tsv.gz \
         --columns CHROM,POS,AA_upcase \
-        --header-line '##INFO=<ID=AA_upcase,Number=.,Type=String,Description=\"The AA field from INFO/CSQ after converting alleles to uppercase\">' > \
-    ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_cleaned_vep_anc_up.vcf")
+        --header-line '##INFO=<ID=AA_upcase,Number=.,Type=String,Description=\"The AA field from INFO/CSQ after converting alleles to uppercase\">' > ./dummy_example_vep_anc_up.vcf; \
+    cat ./dummy_example_vep_anc_up.vcf")
         #From the CSQ field added by VEP, extract the tag "AA" as a string, which is the ancestral state.
         #remove the CSQ field
         #add a new INFO/Tag using the tab delimited file previously created
@@ -1075,6 +1060,9 @@ else:
     #check AA and AA_upcase are the same with case insensitive
 
 
+    #check what to do with cases like "." because they are not updated in the new AA field, but this should not be a problem, right? They would be out after selecting for ACTG
+    #check the new field is the same with case insensitive
+    #then you should update the previous code with the new options like extracting AA from CSQ and then remove CSQ
 
 
 #filter
@@ -2876,3 +2864,7 @@ pool.close()
 
 
 #you need to save in upper case the ancestral allele and save the VCF files in a new folder, indicate in that folder that the REF is not yet ancestral. You will do the polarization within each populatin. We need only biallelic snps (to easily exchange ref by alt if needed), and we need to do this within pop, porque an allele can be biallelic for one pop but not for other.
+
+    #then create the list of SNPs for which REF is not AA
+    #then you can go to -fixref and use it to switch these snps in the original VCF file
+    #check and then go to the real data
