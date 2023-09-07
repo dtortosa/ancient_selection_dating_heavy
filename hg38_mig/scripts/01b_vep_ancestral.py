@@ -782,18 +782,27 @@ run_bash("\
                 #https://useast.ensembl.org/info/docs/tools/vep/script/vep_plugins.html#ancestralallele
         #Therefore, we only want to consider cases for which the ancestral allele is inferred.
 
-print_text("now manually change ancestral of rs6054257 and rs6054252 from '.' to 'c' to check whether our expression catch it: We can see how the first SNP now with AA=c is included by the expression AA='ACTGactg', so we are targeting ancestral alleles with high and low confidence.", header=4)
+print_text("now manually change ancestral of rs6054257 and rs6054252 from '.' to 'c' to check whether our expression catch it: We can see how the first SNP now with AA=c is included by the expression AA='ACTGactg', so we are targeting ancestral alleles with high and low confidence. We are also adding a few cases of '-' and 'N' to see how we deal with that (see below)", header=4)
 run_bash(" \
     cd ./data/dummy_vcf_files/00_dummy_vcf_files_vep/; \
     gunzip \
         --stdout \
         dummy_example_vep.vcf.gz | \
     sed \
+        --expression 's/chr20:14310|A||||intergenic_variant||./chr20:14310|A||||intergenic_variant||N/g' | \
+    sed \
+        --expression 's/chr20:14320|A||||intergenic_variant||./chr20:14320|A||||intergenic_variant||-/g' | \
+    sed \
         --expression 's/chr20:14350|A||||intergenic_variant||./chr20:14350|A||||intergenic_variant||c/g' | \
     sed \
         --expression 's/chr20:14370|A||||intergenic_variant||./chr20:14370|A||||intergenic_variant||c/g' > dummy_example_vep_2.vcf")
         #decompress the VCF file to avoid problems with sed
-        #change "." by "c" in a specific SNP
+        #change "." by "c" in two SNPs and also change in other two to N and -
+            #ACTG: high-confidence call, ancestral state supported by the other two sequences
+            #actg: low-confidence call, ancestral state supported by one sequence only
+            #N: failure, the ancestral state is not supported by any other sequence
+            #-: the extant species contains an insertion at this postion
+            #.: no coverage in the alignment
             #https://stackoverflow.com/questions/525592/find-and-replace-inside-a-text-file-from-a-bash-command
         #then save as a new file
 run_bash("\
@@ -1010,6 +1019,7 @@ run_bash(" \
 
 
 #por aqui
+#check again the result of previous line for - and N, then move foward
 
 print_text("check that the new INFO/TAG with ancestral alleles in upper case is exactly the same than the original AA tag but in uppercase always", header=4)
 count_aa = run_bash(" \
