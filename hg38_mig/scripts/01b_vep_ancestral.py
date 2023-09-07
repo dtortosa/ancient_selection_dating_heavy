@@ -782,12 +782,14 @@ run_bash("\
                 #https://useast.ensembl.org/info/docs/tools/vep/script/vep_plugins.html#ancestralallele
         #Therefore, we only want to consider cases for which the ancestral allele is inferred.
 
-print_text("now manually change ancestral of the a SNP (rs6054257) from '.' to 'c' to check whether our expression catch it: We can see how the first SNP now with AA=c is included by the expression AA='ACTGactg', so we are targeting ancestral alleles with high and low confidence.", header=4)
+print_text("now manually change ancestral of rs6054257 and rs6054252 from '.' to 'c' to check whether our expression catch it: We can see how the first SNP now with AA=c is included by the expression AA='ACTGactg', so we are targeting ancestral alleles with high and low confidence.", header=4)
 run_bash(" \
     cd ./data/dummy_vcf_files/00_dummy_vcf_files_vep/; \
     gunzip \
         --stdout \
         dummy_example_vep.vcf.gz | \
+    sed \
+        --expression 's/chr20:14350|A||||intergenic_variant||./chr20:14350|A||||intergenic_variant||c/g' | \
     sed \
         --expression 's/chr20:14370|A||||intergenic_variant||./chr20:14370|A||||intergenic_variant||c/g' > dummy_example_vep_2.vcf")
         #decompress the VCF file to avoid problems with sed
@@ -809,31 +811,88 @@ run_bash(" \
         dummy_example_vep_2.vcf; \
     ls -l")
 
-print_text("after selecting SNPs with ACGT-acgt ancestral allele, select those whose REF is not equal to ancestral. We can see how rs6054257 is not included in this list even having AA=c and REF=G. There is a problem with the case because bcftools filters are case sensitive", header=4)
-run_bash("\
+print_text("see the new VCF file", header=4)
+run_bash(" \
     bcftools +split-vep \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2.vcf.gz \
         --annotation CSQ \
-        --include 'AA=\"A,C,G,T,a,c,g,t\" && REF!=AA && ALT=AA' \
+        --format '%TYPE %ID %CHROM %POS %REF %ALT %AF AA=%AA\n' \
+        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2.vcf.gz")
+
+print_text("WE HAVE TO EXCLUDE CASES WHERE REF NOR ALT ARE THE ANCESTRAL ALLELE. This can be the case for a multiallelic SNP that only has two alleles in the selected populations, being the missing one the ancestral. We will just remove actual multiallelic SNPs in this dummy population, i.e., more than 2 alleles are present in the genotype data. Then, we will exclude those SNPs where AA is not REF nor ALT.", header=4)
+run_bash("\
+    bcftools norm \
+        --multiallelic -snps \
+        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2.vcf.gz |\
+    bcftools +fill-tags \
+        -- --tags AN,AC | \
+    bcftools view \
+        --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
+    bcftools norm \
+        --multiallelic +snps | \
+    bcftools view \
+        --max-alleles 2 \
+        --min-alleles 2 | \
+    bcftools +split-vep \
+        --annotation CSQ \
+        --columns AA:String | \
+    bcftools annotate \
+        --remove INFO/CSQ | \
+    bcftools view \
+        --exclude 'AA=\"A,C,G,T,a,c,g,t\" && REF!=AA && ALT!=AA' | \
+    bcftools view \
+        --include 'AA=\"A,C,G,T,a,c,g,t\"' | \
+    bcftools query \
         --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n'")
-    #select those SNPs for which 
-        #we have actual ancestral allele infered (instead of "N", "."...) AND 
-        #the REF is different from that ancestral allele AND 
-        #the ALT is the ancestral. These are the SNPs we have to switch.
+    #split multiallelic SNPs
+    #update the AN and AC fields to be sure we have the new allele count considering only each pair of REF/ALT
+    #remove those monomorphic SNPs. This will remove REF/ALT pairs of a multiallelic SNP if one of the ALTs is not present in the population. For example, the pair A/C in the example will be removed because C is not present.
+        #snp_1 REF=A ALT=C A|. A|. A|A AA=C
+        #snp_1 REF=A ALT=G A|G G|G A|A AA=C
+    #bind again the multiallelic SNPs and remove those that still have more than 1 ALT, because these are truly multiallelic SNPs in the dummy population.
+    #Extract AA data from CSQ and create a new, independent field with that.
+    #exclude SNPs where AA is not REF nor ALT
+        #in the previous example, A/C has been already removed, thus only A/G is present. Therefore, this SNP now does not have the ancestral allele. AA is not present in this dummy population, thus REF!=AA (A!=C) and ALT!=AA (G!=C) and this SNP is excluded.
+        #snp_1 REF=A ALT=G A|G G|G A|A AA=C
+    #then select only for SNPs with actual ancestral allele estimated, instead of "." or "N"
     #I use && instead of & because only one & looks for variants satisfying the condition within sample.
         #For example, say our VCF contains the per-sample depth and genotype quality annotations per SNP and we want to include only sites where ONE OR MORE samples have big enough coverage (DP>10) and genotype quality (GQ>20). The expression -i 'FMT/DP>10 & FMT/GQ>20'. This would select variants for which at least one sample has good coverage and genotype quality.  
         #but we do not want this. We want to select SNPs that fulfill certain requirements across all samples, not just within at least one sample. We want to match the whole record, using features that are similar across samples, like REF, ALT and AA.
             #http://samtools.github.io/bcftools/howtos/filtering.html
+print("IMPORTANT: We can see how rs6054252 is not included in this list even having AA=c and REF=C, thus at least one of the REF/ALT columns includes the AA and then should not be removed by the filter REF!=AA && ALT!=AA. There is a problem with the case because bcftools filters are case sensitive: C is not the same than c")
+
+print_text("select now those cases where REF!=AA but ALT=AA, because these are the cases that can be switched", header=4)
+run_bash("\
+    bcftools norm \
+        --multiallelic -snps \
+        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2.vcf.gz |\
+    bcftools +fill-tags \
+        -- --tags AN,AC | \
+    bcftools view \
+        --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
+    bcftools norm \
+        --multiallelic +snps | \
+    bcftools view \
+        --max-alleles 2 \
+        --min-alleles 2 | \
+    bcftools +split-vep \
+        --annotation CSQ \
+        --columns AA:String | \
+    bcftools annotate \
+        --remove INFO/CSQ | \
+    bcftools view \
+        --exclude 'AA=\"A,C,G,T,a,c,g,t\" && REF!=AA && ALT!=AA' | \
+    bcftools view \
+        --include 'AA=\"A,C,G,T,a,c,g,t\" && REF!=AA && ALT=AA' | \
+    bcftools query \
+        --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n'")
 
 print_text("Problem upper vs. lower case ancestral allele", header=4)
 print("We have a problem with case sensitive: if ALT=C and AA=c, ALT is NOT equal to AA. So I am creating a new AA field with all alleles as upper case, so we avoid this problem.")
 
 
-##por aqui
-#another problem!!! 
-#SNP rs6040361 chr20 1110702 A G C,C,C,C,C,C,C
-#this snp has C as AA, but is not REF nor ALT, this could occurr in a pop for a multiallleic snp, where the ancestral is not present!!!
+#check the change in the second snp with sed
 
+##por aqui
 
 
 print_text("working on the upper vs. lower case problem", header=3)
@@ -2863,8 +2922,11 @@ pool.close()
     #check the whole script in the meantime
 
 
-#you need to save in upper case the ancestral allele and save the VCF files in a new folder, indicate in that folder that the REF is not yet ancestral. You will do the polarization within each populatin. We need only biallelic snps (to easily exchange ref by alt if needed), and we need to do this within pop, porque an allele can be biallelic for one pop but not for other.
-
+#for 01d_hap_map_calcs.py
+    #you need to save in upper case the ancestral allele and save the VCF files in a new folder, indicate in that folder that the REF is not yet ancestral. You will do the polarization within each populatin. We need only biallelic snps (to easily exchange ref by alt if needed), and we need to do this within pop, porque an allele can be biallelic for one pop but not for other.
+    #WE HAVE TO EXCLUDE CASES WHERE REF NOR ALT ARE THE ANCESTRAL ALLELE
+        #these can be multiallelic SNPs for which one of the ALTs is not present in the selected population and that very ALT is the ancestral. We need these SNPs OUT, if no ancestral, we cannot estimate selection.
+        #see line 812 of 01b_vep_ancestral.py
     #then create the list of SNPs for which REF is not AA
     #then you can go to -fixref and use it to switch these snps in the original VCF file
     #check and then go to the real data
