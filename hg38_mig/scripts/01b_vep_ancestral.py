@@ -988,28 +988,33 @@ run_bash(" \
     bcftools annotate \
         --remove INFO/CSQ \
         --annotations ./anc_alleles_uppercase.tsv.gz \
-        --columns CHROM,POS,AA_upcase \
+        --columns CHROM,POS,.AA_upcase \
         --header-line '##INFO=<ID=AA_upcase,Number=.,Type=String,Description=\"The AA field from INFO/CSQ after converting alleles to uppercase\">' > ./dummy_example_vep_2_anc_up.vcf; \
     cat ./dummy_example_vep_2_anc_up.vcf")
         #From the CSQ field added by VEP, extract the tag "AA" as a string, which is the ancestral state.
         #remove the CSQ field
         #add a new INFO/Tag using the tab delimited file previously created
         #select the columns from the tab file in which we are interested
+            #We do ".AA" because we want to include also missing values
+                #.TAG 
+                    #Add TAG even if the source value is missing. This can overwrite non-missing values with a missing value and can create empty VCF fields (TAG=.)
+                #TAG
+                    #Add TAG if the source value is not missing (“.”). If TAG exists in the target file, it will be overwritten
+                #+TAG
+                    #Add TAG if the source value is not missing and TAG is not present in the target file.
+                #.+TAG
+                    #Add TAG even if the source value is missing but only if TAG does not exist in the target file; existing tags will not be overwritten.
+                #https://samtools.github.io/bcftools/howtos/annotate.html
         #add the header line for this new tag
         #save as a new file
 
 
-##"." are lost in the new file
+#por aqui
 
-
-
-#
-print("\n#######################################\n#######################################")
-print("check that the new INFO/TAG with ancestral alleles in upper case is exactly the same than the original AA tag but in uppercase always")
-print("#######################################\n#######################################")
-count_aa_no_upper = run_bash(" \
+print_text("check that the new INFO/TAG with ancestral alleles in upper case is exactly the same than the original AA tag but in uppercase always", header=4)
+count_aa = run_bash(" \
     bcftools view \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_cleaned_vep_anc_up.vcf \
+        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf \
         --drop-genotypes \
         --no-header | \
     awk \
@@ -1019,7 +1024,7 @@ count_aa_no_upper = run_bash(" \
         { \
             for(i=1;i<=NF;i++){ \
                 if($i==\"AA\"){ \
-                    if(toupper($(i+1))== \"A\" || toupper($(i+1))== \"C\" || toupper($(i+1))== \"T\" || toupper($(i+1))== \"G\" && toupper($(i+1))!=$(i+3)){ \
+                    if(toupper($(i+1))==$(i+3)){ \
                         count++; \
                         next \
                     } \
@@ -1030,10 +1035,35 @@ count_aa_no_upper = run_bash(" \
             print count\
             }'", return_value=True).strip()
 
-if (count_aa_no_upper == ""):
-    print("TRUE")
+
+
+
+#chceck better that the TRUEs are the same than the number of variants, rows in the VCF file without the header
+
+
+
+check_aa = run_bash(" \
+    n_variants=$( \
+        bcftools view \
+            ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf \
+            --drop-genotypes \
+            --no-header | \
+        awk \
+            'END{print NR}'); \
+    if [[ " + count_aa +  " -eq $n_variants ]]; then \
+        echo 'TRUE'; \
+    else \
+        echo 'FALSE'; \
+    fi", return_value=True).strip()
+
+
+if (check_aa):
+    print("GOOD TO GO! The new tag with ancestral alleles is exactly the same than the original AA field but in upper case")
 else:
     raise ValueError("SERIOUS ERROR! We have not correctly converted to upper case all ancestral alleles")
+
+
+
 
 #
 print("\n#######################################\n#######################################")
