@@ -802,7 +802,7 @@ run_bash("\
         --annotation CSQ \
         --include 'AA=\"A,C,G,T,a,c,g,t\"'\
         --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n'")
-print("see how rs6054257 now it is included within those with ancestral allele. We will maintain this change to have lower case ancestral allele and learn to deal with that (see below)")
+print("see how rs6054252 and rs6054257 are now included between those with ancestral allele. We will maintain these changes to have lower case ancestral allele and learn to deal with that (see below)")
 run_bash(" \
     cd ./data/dummy_vcf_files/00_dummy_vcf_files_vep/; \
     bgzip \
@@ -890,16 +890,11 @@ print_text("Problem upper vs. lower case ancestral allele", header=4)
 print("We have a problem with case sensitive: if ALT=C and AA=c, ALT is NOT equal to AA. So I am creating a new AA field with all alleles as upper case, so we avoid this problem.")
 
 
-#check the change in the second snp with sed
-
-##por aqui
-
-
 print_text("working on the upper vs. lower case problem", header=3)
 print_text("create a tab separated file with the position info and ancestral allele in upper case of each SNP. Then create an index for this tab-delimited file using tabix.", header=4)
 run_bash(" \
     bcftools +split-vep \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep.vcf.gz \
+        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2.vcf.gz \
         --annotation CSQ \
         --columns AA:String | \
     bcftools annotate \
@@ -944,7 +939,8 @@ run_bash(" \
     gunzip \
         --keep \
         --stdout \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/anc_alleles_uppercase.tsv.gz")
+        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/anc_alleles_uppercase.tsv.gz; \
+    ls -l ./data/dummy_vcf_files/00_dummy_vcf_files_vep/")
         #convert to upper case the ancestral alleles using awk
             #Based on "#https://www.biostars.org/p/304979/"
             #start and set 
@@ -986,21 +982,26 @@ print_text("take the indexed and tab-delimited file with the ancestral alleles i
 run_bash(" \
     cd ./data/dummy_vcf_files/00_dummy_vcf_files_vep/; \
     bcftools +split-vep \
-        ./dummy_example_vep.vcf.gz \
+        ./dummy_example_vep_2.vcf.gz \
         --annotation CSQ \
         --columns AA:String | \
     bcftools annotate \
         --remove INFO/CSQ \
         --annotations ./anc_alleles_uppercase.tsv.gz \
         --columns CHROM,POS,AA_upcase \
-        --header-line '##INFO=<ID=AA_upcase,Number=.,Type=String,Description=\"The AA field from INFO/CSQ after converting alleles to uppercase\">' > ./dummy_example_vep_anc_up.vcf; \
-    cat ./dummy_example_vep_anc_up.vcf")
+        --header-line '##INFO=<ID=AA_upcase,Number=.,Type=String,Description=\"The AA field from INFO/CSQ after converting alleles to uppercase\">' > ./dummy_example_vep_2_anc_up.vcf; \
+    cat ./dummy_example_vep_2_anc_up.vcf")
         #From the CSQ field added by VEP, extract the tag "AA" as a string, which is the ancestral state.
         #remove the CSQ field
         #add a new INFO/Tag using the tab delimited file previously created
         #select the columns from the tab file in which we are interested
         #add the header line for this new tag
         #save as a new file
+
+
+##"." are lost in the new file
+
+
 
 #
 print("\n#######################################\n#######################################")
@@ -2920,13 +2921,19 @@ pool.close()
     #run the script 
     #check the redirection of stdout
     #check the whole script in the meantime
+    #while running
+        #ask Jesus/David about using low-confidence ancestral alleles
+        #prepare next step
 
 
 #for 01d_hap_map_calcs.py
     #you need to save in upper case the ancestral allele and save the VCF files in a new folder, indicate in that folder that the REF is not yet ancestral. You will do the polarization within each populatin. We need only biallelic snps (to easily exchange ref by alt if needed), and we need to do this within pop, porque an allele can be biallelic for one pop but not for other.
     #WE HAVE TO EXCLUDE CASES WHERE REF NOR ALT ARE THE ANCESTRAL ALLELE
         #these can be multiallelic SNPs for which one of the ALTs is not present in the selected population and that very ALT is the ancestral. We need these SNPs OUT, if no ancestral, we cannot estimate selection.
+        #you hav eto do it after removing truly multiallelci snps in the population
         #see line 812 of 01b_vep_ancestral.py
     #then create the list of SNPs for which REF is not AA
     #then you can go to -fixref and use it to switch these snps in the original VCF file
+    #I think you could use --derived to set the ancestral as reference in bcftools
+        #https://www.biostars.org/p/304979/
     #check and then go to the real data
