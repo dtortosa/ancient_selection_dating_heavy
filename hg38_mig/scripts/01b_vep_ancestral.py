@@ -526,7 +526,7 @@ run_bash("\
         '{if(NR>=12871036 && NR<=12871536){print $0}}' \
         homo_sapiens_ancestor_GRCh38_final.fa")
 
-print_text("bgzip the fasta file with ancestral alleles because this should make things faster when running VEP (see documentation below)", hader=4)
+print_text("bgzip the fasta file with ancestral alleles because this should make things faster when running VEP (see documentation below)", header=4)
 run_bash("\
     cd ./data/fasta_ancestral/; \
     bgzip \
