@@ -647,6 +647,7 @@ run_bash(" \
         --stdout \
         ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep.vcf.gz | \
     head -50")
+    #I have checked in the information obtained from VEP for this dummy file that the same SNP can be in different transcripts with different strand, but the ancestral allele is always the same.
 
 print_text("do some checks about about whether we have used the correct data using the row added to the header in the VCF file by VEP", header=4)
 line_checks_after = run_bash(" \
@@ -708,6 +709,8 @@ run_bash("\
     bcftools +split-vep \
         ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep.vcf.gz \
         --list")
+    #--list: 
+        #Parse the VCF header and list the annotation fields
 
 print_text("make tags inside CSQ available", header=4)
 run_bash("\
@@ -1142,6 +1145,47 @@ run_bash("\
         ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf")
 print("We get as cases with AA not being the ALT those multiallelics where 1 of the ALT alleles are indeed the ancestral. For example, REF=A;ALT=T,G;AA=G is considered when filtering by ALT!=AA_upcase, when indeed G is the ancestral and it is one of the alternative alleles. Oddly enough, these SNPs are again filtered in when doing ALT=AA_upcase. In both cases makes sense, because we have ALT alleles that are the AA but other are not. For things like this, we should do ancestral filtering after dealing with multiallelic snps.")
 
+print_text("Check the number of SNPs without ancestral allele", header=4)
+run_bash(" \
+    n_snps_missing_ancestral=$( \
+        bcftools view \
+            --drop-genotypes \
+            --no-header \
+            --include 'AA_upcase=\".,-,N\"' \
+            ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
+        awk 'END{print NR}'); \
+    n_snps_total=$( \
+        bcftools view \
+            --drop-genotypes \
+            --no-header \
+            ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
+        awk 'END{print NR}'); \
+    printf 'We have a total of %s SNPs\n' \"$n_snps_total\"; \
+    printf 'We have %s SNPs WITHOUT ancestral alleles\n' \"$n_snps_missing_ancestral\"; \
+    loss_percent=$( \
+        awk \
+            -v x=$n_snps_missing_ancestral \
+            -v y=$n_snps_total \
+            'BEGIN{print (x/y)*100}'); \
+    if [[ $loss_percent < 40 ]]; then \
+        printf 'GOOD TO GO! The percentage of SNPs without ancestral allele is: %s' \"$loss_percent\"; \
+    else \
+        echo 'ERROR: FALSE! There are more than 40% of SNPs without ancestral allele';\
+    fi")
+    #Count the number of rows without header (i.e., SNPs) for which the ancestral allele is ".", "-" or "N". We do not use --exclude "A,C,T,G" because this lead to include indels with ancestral state like "TT" because "TT" is not "T". Use awk to count with print NR at the end of the file.
+        #from the fasta file info
+            #ACTG: high-confidence call, ancestral state supported by the other two sequences
+            #actg: low-confidence call, ancestral state supported by one sequence only
+                #these are no longer present in AA_upcase, they have been converted to uppercase
+            #N: failure, the ancestral state is not supported by any other sequence
+            #-: the extant species contains an insertion at this postion
+            #.: no coverage in the alignment
+    #Count the total number of SNPs, i.e., no filtering.
+    #load both numbers into AWK and divide SNPs with missing ancestrals by the total number of SNPs, then multiply by 100 to get percentage
+    #check this number is not very high
+        #we can use < inside [[ ]] as it will not be considered redirection
+        #-gt/-lt does not work for floats
+
 
 
 print_text("See the dummy VCF file after all operations with the Ancestral Alleles as a new field with all bases in uppercase to match that of REF and ALT columns, so we will be able to apply filters in next steps", header=2)
@@ -1152,106 +1196,21 @@ run_bash(" \
 
 
 
-#por aquii
-
-
-
-    #check options this plugin, you can select specific data from CSQ...
-        #https://samtools.github.io/bcftools/howtos/plugin.split-vep.html
-
-
-
-#POR AQUII
-#atcg is not considered using ACTG, so we I had to add actg
-#do checks about the use of the plugin on VEP data
-    #maybe change AA for ancestral? it can be confusing with AA (ALT | ALT)
-#generate a list of SNPs with different REF - ancestral
-#then use fixref to switch REF/ALT using that list
-
-
-
-
-#with bcftools
-    #--include those SNPs for which R != INFO/AA
-        #you have to find a way to create INFO/AA because that information is right now, and ask for chr, pos, REF ALT, and export as vcf
-    #alternatively, you can directly export chrom, pos, REF, ALT, for all SNPs, then select rows with different REF than Ancestral using awk and generate a BED file, which is also accpeted by annotate
-        #http://www.htslib.org/doc/bcftools.html#annotate
-    #use +fixref to switch REF/ALT for these SNPs
-        #bcftools +fixref file.bcf -Ob -o out.bcf -- -i List_of_1.vcf.gz 
-            #https://www.biostars.org/p/411202/
-            #https://samtools.github.io/bcftools/howtos/plugin.fixref.html
-        #fixref ES PELIGROSO!!
-
-
-
-    #WHERE THE CACHE IS BEING INSTALLED?
-        #.vep folder
-    #WE HAVE TO USE CACHE
-        #the question is if we do this step at the end, so we need to upload the whole cache to the HPC, with the risk that you have to be sure you are using the correct version of the cache respect to the version of VEP
-        #the alternative is doing locally with the raw VCF files, and then clean the resulting VCF files.
-
-
-##STRAND, SOME CASES 1 AND OTHER -1!!!!
-    #check if you get the same strand in the output non-VCF than in the VCF
-
-
-#check usage of vep
-    #https://useast.ensembl.org/info/docs/tools/vep/script/vep_options.html
-    #there is no output
-
-
-
-
-#finish checking options of vep installing
-    #https://useast.ensembl.org/info/docs/tools/vep/script/vep_download.html
-
-
-
-#dbi is installed in the container but I get 
-    #ERROR: DBI module not found. VEP requires the DBI perl module to function
-    #maybe environmental variables is the problem? check your bashrc to check if folder of modules is indicated
-
-
-#check if we really need Bio::DB::HTS, it just mentioned in the page of AncestralAllele
-    #https://useast.ensembl.org/info/docs/tools/vep/script/vep_plugins.html#ancestralallele
-    #trying to stop the container so I get the log file with details about the error
-        #cpanm --local-lib /opt/cpanm Bio::DB::HTS &
-        #sleep 60 
-        #cat /root/.cpanm/work/1682462531.14977/build.log
-        #thisdoes not work becausr the folder number changes
-            #cat: /root/.cpanm/work/1682462531.14977/build.log: No such file or directory
-            #baybe force to open with widlcard ?
-
-
-    #https://github.com/Ensembl/Bio-DB-HTS/issues/91
-
-
-#several months ago I started the pollarization of the alleles. I installed VEP and used one of its plugins to estimate the ancestral allele of each SNP within a new VCF file. Then, I started working with AWK to convert to upper case the new column with the ancestral allele, so we have high and low-confidence ancestral alleles and they can be used in conditionals. In other words, I am selecting those snps for which REF is not Ancestral in bcftools, and for that I need the same case, as the conditions of bcftools are case sensitive.
-
-#see email from Jesus about VEP installation, and answer once you have solved the upper case problem
-    #https://mail.google.com/mail/u/0/?tab=rm&ogbl#drafts/QgrcJHsHpDRJdfjndBxlCjQHdCNBwJJqNSl 
-
-#then you should go to the actual data
-
-
-#you should also check the number of variants for which polarization could not be done and hence are lost due to this.
-
-
-
-
-
-
-
-#Note about the update of the INFO fields
-    #it is important to be sure that the fields you are using for filtering, are updated after subseting samples. Of course, type="snp" will be always "snp" irrespectively of the samples we select, but this is not the case of the number of alleles, because you can have SNPs with 3 alleles considering all 26 populations, but then in GBR they can have only 2 or 1. We are interested in SNPs that are biallelic within the selected population.
-    #The same goes for phasing and genotype ^miss. You have to be sure that these filters only consider data from the filtered samples, not fixed data in fields that are not updated.
-    #Because of this we have applied all these filters in order.
-
-
 
 ################################################################
-#### function to clean vcf files and create hap - map files ####
+#### function to estimate the ancestral allele for ALL SNPs ####
 ################################################################
+print_text("function to estimate the ancestral allele for ALL SNPs", header=1)
+
+
+##por aqui
+
+
+#check in the real data what happens with the strand.
+    #you can have same SNP being included in different transcripts with different strands
+    #In the dummy example, all consequences of the same SNP have the same AA, even if the strand is different
+
+
 
 #chr_pop_combination="GBR_1"
 def master_processor(chr_pop_combination):
@@ -2933,23 +2892,40 @@ pool.map(master_processor, full_combinations_pop_chroms)
 #close the pool
 pool.close()
 
+
+
+
 #por aquiii
     #run the script 
     #check the redirection of stdout
     #check the whole script in the meantime
     #while running
-        #ask Jesus/David about using low-confidence ancestral alleles
+        #ask Jesus
+            #about using low-confidence ancestral alleles
+            #see email from Jesus about VEP installation, and answer once you have solved the upper case problem
+            #https://mail.google.com/mail/u/0/?tab=rm&ogbl#drafts/QgrcJHsHpDRJdfjndBxlCjQHdCNBwJJqNSl 
+        #ask David
+            #about using low-confidence ancestral alleles
         #prepare next step
 
 
 #for 01d_hap_map_calcs.py
-    #you need to save in upper case the ancestral allele and save the VCF files in a new folder, indicate in that folder that the REF is not yet ancestral. You will do the polarization within each populatin. We need only biallelic snps (to easily exchange ref by alt if needed), and we need to do this within pop, porque an allele can be biallelic for one pop but not for other.
-    #WE HAVE TO EXCLUDE CASES WHERE REF NOR ALT ARE THE ANCESTRAL ALLELE
-        #these can be multiallelic SNPs for which one of the ALTs is not present in the selected population and that very ALT is the ancestral. We need these SNPs OUT, if no ancestral, we cannot estimate selection.
-        #you hav eto do it after removing truly multiallelci snps in the population
-        #see line 812 of 01b_vep_ancestral.py
-    #then create the list of SNPs for which REF is not AA
-    #then you can go to -fixref and use it to switch these snps in the original VCF file
-    #I think you could use --derived to set the ancestral as reference in bcftools
-        #https://www.biostars.org/p/304979/
+    #You will do the polarization within each populatin. We need only biallelic snps (to easily exchange ref by alt if needed), and we need to do this within pop, porque an allele can be biallelic for one pop but not for other.
+    #list of SNPs to for which we have to switch REF/ALT
+        #WE HAVE TO EXCLUDE CASES WHERE REF NOR ALT ARE THE ANCESTRAL ALLELE
+            #these can be multiallelic SNPs for which one of the ALTs is not present in the selected population and that very ALT is the ancestral. We need these SNPs OUT, if no ancestral, we cannot estimate selection.
+            #you hav eto do it after removing truly multiallelci snps in the population
+            #see line 812 of 01b_vep_ancestral.py
+        #then create the list of SNPs for which REF is not AA
+        #alternatively, you can directly export chrom, pos, REF, ALT, for all SNPs, then select rows with different REF than Ancestral using awk and generate a BED file, which is also accpeted by annotate
+            #http://www.htslib.org/doc/bcftools.html#annotate
+    #make the switch
+        #then you can go to -fixref and use it to switch these snps in the original VCF file
+            #bcftools +fixref file.bcf -Ob -o out.bcf -- -i List_of_1.vcf.gz 
+                #https://www.biostars.org/p/411202/
+                #https://samtools.github.io/bcftools/howtos/plugin.fixref.html
+            #fixref ES PELIGROSO!!
+        #I think you could also use --derived to set the ancestral as reference in bcftools. If you need to change the name of AA_upcase, I think you can use something like "bcftools annotate -c INFO/1kg_v2a_AF:=INFO/AF"
+            #https://www.biostars.org/p/304979/
+            #https://github.com/samtools/bcftools/issues/1695
     #check and then go to the real data
