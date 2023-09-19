@@ -484,6 +484,32 @@ expected_chr = ["homo_sapiens_ancestor_" + chromosome + ".fa" for chromosome in 
 expected_chr == listing_fastas_ordered
     #check
 
+print_text("calculate the total number of rows across all fasta files to check later with the combined file. We do it using a loop with awk and wc -l to check both give the same", header=4)
+print("calculate with awk")
+n_rows_across_fastas_awk = run_bash("\
+    cd ./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38; \
+    list_fasta=$(ls *.fa); \
+    for fasta in \"${list_fasta[@]}\"; do \
+        awk 'END{print NR}' $fasta; \
+    done", return_value=True).strip()
+    #it seems that awk consider all files in the loop like continuous!!
+print("calculate with wc -l")
+n_rows_across_fastas_wc_raw = run_bash("\
+    cd ./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38; \
+    list_fasta=$(ls *.fa); \
+    for fasta in \"${list_fasta[@]}\"; do \
+        wc -l $fasta; \
+    done", return_value=True)
+n_rows_across_fastas_wc = n_rows_across_fastas_wc_raw.split("\n")[-2].replace(" total", "").strip()
+    #indeed wc -l gives the number of rows of each file and at the end gives the total number!
+        #get the raw list of counts and the select only the total count and 
+#I have no checked the behavior in detail, I have just compared two approaches to have more confidence the total number of rows is correct
+print("both awk and wc -l give the same number of rows across all fastas?")
+if n_rows_across_fastas_awk == n_rows_across_fastas_wc:
+    print("YES! GOOD TO GO!")
+else:
+    print("ERROR! FALSE! WE HAVE A PROBLEM")
+
 print_text("combine all fasta files and remove the unzipped folder", header=4)
 run_bash(" \
     cd ./data/fasta_ancestral/; \
@@ -505,6 +531,19 @@ run_bash("\
     awk \
         'END{print NR}' \
         homo_sapiens_ancestor_GRCh38_final.fa")
+
+print_text("check the number of lines in the combined file is the same than the total number of lines across all individual fasta files", header=4)
+run_bash("\
+    cd ./data/fasta_ancestral/; \
+    total_n_rows=$( \
+        awk \
+            'END{print NR}' \
+            homo_sapiens_ancestor_GRCh38_final.fa); \
+    if [[ $total_n_rows -eq " + n_rows_across_fastas_awk + " ]];then \
+        echo 'TRUE'; \
+    else \
+        echo 'FALSE'; \
+    fi")
 
 print_text("see first 500 lines of the combined fasta file", header=4)
 run_bash("\
@@ -1203,27 +1242,16 @@ run_bash(" \
 #### function to estimate the ancestral allele for ALL SNPs ####
 ################################################################
 print_text("function to estimate the ancestral allele for ALL SNPs", header=1)
+#selected_chromosome="1"; debugging=True
+def master_processor(selected_chromosome, debugging=False):
 
-
-##por aqui
-
-
-#check in the real data what happens with the strand in VEP output.
-    #you can have same SNP being included in different transcripts with different strands
-    #In the dummy example, all consequences of the same SNP have the same AA, even if the strand is different
-
-
-
-#selected_chromosome="1"
-def master_processor(selected_chromosome):
-
-    #redirect standard output
-    #do NOT run if debugging!
-    import sys
-    original_stdout = sys.stdout
-        #save off a reference to sys.stdout so we can restore it at the end of the function with "sys.stdout = original_stdout"
-    sys.stdout = open("./scripts/00_ancestral_calcs_outputs/chr" + selected_chromosome + ".out", "w")
-        #https://www.blog.pythonlibrary.org/2016/06/16/python-101-redirecting-stdout/
+    #redirect standard output ONLY when running for production
+    if debugging == False:
+        import sys
+        original_stdout = sys.stdout
+            #save off a reference to sys.stdout so we can restore it at the end of the function with "sys.stdout = original_stdout"
+        sys.stdout = open("./scripts/00_ancestral_calcs_outputs/chr" + selected_chromosome + ".out", "w")
+            #https://www.blog.pythonlibrary.org/2016/06/16/python-101-redirecting-stdout/
 
 
 
@@ -1368,18 +1396,17 @@ def master_processor(selected_chromosome):
 
 
     print_text("run VEP's plugin ancestral allele on the VCF file", header=2)
-    print_text("decide whether to run this for debugging or for the whole data. This will determine whether we use the whole dataset or just a few SNPs to debug", header=3)
-    debuging=False
-    if debuging:
+    print_text("Select the input VCF for VEP. Use only a subset of the data if we are on debugging mode", header=3)
+    if debugging==True:
         run_bash(" \
             bcftools view \
                 " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-            head -n 130 > 00_ancestral_debug_subset.vcf; \
+            head -n 1200 > 00_ancestral_debug_subset.vcf; \
             ls -l")
         input_vcf_file_vep="00_ancestral_debug_subset.vcf"
     else:
         input_vcf_file_vep=input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz"
-    print(vcf_file_to_process)
+    print(input_vcf_file_vep)
 
 
     print_text("make a run of VEP", header=3)
@@ -1408,95 +1435,156 @@ def master_processor(selected_chromosome):
         bcftools view \
             --header \
             ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz")
-        
-    print_text("see CSQ field for the 5 first variants and check whether different transcripts of the same variant have the same ancestral alelle", header=3)
+
+
+    print_text("see CSQ field for the first variants", header=3)
     run_bash(" \
         bcftools query \
             --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF CSQ: %CSQ\n' \
             ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz | \
-        head -n 20")
-        
+        head -n 1000")
 
-        #checking this!!! I cannot find SNPs in the first lines with ancestral allele!!
-        #I have checked in the information obtained from VEP for several SNPs file that the same SNP can be in different transcripts with different strand, but the ancestral allele is always the same.
-
-
-
-
-
-
-print_text("do some checks about about whether we have used the correct data using the row added to the header in the VCF file by VEP", header=4)
-line_checks_after = run_bash(" \
-    gunzip \
-        --stdout \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep.vcf.gz | \
-    grep '##VEP='", return_value=True)
+    print_text("do some checks about about whether we have used the correct data using the row added to the header in the VCF file by VEP", header=4)
+    line_checks_after = run_bash(" \
+        gunzip \
+            --stdout \
+            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz | \
+        grep '##VEP='", return_value=True)
     #extract the row of the header with that information
-line_checks_after_split = line_checks_after.split(" ")
-    #split the different fields
-print("Do we have the correct VEP version in the VCF file?")
-print('##VEP="v'+vep_version+'\"' in line_checks_after_split)
-print("Do we have the correct cache and assembly version in the VCF file?")
-import numpy as np
-print(line_checks_after_split[np.where(['ensembl=' in field for field in line_checks_after_split])[0][0]].split(".")[0] == 'ensembl='+cache_version)
-print(line_checks_after_split[np.where(['assembly=' in field for field in line_checks_after_split])[0][0]].split(".")[0] == 'assembly="GRCh38')
-    #select the field including "ensemble" or "assembly", then split by "." to have only the general number version and then check that number is the correct one.
+    line_checks_after_split = line_checks_after.split(" ")
+        #split the different fields
+    import numpy as np
+    #extract the different versions
+    vep_version_vcf = line_checks_after_split[np.where(['##VEP=' in field for field in line_checks_after_split])[0][0]].replace('##VEP="v', '').replace('"', '')
+    ensembl_version_vcf = line_checks_after_split[np.where(['ensembl=' in field for field in line_checks_after_split])[0][0]].split(".")[0].replace("ensembl=", "")
+    assembly_version_vcf = line_checks_after_split[np.where(['assembly=' in field for field in line_checks_after_split])[0][0]].split(".")[0].replace('assembly="', '')
+        #select the field of interest, then split and/or replace to correctly extract the version number
+    import re
+    cache_version_vcf = re.split("_|/", line_checks_after_split[np.where(['cache=' in field for field in line_checks_after_split])[0][0]])[-2]
+    cache_version_assembly_vcf = re.split("_|/", line_checks_after_split[np.where(['cache=' in field for field in line_checks_after_split])[0][0]])[-1].replace('"', "")
+        #in the case of the cache line, we need to split using two separators to obtain both the cache and assembly version
+    print("The vep version in the VCF file is the same than the one I selected in the script?")
+    print(vep_version_vcf == vep_version)
+    print("The cache version in the VCF (according to cache and ensemble lines) matches the version I selected in the script?")
+    print(cache_version_vcf == cache_version)
+    print(ensembl_version_vcf == cache_version)
+    print("The cache version of the VCF file is the same than the VEP version used according to the VCF file?")
+    print(cache_version_vcf == vep_version_vcf)
+    print("The cache version of the VCF file is the same than the VEP version used according to my script?")
+    print(cache_version_vcf == vep_version)
+    print("The assembly version according to the cache and assembly lines in the VCF matches?")
+    print(cache_version_assembly_vcf == assembly_version_vcf)
+    print("The assembly is GRCh38?")
+    print(assembly_version_vcf == 'GRCh38')
+    print("The cache version of the VCF file according to the ensemble line is equal to the vep version according to the VCf file and according to my script?")
+    print(ensembl_version_vcf == vep_version_vcf)
+    print(ensembl_version_vcf == vep_version)
 
-print_text("see what happens with multiallelic snps", header=4)
-run_bash(" \
-    bcftools view \
-        --max-alleles 10  \
-        --min-alleles 3 \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep.vcf.gz | \
-    bcftools query \
-        -f '%TYPE %ID %CHROM %POS %REF %ALT %CSQ\n'")
-print("The ancestral allele is selected even if it is one of the multiple derived alleles. Therefore, no problem.")
+    print_text("According to the VEP manual, vep does not change the vcf file, only add the CSQ field. Therefore, we could process the original vcf files and then process with our cleaning. Let's check if the vep VCF is exactly the same after we removed the CSQ field, which is the one added by AncestralAllele plugin of VEP", header=4)
+    run_bash(" \
+        bcftools query \
+            -f '%TYPE %ID %CHROM %POS %REF %ALT %QUAL %FILTER %INFO %FORMAT\n' \
+            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz > file_check_1.txt; \
+        bcftools annotate \
+            --remove INFO/CSQ \
+            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz | \
+        bcftools query \
+            -f '%TYPE %ID %CHROM %POS %REF %ALT %QUAL %FILTER %INFO %FORMAT\n' > file_check_2.txt; \
+        echo '##See head first check file:'; head -n 5 file_check_1.txt; \
+        echo '##See head second check file:'; head -n 5 file_check_2.txt; \
+        check_status=$(cmp --silent file_check_1.txt file_check_2.txt; echo $?); \
+        echo '##Do the check'; \
+        if [[ $check_status -eq 0 ]]; then \
+            echo 'TRUE'; \
+        else \
+            echo 'FALSE'; \
+        fi; \
+        rm file_check_1.txt; rm file_check_2.txt; \
+        ls -l")
+    
+    
+    print_text("Create a new AA field using the ancestral allele stored in CSQ/AA", header=3)
+    print_text("see the header of the VCF file after VEP processing", header=4)
+    run_bash("\
+        bcftools head \
+            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz")
+    
+    print_text("see all the tags in the CSQ field", header=4)
+    run_bash("\
+        bcftools +split-vep \
+            --list \
+            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz")
+    
+    print_text("make tags inside CSQ available", header=4)
+    run_bash("\
+        bcftools +split-vep \
+            --annotation CSQ \
+            --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n' \
+            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz | \
+        head -n 50")
+    
+    print_text("IMPORTANT CHECK: Check that all the consequences the same variant has across transcripts have ALWAYS the same ancestral allele", header=4)
+    print("First, extract the AA field, where we have 1 row per SNP and each consequence across transcripts is separated by ',', these are going to by our columns")
+    run_bash(" \
+        bcftools +split-vep \
+            --annotation CSQ \
+            --format '%AA\n' \
+            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz > check_ancestral_transcripts.csv")
+    print("Then add a new line at the beginning with two different alleles to check our approach is able to discard these cases")
+    run_bash(" \
+        sed  \
+            --in-place \
+            '1i A,G' \
+            check_ancestral_transcripts.csv")
+        #https://unix.stackexchange.com/a/99351
+    print("In some rows, we will have more consequences (columns) and other will have less consequences and hence less columns. We will deal with that using awk")
 
-print_text("According to the VEP manual, vep does not change the vcf file, only add the CSQ field. Therefore, we could process the original vcf files and then process with our cleaning. Let's check if the VCF is exactly the same if we avoid the CSQ field, which is the one added by AncestralAllele plugin of VEP", header=4)
-run_bash(" \
-    cd ./data/dummy_vcf_files/00_dummy_vcf_files_vep; \
-    bcftools query \
-        -f '%TYPE %ID %CHROM %POS %REF %ALT %QUAL %FILTER %INFO/AN %INFO/AC %INFO/AF %INFO/NS %INFO/DP %INFO/AA %INFO/DB %INFO/H2 GTs:[ %GT]\n' \
-        ./dummy_example.vcf.gz > file_check_1.txt; \
-    bcftools query \
-        -f '%TYPE %ID %CHROM %POS %REF %ALT %QUAL %FILTER %INFO/AN %INFO/AC %INFO/AF %INFO/NS %INFO/DP %INFO/AA %INFO/DB %INFO/H2 GTs:[ %GT]\n' \
-        ./dummy_example_vep.vcf.gz > file_check_2.txt; \
-    echo '##See head first check file:'; head file_check_1.txt; \
-    echo '##See head second check file:'; head file_check_2.txt; \
-    check_status=$(cmp --silent file_check_1.txt file_check_2.txt; echo $?); \
-    echo '##Do the check'; \
-    if [[ $check_status -eq 0 ]]; then \
-        echo 'TRUE'; \
-    else \
-        echo 'FALSE'; \
-    fi; \
-    rm file_check_1.txt; rm file_check_2.txt; \
-    ls -l")
+    ##por aquiii
+
+    n_pass_ancestral_check = run_bash("\
+        awk \
+            'BEGIN{ \
+                FS=\",\" \
+            }{ \
+                if(NF != 1){ \
+                    for(i=2; i<=NF; i++){ \
+                        if($(i-1)!=\"\" && $i!=\"\"){ \
+                            if($(i-1)==$i){count_1++} \
+                        }else{count_1++} \
+                    };\
+                    if((NF-1)==count_1){count_2++} \
+                } else if (NF == 1){ \
+                    count_2++ \
+                }; \
+                count_1=\"\"\
+            }END{print count_2++}' check_ancestral_transcripts.csv", return_value=True).strip()
+        #https://stackoverflow.com/a/57984015/12772630
+
+    run_bash(" \
+        total_cases=$( \
+            awk \
+                'END{print NR}' \
+                check_ancestral_transcripts.csv); \
+        if [[ $total_cases -eq $((" + n_pass_ancestral_check + " + 1)) ]]; then \
+            echo 'TRUE'; \
+        else \
+            echo 'FALSE'; \
+        fi")
+        #plus 1 because the we have added a row with two different ancestral alleles that should NOT be counted
+
+    run_bash("rm check_ancestral_transcripts.csv")
 
 
-print_text("Create a new AA field using the ancestral allele stored in CSQ/AA", header=3)
-print_text("see the header of the VCF file after VEP processing", header=4)
-run_bash("\
-    bcftools head \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep.vcf.gz")
+#WE HAVE TO CHECK THIS WHEN THE AA FIELD IS ALONE
+#I have checked in the information obtained from VEP for several SNPs file that the same SNP can be in different transcripts with different strand, but the ancestral allele is always the same.
 
-print_text("see all the tags in the CSQ field", header=4)
-run_bash("\
-    bcftools +split-vep \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep.vcf.gz \
-        --list")
-    #--list: 
-        #Parse the VCF header and list the annotation fields
+#check in the real data what happens with the strand in VEP output.
+    #you can have same SNP being included in different transcripts with different strands
+    #In the dummy example, all consequences of the same SNP have the same AA, even if the strand is different
 
-print_text("make tags inside CSQ available", header=4)
-run_bash("\
-    bcftools +split-vep \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep.vcf.gz \
-        --annotation CSQ \
-        --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n'")
-        #--annotation
-            #INFO annotation to parse, being CSQ the default
-        #you now can directly ask for AA and other tags added by VEP in the CSQ field using --columns (see below)
+#there is any problem with ancestral of multiallelic snps?
+
+
 
 print_text("check we can call AA from CSQ and use it to filter", header=4)
 print("exclude those SNPs for which the REF allele IS NOT the ancestral")
@@ -1532,6 +1620,9 @@ run_bash("\
             #List of annotations to remove. Use "FILTER" to remove all filters or "FILTER/SomeFilter" to remove a specific filter. Similarly, "INFO" can be used to remove all INFO tags and "FORMAT" to remove all FORMAT tags except GT. To remove all INFO tags except "FOO" and "BAR", use "^INFO/FOO,INFO/BAR" (and similarly for FORMAT and FILTER). "INFO" can be abbreviated to "INF" and "FORMAT" to "FMT".
 
 print_text("select SNPs for which the ancestral allele is ACGT or acgt, avoiding cases where AA='.' or '-'", header=4)
+
+#CHECK THIS ALSO AVOID EMPTY CASES ",,,"
+
 run_bash("\
     bcftools +split-vep \
         ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep.vcf.gz \
@@ -3356,14 +3447,20 @@ run_bash(" \
 
 
 
-    ###REMIVE SUBSET VCF
-    #"00_ancestral_debug_subset.vcf"
+    #remove ...
+    if debugging==True:
+        print("remove the VCF subset we used for debugging")
+        run_bash(" \
+            rm 00_ancestral_debug_subset.vcf; \
+            ls -l")
 
 
     #restore sys.stdout using the previously saved reference to it
     #This is useful if you intend to use stdout for other things
-    sys.stdout = original_stdout
-        #https://www.blog.pythonlibrary.org/2016/06/16/python-101-redirecting-stdout/
+    #only required if we are in production, as we changed stdout only in that case
+    if debugging==False:
+        sys.stdout = original_stdout
+            #https://www.blog.pythonlibrary.org/2016/06/16/python-101-redirecting-stdout/
 
 
 
