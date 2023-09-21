@@ -1,6 +1,8 @@
 - Ask jesus 
 	- about VEP 
 		- should I also use ancestral alleles that are lower case? i.e., they have low confidence?
+			- check number of variants wiht low confidnce
+    			- if only 2% is ok, half of the variants is not
 	- about what accesibility masks is he using: L, Z and Q? also H?
 		- These masks help to identify regions of the genome that are more or less accesible to next generation sequencing methods using short reads.
 		- David say to avoid regions with a very low depth when it is not possible to do variant call.
@@ -26,8 +28,11 @@
 		- it says it is hg38 in the origina file, aau1043_DataS3.gz
 	- check if the data is 1 or 0 based
 
+	- DAVID: according to DAvid, you can check that with the assembly file, if the base the map is saying is in position X is indeed at position X, you are good.
 
-- ASK DAVID FIRST ABOUT hgdp + 1000kgp
+
+
+- ask david about hgdp + 1000kgp
 	- A new preprint has been posted about the harmonization of 1000KP high coverage and the HGDP. 
 		- A harmonized public resource of deeply sequenced diverse human genomes
 		- https://www.biorxiv.org/content/10.1101/2023.01.23.525248v2.full

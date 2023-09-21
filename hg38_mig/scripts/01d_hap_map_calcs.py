@@ -2070,6 +2070,12 @@ def master_processor(chr_pop_combination):
 
     #therefore, we have the same position format in both datasets, so we can just use the decode 2019 map to calculate the genetic position of each SNP.
 
+    ##IMPORTANT
+    #check if the data is 1 or 0 based
+        #DAVID: according to DAvid, you can check that with the assembly file, if the base the map is saying is in position X is indeed at position X, you are good.
+
+
+
     # 
     print("\n#######################################\n#######################################")
     print("chr " + selected_chromosome + " - " + selected_pop + ": see first lines of the Data S3 of decode paper, which is the sex average map (see above). The file has header")

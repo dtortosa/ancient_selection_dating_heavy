@@ -1367,23 +1367,23 @@ def master_processor(selected_chromosome, debugging=False):
             #you can include data from INFO
             #end with \n to have different lines per SNPs
 
-
-    print_text("chr " + selected_chromosome + ": all variants has '.' for filter?", header=3)
-    run_bash(" \
-        uniq_filters=$( \
-            bcftools query \
-                --format '%FILTER\n' \
-                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-            uniq); \
-        if [[ $uniq_filters == '.' ]]; then \
-            echo 'True'; \
-        else \
-            echo 'False';\
-        fi")
-        #according to the specific readme of the dataset we are using (http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/README_1kGP_phased_panel_110722.pdf), prior phasing they applied several filters, being one of them that all variants has to be PASS for FILTER. I understand that, because of this, all variants in the chromosome have now ".", being this the unique character. Let's check this for all chromosomes:
-            #make a query asking for the FILTER value of all variants
-            #select unique cases
-            #the unique cases should be a single string with a dot ("."), if yes, perfect.
+    print_text("chr " + selected_chromosome + ": check that all variants has '.' for filter, but only if you are NOT in debugging mode because it takes a few minutes", header=3)
+    if debugging==False:
+        run_bash(" \
+            uniq_filters=$( \
+                bcftools query \
+                    --format '%FILTER\n' \
+                    " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+                uniq); \
+            if [[ $uniq_filters == '.' ]]; then \
+                echo 'True'; \
+            else \
+                echo 'False';\
+            fi")
+            #according to the specific readme of the dataset we are using (http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/README_1kGP_phased_panel_110722.pdf), prior phasing they applied several filters, being one of them that all variants has to be PASS for FILTER. I understand that, because of this, all variants in the chromosome have now ".", being this the unique character. Let's check this for all chromosomes:
+                #make a query asking for the FILTER value of all variants
+                #select unique cases
+                #the unique cases should be a single string with a dot ("."), if yes, perfect.
 
 
     print_text("chr " + selected_chromosome + ": see genotypes of first samples", header=3)
@@ -1480,27 +1480,28 @@ def master_processor(selected_chromosome, debugging=False):
             ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz | \
         head -n 1000")
 
-    print_text("According to the VEP manual, vep does not change the vcf file, only add the CSQ field. Therefore, we could process the original vcf files and then process with our cleaning. Let's check if the vep VCF is exactly the same after we removed the CSQ field, which is the one added by AncestralAllele plugin of VEP", header=4)
-    run_bash(" \
-        bcftools query \
-            -f '%TYPE %ID %CHROM %POS %REF %ALT %QUAL %FILTER %INFO %FORMAT\n' \
-            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz > chr" + selected_chromosome + "_file_check_1.txt; \
-        bcftools annotate \
-            --remove INFO/CSQ \
-            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz | \
-        bcftools query \
-            -f '%TYPE %ID %CHROM %POS %REF %ALT %QUAL %FILTER %INFO %FORMAT\n' > chr" + selected_chromosome + "_file_check_2.txt; \
-        echo '##See head first check file:'; head -n 5 chr" + selected_chromosome + "_file_check_1.txt; \
-        echo '##See head second check file:'; head -n 5 chr" + selected_chromosome + "_file_check_2.txt; \
-        check_status=$(cmp --silent chr" + selected_chromosome + "_file_check_1.txt chr" + selected_chromosome + "_file_check_2.txt; echo $?); \
-        echo '##Do the check'; \
-        if [[ $check_status -eq 0 ]]; then \
-            echo 'TRUE'; \
-        else \
-            echo 'FALSE'; \
-        fi; \
-        rm chr" + selected_chromosome + "_file_check_1.txt; rm chr" + selected_chromosome + "_file_check_2.txt; \
-        ls -l")
+    print_text("According to the VEP manual, vep does not change the vcf file, only add the CSQ field. Therefore, we could process the original vcf files and then process with our cleaning. Let's check if the vep VCF is exactly the same after we removed the CSQ field, which is the one added by AncestralAllele plugin of VEP. Only do it if NOT in debugging mode because we need the whole dataset to this check to work", header=4)
+    if debugging==False:
+        run_bash(" \
+            bcftools query \
+                -f '%TYPE %ID %CHROM %POS %REF %ALT %QUAL %FILTER %INFO %FORMAT\n' \
+                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz > chr" + selected_chromosome + "_file_check_1.txt; \
+            bcftools annotate \
+                --remove INFO/CSQ \
+                ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz | \
+            bcftools query \
+                -f '%TYPE %ID %CHROM %POS %REF %ALT %QUAL %FILTER %INFO %FORMAT\n' > chr" + selected_chromosome + "_file_check_2.txt; \
+            echo '##See head first check file:'; head -n 5 chr" + selected_chromosome + "_file_check_1.txt; \
+            echo '##See head second check file:'; head -n 5 chr" + selected_chromosome + "_file_check_2.txt; \
+            check_status=$(cmp --silent chr" + selected_chromosome + "_file_check_1.txt chr" + selected_chromosome + "_file_check_2.txt; echo $?); \
+            echo '##Do the check'; \
+            if [[ $check_status -eq 0 ]]; then \
+                echo 'TRUE'; \
+            else \
+                echo 'FALSE'; \
+            fi; \
+            rm chr" + selected_chromosome + "_file_check_1.txt; rm chr" + selected_chromosome + "_file_check_2.txt; \
+            ls -l")
     
     
     print_text("Create a new AA field using the ancestral allele stored in CSQ/AA", header=3)
@@ -1774,160 +1775,302 @@ def master_processor(selected_chromosome, debugging=False):
                 #http://samtools.github.io/bcftools/howtos/filtering.html
     print("IMPORTANT: You can see many cases for which the AA is like the REF but in lower case. These cases should not be included here because REF does not meet REF!=AA. There is a problem with the case here in bcftools.")
 
-
-#check wuickily that multialleic are already separared in 1KGDP
-##por aqui
-
-
-print_text("select now those cases where REF!=AA but ALT=AA, because these are the cases that can be switched", header=4)
-run_bash("\
-    bcftools view \
-        --exclude 'INFO/AC=INFO/AN || INFO/AC=0' \
-        ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz | \
-    bcftools norm \
-        --multiallelic +snps | \
-    bcftools view \
-        --max-alleles 2 \
-        --min-alleles 2 | \
-    bcftools +split-vep \
-        --annotation CSQ \
-        --columns AA:String | \
-    bcftools annotate \
-        --remove INFO/CSQ | \
-    bcftools view \
-        --exclude 'AA=\"A,C,G,T,a,c,g,t\" && REF!=AA && ALT!=AA' | \
-    bcftools view \
-        --include 'AA=\"A,C,G,T,a,c,g,t\" && REF!=AA && ALT=AA' | \
-    bcftools query \
-        --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n'")
-
-print_text("Problem upper vs. lower case ancestral allele", header=4)
-print("We have a problem with case sensitive: if ALT=C and AA=c, ALT is NOT equal to AA. So I am creating a new AA field with all alleles as upper case, so we avoid this problem.")
+    print_text("select now those cases where REF!=AA but ALT=AA, because these are the cases where REF and ALT can be switched", header=4)
+    run_bash("\
+        bcftools view \
+            --exclude 'INFO/AC=INFO/AN || INFO/AC=0' \
+            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz | \
+        bcftools norm \
+            --multiallelic +snps | \
+        bcftools view \
+            --max-alleles 2 \
+            --min-alleles 2 | \
+        bcftools +split-vep \
+            --annotation CSQ \
+            --columns AA:String | \
+        bcftools annotate \
+            --remove INFO/CSQ | \
+        bcftools view \
+            --exclude 'AA=\"A,C,G,T,a,c,g,t\" && REF!=AA && ALT!=AA' | \
+        bcftools view \
+            --include 'AA=\"A,C,G,T,a,c,g,t\" && REF!=AA && ALT=AA' | \
+        bcftools query \
+            --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n' | \
+        head -n 20")
 
 
-print_text("working on the upper vs. lower case problem", header=3)
-print_text("create a tab separated file with the position info and ancestral allele in upper case of each SNP. Then create an index for this tab-delimited file using tabix.", header=4)
-run_bash(" \
-    bcftools +split-vep \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2.vcf.gz \
-        --annotation CSQ \
-        --columns AA:String | \
-    bcftools annotate \
-        --remove INFO/CSQ | \
-    bcftools view \
-        --drop-genotypes \
-        --no-header | \
-    awk \
-        'BEGIN{ \
-            FS=\"\t|;|=\"; \
-            OFS=\"\t\"}; \
-        { \
-            for(i=1;i<=NF;i++){ \
-                if($i==\"AA\"){ \
-                    $(i+1) = toupper($(i+1)); \
-                    print $1, $2, $(i+1); \
-                    next \
+    print_text("Problem upper vs. lower case ancestral allele", header=3)
+    print("We have a problem with case sensitive. We have previously seen that if REF=C and AA=c, REF is NOT considered to be equal to AA. Therefore, if ALT=C and AA=c, ALT is NOT considered to be equal to AA. So I am creating a new AA field with all alleles as upper case, so we avoid this problem and we can consider ancestral alleles with high and low confidence (upper and lower case, respectively)")
+    
+    print_text("extract the position (index) of the columns CHROM and POS in the VCF file, so we can be sure we are selecting these two columns. We need these columns to create a file with chrom, pos and upper ancestral allele that will be included as a new field in the VCF file using tabix (see below)", header=4)
+    print("obtain the position of these columns using awk")
+    indexes_chrom_pos = run_bash(" \
+        bcftools +split-vep \
+            --annotation CSQ \
+            --columns AA:String \
+            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz | \
+        bcftools annotate \
+            --remove INFO/CSQ | \
+        bcftools view \
+            --header | \
+        awk \
+            'BEGIN{FS=\"\t\"}; \
+            END{ \
+                for(i=1;i<=NF;i++){ \
+                    if($i == \"#CHROM\"){ \
+                        chrom_index=i \
+                    }; \
+                    if($i == \"POS\"){ \
+                        pos_index=i \
+                    }; \
+                    if($i ~/^HG/ || $i ~/^NA/){ \
+                        n_samples++\
+                    } \
+                }; \
+                n_fields=NF; \
+                printf \"n_fields=%s,n_samples=%s,chrom=%s,pos=%s\", n_fields, n_samples, chrom_index, pos_index \
+            }'", return_value=True).strip()
+        #get the header of the VCF file after extracting AA from CSQ and removing CSQ, just like we are going to do when we replace lower for upper case in the next line
+        #open the header with AWK
+            #when you reach the last line, which includes the headers
+                #run loop across fields, i.e., headers
+                    #if the header is CHROM or POS then save the index of the field as a new variable, chrom_index and pos_index, respectively.
+                        #"i" is the index, like 1, 2, 3... because of this, when you do $i is like you are doing $1.
+                        #if we save "i", we are saving the index, the number
+                        #https://unix.stackexchange.com/a/616495
+                    #if the header starts with HG or NA, add 1 to the count of n_samples, because this is a GT column for a given sample
+                        #"~" let you use regular expression
+                        #"/.../" is a regular expression to match text that meet condition
+                        #"^" text that starts with...
+                        #https://unix.stackexchange.com/a/72763
+                #save the number of fields
+            #then print the number of fields, the number of sample and the index of both CHROM and POS
+                #https://www.gnu.org/software/gawk/manual/html_node/Printf-Examples.html
+    print("extract the numbers")
+    n_fields = indexes_chrom_pos.split(",")[0].replace("n_fields=", "")
+    n_samples = indexes_chrom_pos.split(",")[1].replace("n_samples=", "")
+    index_chrom = indexes_chrom_pos.split(",")[2].replace("chrom=", "")
+    index_pos = indexes_chrom_pos.split(",")[3].replace("pos=", "")
+    print("total number of fields: " + n_fields)
+    print("number of samples: " + n_samples)
+    print("index of column CHROM: " + index_chrom)
+    print("index of column POS: " + index_pos)
+    print("the total number of fields minus the number of samples should be 9. The number of fixed fields in VCF v4.2 is 8 and then FORMAT, which in our case only has GT, thus we should have 9 fields. Also, the index of CHROM and POS should be 1 and 2, respectively")
+    if (int(n_fields)-int(n_samples) == 9) & (index_chrom=="1") & (index_pos=="2"):
+        print("YES! GOOD TO GO!")
+    else:
+        raise ValueError("FALSE! ERROR! WE HAVE A PROBLEM WITH THE FIELDS OF THE VCF FILE BEFORE CONVERTING TO UPPER CASE ANCESTRAL ALLELES")
+
+    print_text("create a tab separated file with the position info and ancestral allele in upper case of each SNP", header=4)
+    run_bash(" \
+        bcftools +split-vep \
+            --annotation CSQ \
+            --columns AA:String \
+            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz | \
+        bcftools annotate \
+            --remove INFO/CSQ | \
+        bcftools view \
+            --drop-genotypes \
+            --no-header | \
+        awk \
+            'BEGIN{ \
+                FS=\"\t|;|=\"; \
+                OFS=\"\t\"}; \
+            { \
+                for(i=1;i<=NF;i++){ \
+                    if($i==\"AA\"){ \
+                        $(i+1) = toupper($(i+1)); \
+                        print $" + index_chrom + ", $" + index_pos + ", $(i+1); \
+                        next \
+                    } \
                 } \
-            } \
-        }' \
-    > ./data/dummy_vcf_files/00_dummy_vcf_files_vep/anc_alleles_uppercase.tsv; \
-    sed  \
-        --in-place \
-        --expression '1i #CHROM\tPOS\tAA_upcase' \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/anc_alleles_uppercase.tsv; \
-    bgzip \
-        --force \
-        --keep \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/anc_alleles_uppercase.tsv; \
-    echo 'See the tab file with upper case ancestral alleles'; \
-    gunzip \
-        --stdout \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/anc_alleles_uppercase.tsv.gz; \
-    tabix \
-        --sequence 1 \
-        --begin 2 \
-        --end 2 \
-        --force \
-        --comment '#' \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/anc_alleles_uppercase.tsv.gz; \
-    echo 'See the tab file with upper case ancestral alleles after creating the index'; \
-    gunzip \
-        --keep \
-        --stdout \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/anc_alleles_uppercase.tsv.gz; \
-    ls -l ./data/dummy_vcf_files/00_dummy_vcf_files_vep/")
-        #convert to upper case the ancestral alleles using awk
-            #Based on "#https://www.biostars.org/p/304979/"
-            #start and set 
-                #the field separator
-                    #"\t", ";" and "=" so we separate the fields like POS, CHROM... and the tags we have inside INFO that are in the format AC=3;AF=1... so we have the tag and its value as a different field
-                        #https://www.gnu.org/software/gawk/manual/html_node/Field-Separators.html
-                    #you can have sevaral delimiters separated with "|"
-                        #https://stackoverflow.com/questions/12204192/using-multiple-delimiters-in-awk
-                #the output field separator
-                    #"\t" because we want a tsv
-            #for i to the number of delimited fields
-                #if the field the ancestral allele (AA)
-                    #update the next field (value of AA) with the same string that was present but in upper case.
-                    #then print the fields 1 (chrom), 2 (pos), i+1 (AA value)
-                        #this is the format required by bcftools annotate to create a new field based on a tab delimited file
-                            #--annotations: VCF file or tabix-indexed FILE with annotations: CHR\tPOS[\tVALUE]
-                    #go to next row
-                        #next is used to go to the next line once you ahve fullfill the condition. It makes things faster if you have another if after, because if you already satisifed the condition, you do not need to do more stuff there.
-                            #https://www.tecmint.com/use-next-command-with-awk-in-linux/
-                            #https://www.biostars.org/p/304979/
-        #save the result as a file
-        #add a header to that file (tab separated names) but annotating that new line with "#" to avoid problems with tabix
-            #https://unix.stackexchange.com/a/401673
-        #compress using bgzip (from samtools) so the file is recognised by tabix, see below
-            #https://github.com/samtools/bcftools/issues/668
-        #create index of the tab delimited file with SNP positions and upper ancestral alleles
-            #Tabix indexes a TAB-delimited genome position file in.tab.bgz and creates an index file (in.tab.bgz.tbi or in.tab.bgz.csi) when region is absent from the command-line. The input data file must be position sorted and compressed by bgzip which has a gzip(1) like interface.
-            #After indexing, tabix is able to quickly retrieve data lines overlapping regions specified in the format "chr:beginPos-endPos". (Coordinates specified in this region format are 1-based and inclusive.)
-            #tabix
-                #--sequence: column number for sequence names
-                    #chromosome in our case (first column)
-                    #CHECK THAT CHROMSOME AND POS ARE THE FIRST AND SECOND COLUMNS WHEN USING THIS ON REAL DATA
-                #--begin: column number for region start
-                    #position of the SNP in our case (second column)
-                    #I am using the coordinates from the VCF file, so they are 1-based, so I have not to use "--zero-based".
-                #--end: column number for region end (if no end, set INT to -b). The end column can be the same as the start column.
-                    #again the SNP position in our case (second column)
-                #--force: overwrite existing index without asking
-                #--comment: skip comment lines starting with CHAR
-                    #in our case we use "#" to comment the first line with the header
-                #http://www.htslib.org/doc/tabix.html
+            }' \
+        > ./results/00_vep_vcf_files/anc_alleles_uppercase_chr" + selected_chromosome + ".tsv; \
+        sed  \
+            --in-place \
+            --expression '1i #CHROM\tPOS\tAA_upcase' \
+            ./results/00_vep_vcf_files/anc_alleles_uppercase_chr" + selected_chromosome + ".tsv; \
+        bgzip \
+            --force \
+            ./results/00_vep_vcf_files/anc_alleles_uppercase_chr" + selected_chromosome + ".tsv; \
+        echo 'See first lines of the tab file with upper case ancestral alleles'; \
+        gunzip \
+            --stdout \
+            ./results/00_vep_vcf_files/anc_alleles_uppercase_chr" + selected_chromosome + ".tsv.gz | head -n 70")
+            #convert to upper case the ancestral alleles using awk
+                #Based on "#https://www.biostars.org/p/304979/"
+                #start and set 
+                    #the field separator
+                        #"\t", ";" and "=" so we separate the fields like POS, CHROM... and the tags we have inside INFO that are in the format AC=3;AF=1... so we have the tag and its value as a different field
+                            #https://www.gnu.org/software/gawk/manual/html_node/Field-Separators.html
+                        #you can have sevaral delimiters separated with "|"
+                            #https://stackoverflow.com/questions/12204192/using-multiple-delimiters-in-awk
+                    #the output field separator
+                        #"\t" because we want a tsv
+                #for i to the number of delimited fields
+                    #if the field is the ancestral allele (AA)
+                        #update the next field (value of AA) with the same string that was present but in upper case.
+                        #then print the fields 1 (chrom), 2 (pos), i+1 (AA value)
+                            #this is the format required by bcftools annotate to create a new field based on a tab delimited file
+                                #--annotations: VCF file or tabix-indexed FILE with annotations: CHR\tPOS[\tVALUE]
+                        #go to next row
+                            #next is used to go to the next line once you have fulfilled the condition. It makes things faster if you have another if after, because if you already satisifed the condition, you do not need to do more stuff there.
+                                #https://www.tecmint.com/use-next-command-with-awk-in-linux/
+                                #https://www.biostars.org/p/304979/
+            #save the result as a file
+            #add a header to that file (tab separated names) but annotating that new line with "#" to avoid problems with tabix
+                #https://unix.stackexchange.com/a/401673
+            #compress using bgzip (from samtools) so the file is recognised by tabix, see below
+                #https://github.com/samtools/bcftools/issues/668
 
-print_text("take the indexed and tab-delimited file with the ancestral alleles in upper case and the position to create a new field with upper ancestral alleles, save the new VCF file", header=4)
-run_bash(" \
-    cd ./data/dummy_vcf_files/00_dummy_vcf_files_vep/; \
-    bcftools +split-vep \
-        ./dummy_example_vep_2.vcf.gz \
-        --annotation CSQ \
-        --columns AA:String | \
-    bcftools annotate \
-        --remove INFO/CSQ \
-        --annotations ./anc_alleles_uppercase.tsv.gz \
-        --columns CHROM,POS,.AA_upcase \
-        --header-line '##INFO=<ID=AA_upcase,Number=.,Type=String,Description=\"The AA field from INFO/CSQ after converting alleles to uppercase\">' > ./dummy_example_vep_2_anc_up.vcf; \
-    cat ./dummy_example_vep_2_anc_up.vcf")
-        #From the CSQ field added by VEP, extract the tag "AA" as a string, which is the ancestral state.
-        #remove the CSQ field
-        #add a new INFO/Tag using the tab delimited file previously created
-        #select the columns from the tab file in which we are interested
-            #We do ".AA" because we want to include also missing values (i.e., 'AA=.')
-                #.TAG 
-                    #Add TAG even if the source value is missing. This can overwrite non-missing values with a missing value and can create empty VCF fields (TAG=.)
-                #TAG
-                    #Add TAG if the source value is not missing (“.”). If TAG exists in the target file, it will be overwritten
-                #+TAG
-                    #Add TAG if the source value is not missing and TAG is not present in the target file.
-                #.+TAG
-                    #Add TAG even if the source value is missing but only if TAG does not exist in the target file; existing tags will not be overwritten.
-                #https://samtools.github.io/bcftools/howtos/annotate.html
-        #add the header line for this new tag
-        #save as a new file
-print("We can how the new tag AA_upcase has ACTG in uppercase, while the rest of characters ('.', '-', 'N') remain the same")
+    print_text("check whether the position in the new file is position sorted, as this is a requirement of tabix", header=4)
+    print("extract the second column (POS) avoiding the header (NR=1)")
+    list_pos = run_bash(" \
+        gunzip \
+            --stdout \
+            ./results/00_vep_vcf_files/anc_alleles_uppercase_chr" + selected_chromosome + ".tsv.gz | \
+        awk \
+            'BEGIN{FS=\"\t\"}{ \
+                if(NR>1){print $2} \
+            }'", return_value=True).split()
+    print("convert to integer each position because we get it in the form of string from run_bash")
+    list_pos = [int(pos) for pos in list_pos]
+    print("sort in ascending order") 
+    list_pos_sorted = sorted(list_pos)
+        #sorted([1,2,3,5,4]) gives [1, 2, 3, 4, 5]
+    print("check that both lists are the same and hence the original was already sorted")
+    if list_pos==list_pos_sorted:
+        print("YES! GOOD TO GO!")
+    else:
+        raise ValueError("FALSE! ERROR! Coordinates are not sorted in ascending order")
+
+    print_text("check also that the first column of chrom only have one unique chromosome", header=4)
+    print("extract the unique chromosomes avoiding the header (NR=1)")
+    uniq_chrom = run_bash(" \
+        gunzip \
+            --stdout \
+            ./results/00_vep_vcf_files/anc_alleles_uppercase_chr" + selected_chromosome + ".tsv.gz | \
+        awk \
+            'BEGIN{FS=\"\t\"}{ \
+                if(NR>1 && !a[$1]++){print $1} \
+            }'", return_value=True).strip()
+        #print the unique chromosomes in the file avoiding the first row with the headers (i.e., NR=1)
+            #a[$1] is the name of the array that holds $1 (chromosome) as keys.
+            #uses the current value of $1 as key to the array "a", taking the value stored there. If this particular key was never referenced before, a[$2] evaluates to the empty string.
+            #In "!a[$1]", the ! negates the value from before. If it was empty or zero (i.e., the key was never referenced before; false), we now have a true result. If it was non-zero (i.e., the key was referenced before; true in the original test), we have a false result. If the whole expression evaluated to true, meaning that a[$1] was not set to begin with, the whole line is printed as the default action. Therefore, it is only printing a value of $1 if was never references before, i.e., non-duplicate.
+            #In other words:
+                #a[$1]: look at the value of key $1, in associative array a. If it does not exist, automatically create it with an empty string.
+                #!a[$1]++: negate the value of expression. If a[$1]++ returned 0 (a false value), the whole expression evaluates to true, and makes awk perform the default action print $1. Otherwise, if the whole expression evaluates to false, no further action is taken.
+    print("check we have only one value of CHROM in the form of string and it is the correct one")
+    if (type(uniq_chrom)==str) & (uniq_chrom=="chr"+selected_chromosome):
+        print("YES! GOOD TO GO!")
+    else:
+        raise ValueError("FALSE! ERROR! WE HAVE MORE THAN 1 CHROMOSOME")
+
+    print_text("Then create an index for this tab-delimited file using tabix.", header=4)
+    run_bash(" \
+        tabix \
+            --sequence 1 \
+            --begin 2 \
+            --end 2 \
+            --force \
+            --comment '#' \
+            ./results/00_vep_vcf_files/anc_alleles_uppercase_chr" + selected_chromosome + ".tsv.gz; \
+        echo 'See first lines of the tab file with upper case ancestral alleles after creating the index'; \
+        gunzip \
+            --keep \
+            --stdout \
+            ./results/00_vep_vcf_files/anc_alleles_uppercase_chr" + selected_chromosome + ".tsv.gz | head -n 70")
+            #create index of the tab delimited file with SNP positions and upper ancestral alleles
+                #Tabix indexes a TAB-delimited genome position file in.tab.bgz and creates an index file (in.tab.bgz.tbi or in.tab.bgz.csi) when region is absent from the command-line. The input data file must be position sorted and compressed by bgzip which has a gzip(1) like interface.
+                #After indexing, tabix is able to quickly retrieve data lines overlapping regions specified in the format "chr:beginPos-endPos". (Coordinates specified in this region format are 1-based and inclusive.)
+                #tabix
+                    #--sequence: column number for sequence names
+                        #chromosome in our case (first column)
+                    #--begin: column number for region start
+                        #position of the SNP in our case (second column)
+                        #I am using the coordinates from the VCF file, so they are 1-based, so I have not to use "--zero-based".
+                    #--end: column number for region end (if no end, set INT to -b). The end column can be the same as the start column.
+                        #again the SNP position in our case (second column)
+                    #--force: overwrite existing index without asking
+                    #--comment: skip comment lines starting with CHAR
+                        #in our case we use "#" to comment the first line with the header
+                    #http://www.htslib.org/doc/tabix.html
+
+    print_text("take the indexed and tab-delimited file with the ancestral alleles in upper case and the position to create a new field with upper ancestral alleles, save the new VCF file and then take a look at it", header=4)
+    run_bash(" \
+        bcftools +split-vep \
+            --annotation CSQ \
+            --columns AA:String \
+            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz | \
+        bcftools annotate \
+            --remove INFO/CSQ \
+            --annotations ./results/00_vep_vcf_files/anc_alleles_uppercase_chr" + selected_chromosome + ".tsv.gz \
+            --columns CHROM,POS,.AA_upcase \
+            --header-line '##INFO=<ID=AA_upcase,Number=.,Type=String,Description=\"The AA field from INFO/CSQ after converting alleles to uppercase\">' \
+            --output-type z\
+            --output ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.anc_up.vcf.gz; \
+        bcftools query \
+            --format '%TYPE %ID %CHROM %POS %REF %ALT AA:%AA AA_upcase:%AA_upcase\n' \
+            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.anc_up.vcf.gz | \
+        head -n 100")
+            #From the CSQ field added by VEP, extract the tag "AA" as a string, which is the ancestral state.
+            #remove the CSQ field
+            #add a new INFO/Tag using the tab delimited file previously created
+            #list the the columns from the tab file that will be used in the annotation
+                #We do ".AA" because we want to include also missing values (i.e., 'AA=.') and overwrite existing tags with the same name as I am using a custom name for uppercase ancestral alleles
+                    #.TAG 
+                        #Add TAG even if the source value is missing. This can overwrite non-missing values with a missing value and can create empty VCF fields (TAG=.)
+                    #TAG
+                        #Add TAG if the source value is not missing (“.”). If TAG exists in the target file, it will be overwritten
+                    #+TAG
+                        #Add TAG if the source value is not missing and TAG is not present in the target file.
+                    #.+TAG
+                        #Add TAG even if the source value is missing but only if TAG does not exist in the target file; existing tags will not be overwritten.
+                    #https://samtools.github.io/bcftools/howtos/annotate.html
+            #add the header line for this new tag
+            #save as a new compressed file
+                #--output
+                    #Write output to a file
+                #--output-type
+                    #u/b: un/compressed BCF, v/z: un/compressed VCF, 0-9: compression level [v]
+    print("We can see how the new tag AA_upcase has ACTG in uppercase, while the rest of characters ('.', '-', 'N') remain the same")
+
+##por aqui
+#count SNPs with lower case and then checks about new AA_upcase field
+
+    print_text("calculate the percentage of SNPs with low-confidence ancestral alleles, i.e., lower-case alleles", header=4)
+    print("get the number of SNPs and SNPs with upper using awk")
+    counts_case = run_bash(" \
+        bcftools query \
+            --format '%TYPE\t%AA\n' \
+            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.anc_up.vcf.gz | \
+        awk \
+            'BEGIN{ \
+                FS=\"\t\"}; \
+            { \
+                if($1 == \"SNP\"){count_1++} \
+                if($1 == \"SNP\" && $2==toupper($2)){count_2++} \
+            }END{ printf \"count_snps=%s,count_snps_upper_anc=%s\", count_1, count_2 }'", return_value=True).strip()
+        #get the variant type and ancestral allele (with lower and upper case) from the VCF file for each variant, being separated by tab
+            #very IMPORTANT to maintain the order (AA second), because we will use AWK to filter using columns indexes assuming that AA is the second
+        #in awk
+            #if the variant in the row is a SNP, then add one to count_1
+            #if the variant in the row is a SNP and its ancestral allele is upper case, add 1 to count_2
+            #at the END, print both counts
+    print("extract the counts")
+    total_count_snps = int(counts_case.split(",")[0].replace("count_snps=", ""))
+    count_snps_upper_case_anc = int(counts_case.split(",")[1].replace("count_snps_upper_anc=", ""))
+    print("The number of SNPs with high-confidence ancestral alleles is " + str(count_snps_upper_case_anc))
+    print("The total number of SNPs in this chromosome is " + str(total_count_snps))
+    print("Calculate the percentage of SNPs with high-confidence ancestral alleles")
+    percent_upper_anc = (count_snps_upper_case_anc/total_count_snps)*100
+    print("IMPORTANT RESULT: The percentage of SNPs with high confidence ancestral allele is " + str(percent_upper_anc) + " thus, the percentage with low-confidence is " + str(100-percent_upper_anc))
+
+    #do this also with the VCF file before creating AA_upcase?
+        #maybe you could remove that new field and see if the previos and teh new VCF files are the same. so you can be sure your operations have not changed the VCF more than necessary
+
+
 
 print_text("check that the new INFO/TAG with ancestral alleles in upper case is exactly the same than the original AA tag but in uppercase always", header=4)
 print("calculate the number of SNPs for which AA is just AA_upcase but in lowercase")
