@@ -1401,9 +1401,9 @@ def master_processor(selected_chromosome, debugging=False):
         run_bash(" \
             bcftools view \
                 " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-            head -n 1200 > 00_ancestral_debug_subset.vcf; \
+            head -n 1200 > 00_ancestral_debug_subset_chr" + selected_chromosome + ".vcf; \
             ls -l")
-        input_vcf_file_vep="00_ancestral_debug_subset.vcf"
+        input_vcf_file_vep="00_ancestral_debug_subset_chr" + selected_chromosome + ".vcf"
     else:
         input_vcf_file_vep=input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz"
     print(input_vcf_file_vep)
@@ -1430,21 +1430,14 @@ def master_processor(selected_chromosome, debugging=False):
         #see dummy example for details about the arguments
 
 
-    print_text("see the header of the generated VCF file", header=3)
+    print_text("explore the generated VCF file and do checks", header=3)
+    print_text("view the file", header=4)
     run_bash(" \
         bcftools view \
             --header \
             ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz")
 
-
-    print_text("see CSQ field for the first variants", header=3)
-    run_bash(" \
-        bcftools query \
-            --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF CSQ: %CSQ\n' \
-            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz | \
-        head -n 1000")
-
-    print_text("do some checks about about whether we have used the correct data using the row added to the header in the VCF file by VEP", header=4)
+    print_text("do some checks about about whether we have used the VEP/ensemble/cache/assembly versions using the row added to the header in the VCF file by VEP", header=4)
     line_checks_after = run_bash(" \
         gunzip \
             --stdout \
@@ -1480,31 +1473,38 @@ def master_processor(selected_chromosome, debugging=False):
     print(ensembl_version_vcf == vep_version_vcf)
     print(ensembl_version_vcf == vep_version)
 
+    print_text("see CSQ field for the first variants", header=4)
+    run_bash(" \
+        bcftools query \
+            --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF CSQ: %CSQ\n' \
+            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz | \
+        head -n 1000")
+
     print_text("According to the VEP manual, vep does not change the vcf file, only add the CSQ field. Therefore, we could process the original vcf files and then process with our cleaning. Let's check if the vep VCF is exactly the same after we removed the CSQ field, which is the one added by AncestralAllele plugin of VEP", header=4)
     run_bash(" \
         bcftools query \
             -f '%TYPE %ID %CHROM %POS %REF %ALT %QUAL %FILTER %INFO %FORMAT\n' \
-            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz > file_check_1.txt; \
+            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz > chr" + selected_chromosome + "_file_check_1.txt; \
         bcftools annotate \
             --remove INFO/CSQ \
             ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz | \
         bcftools query \
-            -f '%TYPE %ID %CHROM %POS %REF %ALT %QUAL %FILTER %INFO %FORMAT\n' > file_check_2.txt; \
-        echo '##See head first check file:'; head -n 5 file_check_1.txt; \
-        echo '##See head second check file:'; head -n 5 file_check_2.txt; \
-        check_status=$(cmp --silent file_check_1.txt file_check_2.txt; echo $?); \
+            -f '%TYPE %ID %CHROM %POS %REF %ALT %QUAL %FILTER %INFO %FORMAT\n' > chr" + selected_chromosome + "_file_check_2.txt; \
+        echo '##See head first check file:'; head -n 5 chr" + selected_chromosome + "_file_check_1.txt; \
+        echo '##See head second check file:'; head -n 5 chr" + selected_chromosome + "_file_check_2.txt; \
+        check_status=$(cmp --silent chr" + selected_chromosome + "_file_check_1.txt chr" + selected_chromosome + "_file_check_2.txt; echo $?); \
         echo '##Do the check'; \
         if [[ $check_status -eq 0 ]]; then \
             echo 'TRUE'; \
         else \
             echo 'FALSE'; \
         fi; \
-        rm file_check_1.txt; rm file_check_2.txt; \
+        rm chr" + selected_chromosome + "_file_check_1.txt; rm chr" + selected_chromosome + "_file_check_2.txt; \
         ls -l")
     
     
     print_text("Create a new AA field using the ancestral allele stored in CSQ/AA", header=3)
-    print_text("see the header of the VCF file after VEP processing", header=4)
+    print_text("see again the header of the VCF file after VEP processing", header=4)
     run_bash("\
         bcftools head \
             ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz")
@@ -1514,33 +1514,133 @@ def master_processor(selected_chromosome, debugging=False):
         bcftools +split-vep \
             --list \
             ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz")
-    
-    print_text("make tags inside CSQ available", header=4)
+
+    print_text("make tags inside CSQ available and then extract AA as a new column outside CSQ. You can then make a query and call AA without +split-vep", header=4)
     run_bash("\
         bcftools +split-vep \
             --annotation CSQ \
-            --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n' \
+            --columns AA:String \
             ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz | \
-        head -n 50")
-    
-    print_text("IMPORTANT CHECK: Check that all the consequences the same variant has across transcripts have ALWAYS the same ancestral allele", header=4)
-    print("First, extract the AA field, where we have 1 row per SNP and each consequence across transcripts is separated by ',', these are going to by our columns")
-    run_bash(" \
+        bcftools query \
+            --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n'")
+
+
+    print_text("why I am directly calling AA using +split-vep?", header=4)
+    print("If you query %AA using  +split-vep and --annotation CSQ, you would not get variants where there is empty AA, i.e., '', you would get those with A='.', but not with AA=''")
+    print("In the script, if you run the next lines for chromosome 1, you will see how we have more variants if we call AA as an independent INFO/AA field with bcftools query than if we just call it inside CSQ with +split-vep. 1:10398:C:CCCCTAA has AA='', i.e., there is no data, no space for AA. This is the variant lost when directly making the query with +split-vep. If we use +split-vep but do not call AA in the query, we DO get the missing variant. It seems that bcftools add '.' to these empty cases when querying outside of CSQ as shown for 1:10398:C:CCCCTAA. I prefer to get all variants and then deal with those without data, so we will use the first approach")
+    if selected_chromosome=="1":
+        run_bash(" \
+            bcftools +split-vep \
+                --annotation CSQ \
+                --columns AA:String \
+                ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz | \
+            bcftools query \
+                --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n' | \
+            head -n 4")
+        run_bash(" \
+            bcftools +split-vep \
+                --annotation CSQ \
+                --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n' \
+                ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz | \
+            head -n 3")
+        run_bash(" \
+            bcftools +split-vep \
+                --annotation CSQ \
+                --format '%TYPE %ID %CHROM %POS %REF %ALT\n' \
+                ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz | \
+            head -n 3")
+
+    print_text("use AA to filter", header=4)
+    print("exclude those SNPs for which the REF allele IS NOT the ancestral. Note that 'A' and 'a' are considered different, this is something we will deal later")
+    run_bash("\
         bcftools +split-vep \
             --annotation CSQ \
-            --format '%AA\n' \
-            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz > check_ancestral_transcripts.csv")
-    print("Then add a new line at the beginning with two different alleles to check our approach is able to discard these cases")
+            --columns AA:String \
+            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz | \
+        bcftools query \
+            --exclude 'REF=AA' \
+            --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n' | \
+        head -n 70")
+    print("exclude those SNPs for which the REF allele IS the ancestral")
+    run_bash("\
+        bcftools +split-vep \
+            --annotation CSQ \
+            --columns AA:String \
+            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz | \
+        bcftools query \
+            --include 'REF=AA' \
+            --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n' | \
+        head -n 70")
+    print("As you can see, we can just filter by the ancestral allele using AA and it does not consider C, C, C.... but only C, see below")
+
+    print_text("extract AA tag from CSQ and then remove CSQ", header=4)
+    run_bash("\
+        bcftools +split-vep \
+            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz \
+            --annotation CSQ \
+            --columns AA:String | \
+        bcftools annotate \
+            --remove INFO/CSQ | \
+        bcftools query \
+            --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n' | \
+        head -n 50")
+
+
+    print_text("IMPORTANT CHECK: Check that all the consequences the same variant has across transcripts have ALWAYS the same ancestral allele", header=3)
+    print_text("First, extract the AA field, where we have 1 row per SNP and each consequence across transcripts is separated by ',', these are going to by our columns", header=4)
     run_bash(" \
-        sed  \
+        bcftools +split-vep \
+            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz \
+            --annotation CSQ \
+            --columns AA:String | \
+        bcftools annotate \
+            --remove INFO/CSQ | \
+        bcftools query \
+            --format '%AA\n' > check_ancestral_transcripts_chr" + selected_chromosome + ".csv; \
+        head -n 50 check_ancestral_transcripts_chr" + selected_chromosome + ".csv")
+    
+    print_text("get the number of rows of the file", header=4)
+    total_ancestral_check_before = run_bash(" \
+        awk \
+            'END{print NR}'\
+            check_ancestral_transcripts_chr" + selected_chromosome + ".csv", return_value=True).strip()
+    
+    print_text("Then add a new lines at the beginning with two different alleles to check our approach is able to discard these cases. Also add two lines with the same alleles, i.e., two spaces and two empty fields, which should be considered as equal", header=4)
+    run_bash(" \
+        sed \
             --in-place \
-            '1i A,G' \
-            check_ancestral_transcripts.csv")
+            --expression '1i A,a' \
+            --expression '1i A,1' \
+            --expression '1i A,!' \
+            --expression '1i \\ ,A' \
+            --expression '1i ,A' \
+            --expression '1i \\ ,' \
+            --expression '1i \\ , ' \
+            --expression '1i ,' \
+            check_ancestral_transcripts_chr" + selected_chromosome + ".csv; \
+        head -n 50 check_ancestral_transcripts_chr" + selected_chromosome + ".csv")
+        #Change directly in the file (in place), and add 
+            #"A,a": 
+                #So we can be sure awk differentiate even the same letter in different case
+            #"A,1"
+                #to check awk can differentiate letters from numbers
+            #"A,!"
+                #to check awk can differentiate letters from symbols
+            #" ,A": 
+                #Space and then A (we have to add "\" in sed in order to add spaces in the expression) to check letters are differentiated from spaces
+            #",A"
+                #empty field and then A to check letters are differentiated from blank fields
+            #" ,"
+                #space and empty to check that both are clearly differentiated
+            #" , "
+                #two spaces to check whether two spaces are considered equal
+            #","
+                #two empty fields to check that two different fields that are empty are considered as identical
         #https://unix.stackexchange.com/a/99351
-    print("In some rows, we will have more consequences (columns) and other will have less consequences and hence less columns. We will deal with that using awk")
-
-    ##por aquiii
-
+        #https://stackoverflow.com/a/43420225/12772630
+        #https://stackoverflow.com/a/39788362/12772630
+    
+    print_text("Calculate the number of SNPs for which there is only 1 unique ancestral allele. In some rows, we will have more consequences (columns) and other will have less consequences and hence less columns. We will deal with that using awk", header=4)
     n_pass_ancestral_check = run_bash("\
         awk \
             'BEGIN{ \
@@ -1548,206 +1648,142 @@ def master_processor(selected_chromosome, debugging=False):
             }{ \
                 if(NF != 1){ \
                     for(i=2; i<=NF; i++){ \
-                        if($(i-1)!=\"\" && $i!=\"\"){ \
-                            if($(i-1)==$i){count_1++} \
-                        }else{count_1++} \
+                        if($(i-1)==$i){count_1++} \
                     };\
-                    if((NF-1)==count_1){count_2++} \
-                } else if (NF == 1){ \
+                    if((NF-1)==count_1){count_2++}; \
+                    count_1=\"\" \
+                }else if(NF == 1){ \
                     count_2++ \
                 }; \
-                count_1=\"\"\
-            }END{print count_2++}' check_ancestral_transcripts.csv", return_value=True).strip()
+            }END{ \
+                print count_2++ \
+            }' \
+            check_ancestral_transcripts_chr" + selected_chromosome + ".csv", return_value=True).strip()
+        #load the file using the commas as field separator
+        #if the row has more than 1 column:
+            #remember that each row can have a different number of columns because each SNP can have more or less consequences. Therefore our loop across columns only work only for those rows with more than 1 column
+            #from the field 2 to the last one
+                #if the previous field (i-1) and the current field are identical, then add 1 to the count_1
+                #this is able to detect as different an space " " in the field 1 vs an blank value "" in the next field or upper vs lower case (see new lines added to the csv).
+                #in previous versions,
+                    #I considered as OK those cases where $i or $(i-1) were blank, for example, "A, ,".
+                    #I did that but adding an additional if else, so if both fields were NOT blank, I do the if previously explained, but if one of them is blank, no check was done and I gave it for good. 
+                        #if($(i-1)!=\"\" && $i!=\"\"){ \
+                            #if($(i-1)==$i){count_1++} \
+                        #}else{count_1++} \
+                    #but this is not ok because "A" and "" are not the same. I would expect that all consequences have EXACTLY the same ancestral allele. So we should get TRUE for this check without this line of code
+            #then check whether the count_1 across fields is equal to the number of fields minus 1, e.g., we have 3 columns, you compare 1 with 2 and 2 with 3. If all are equal, we would have 2 counts (3 fields - 1). If True, then add 1 to count_2
+            #then set the count_1 to "", so it is empty when we repeat the process with the next row
+        #if not, and the number of fields is only 1
+            #just add 1 to count_2
+                #if there is only one consequence, i.e., one ancestral allele, there is really no need to compare. We know for sure there is only 1 unique ancestral allele, which is the main goal of this script.
+        #return count_2 at the END, which is the total number of rows, i.e., SNPs, for which there is only 1 unique ancestral allele.
         #https://stackoverflow.com/a/57984015/12772630
-
+    
+    print_text("now check that the number of SNPs with 1 unique ancestral allele is exactly the total number of variantes before adding the new lines PLUS 2. Remember we added several lines with different ancestral alleles in each one. These new lines should NOT be counted by our approach, except the last 2, which included two spaces and two empty fields, respectively, and hence are identical. Therefore, we should have the original number of variants plus 2", header=4)
+    if (int(total_ancestral_check_before)+2) == int(n_pass_ancestral_check):
+        print("YES! GOOD TO GO! All variants have 1 unique ancestral allele, so we can just select 1 per variant")
+    else:
+        raise ValueError("SERIOUS ERROR! THE CHECK FOR 1 UNIQUE ANCESTRAL ALLELE PER VARIANT FAILED. WE NEED TO CAREFULLY CHECK THIS BECAUSE WE CAN ONLY SELECT ONE ANCESTRAL ALLELE PER VARIANT")
+    print("remove the csv files used to do the check")
     run_bash(" \
-        total_cases=$( \
-            awk \
-                'END{print NR}' \
-                check_ancestral_transcripts.csv); \
-        if [[ $total_cases -eq $((" + n_pass_ancestral_check + " + 1)) ]]; then \
-            echo 'TRUE'; \
-        else \
-            echo 'FALSE'; \
-        fi")
-        #plus 1 because the we have added a row with two different ancestral alleles that should NOT be counted
-
-    run_bash("rm check_ancestral_transcripts.csv")
+        rm check_ancestral_transcripts_chr" + selected_chromosome + ".csv; \
+        ls -l")
 
 
-#WE HAVE TO CHECK THIS WHEN THE AA FIELD IS ALONE
-#I have checked in the information obtained from VEP for several SNPs file that the same SNP can be in different transcripts with different strand, but the ancestral allele is always the same.
+    print_text("make more checks on the vep generated file", header=3)
+    print_text("there is any problem with multiallelic variants?", header=4)
+    run_bash(" \
+        bcftools +split-vep \
+            --annotation CSQ \
+            --columns AA:String \
+            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz | \
+        bcftools annotate \
+            --remove INFO/CSQ | \
+        bcftools norm \
+            --multiallelic +snps | \
+        bcftools view \
+            --min-alleles 3 | \
+        bcftools query \
+            --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AA\n' | \
+        head -n 10")
+    print("As you can see in these few cases, the different alleles of the same variant get the same ancestral allele and the rest goes for the rest of CSQ fields. This makes sense because the different lines of a multiallelic variant have the same position, thus they get the same ancestral allele. I am not going to check more here as multiallelic variants are going to be filtered out in the script")
 
-#check in the real data what happens with the strand in VEP output.
-    #you can have same SNP being included in different transcripts with different strands
-    #In the dummy example, all consequences of the same SNP have the same AA, even if the strand is different
+    print_text("select SNPs for which the ancestral allele is ACGT or acgt, avoiding cases where AA='.' or '-'", header=4)
+    run_bash("\
+        bcftools +split-vep \
+            --annotation CSQ \
+            --columns AA:String \
+            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz | \
+        bcftools query\
+            --include 'AA=\"A,C,G,T,a,c,g,t\"'\
+            --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n' | \
+        head -n 70")
+            #we get rid of the SNP with AA=".", but also of AA="", i.e., empty. The variant 1:10398:C:CCCCTAA in chromosome 1 has no string for AA and it is removed from here.
+            #Comma in strings is interpreted as a separator and when multiple values are compared, the OR logic is used. Consequently, the following two expressions are equivalent but not the third:
+                #-i 'TAG="hello,world"'
+                #-i 'TAG="hello" || TAG="world"'
+                #-i 'TAG="hello" && TAG="world"'
+                    #https://samtools.github.io/bcftools/bcftools.html#expressions
+            #This is exactly what we want, check that our TAG ("AA") has ACGT both in upper (ACGT) and lower (acgt) case. See next line to understand why we need lower case.
+            #Remember that the convention for the sequence in ancestral allele determination is:
+                #ACTG: high-confidence call, ancestral state supported by the other two sequences
+                #actg: low-confidence call, ancestral state supported by one sequence only
+                #N: failure, the ancestral state is not supported by any other sequence
+                #-: the extant species contains an insertion at this postion
+                #.: no coverage in the alignment
+                    #supplementary file of the paper for 1KGP phase 3 (section 8)
+                        #https://static-content.springer.com/esm/art%3A10.1038%2Fnature15393/MediaObjects/41586_2015_BFnature15393_MOESM86_ESM.pdf
+                    #README ancestral fasta file for hg19
+                        #https://ftp.ensembl.org/pub/release-75/fasta/ancestral_alleles/homo_sapiens_ancestor_GRCh37_e71.README
+            #In addition, the plugin AncestralAllele has two special conditions:
+                #"-" represents an insertion
+                #"?" indicates the chromosome could not be looked up in the FASTA
+                    #https://useast.ensembl.org/info/docs/tools/vep/script/vep_plugins.html#ancestralallele
+            #Therefore, we only want to consider cases for which the ancestral allele is inferred.
 
-#there is any problem with ancestral of multiallelic snps?
+    print_text("WE HAVE TO EXCLUDE CASES WHERE REF NOR ALT ARE THE ANCESTRAL ALLELE. This can be the case for a multiallelic SNP that only has two alleles in the selected populations, being the missing one the ancestral. After multiallelic snps have been removed, we have to exclude those for which AA is not REF nor ALT. In this example, we are going to specifically select these cases to see how bcftools deals with letters with different case. Note that the VCF files of the 1KGP already have multiallelix snps separated, so we not need to do --multiallelic -snps", header=4)
+    run_bash("\
+        bcftools view \
+            --exclude 'INFO/AC=INFO/AN || INFO/AC=0' \
+            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz | \
+        bcftools norm \
+            --multiallelic +snps | \
+        bcftools view \
+            --max-alleles 2 \
+            --min-alleles 2 | \
+        bcftools +split-vep \
+            --annotation CSQ \
+            --columns AA:String | \
+        bcftools annotate \
+            --remove INFO/CSQ | \
+        bcftools view \
+            --include 'AA=\"A,C,G,T,a,c,g,t\" && REF!=AA && ALT!=AA' | \
+        bcftools query \
+            --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n' | \
+        head -n 50")
+            #remove those monomorphic SNPs. This will remove REF/ALT pairs of a multiallelic SNP if one of the ALTs is not present in the population.
+            #bind the multiallelic SNPs and remove those that still have more than 1 ALT, because these are truly multiallelic SNPs in the dummy population.
+            #Extract AA data from CSQ and create a new, independent field with that.
+        #select SNPs where AA is not REF nor ALT. These can be cases where one line of the multiallelic has been removed (e.g., because it was all REF, i.e., monomorphic) and the ALT allele of that line was actually the AA. After the removal the remaining line has REF and ALT, being none of them the AA.
+            #this filter removes problematic cases where the AA was a allele considered as ALT, maybe because was in low frequency as it was surpassed by other alleles.
+        #then select only for SNPs with actual ancestral allele estimated, instead of "." or "N"
+        #I use && instead of & because only one & looks for variants satisfying the condition within sample.
+            #For example, say our VCF contains the per-sample depth and genotype quality annotations per SNP and we want to include only sites where ONE OR MORE samples have big enough coverage (DP>10) and genotype quality (GQ>20). The expression -i 'FMT/DP>10 & FMT/GQ>20'. This would select variants for which at least one sample has good coverage and genotype quality.  
+            #but we do not want this. We want to select SNPs that fulfill certain requirements across all samples, not just within at least one sample. We want to match the whole record, using features that are similar across samples, like REF, ALT and AA.
+                #http://samtools.github.io/bcftools/howtos/filtering.html
+    print("IMPORTANT: You can see many cases for which the AA is like the REF but in lower case. These cases should not be included here because REF does not meet REF!=AA. There is a problem with the case here in bcftools.")
 
 
+#check wuickily that multialleic are already separared in 1KGDP
+##por aqui
 
-print_text("check we can call AA from CSQ and use it to filter", header=4)
-print("exclude those SNPs for which the REF allele IS NOT the ancestral")
-run_bash("\
-    bcftools +split-vep \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep.vcf.gz \
-        --annotation CSQ \
-        --exclude REF==AA \
-        --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n'")
-print("exclude those SNPs for which the REF allele IS the ancestral")
-run_bash("\
-    bcftools +split-vep \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep.vcf.gz \
-        --annotation CSQ \
-        --include 'REF=AA'\
-        --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n'")
-print("As you can see, we can just filter by the ancestral allele using AA and it does not consider C, C, C.... but only C, see below")
-
-print_text("extract AA tag from CSQ and then remove CSQ", header=4)
-run_bash("\
-    bcftools +split-vep \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep.vcf.gz \
-        --annotation CSQ \
-        --columns AA:String | \
-    bcftools annotate \
-        --remove INFO/CSQ | \
-    bcftools view")
-    #bcftools +split-vep
-        #--columns
-            #Extract the fields listed either as indexes or names. The default type of the new annotation is String but can be also Integer/Int or Float/Real.
-    #bcftools annotate
-        #--remove
-            #List of annotations to remove. Use "FILTER" to remove all filters or "FILTER/SomeFilter" to remove a specific filter. Similarly, "INFO" can be used to remove all INFO tags and "FORMAT" to remove all FORMAT tags except GT. To remove all INFO tags except "FOO" and "BAR", use "^INFO/FOO,INFO/BAR" (and similarly for FORMAT and FILTER). "INFO" can be abbreviated to "INF" and "FORMAT" to "FMT".
-
-print_text("select SNPs for which the ancestral allele is ACGT or acgt, avoiding cases where AA='.' or '-'", header=4)
-
-#CHECK THIS ALSO AVOID EMPTY CASES ",,,"
-
-run_bash("\
-    bcftools +split-vep \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep.vcf.gz \
-        --annotation CSQ \
-        --include 'AA=\"A,C,G,T,a,c,g,t\"'\
-        --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n'")
-        #we get rid of the SNP with AA="."
-        #Comma in strings is interpreted as a separator and when multiple values are compared, the OR logic is used. Consequently, the following two expressions are equivalent but not the third:
-            #-i 'TAG="hello,world"'
-            #-i 'TAG="hello" || TAG="world"'
-            #-i 'TAG="hello" && TAG="world"'
-                #https://samtools.github.io/bcftools/bcftools.html#expressions
-        #This is exactly what we want, check that our TAG ("AA") has ACGT both in upper (ACGT) and lower (acgt) case. See next line to understand why we need lower case.
-        #Remember that the convention for the sequence in ancestral allele determination is:
-            #ACTG: high-confidence call, ancestral state supported by the other two sequences
-            #actg: low-confidence call, ancestral state supported by one sequence only
-            #N: failure, the ancestral state is not supported by any other sequence
-            #-: the extant species contains an insertion at this postion
-            #.: no coverage in the alignment
-                #supplementary file of the paper for 1KGP phase 3 (section 8)
-                    #https://static-content.springer.com/esm/art%3A10.1038%2Fnature15393/MediaObjects/41586_2015_BFnature15393_MOESM86_ESM.pdf
-                #README ancestral fasta file for hg19
-                    #https://ftp.ensembl.org/pub/release-75/fasta/ancestral_alleles/homo_sapiens_ancestor_GRCh37_e71.README
-        #In addition, the plugin AncestralAllele has two special conditions:
-            #"-" represents an insertion
-            #"?" indicates the chromosome could not be looked up in the FASTA
-                #https://useast.ensembl.org/info/docs/tools/vep/script/vep_plugins.html#ancestralallele
-        #Therefore, we only want to consider cases for which the ancestral allele is inferred.
-
-print_text("now manually change ancestral of rs6054257 and rs6054252 from '.' to 'c' to check whether our expression catch it: We can see how the first SNP now with AA=c is included by the expression AA='ACTGactg', so we are targeting ancestral alleles with high and low confidence. We are also adding a few cases of '-' and 'N' to see how we deal with that (see below)", header=4)
-run_bash(" \
-    cd ./data/dummy_vcf_files/00_dummy_vcf_files_vep/; \
-    gunzip \
-        --stdout \
-        dummy_example_vep.vcf.gz | \
-    sed \
-        --expression 's/chr20:14310|A||||intergenic_variant||./chr20:14310|A||||intergenic_variant||N/g' | \
-    sed \
-        --expression 's/chr20:14320|A||||intergenic_variant||./chr20:14320|A||||intergenic_variant||-/g' | \
-    sed \
-        --expression 's/chr20:14350|A||||intergenic_variant||./chr20:14350|A||||intergenic_variant||c/g' | \
-    sed \
-        --expression 's/chr20:14370|A||||intergenic_variant||./chr20:14370|A||||intergenic_variant||c/g' > dummy_example_vep_2.vcf")
-        #decompress the VCF file to avoid problems with sed
-        #change "." by "c" in two SNPs and also change in other two to N and -
-            #ACTG: high-confidence call, ancestral state supported by the other two sequences
-            #actg: low-confidence call, ancestral state supported by one sequence only
-            #N: failure, the ancestral state is not supported by any other sequence
-            #-: the extant species contains an insertion at this postion
-            #.: no coverage in the alignment
-            #https://stackoverflow.com/questions/525592/find-and-replace-inside-a-text-file-from-a-bash-command
-        #then save as a new file
-run_bash("\
-    bcftools +split-vep \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2.vcf \
-        --annotation CSQ \
-        --include 'AA=\"A,C,G,T,a,c,g,t\"'\
-        --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n'")
-print("see how rs6054252 and rs6054257 are now included between those with ancestral allele. We will maintain these changes to have lower case ancestral allele and learn to deal with that (see below)")
-run_bash(" \
-    cd ./data/dummy_vcf_files/00_dummy_vcf_files_vep/; \
-    bgzip \
-        --force \
-        --keep \
-        dummy_example_vep_2.vcf; \
-    ls -l")
-
-print_text("see the new VCF file", header=4)
-run_bash(" \
-    bcftools +split-vep \
-        --annotation CSQ \
-        --format '%TYPE %ID %CHROM %POS %REF %ALT %AF AA=%AA\n' \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2.vcf.gz")
-
-print_text("WE HAVE TO EXCLUDE CASES WHERE REF NOR ALT ARE THE ANCESTRAL ALLELE. This can be the case for a multiallelic SNP that only has two alleles in the selected populations, being the missing one the ancestral. We will just remove actual multiallelic SNPs in this dummy population, i.e., more than 2 alleles are present in the genotype data. Then, we will exclude those SNPs where AA is not REF nor ALT.", header=4)
-run_bash("\
-    bcftools norm \
-        --multiallelic -snps \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2.vcf.gz |\
-    bcftools +fill-tags \
-        -- --tags AN,AC | \
-    bcftools view \
-        --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
-    bcftools norm \
-        --multiallelic +snps | \
-    bcftools view \
-        --max-alleles 2 \
-        --min-alleles 2 | \
-    bcftools +split-vep \
-        --annotation CSQ \
-        --columns AA:String | \
-    bcftools annotate \
-        --remove INFO/CSQ | \
-    bcftools view \
-        --exclude 'AA=\"A,C,G,T,a,c,g,t\" && REF!=AA && ALT!=AA' | \
-    bcftools view \
-        --include 'AA=\"A,C,G,T,a,c,g,t\"' | \
-    bcftools query \
-        --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n'")
-    #split multiallelic SNPs
-    #update the AN and AC fields to be sure we have the new allele count considering only each pair of REF/ALT
-    #remove those monomorphic SNPs. This will remove REF/ALT pairs of a multiallelic SNP if one of the ALTs is not present in the population. For example, the pair A/C in the example will be removed because C is not present.
-        #snp_1 REF=A ALT=C A|. A|. A|A AA=C
-        #snp_1 REF=A ALT=G A|G G|G A|A AA=C
-    #bind again the multiallelic SNPs and remove those that still have more than 1 ALT, because these are truly multiallelic SNPs in the dummy population.
-    #Extract AA data from CSQ and create a new, independent field with that.
-    #exclude SNPs where AA is not REF nor ALT
-        #in the previous example, A/C has been already removed, thus only A/G is present. Therefore, this SNP now does not have the ancestral allele. AA is not present in this dummy population, thus REF!=AA (A!=C) and ALT!=AA (G!=C) and this SNP is excluded.
-        #snp_1 REF=A ALT=G A|G G|G A|A AA=C
-    #then select only for SNPs with actual ancestral allele estimated, instead of "." or "N"
-    #I use && instead of & because only one & looks for variants satisfying the condition within sample.
-        #For example, say our VCF contains the per-sample depth and genotype quality annotations per SNP and we want to include only sites where ONE OR MORE samples have big enough coverage (DP>10) and genotype quality (GQ>20). The expression -i 'FMT/DP>10 & FMT/GQ>20'. This would select variants for which at least one sample has good coverage and genotype quality.  
-        #but we do not want this. We want to select SNPs that fulfill certain requirements across all samples, not just within at least one sample. We want to match the whole record, using features that are similar across samples, like REF, ALT and AA.
-            #http://samtools.github.io/bcftools/howtos/filtering.html
-print("IMPORTANT: We can see how rs6054252 is not included in this list even having AA=c and REF=C, thus at least one of the REF/ALT columns includes the AA and then should not be removed by the filter REF!=AA && ALT!=AA. There is a problem with the case because bcftools filters are case sensitive: C is not the same than c")
 
 print_text("select now those cases where REF!=AA but ALT=AA, because these are the cases that can be switched", header=4)
 run_bash("\
-    bcftools norm \
-        --multiallelic -snps \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2.vcf.gz |\
-    bcftools +fill-tags \
-        -- --tags AN,AC | \
     bcftools view \
-        --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
+        --exclude 'INFO/AC=INFO/AN || INFO/AC=0' \
+        ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz | \
     bcftools norm \
         --multiallelic +snps | \
     bcftools view \
@@ -2615,835 +2651,6 @@ run_bash(" \
 
 
 
-    ##########################################
-    # calculate map file within selected pop #
-    ##########################################
-
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": STARTING MAP FILE CALCULATION")
-    print("#######################################\n#######################################")
-        #we are going to calculate the map of each population directly using the SNPs in its vcf file FILTERED WITHIN population. Then, when we know for which of the SNPs we have genetic position, we can further filter the VCF file and convert to hap.
-        #an alternative would be just take all the SNPs in the raw VCF file and calculate their genetic position.
-            #it should be ok regarding the ID of the SNPs because REF/ALT are split when using multiallelics, and these fields are NOT switched based on the frequency of the SNPs in specific subsets.
-        #I am going for the first option just to be completely sure I am using the SNPs (and positions) of the selected population.
-            #If it is too slow this option, think about the other one.
-
-    #Instructions david
-        #I understand that SNPs with genetic position are NO useful for any summary statistic, right? So I can safely remove these SNPs from the VCF and hap files right?
-            #ok
-        #format of ID
-            #in the map file can I use the format "CHROM:POS_REF_ALT" for the ID? 
-            #I think remember that the map files I originally got from you in the previous project (before decode2019 conversion) used as ID just the physical position. Not sure if there is any specific reason for doing that.
-            #not asked, by irrelevant question
-        #data format decode map
-            #in the decode map, they say clearly that the data is aligned to hg38. Also they do not specify if the coordinates are 1 or 0-based so I assume they are 1-based, base 1 in the map is base 1 in the genome, to me this should be the default. 
-            #1KGP data is also aligned to hg38 and is 1-based.
-            #Therefore I can just use the position of the SNPs in 1KGP to calculate their genetic position in the decode map, right?
-                #David said that there is not problem if the map and hap files are in the same format. 
-                #that is the case because the map file is calculated with decode map, and hap file with 1KGP VCF file, and as I said, I have no reason to think that the decode map is not 1-based.
-
-
-    ##extract the SNP positions
-    #extract snps from the cleaned VCF file
-    run_bash(" \
-        bcftools view \
-            ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz | \
-        bcftools query \
-            --format '%CHROM %ID %POS %REF %ALT\n' | \
-        gzip \
-            --force \
-        > ./results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_raw.map.gz")
-            #from the cleaned VCF file, extract the chromosome, position, REF/ALT to compare with the positions in the raw hap file (see below), compress and save as a file
-
-    #Note about the format of the positions
-    #pos in VCF files v4.2 is 1-based according to the specification file (this is the format of 1KGP data). Therefore, we have here 1-based coordinates.
-        #POS - position: The reference position, with the 1st base having position 1. Positions are sorted numerically, in increasing order, within each reference sequence CHROM. It is permitted to have multiple records with the same POS. Telomeres are indicated by using positions 0 or N+1, where N is the length of the corresponding chromosome or contig. (Integer, Required)
-            #https://samtools.github.io/hts-specs/VCFv4.2.pdf
-
-    #required format according to hapbin
-        #The map files (--map) should be in the same format as used by Selscan with one row per variant and four space-separated columns specifiying 
-            #chromosome, 
-            #locus ID, 
-            #genetic position
-            #physical position.
-        #therefore, we still need to 
-            #include the genetic position
-            #remove the allele names
-
-
-    ##load the raw_map file
-    snp_map_raw = pd.read_csv(\
-        "./results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_raw.map.gz", \
-        sep=" ", \
-        header=None)
-    print("See raw map file loaded in python")
-    print(snp_map_raw)
-
-    #
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": check we have the correct number of SNPs in the map file loaded in python")
-    print("#######################################\n#######################################")
-    run_bash(" \
-        n_snps=$(\
-            bcftools view \
-                --no-header \
-                ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz | \
-            wc -l); \
-        if [[ $n_snps -eq " + str(snp_map_raw.shape[0]) + " ]]; then \
-            echo 'TRUE'; \
-        else \
-            echo 'FALSE'; \
-        fi")
-            #count the number of lines in the cleaned VCF file without the header, and check that number is equal to the number of SNPs we have in the map file loaded in python 
-
-    #rename the columns
-    snp_map_raw = snp_map_raw.rename(\
-        {0: "chr", 1: "id_old", 2: "pos", 3: "ref", 4: "alt"}, \
-        axis=1)
-            #we name ID as old because this is the ID coming from the VCF file, which we need for selecting those variants in the VCF file with genetic position. The final ID will be in plink format, see below.
-            #use a dict with old and new column names. indicated we are renaming columns (axis=1)
-    print("see map file with renamed columns")
-    print(snp_map_raw)
-
-    #
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": create a new ID variable following plink 2.0 format and check it was correctly created")
-    print("#######################################\n#######################################")
-    #the original ID column is in the format "CHR:POS:REF:ALT" but the problem is that some SNPs have their position indicated in the ID is shifted. 1KGP authors separated multiallelic SNPs in different lines with bcftools norm and then shifted their position so they could be phased, combing back to the original position afterwards (see next line). I guess during that process, they updated the IDs using chrom and the shifted position was used in the ID. Therefore, even POS comes back to the original position, the ID remains with the shifted position. I have checked several multiallelic SNPs, and they have all the same issue with the position in the ID.
-        #From README ("http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/README_1kGP_phased_panel_110722.pdf"): "SHAPEIT2 does not handle multiallelic variant phasing. To phase both biallelic and multiallelic variants we first split the multiallelics into separate rows while left-aligning and normalizing INDELs using bcftools norm tool (Li, 2011). Next, we shifted the position of multiallelic variants (2nd, 3rd, etc ALT alleles) by 1 or more bp (depending on how many ALT alleles there are at a given position) to ensure a unique start position for all variants, which is required for SHAPEIT2. We shifted the positions back to the original ones after phasing".
-    #This is not very convenient because when later we create the hap files, SNPs will have the plink format for ID to avoid avoid strand flips (CHR:POS_REF_ALT), so we are going to have different IDs between hap and map files, making more difficult to do checks.
-    #Therefore, we are going to update the ID of each SNP using plink format, and ensuring in this way SNPs will be names the same in hap and map files.
-    snp_map_raw["id"] = snp_map_raw["chr"] + ":" + snp_map_raw["pos"].astype("str") + "_" + snp_map_raw["ref"] + "_" + snp_map_raw["alt"]
-    #check
-    check_id = snp_map_raw["chr"] + ":" + snp_map_raw["pos"].astype("str") + "_" + snp_map_raw["ref"] + "_" + snp_map_raw["alt"]
-        #make a series combining chromosome, pos, ref and alt, and using the corresponding separators
-    print(check_id.equals(snp_map_raw["id"]))
-        #check it is identical to id
-    print(snp_map_raw)
-
-    #
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": remove the ref/alt columns as we have this information already included in the ID")
-    print("#######################################\n#######################################")
-    snp_map_raw = snp_map_raw.drop(["ref", "alt"], axis=1)
-    print(snp_map_raw)
-
-
-    ##load and explore the decode2019 map
-
-    #I know that the original 2019 decode map is alligned to hg38. Also, I assume that the decode2019 map is 1-based because they do not specify is 0-based. I assume that if you say anything, base 1 in your coordinates is base 1 in the genome. I assume this is the default.
-        #Data S3.genetic.map.final.sexavg.gor.gz:
-            #average genetic map computed from the paternal and maternal genetic maps, which were in turn computed from the paternal and maternal crossover, respectively. The data columns are as follows: Chr (chromosome), Begin (start point position of interval in GRCh38 coordinates), End (end point position of interval in GRCh38 coordinates), cMperMb (recombination rate in interval), cM (centiMorgan location of END POINT of interval)
-            #Page 85 of "aau1043-halldorsson-sm-revision1.pdf"
-
-    #1KGP is aligned to hg38 (see paper) and coordinates are 1-based as VCF format 4.2 has 1-based coordinates.
-
-    #therefore, we have the same position format in both datasets, so we can just use the decode 2019 map to calculate the genetic position of each SNP.
-
-    # 
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": see first lines of the Data S3 of decode paper, which is the sex average map (see above). The file has header")
-    print("#######################################\n#######################################")
-    run_bash("\
-        gunzip \
-            --stdout \
-            ./data/decode_2019/aau1043_datas3.gz | \
-        head -20")
-
-    #
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": remove the header and save")
-    print("#######################################\n#######################################")
-    run_bash("\
-        gunzip \
-            --stdout \
-            ./data/decode_2019/aau1043_datas3.gz | \
-        awk \
-            'NR>7' | \
-        gzip \
-            --force > \
-        ./data/decode_2019/aau1043_datas3_no_header.gz; \
-        gunzip \
-            --stdout \
-            ./data/decode_2019/aau1043_datas3_no_header.gz | \
-        head -5")
-            #decompress, send to stdout
-            #then select any row whose number is larger than 7, i.e., from 8th row and forward.
-                #https://www.baeldung.com/linux/remove-first-line-text-file 
-            #compress and save
-            #decompress and see first lines
-
-    #
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": load decode 2019 map into python")
-    print("#######################################\n#######################################") 
-    decode2019_map = pd.read_csv(\
-        "./data/decode_2019/aau1043_datas3_no_header.gz", \
-        sep="\t", \
-        header=0, \
-        low_memory=False)
-    #rename columns in lower case
-    decode2019_map=decode2019_map.rename({"Chr":"chr", "Begin":"begin", "End":"end", "cMperMb":"cM_Mb", "cM":"cM"}, axis=1)
-    print(decode2019_map)
-        #Average genetic map computed from the paternal and maternal genetic maps.
-        #The data columns are as follows:
-        #Chr (chromosome)
-        #Begin (start point position of interval in GRCh38 coordinates)
-        #End (end point position of interval in GRCh38 coordinates)
-        #cMperMb (recombination rate in interval)
-        #cM (centiMorgan location of END POINT of interval)
-
-        #I did a lot of checks on this map regarding overlapping of the intervals etc, check recomb_v3.R in method_deep paper for further details.
-
-    #
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": subset decode map for the selected chromosome")
-    print("#######################################\n#######################################") 
-    decode2019_map_subset = decode2019_map.loc[decode2019_map["chr"] == "chr"+str(selected_chromosome),:]
-    print(decode2019_map_subset)
-    print("Do we selected the correct chromosome?")
-    print(decode2019_map_subset["chr"].unique() == "chr"+str(selected_chromosome))
-    #
-    print("remove the full decode map")
-    del(decode2019_map)
-    import gc
-    gc.collect()
-
-    #
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": define function to calculate genetic position per SNP")
-    print("#######################################\n#######################################") 
-    #selected_snp_id=snp_map_raw.iloc[10000]["id"] #snp with cM value just in its position
-    #selected_snp_id=snp_map_raw.iloc[5000]["id"] #snp with cM values at both sides
-    #selected_snp_id=snp_map_raw.iloc[0]["id"] #snp without cM values around
-    def gen_pos(selected_snp_id):
-
-        #extract the row in the raw map for the selected SNP
-        selected_snp_row = snp_map_raw.loc[snp_map_raw["id"] == selected_snp_id,:]
-
-        #check we have the correct chromosome
-        check_0 = selected_snp_row["chr"].unique()[0] == "chr"+str(selected_chromosome)
-
-        #extract position of the selected snp
-        selected_snp_physical_pos = selected_snp_row["pos"].to_numpy()[0]
-
-        #extract old ID (this follows VFP file format so we can use them to filter it)
-        selected_snp_old_id = selected_snp_row["id_old"].to_numpy()[0]
-
-        #select those deCODE intervals that are at least 1 MB close to the selected SNP: I have search for genetic position data around each SNP of each population, 1MB at each side. I think remember you told me that if we do not find data points at both side of the SNP, we can safely remove it. In that way, we include areas with low recombination (possible haplotypes) but not areas with a lot of missing data.
-        decode2019_map_subset_around_snp = decode2019_map_subset.loc[\
-            (decode2019_map_subset["end"] >= (selected_snp_physical_pos - 1000000)) & \
-            (decode2019_map_subset["end"] <= (selected_snp_physical_pos + 1000000)), :]
-                #we are only interested in the END coordinate because the cM data of each interval came from the end of the interval. Indeed, the start coordinate of the next interval is the same of the end of the previous one. Therefore, we focus on end coordinate.
-                #Note that we are using 1000000 directly. If a SNP is at 1000001, then 1000001-1000000=1, length(1:1000001) is equal to 1000001, which is not exactly 1MB, but this is only 1 base of difference. This is not important.
-                #Also note that for SNPs between base 0 and 1000kb, the difference between SNP position and 1000kb will be negative, but this is OK:
-                    #If a SNP is before base 1000kb, then there is less than 1000kb bases to look for decode intervals before the SNP, reaching base 0.
-                    #therefore, having a negative value would mean the same than just look up to zero (there are not decode intervals below zero).
-                        #SNP at position 500kb
-                            #500kb+1000kb=1500kb
-                            #500kb-1000kb=-500kb
-                            #there is no enough space at the left of the SNP to look for decode intervals up to 1000kb, so we have to reach 0, which is the same than looking for values equal or higher than a negative given that no decode interval has a negative position.
-                    #this will be the case until a SNP in position 1001kb, as 1001kb-1000kb would be 1, so we do not look for decode intervals below 1.
-                    #As we move foward from 1000kb, the lower limit of the window starts moving away from 1.
-                    #indeed, using the absolute value would not work
-                        #SNP at position 500kb
-                            #1000kb+500kb=1500kb
-                            #1000kb-500kb=500kb
-                            #the lower limit cannot be 500kb, when the SNP is at 500kb. We would automatically lose this SNP.
-                            #you would need -500 to 1500kb.
-                    #one concern about this is that for some SNPs we are looking for decode intervals in a smaller region, but SNPs below 1MB are not frequent. 
-                        #For example, in chromosome 1, only 1339 out of 800K are at a coordinate below 1000kb. Therefore, this does not seem to be a problem. I have not tested it, but I guess the same would go for SNPs close to the end of the chromosome, this would be a small proportion of the total number of SNPs.
-                        #More important, there are NO decode interval below base 500kb, so we will discard any SNP before that base because no cM value will be available to the left in order to interpolate. Therefore, the importance of this issue is very limited.       
-
-        #select those intervals before and after the selected SNP
-        intervals_lower_end = decode2019_map_subset_around_snp.loc[(decode2019_map_subset_around_snp["end"] < selected_snp_physical_pos), :]
-        intervals_upper_end = decode2019_map_subset_around_snp.loc[(decode2019_map_subset_around_snp["end"] > selected_snp_physical_pos), :]
-
-        #select those decode intervals with the same position than the selected SNP
-        interval_same_pos = decode2019_map_subset_around_snp.loc[decode2019_map_subset_around_snp["end"] == selected_snp_physical_pos, :]
-
-        #if we have deCODE intervals 1MB around the selected SNP, i.e., we have intervals at both sides, intervals ending before and after the selected SNP OR we have a deCODE interval ending exactly at the SNP. In the second case if you have cM value in the exact position of the selected SNP, then you do not need intervals at both sides.
-        if (intervals_lower_end.shape[0]>0) & (intervals_upper_end.shape[0]>0) | (interval_same_pos.shape[0]>0): 
-            #the first condition do not need equal because in the next condition (after "|") we consider the option of equal coordinate between window extreme and deCODE end interval.
-
-            #checks
-            check_1=np.unique(\
-                (decode2019_map_subset_around_snp["end"] >= (selected_snp_physical_pos - 10**6)) & \
-                (decode2019_map_subset_around_snp["end"] <= (selected_snp_physical_pos + 10**6)))[0]
-
-            #if we dot NOT have an interval with an end coordinate exactly similar to the selected SNP
-            if (interval_same_pos.shape[0] == 0):
-
-                #check
-                check_2 = np.unique(intervals_lower_end["end"] < selected_snp_physical_pos)[0]
-                check_3 = np.unique(intervals_upper_end["end"] > selected_snp_physical_pos)[0]
-
-                #from the intervals below the extreme window, select the biggest and hence closest to the extreme window   
-                lowest_interval = intervals_lower_end.loc[intervals_lower_end["end"] == max(intervals_lower_end["end"]),:] 
-                    #we cannot have two cases with the same value because the coordinates are in increasing order, the coordinate of an interval is bigger than the previous one.
-
-                #from the intervals above the extreme window, select the smallest and hence closest to the extreme window
-                highest_interval = intervals_upper_end.loc[intervals_upper_end["end"] == min(intervals_upper_end["end"]),:] 
-                    #we cannot have two cases with the same value because the coordinates are in increasing order, the coordinate of an interval is bigger than the previous one.
-
-                #check that the end coordinate with lowest difference respect the SNP is the selected in the previous step both for the lower and higher intervals
-                check_4a = (intervals_lower_end.loc[\
-                    np.abs(intervals_lower_end["end"]-selected_snp_physical_pos) == \
-                    np.min(np.abs(intervals_lower_end["end"]-selected_snp_physical_pos)), \
-                    "end"] == lowest_interval["end"]).to_numpy()[0]
-                check_4b = (intervals_upper_end.loc[\
-                    np.abs(intervals_upper_end["end"]-selected_snp_physical_pos) == \
-                    np.min(np.abs(intervals_upper_end["end"]-selected_snp_physical_pos)), \
-                    "end"] == highest_interval["end"]).to_numpy()[0]
-
-
-                ##calculate cM value of the snp
-                #extract the centimorgan of each the closest deCODE intervals to the SNP
-                left_cM = lowest_interval["cM"].to_numpy()[0]
-                right_cM = highest_interval["cM"].to_numpy()[0]
-
-                #calculate the distance from each interval to the SNP
-                distance_left_end = (selected_snp_physical_pos - lowest_interval["end"]).to_numpy()[0]
-                distance_right_end = (highest_interval["end"] - selected_snp_physical_pos).to_numpy()[0]
-                    #We do not need to include both extremes, we want the distance from one point to another. Imagine the window begins at 1 and ends at 3. Including both extremes, the size of the window is 3, you have 3 bases. However, the distance from the point 1 to 3 is 2 (3-1=2). We want the distance between two points with centiMorgan values.
-
-                #check that calculating the distance with abs and changing order gives the same result
-                check_5a = distance_left_end == abs(lowest_interval["end"] - selected_snp_physical_pos).to_numpy()[0]
-                check_5b = distance_right_end == abs(highest_interval["end"] - selected_snp_physical_pos).to_numpy()[0]
-
-                #check that the sum of the physical distance of each deCODE end point to the SNP is the same than the total distance between the deCODE end points
-                check_6 = distance_left_end + distance_right_end == np.abs(lowest_interval["end"].to_numpy()[0] - highest_interval["end"].to_numpy()[0])
-
-                #calculate the genetic distance using the formula of David
-                genetic_distance = left_cM + (right_cM - left_cM) * distance_left_end / (distance_left_end + distance_right_end)
-                    #Explanation of David: In that case, you have to find the genetic map position of a single SNP (or in general a position of the genome). To assign a position to each SNP, you can use the two genetic map positions (end points as you described) left and right form the SNP. You can then consider that the genetic position increases linearly between the two left and right positions. For example, if a SNP is between a genetic position on the left at 100 cM, and a genetic position on the right at 102 cM, and the SNP is located 20 kb from the left genetic position but 80kb from the right position, then the SNP will be located at genetic position: 100 cM + (102 cM-100 cM) * 20kb / (20kb+80kb) = 100.4 cM. Of course, if the SNP is right on the coordinate of an end point, then just use the genetic map position directly for that SNP.
-                    #My explanation: What David is doing is 100 + ((102-100)*20)/(20+80). This gives exactly 100.4. David is using the rule of three (https://en.wikipedia.org/wiki/Cross-multiplication#Rule_of_Three). You have three points, A, B and C. If the physical distance distance A-C is 100 kb (20+80) and the genetic distance between these points is 2 cM (102-100) , what would be the genetic distance between A-B if these points are separated by 20 kb? ((102-100 cM) * 20 kb) / (20+80 kb); ((2 cM) * 20 kb) / (100 kb); ((2 cM) * 20 kb) / (100 kb); (40 cM * kb) / 100 kb; 0.4 cM. 0.4 is the genetic distance between A and B. Now we can sum 0.4 and the genetic position of A, to get the genetic position of B in the genome. 100 cM + 0.4 cM = 100.4 cM.
-                    #If you the point for which you calculate the genetic distance is exactly in the middle of the two points with 100 and 102 cM of genetic distance, the resulting genetic distance would be exactly in the middle, i.e., 101: 100 + ((102-100)*50)/(50+50). 50 is the physical distance between cM point and the point of interest. 
-                    #This method assumes that relationship between genetic distance and physical distance between two points is lineal and stable, so you can estimate the genetic distance based on the physical distance in the genomic region encompassed by these points. Note that you are using point that are at least 1MB close to the point under study, therefore, we are estimating the genetic distance using the relationship between physical and genetic distance in a specific genomic region, not the whole genome.
-                    #see figure 31 for further details.
-            else:
-
-                #if not and hence we have an deCODE interval exactly in the SNP position
-                genetic_distance = interval_same_pos["cM"].to_numpy()[0]
-
-                #set NA for the rest of results. They are not needed.
-                check_2 = np.nan
-                check_3 = np.nan                
-                check_4a = np.nan
-                check_4b = np.nan
-                check_5a = np.nan
-                check_5b = np.nan
-                check_6 = np.nan
-                left_cM = np.nan
-                right_cM = np.nan
-                distance_left_end = np.nan
-                distance_right_end = np.nan
-        else:
-
-            #if not, and hence we cannot calculate the cM of SNP
-            genetic_distance = np.nan
-
-            #set NA for the rest of results. They are not needed.
-            check_1 = np.nan
-            check_2 = np.nan
-            check_3 = np.nan
-            check_4a = np.nan
-            check_4b = np.nan
-            check_5a = np.nan
-            check_5b = np.nan
-            check_6 = np.nan
-            left_cM = np.nan
-            right_cM = np.nan
-            distance_left_end = np.nan
-            distance_right_end = np.nan
-
-        #save results
-        return(tuple([selected_chromosome, selected_snp_id, selected_snp_old_id, selected_snp_physical_pos, check_0, check_1, check_2, check_3, check_4a, check_4b, check_5a, check_5b, check_6, genetic_distance, left_cM, right_cM, distance_left_end, distance_right_end]))
-
-    #
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": Run the function on just one snp")
-    print("#######################################\n#######################################")
-    print(gen_pos(snp_map_raw.iloc[5000]["id"]))
-
-    #
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": run function across SNPs")
-    print("#######################################\n#######################################")
-    #we do not use pool.map because we will only want to use 1 core. The parallelization will be done in the parent function across chromosome*pop combinations
-    #map seems to be faster than loop even using just 1 core, although there is not a big difference
-        #https://www.linkedin.com/pulse/loops-maps-who-faster-time-space-complexity-we-coming-george-michelon/
-    final_genetic_pos = list(map(gen_pos, snp_map_raw["id"]))
-    #final_genetic_pos = list(map(gen_pos, snp_map_raw.iloc[5000:5100]["id"]))
-
-    #convert the tuple to DF and add the column names
-    final_genetic_pos_df = pd.DataFrame(final_genetic_pos, columns=["selected_chromosome", "selected_snp_id", "selected_snp_old_id", "selected_snp_physical_pos", "check_0", "check_1", "check_2", "check_3", "check_4a", "check_4b", "check_5a", "check_5b", "check_6", "genetic_distance", "left_cM", "right_cM", "distance_left_end", "distance_right_end"])
-    print("see results:")
-    print(final_genetic_pos_df)
-
-    #
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": all checks of genetic position calculation are True?")
-    print("#######################################\n#######################################") 
-    print(final_genetic_pos_df[["check_0", "check_1", "check_2", "check_3", "check_4a", "check_4b", "check_5a", "check_5b", "check_6"]].all())
-        #important:
-            #all() does not consider nan, so if you have nan and the rest True, the output is True.
-            #this is ok for us, because we use nan in some conditions.
-    
-    #
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": check we have the correct number of SNPs in the calculation of genetic position")
-    print("#######################################\n#######################################")
-    run_bash(" \
-        n_snps=$(\
-            bcftools view \
-                --no-header \
-                ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz | \
-            wc -l); \
-        if [[ $n_snps -eq " + str(final_genetic_pos_df.shape[0]) + " ]]; then \
-            echo 'TRUE'; \
-        else \
-            echo 'FALSE'; \
-        fi")
-            #count the number of lines in the cleaned VCF file without the header, and check that number is equal to the number of SNPs we have in the map file loaded in python 
-
-    #
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": check that we have the exact same snps than in the raw map")
-    print("#######################################\n#######################################")
-    print(np.array_equal(
-        snp_map_raw["chr"].to_numpy(),
-        ("chr" + final_genetic_pos_df["selected_chromosome"]).to_numpy()))
-    print(np.array_equal(
-        snp_map_raw["id"].to_numpy(),
-        final_genetic_pos_df["selected_snp_id"].to_numpy()))
-    print(np.array_equal(
-        snp_map_raw["id_old"].to_numpy(),
-        final_genetic_pos_df["selected_snp_old_id"].to_numpy()))
-    print(np.array_equal(
-        snp_map_raw["pos"].to_numpy(),
-        final_genetic_pos_df["selected_snp_physical_pos"].to_numpy()))
- 
-    
-    ##recalculate genetic distance of each SNP
-    #but we exclude SNPs that have cM exactly in their position in the decode map or SNPs without decode data around
-    final_genetic_pos_df_check_dist_calc = final_genetic_pos_df.loc[\
-        (~final_genetic_pos_df["genetic_distance"].isna()) & \
-        (~final_genetic_pos_df["left_cM"].isna()), :]
-    #calculate the physical distance between the end of the two deCODE ranges, that is, the distance from the closest interval to the SNP of the left PLUS the distance from the SNP to the closest deCODE interval from the right
-    phys_distance_decode_intervals = final_genetic_pos_df_check_dist_calc["distance_left_end"] + final_genetic_pos_df_check_dist_calc["distance_right_end"]
-
-    #calculate the genetic distance between the end of the two deCODE interval closest to the SNP (on both sides, right and left)
-    gen_distance_decode_intervals = final_genetic_pos_df_check_dist_calc["right_cM"] - final_genetic_pos_df_check_dist_calc["left_cM"]
-
-    #extract the physical distance from the SNP to the closest deCODE interval to the left
-    phy_distance_left_decode = final_genetic_pos_df_check_dist_calc["distance_left_end"]
-
-    #calculate the genetic distance: If the physical distance between the end of deCODE intervals (phys_distance_decode_intervals) corresponds with a known genetic distance (gen_distance_decode_intervals), the physical distance from the closest deCODE intervals from the left to the selected SNP (phy_distance_left_decode) would correspond with X; thus X = (gen_distance_decode_intervals*phy_distance_left_decode)/phys_distance_decode_intervals X is the genetic distance from the closest deCODE interval from the left to the SNP If you sum this to the genetic position of that closest deCODE interval from the left (final_genetic_pos$left_cM), you would have the genetic distance of the selected SNP. The genetic position of that interval gives the cM value until that point, and you just calculated the rest of cM increase until the SNP 
-    new_genetic_distance = ((gen_distance_decode_intervals * phy_distance_left_decode) / phys_distance_decode_intervals) + final_genetic_pos_df_check_dist_calc["left_cM"]
-        #see figure 31 and the calculation of genetic distance in "recomb_calc" function for the full explanation using the words of David and also my interpretation.
-
-    #
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": compare the new genetic distance and the distance previously calculated. It is ok to have False here if the next check is ok")
-    print("#######################################\n#######################################")
-    raw_check_gen_dis = new_genetic_distance == final_genetic_pos_df_check_dist_calc["genetic_distance"]
-    print(raw_check_gen_dis.groupby(raw_check_gen_dis).count())
-        
-    #
-    #from results, extract ID of snps with NA for last checks but with data for genetic position
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": check that the cases with NA for last checks but with genetic distance are the cases of SNPs in a position exactly with deCODe data")
-    print("#######################################\n#######################################")
-    cases_gen_pos_no_last_checks = final_genetic_pos_df.loc[\
-        (final_genetic_pos_df["check_4a"].isna()) & \
-        (~final_genetic_pos_df["genetic_distance"].isna()), "selected_snp_id"]
-    #extract the ID of snps with a position that have deCODE genetic position
-    snps_with_decode_data = final_genetic_pos_df.loc[\
-        final_genetic_pos_df["selected_snp_physical_pos"].isin(decode2019_map_subset["end"]), "selected_snp_id"]
-    #print the check
-    print(cases_gen_pos_no_last_checks.equals(snps_with_decode_data))
-
-
-    ##final map file
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": prepare final map file")
-    print("#######################################\n#######################################")
-    #subset only the columns for map files
-    final_genetic_pos_map_file = final_genetic_pos_df[["selected_chromosome", "selected_snp_id", "selected_snp_old_id", "genetic_distance", "selected_snp_physical_pos"]]
-        
-    #add chrom
-    final_genetic_pos_map_file["selected_chromosome"] = "chr"+final_genetic_pos_map_file["selected_chromosome"]
-        #WARNING HERE
-    print(final_genetic_pos_map_file)
-        #save the chromosome, ID, genetic position and physical position. This is the format expected by hapbin
-            #https://github.com/evotools/hapbin
-
-    #
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": remove the SNPs without genetic position from the VCF file")
-    print("#######################################\n#######################################")
-
-    #select old_id from the map that have genetic position
-    #this ID is the original retained from the VCF file, so we can use it to subset the VCF file
-    snps_id_with_gen_pos = final_genetic_pos_map_file.loc[\
-        ~final_genetic_pos_map_file["genetic_distance"].isna(), \
-        "selected_snp_old_id"]
-
-    #
-    print("see the number of SNPs removed due to the lack of genetic position")
-    print(final_genetic_pos_map_file.shape[0] - len(snps_id_with_gen_pos))
-
-    #save the names in a txt file
-    with open(r"./results/cleaned_vcf_files/list_snps_with_gen_pos.txt", "w") as fp:
-        fp.write("\n".join(snps_id_with_gen_pos))
-            #each name in a different line so we have to add "\n" to the name
-            #https://pynative.com/python-write-list-to-file/
-        fp.write("\n")
-            #add empty line at the end
-
-    #
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": filter the already cleaned VCF with bcftools")
-    print("#######################################\n#######################################")
-    #this file is cleaned regarding biallelic snps, duplicates... but need to retain only SNPs with genetic position
-    #We could do this by just creating before the hap file, extract snp positions from there, calculate genetic position and then remove from the hap those rows of SNPs without genetic position. The problem is that we would do that by row index instead of SNP ID, at least if we use the final hap file, so we are going for this option better. In addition, we would have snps that cannot be used in the VCF file because they do not have genetic position. With the other approach we would have a VCF with all SNPs filtered and another one with only snps with genetic position.
-    
-    #filter
-    run_bash("\
-        bcftools view \
-            --include ID==@./results/cleaned_vcf_files/list_snps_with_gen_pos.txt\
-            ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz | \
-        bcftools view \
-            --output ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + "_only_snps_gen_pos.vcf.gz \
-            --output-type z \
-            --compression-level 1")
-            #include those SNPs for which ID is included in the list of SNPs with genetic position and save the resulting VCF file
-                #https://www.biostars.org/p/373852/
-
-    #
-    print("see header of the fully filtered VCF file and some genotypes")
-    run_bash(" \
-        bcftools head \
-            ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + "_only_snps_gen_pos.vcf.gz")
-    run_bash(" \
-        bcftools view \
-            ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + "_only_snps_gen_pos.vcf.gz \
-            --no-header | \
-        head -5")
-
-    #
-    print("check that IDs in the filtered VCF file are the same than the ones in the list of IDs used as input to filter")
-    run_bash(" \
-        bcftools query \
-            ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + "_only_snps_gen_pos.vcf.gz \
-            --format '%ID\n' \
-        > ./results/cleaned_vcf_files/ids_vcf_after_filter.txt; \
-        file1='./results/cleaned_vcf_files/list_snps_with_gen_pos.txt'; \
-        file2='./results/cleaned_vcf_files/ids_vcf_after_filter.txt'; \
-        STATUS=$(cmp --silent $file1 $file2; echo $?); \
-        if [[ $STATUS -eq 0 ]]; then \
-            echo 'TRUE'; \
-        else \
-            echo 'FALSE'; \
-        fi; \
-        rm $file2")
-        #get the IDs in the finally filtered VCF file and save the file
-        #create two variables with the names of this file and also the name of the file with the list of IDs used as input to filter        
-        #check byte by byte whether the two files are the same
-            #cmp takes two files and compare them until 1 byte is different
-            #we make it silent and get the final status
-            #remember that "$?" gives the return value of the last run command.
-                #For example, 
-                    #ls somefile
-                    #echo $?
-                    #If somefile exists (regardless whether it is a file or directory), you will get the return value thrown by the ls command, which should be 0 (default "success" return value). If it doesn't exist, you should get a number other then 0. The exact number depends on the program.
-                #https://stackoverflow.com/a/6834572/12772630
-            #the return value of cmp will be 0 if the two files are identical, if not, then we have differences between the files
-                #https://stackoverflow.com/a/53529649/12772630
-        #remove the file created for this check
-
-    #
-    print("remove also the SNPs without genetic position from the map file and check")
-    final_genetic_pos_map_file = final_genetic_pos_map_file.loc[\
-        ~final_genetic_pos_map_file["genetic_distance"].isna(),:]
-    print(final_genetic_pos_map_file["selected_snp_old_id"].equals(snps_id_with_gen_pos))
-
-    #
-    print("remove old ID as we have already filtered the VCF file and check")
-    final_genetic_pos_map_file = final_genetic_pos_map_file.drop(["selected_snp_old_id"], axis=1)
-    print(final_genetic_pos_map_file.columns == ["selected_chromosome", "selected_snp_id", "genetic_distance", "selected_snp_physical_pos"])
-
-    #
-    print("see final map and save")
-    print(final_genetic_pos_map_file)
-        #required format according to hapbin
-            #The map files (--map) should be in the same format as used by Selscan with one row per variant and four space-separated columns specifiying 
-                #chromosome, 
-                #locus ID, 
-                #genetic position
-                #physical position.
-    final_genetic_pos_map_file.to_csv(\
-        "./results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz", \
-        sep=" ", \
-        header=False, \
-        index=False)
-
-    #
-    run_bash("\
-        n_rows=$( \
-            gunzip \
-                --stdout \
-                ./results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz | \
-            awk \
-                -F ' ' \
-                'END {print NR}'); \
-        n_cols=$( \
-            gunzip \
-                --stdout \
-                ./results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz | \
-            awk \
-                -F ' ' \
-                'END {print NF}'); \
-        if [[ $n_cols -eq 4 && $n_rows -eq " + str(final_genetic_pos_map_file.shape[0]) + " ]];then \
-            echo 'TRUE'; \
-        else \
-            echo 'FALSE'; \
-        fi")
-            #decompress map file to stdout and then calculate the number of rows (NR) and fields (NF). Do that only after the whole file has been read (END)
-                #https://www.gnu.org/software/gawk/manual/html_node/Using-BEGIN_002fEND.html
-            #the number of columns (fields) should be 4 following salescan format, while the number of rows should be equal to the number of snps we have in the map file loaded in python, which was indeed used to write this .map file.
-
-
-    ##convert to hap 
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": convert to hap file")
-    print("#######################################\n#######################################")
-    run_bash(" \
-        bcftools convert \
-            ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + "_only_snps_gen_pos.vcf.gz \
-            --hapsample ./results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw")
-            #load the cleaned vcf file
-            #--vcf-ids 
-                #when this option is given, the second column is set to match the ID column of the VCF.
-                #Without the option, the format follows https://www.cog-genomics.org/plink/2.0/formats#haps with ids (the second column) of the form "CHR:POS_REF_ALT[_END], with the _END being optional for defining the INFO/END tag when ALT is a symbolic allele.
-                #we are not using --vcf-ids so we can have "CHR:POS_REF_ALT". This can avoid strand swaps (see below).
-            #--hapsample
-                #convert from VCF to hap/sample format used by IMPUTE2 and SHAPEIT. The columns of .hap file begin with ID,RSID,POS,REF,ALT. In order to prevent strand swaps, the program uses IDs of the form "CHROM:POS_REF_ALT".
-                #save the results and using the name of the chromosome and the pop
-            #https://www.htslib.org/doc/bcftools.html#convert
-        #IMPUTE2 hap format
-            #https://www.cog-genomics.org/plink/2.0/formats#haps
-            #we are going to use the reference panel haplotype file format for IMPUTE2. 
-            #This is a text file with no header line, and either 2N+5 or 2N fields where N is the number of samples. In other words, you can have 5 initial columns with data about the variants, or just the haplotype columns. In the former case, the first five columns are:
-                #Chromosome code
-                #Variant ID
-                    #This is in the format CHROM:POS_REF_ALT to prevent strand swaps. I guess you avoid strand swaps by having information about the REF and ALT alleles, so you can be sure the strand you are using.
-                #Base-pair coordinate (POS)
-                #REF allele
-                #ALT allele
-            #This is followed by a pair of 0/1-valued haplotype columns for the first sample, then a pair of haplotype columns for the second sample, etc. (For male samples on chrX, the second column may contain dummy '-' entries; otherwise, missing genotype calls are not permitted.)
-            #Previous hap format used by us
-                #hap IMPUTE format is the one required by hapbin
-                    #https://github.com/evotools/hapbin#input-file-formats
-                #The format I used for hap files used as input to hapbin was the second option, i.e., ONLY THE HAPLOTYPE COLUMNS.
-                    #/xdisk/denard/dftortosa/genomic_determinants_recent_selection/hapbin_inputs/
-                #In addition, hap files in yoruba folder of flexsweep are just our hap files for iHS, i.e., ONLY THE HAPLOTYPE COLUMNS.
-                    #/xdisk/denard/lauterbur/yoruba/hapmap_YRI_hg19_decode2019/
-
-    #note about the output of hap conversion
-        #I get an output like this
-            #Hap file: ./results/hap_map_files_raw/chr1_GBR_IMPUTE2_raw.hap.gz
-            #Sample file: ./results/hap_map_files_raw/chr1_GBR_IMPUTE2_raw.samples
-            #852072 records written, 0 skipped: 0/0/0 no-ALT/non-biallelic/filtered
-
-        #I guess non-biallelic and non-alt should be removed to meet impute requirements, but in our case we already selected those SNPs with 2 alleles only. This explains why we get 0/0/0. This is the number of SNPs with no-ALT, no-biallelic and filtered. All the filters were previously applied.
-            #I have checked this in the dummy example.
-        
-        #if you take the VCF file, filter and then count lines, you get 852072 records, but then say that total is 945919, as when writting the file. "Lines   total/split/realigned/skipped" is produced for some commands like bcftools norm and I have seen in the dummy example that total is the total number of SNPs, while split are those splitting due to multiallelic is the multiallelic flag is used.
-            #852072
-            #Lines   total/split/realigned/skipped:  945919/0/0/0
-            #Lines   total/split/realigned/skipped:  945919/0/0/0
-
-        #the total number of snps in the raw vcf file of chr1 is 5759173, instead of 945919. What it can be happening here is that bcftools norm (the command generating the line output) is run after some (but not all) filters have been applied, thus the input number of SNPs is smaller but the final number (852072). Indeed, if you apply these filters applied before norm, you get 945919 variants, so it makes sense that bcftools norm, which is run after these filters, gives 945919 as total number of snps.
-
-        #The smallest number (852072) is the number of SNPs after we have completely cleaned the vcf file, including the accesibility mask. I have checked that.
-
-    #see first variants
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": see first variants of the hap file")
-    print("#######################################\n#######################################")
-    run_bash(
-        "gunzip -c ./results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
-        head -3")
-            #decompress the hap file and show in stdout 
-    
-    #clean
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": remove first columns of hap file to leave only haplotype columns")
-    print("#######################################\n#######################################")
-    run_bash(
-        "gunzip -c results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
-        cut \
-            --complement \
-            --delimiter ' ' \
-            --fields 1-5 \
-        > results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap; \
-        gzip -f results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap")
-            #extract the content of compressed hap file
-            #remove the first 5 columns
-                #--complement keeps the columns other than the ones specified in -f
-                #--delimiter specifies the delimiter; in this case, a space
-                #--fields specifies the columns to cut (rather than the columns to keep, since --complement is being used);
-                    #https://unix.stackexchange.com/questions/222121/how-to-remove-a-column-or-multiple-columns-from-file-using-shell-command
-            #save the result as a hap file
-            #compress that file
-                #-f option : Sometimes a file cannot be compressed. Perhaps you are trying to compress a file called “myfile1” but there is already a file called “myfile1.gz”. In this instance, the “gzip” command won’t ordinarily work. To force the “gzip” command to do its stuff simply use -f option
-                #https://www.geeksforgeeks.org/gzip-command-linux/
-
-    #check
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": the clean hap file is just the raw hap file but without the first 5 columns?")
-    print("#######################################\n#######################################")
-    #create a long string with the index of each column of hap_raw file (without 5 first columns)
-    #these indexes will be used by awk to select the corresponding columns so we are creating the cleaned hap file again using another approach
-    fields_selected_samples = "".join(
-        ["$" + str(i) + "," if i != selected_samples.shape[0]*2+5 else "$" + str(i) for i in range(6, selected_samples.shape[0]*2+5+1, 1)])
-        #from index 6 (avoiding non-genotype columns) to the index of the last column, i.e., 2 columns times the number of samples plus 5 (because of the non-genotype columns) and 1 (because index 1 in python is 0, so if you do range from 0 to 10, you get until 9, not 10, you need to add 1 (i.e., 11) to get the last one)
-        #if the index is NOT the last one
-            #add $ to the index and then comma
-        #else
-            #it is the last one so we do not need add comma
-        #join all strings
-    #do comparison
-    run_bash(" \
-        gunzip \
-            -c results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
-        awk -F ' ' '{print " + fields_selected_samples + "}' > \
-        results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw_clean_check.hap; \
-        gunzip \
-            -kf results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap.gz; \
-        file1='results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap'; \
-        file2='results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw_clean_check.hap'; \
-        STATUS=$(cmp --silent $file1 $file2; echo $?); \
-        if [[ $STATUS -eq 0 ]]; then \
-            echo 'TRUE'; \
-        else \
-            echo 'FALSE'; \
-        fi; \
-        rm $file1; \
-        rm $file2")
-        #create again the hap file cleaned
-            #decompress the raw hap file and send it to stdout
-            #select only the genotype columns using awk, which needs to know the delimiter is ' '
-            #save it as a file
-        #decompress the previously cleaned hap file, keeping the compressed file and forcing the decompression in case the decompressed file already exist (-kf)
-            #https://linux.die.net/man/1/gunzip
-        #create two variables with the names of these new files        
-        #check byte by byte whether the two files are the same
-            #cmp takes two files and compare them until 1 byte is different
-            #we make it silent and get the final status
-            #remember that "$?" gives the return value of the last run command.
-                #For example, 
-                    #ls somefile
-                    #echo $?
-                    #If somefile exists (regardless whether it is a file or directory), you will get the return value thrown by the ls command, which should be 0 (default "success" return value). If it doesn't exist, you should get a number other then 0. The exact number depends on the program.
-                #https://stackoverflow.com/a/6834572/12772630
-            #the return value of cmp will be 0 if the two files are identical, if not, then we have differences between the files
-                #https://stackoverflow.com/a/53529649/12772630
-        #remove the new files
-
-    #
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": check we have the same number of rows (variants) in the cleaned vcf, hap and map files")
-    print("#######################################\n#######################################")
-    run_bash(" \
-        n_snps_vcf=$( \
-            bcftools view \
-                ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + "_only_snps_gen_pos.vcf.gz \
-                --no-header | \
-            wc -l); \
-        n_snps_map=$( \
-            gunzip \
-                -c ./results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz | \
-            wc -l); \
-        n_snps_hap=$( \
-            gunzip \
-                -c results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap.gz | \
-            wc -l); \
-        if [[ $n_snps_vcf -eq $n_snps_hap && $n_snps_vcf -eq $n_snps_map ]];then \
-            echo 'TRUE'; \
-        else \
-            echo 'FALSE'; \
-        fi")
-            #load the cleaned vcf file with bcftools and show only the snps, with no header, then count the number of lines and save the result
-            #decompress the hap file and count the number of line
-            #check both numbers are the same
-
-    #
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": do we have the correct number of samples in the hap file?")
-    print("#######################################\n#######################################")
-    run_bash(" \
-        nfields_hap=$( \
-            gunzip \
-                -c results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap.gz | \
-            awk -F ' ' '{print NF}' | \
-            sort | \
-            uniq); \
-        nfields_hap_nlines=$( \
-            echo -n $nfields_hap | \
-            grep -c '^'); \
-        if [[ $nfields_hap_nlines -eq 1 ]]; then \
-            nsamples_hap=$(($nfields_hap/2)); \
-            nsamples_bcftools=$( \
-                cat results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_samples_to_bcftools.txt | \
-                grep -c '^'); \
-            if [[ $nsamples_hap -eq $nsamples_bcftools ]]; then \
-                echo 'TRUE'; \
-            else \
-                echo 'FALSE'; \
-            fi\
-        fi")
-        #calculate the number of fields/columns in the hap file
-            #decompress the hap file and send the output to stdout (flag c of gunzip)
-            #use the interpreter of awk language (awk), indicating the delimiter of the columns (-F) and asking to print the number of fields. You could also ask for column 1 typing $1... NF will give the number of columns or fields.
-                #https://www.unix.com/shell-programming-and-scripting/110272-no-columns-csv-file.html
-                #https://askubuntu.com/questions/342842/what-does-this-command-mean-awk-f-print-4
-            #you get the number of fields per row, so you have to sort the output and obtain the uniq cases.
-            #save into nfields_hap
-        #calculate how many number of unique number of columns we have. 
-            #We should have the same number of columns in all rows. Therefore, just 1 line.
-            #echo the nfields_hap with -n flag, so you do not output the trailing newline, i.e., there is no last empty line at the end. I guess people use this to avoid counting that last line. If you do echo '' | grep -c '^', without -n, you still get 1, when it should be zero.
-                #https://unix.stackexchange.com/questions/579651/what-does-n-flags-stands-for-after-echo
-            #get the number of lines that start with any character ("^") using grep -c "^". Remember that ^eso would look for any line starting with "eso"
-                #https://stackoverflow.com/questions/6314679/in-bash-how-do-i-count-the-number-of-lines-in-a-variable
-                #https://stackoverflow.com/questions/13054227/what-does-grep-mean-in-unix
-        #if the number of unique number of columns is 1, we are fine so continue
-            #take nfields_hap, divide by 2. Remember that we remove the initial 5 columns, so we only have haplo columns. In these columns, we have 2 genotype columns per sample, so the number of columns/2 is the number of samples.
-                #https://phoenixnap.com/kb/bash-math
-            #calculate the number of samples from the .txt file with the IDs of all samples.
-                #load the file with cat and count the number of lines that start with any character
-            #check that the number of samples according to the hap file and the txt are the same.
-
-    #
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": check that sample file generated with hap has the correct sample IDs?")
-    print("#######################################\n#######################################")
-    #read the sample file
-    sample_list_from_hap = pd.read_csv(
-        "./results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.samples",
-        header=0, 
-        sep=" ", 
-        low_memory=False)
-    #select those rows whose ID is not zero
-    sample_list_from_hap_clean = sample_list_from_hap.loc[(sample_list_from_hap["ID_1"] != "0") | (sample_list_from_hap["ID_2"] != "0"), :]
-    #reset the index
-    sample_list_from_hap_clean = sample_list_from_hap_clean.reset_index()
-    #check that these IDs are identical to those of selected_samples
-    print(sample_list_from_hap_clean["ID_1"].equals(selected_samples))
-    print(sample_list_from_hap_clean["ID_2"].equals(selected_samples))
-
 
 
 
@@ -3451,7 +2658,7 @@ run_bash(" \
     if debugging==True:
         print("remove the VCF subset we used for debugging")
         run_bash(" \
-            rm 00_ancestral_debug_subset.vcf; \
+            rm 00_ancestral_debug_subset_chr" + selected_chromosome + ".vcf; \
             ls -l")
 
 
