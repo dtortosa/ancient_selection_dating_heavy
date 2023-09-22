@@ -1401,7 +1401,7 @@ def master_processor(selected_chromosome, debugging=False):
         run_bash(" \
             bcftools view \
                 " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-            head -n 1200 > 00_ancestral_debug_subset_chr" + selected_chromosome + ".vcf; \
+            head -n 5000 > 00_ancestral_debug_subset_chr" + selected_chromosome + ".vcf; \
             ls -l")
         input_vcf_file_vep="00_ancestral_debug_subset_chr" + selected_chromosome + ".vcf"
     else:
@@ -2047,28 +2047,75 @@ def master_processor(selected_chromosome, debugging=False):
             ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.anc_up.vcf.gz | \
         awk \
             'BEGIN{ \
-                FS=\"\t\"}; \
+                FS=\"\t\"} \
             { \
-                if($1 == \"SNP\"){count_1++} \
-                if($1 == \"SNP\" && $2==toupper($2)){count_2++} \
-            }END{ printf \"count_snps=%s,count_snps_upper_anc=%s\", count_1, count_2 }'", return_value=True).strip()
+                if(index($2, \"N\")==0 && index($2, \"-\")==0 && index($2, \".\")==0){ \
+                    if($1 == \"SNP\"){count_1++} \
+                    if($1 == \"SNP\" && $2==toupper($2)){count_2++} \
+                    if($1 == \"SNP\" && $2==tolower($2)){count_3++} \
+                } \
+            }END{ printf \"count_snps_acgt=%s,count_snps_acgt_upper_anc=%s,count_snps_acgt_lower_anc=%s\", count_1, count_2, count_3 }'", return_value=True).strip()
         #get the variant type and ancestral allele (with lower and upper case) from the VCF file for each variant, being separated by tab
             #very IMPORTANT to maintain the order (AA second), because we will use AWK to filter using columns indexes assuming that AA is the second
+            #also use "\t" as separator so we can correctly load the result into awk with FS=\t
         #in awk
-            #if the variant in the row is a SNP, then add one to count_1
-            #if the variant in the row is a SNP and its ancestral allele is upper case, add 1 to count_2
-            #at the END, print both counts
+            #if the ancestral_allele NOT includes N, -, . 
+                #We do not consider empty ("") because bcftools add "." to empty cases, so we should not have them. If this would be a problem, then the next check would fail, so no problem.
+                    #see what index() do
+                        #awk index(str1, str2) Function: This searches in the string str1 for the first occurrences of the string str2, and returns the position in characters where that occurrence begins in the string str1. String indices in awk starts from 1.
+                        #For example:
+                            #awk 'BEGIN{print index("Graphic", "ph"); print index("University", "abc")}'
+                            #Gives 4 and 0, because "ph" is included in "Graphic" (position 4), while "abc" is not included in "University"
+                        #therefore, if the result of index() is 0, means that the second string is NOT included in the first string
+                        #https://www.geeksforgeeks.org/built-functions-awk/
+                        #https://stackoverflow.com/a/25292338/12772630
+                                #if the variant in the row is a SNP, then add one to count_1
+                #if the variant in the row is a SNP
+                    #add 1 to count_1
+                    #these are  the SNPs with AA=ACGT or acgt, because we have already filtered out variants with AA equals to ".", "N" or "-"
+                #if the variant in the row is a SNP and its ancestral allele is upper case
+                    #add 1 to count_2
+                #if the variant in the row is a SNP and its ancestral allele is lower case
+                    #add 1 to count_3
+            #at the END, print all counts
     print("extract the counts")
-    total_count_snps = int(counts_case.split(",")[0].replace("count_snps=", ""))
-    count_snps_upper_case_anc = int(counts_case.split(",")[1].replace("count_snps_upper_anc=", ""))
-    print("The number of SNPs with high-confidence ancestral alleles is " + str(count_snps_upper_case_anc))
-    print("The total number of SNPs in this chromosome is " + str(total_count_snps))
+    count_snps_acgt = int(counts_case.split(",")[0].replace("count_snps_acgt=", ""))
+    count_snps_acgt_upper_anc = int(counts_case.split(",")[1].replace("count_snps_acgt_upper_anc=", ""))
+    count_snps_acgt_lower_anc = int(counts_case.split(",")[2].replace("count_snps_acgt_lower_anc=", ""))
+    print("The number of SNPs with high-confidence ancestral alleles is " + str(count_snps_acgt_upper_anc))
+    print("The number of SNPs with low-confidence ancestral alleles is " + str(count_snps_acgt_lower_anc))
+    print("The total number of SNPs with lower or upper ancestral allele in this chromosome is " + str(count_snps_acgt))
     print("Calculate the percentage of SNPs with high-confidence ancestral alleles")
-    percent_upper_anc = (count_snps_upper_case_anc/total_count_snps)*100
-    print("IMPORTANT RESULT: The percentage of SNPs with high confidence ancestral allele is " + str(percent_upper_anc) + " thus, the percentage with low-confidence is " + str(100-percent_upper_anc))
+    percent_lower_anc = (count_snps_acgt_lower_anc/count_snps_acgt)*100
+    if(count_snps_acgt == count_snps_acgt_lower_anc+count_snps_acgt_upper_anc):
+        print("IMPORTANT RESULT: The percentage of SNPs with low-confidence ancestral allele is " + str(percent_lower_anc))
+    else:
+        raise ValueError("SERIOUS ERROR! We have not correctly calculated the number of snps with lower/upper case ancestral allele")
 
-    #do this also with the VCF file before creating AA_upcase?
-        #maybe you could remove that new field and see if the previos and teh new VCF files are the same. so you can be sure your operations have not changed the VCF more than necessary
+    print_text("calculate again the number of SNPs with low- and high-confidence ancestral alleles using bcftools this time", header=4)
+    count_snps_acgt_lower_anc_2 = int(run_bash(" \
+        bcftools query \
+            --include 'TYPE=\"SNP\" && AA=\"a,c,g,t\"' \
+            --format '%TYPE\t%AA\n' \
+            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.anc_up.vcf.gz | \
+        awk \
+            'BEGIN{FS=\"\t\"}END{print NR}'", return_value=True).strip())
+    count_snps_acgt_upper_anc_2 = int(run_bash(" \
+        bcftools query \
+            --include 'TYPE=\"SNP\" && AA=\"A,C,G,T\"' \
+            --format '%TYPE\t%AA\n' \
+            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.anc_up.vcf.gz | \
+        awk \
+            'BEGIN{FS=\"\t\"}END{print NR}'", return_value=True).strip())
+        #select those variants that are SNPs and whose AA field is ACGT or acgt and obtain the type and AA
+        #then calculate the number of rows after the filtering
+    if(count_snps_acgt_lower_anc_2 == count_snps_acgt_lower_anc) & (count_snps_acgt_upper_anc_2 == count_snps_acgt_upper_anc):
+        print("YES! GOOD TO GO!")
+    else:
+        raise ValueError("SERIOUS ERROR! We have not correctly calculated the number of snps with lower/upper case ancestral allele")
+
+
+    #maybe you could remove that new field and see if the previos and teh new VCF files are the same. so you can be sure your operations have not changed the VCF more than necessary
 
 
 
@@ -2867,6 +2914,74 @@ pool.map(master_processor, full_combinations_pop_chroms)
 
 #close the pool
 pool.close()
+
+
+
+
+###########################################################################################
+#### Number of SNPs with low- and high-confidence ancestral alleles across chromosomes ####
+###########################################################################################
+print_text("Number of SNPs with low- and high-confidence ancestral alleles across chromosomes", header=1)
+print_text("empty lists to save the counts of high and low confidence ancestral alleles across chromosomes", header=4)
+count_snps_acgt_list = []
+count_snps_acgt_upper_anc_list = []
+count_snps_acgt_lower_anc_list = []
+
+print_text("run loop across chromosomes", header=4)
+#chrom=1
+for chrom in range(1,23):
+    print("Doing chromosome " + str(chrom))
+
+    print("from the output file of the selected chromosome, extract the row with the counts of high and low confidence ancestral alleles")
+    row_results = run_bash(" \
+        grep \
+            'count_snps_acgt' \
+            ./scripts/00_ancestral_calcs_outputs/chr" + str(chrom) + ".out", return_value=True).strip()
+
+    print("see the row")
+    print(row_results)
+
+    print("split the row")
+    row_results_split = row_results.split(",")
+    print(row_results_split)
+
+    print("check that we only have one row, and it can be split in three parts with comma")
+    if ("\n" not in row_results) & (len(row_results_split)==3):
+        print("YES! GOOD TO GO!")
+    else: 
+        raise ValueError("FALSE! ERROR! We have a problem calculating the number of SNPs with low and high confidence ancestral alleles")
+
+    print("append to each list the corresponding count")
+    count_snps_acgt_list.append(int(row_results_split[0].replace("count_snps_acgt=", "")))
+    count_snps_acgt_upper_anc_list.append(int(row_results_split[1].replace("count_snps_acgt_upper_anc=", "")))
+    count_snps_acgt_lower_anc_list.append(int(row_results_split[2].replace("count_snps_acgt_lower_anc=", "")))
+
+print_text("process the results", header=4)
+print("check we have all chromosomes")
+#selected_list=list_results[0]
+check_count = [len(selected_list) == 22 for selected_list in [count_snps_acgt_list, count_snps_acgt_upper_anc_list, count_snps_acgt_lower_anc_list]]
+if sum(check_count) == len(check_count):
+    print("YES! GOOD TO GO!")
+else:
+    raise ValueError("FALSE! ERROR! We have a problem calculating the number of SNPs with low and high confidence ancestral alleles")
+
+print("make the sum across chromosomes")
+count_snps_acgt_total = sum(count_snps_acgt_list)
+count_snps_acgt_upper_anc_total = sum(count_snps_acgt_upper_anc_list)
+count_snps_acgt_lower_anc_total = sum(count_snps_acgt_lower_anc_list)
+
+print("check the total is equal to the sum of high and low-confidence")
+if count_snps_acgt_total == count_snps_acgt_upper_anc_total+count_snps_acgt_lower_anc_total:
+    print("YES! GOOD TO GO!")
+else:
+    raise ValueError("FALSE! ERROR! We have a problem calculating the number of SNPs with low and high confidence ancestral alleles")
+
+print("calculate the percentage of SNPs with low-confidence ancestral allele across all chromosomes")
+print(count_snps_acgt_lower_anc_total/count_snps_acgt_total*100)
+
+
+
+
 
 
 
