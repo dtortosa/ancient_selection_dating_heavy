@@ -2036,9 +2036,39 @@ def master_processor(selected_chromosome, debugging=False):
                     #u/b: un/compressed BCF, v/z: un/compressed VCF, 0-9: compression level [v]
     print("We can see how the new tag AA_upcase has ACTG in uppercase, while the rest of characters ('.', '-', 'N') remain the same")
 
-##por aqui
-#count SNPs with lower case and then checks about new AA_upcase field
-
+    print_text("Check whether the new VCF file is exactly the same than the previous one but with the addition of AA_upcase. Only do it if NOT in debugging mode because we need the whole dataset to this check to work", header=4)
+    if debugging==False:
+        run_bash(" \
+            bcftools +split-vep \
+                --annotation CSQ \
+                --columns AA:String \
+                ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.vcf.gz | \
+            bcftools annotate \
+                --remove INFO/CSQ | \
+            bcftools query \
+                -f '%TYPE %ID %CHROM %POS %REF %ALT %QUAL %FILTER %INFO %FORMAT\n' > chr" + selected_chromosome + "_file_check_1.txt; \
+            bcftools annotate \
+                --remove INFO/AA_upcase \
+                ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.anc_up.vcf.gz | \
+            bcftools query \
+                -f '%TYPE %ID %CHROM %POS %REF %ALT %QUAL %FILTER %INFO %FORMAT\n' > chr" + selected_chromosome + "_file_check_2.txt; \
+            echo '##See head first check file:'; head -n 1 chr" + selected_chromosome + "_file_check_1.txt; \
+            echo '##See head second check file:'; head -n 1 chr" + selected_chromosome + "_file_check_2.txt; \
+            check_status=$(cmp --silent chr" + selected_chromosome + "_file_check_1.txt chr" + selected_chromosome + "_file_check_2.txt; echo $?); \
+            echo '##Do the check'; \
+            if [[ $check_status -eq 0 ]]; then \
+                echo 'TRUE'; \
+            else \
+                echo 'FALSE'; \
+            fi; \
+            rm chr" + selected_chromosome + "_file_check_1.txt; rm chr" + selected_chromosome + "_file_check_2.txt; \
+            ls -l")
+        #open the vep VCF file without AA_upcase using bcftools
+            #extract AA as a new field and then remove CSQ. This is exactly what we did with VCF file before creating AA_upcase, so we need to recreate that.
+        #open the new VCF with AA_upcase
+            #remove the new AA_upcase field to have the same file than the previous VCF file
+        #save both files and then check they are identical using cmp
+    
     print_text("calculate the percentage of SNPs with low-confidence ancestral alleles, i.e., lower-case alleles", header=4)
     print("get the number of SNPs and SNPs with upper using awk")
     counts_case = run_bash(" \
@@ -2108,14 +2138,71 @@ def master_processor(selected_chromosome, debugging=False):
         awk \
             'BEGIN{FS=\"\t\"}END{print NR}'", return_value=True).strip())
         #select those variants that are SNPs and whose AA field is ACGT or acgt and obtain the type and AA
+            #we have cases like A,A,A because every consequence has an ancestral allele.
+            #AA=A includes also A,A,A. I checked that, with ACGT we are selecting any SNP that has ACGT in the AA field, even if you have several "A"s separated by comma.
+            #This is ok because we know that every consequence has always the same ancestral allele for the same SNP (I have checked that). So if A is present, the rest of ancestral alleles for this SNP will be also A. That SNPs will not have "-", "N" or ".". Indeed, it will not have anything else than "A".
         #then calculate the number of rows after the filtering
     if(count_snps_acgt_lower_anc_2 == count_snps_acgt_lower_anc) & (count_snps_acgt_upper_anc_2 == count_snps_acgt_upper_anc):
         print("YES! GOOD TO GO!")
     else:
         raise ValueError("SERIOUS ERROR! We have not correctly calculated the number of snps with lower/upper case ancestral allele")
 
+##por aqui
+    #There are snps for which AA is not the same than AA_upcase in upper case. I have checked several cases, and it seems these are snps that are multiallelic SNPs. We have two lines with the same position, so tabix does not know which ancestral allele correspond to each one.
+        #maybe you could bind multiallelics, do the operations and then split
+            #I did a quick attemp with bcftools norm and I still get differences between AA and AA_upcase
+            #maybe you could try again, more carefully, and check these cases with still error
+            #if they are still multiallelics or not...
+        #probably easier than adding a new field with AWK
+        #the alternative is remove multiallelci here, but then we cannot filter them within pops
 
-    #maybe you could remove that new field and see if the previos and teh new VCF files are the same. so you can be sure your operations have not changed the VCF more than necessary
+run_bash(" \
+    bcftools view \
+        ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.anc_up.vcf.gz \
+        --drop-genotypes \
+        --no-header | \
+    awk \
+        'BEGIN{ \
+            FS=\"\t|;|=\"; \
+            OFS=\"\t\"}; \
+        { \
+            for(i=1;i<=NF;i++){ \
+                if($i==\"AA\"){ \
+                    if(toupper($(i+1))!=$(i+3)){ \
+                        print $0; \
+                    } \
+                } \
+            } \
+        }' | head -n 1")
+
+    print_text("Check the number of SNPs without ancestral allele respect to the total", header=4)
+    snps_no_ancestral = int(run_bash(" \
+        bcftools query \
+            --format '%TYPE\t%AA\n' \
+            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.anc_up.vcf.gz | \
+        awk \
+            'BEGIN{FS=\"\t\"}{ \
+                if($1==\"SNP\"){ \
+                    if(index($2, \".\")!=0 || index($2, \"-\")!=0 || index($2, \"N\")!=0){ \
+                        count++ \
+                    } \
+                } \
+            }END{print count}'", return_value=True).strip())
+
+    snps_total = int(run_bash(" \
+        bcftools view \
+            --drop-genotypes \
+            --no-header \
+            --include 'TYPE=\"SNP\"' \
+            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.anc_up.vcf.gz | \
+        awk 'END{print NR}'", return_value=True).strip())
+    
+    snps_total == snps_no_ancestral + count_snps_acgt_upper_anc + count_snps_acgt_lower_anc
+
+
+
+
+
 
 
 
@@ -2123,7 +2210,7 @@ print_text("check that the new INFO/TAG with ancestral alleles in upper case is 
 print("calculate the number of SNPs for which AA is just AA_upcase but in lowercase")
 count_aa = run_bash(" \
     bcftools view \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf \
+        ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.anc_up.vcf.gz \
         --drop-genotypes \
         --no-header | \
     awk \
@@ -2147,11 +2234,12 @@ print("then check that this number is equal to the total number of SNPs")
 check_aa = run_bash(" \
     n_variants=$( \
         bcftools view \
-            ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf \
+            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vep.anc_up.vcf.gz \
             --drop-genotypes \
             --no-header | \
         awk \
             'END{print NR}'); \
+    echo $n_variants; \
     if [[ " + count_aa +  " -eq $n_variants ]]; then \
         echo 'TRUE'; \
     else \
@@ -2238,46 +2326,6 @@ run_bash("\
         ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf")
 print("We get as cases with AA not being the ALT those multiallelics where 1 of the ALT alleles are indeed the ancestral. For example, REF=A;ALT=T,G;AA=G is considered when filtering by ALT!=AA_upcase, when indeed G is the ancestral and it is one of the alternative alleles. Oddly enough, these SNPs are again filtered in when doing ALT=AA_upcase. In both cases makes sense, because we have ALT alleles that are the AA but other are not. For things like this, we should do ancestral filtering after dealing with multiallelic snps.")
 
-print_text("Check the number of SNPs without ancestral allele", header=4)
-run_bash(" \
-    n_snps_missing_ancestral=$( \
-        bcftools view \
-            --drop-genotypes \
-            --no-header \
-            --include 'AA_upcase=\".,-,N\"' \
-            ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
-        awk 'END{print NR}'); \
-    n_snps_total=$( \
-        bcftools view \
-            --drop-genotypes \
-            --no-header \
-            ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
-        awk 'END{print NR}'); \
-    printf 'We have a total of %s SNPs\n' \"$n_snps_total\"; \
-    printf 'We have %s SNPs WITHOUT ancestral alleles\n' \"$n_snps_missing_ancestral\"; \
-    loss_percent=$( \
-        awk \
-            -v x=$n_snps_missing_ancestral \
-            -v y=$n_snps_total \
-            'BEGIN{print (x/y)*100}'); \
-    if [[ $loss_percent < 40 ]]; then \
-        printf 'GOOD TO GO! The percentage of SNPs without ancestral allele is: %s' \"$loss_percent\"; \
-    else \
-        echo 'ERROR: FALSE! There are more than 40% of SNPs without ancestral allele';\
-    fi")
-    #Count the number of rows without header (i.e., SNPs) for which the ancestral allele is ".", "-" or "N". We do not use --exclude "A,C,T,G" because this lead to include indels with ancestral state like "TT" because "TT" is not "T". Use awk to count with print NR at the end of the file.
-        #from the fasta file info
-            #ACTG: high-confidence call, ancestral state supported by the other two sequences
-            #actg: low-confidence call, ancestral state supported by one sequence only
-                #these are no longer present in AA_upcase, they have been converted to uppercase
-            #N: failure, the ancestral state is not supported by any other sequence
-            #-: the extant species contains an insertion at this postion
-            #.: no coverage in the alignment
-    #Count the total number of SNPs, i.e., no filtering.
-    #load both numbers into AWK and divide SNPs with missing ancestrals by the total number of SNPs, then multiply by 100 to get percentage
-    #check this number is not very high
-        #we can use < inside [[ ]] as it will not be considered redirection
-        #-gt/-lt does not work for floats
 
 
 
@@ -2975,6 +3023,11 @@ if count_snps_acgt_total == count_snps_acgt_upper_anc_total+count_snps_acgt_lowe
     print("YES! GOOD TO GO!")
 else:
     raise ValueError("FALSE! ERROR! We have a problem calculating the number of SNPs with low and high confidence ancestral alleles")
+
+print("see the sums")
+print("Total number of SNPs with ancestral allele: " + str(count_snps_acgt_total))
+print("Total number of SNPs with high-confidence ancestral allele: " + str(count_snps_acgt_upper_anc_total))
+print("Total number of SNPs with low-confidence ancestral allele: " + str(count_snps_acgt_lower_anc_total))
 
 print("calculate the percentage of SNPs with low-confidence ancestral allele across all chromosomes")
 print(count_snps_acgt_lower_anc_total/count_snps_acgt_total*100)
