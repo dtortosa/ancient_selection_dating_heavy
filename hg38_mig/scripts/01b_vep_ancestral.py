@@ -161,7 +161,7 @@ run_bash("ls")
 ###############
 # folder prep #
 ###############
-print_text("Preparate pedigree data", header=1)
+print_text("folder prep", header=1)
 
 #save name of path including input vcf files
 input_vcfs_path = "data/vcf_files_hg38"
@@ -2524,6 +2524,9 @@ def master_processor(selected_chromosome, debugging=False):
         ls -l")
 
 
+    print_text("FINISH", header=3)
+
+
     print_text("restore sys.stdout using the previously saved reference to it. This is useful if you intend to use stdout for other things only required if we are in production, as we changed stdout only in that case", header=3)
     if debugging==False:
         sys.stdout = original_stdout
@@ -2676,6 +2679,20 @@ for chrom in chromosomes:
         print("YES! GOOD TO GO!")
     else:
         raise ValueError("ERROR! FALSE! WE HAVE ERROR/FALSE IN THE OUTPUT FILE OF CHROMOSOME NUMBER " + str(chrom))
+
+    print_text("check we have the row of FINISH", header=4)
+    check_finish = run_bash(" \
+        grep \
+            '## FINISH ##' \
+            --count \
+            ./scripts/00_ancestral_calcs_outputs/chr" + str(chrom) + ".out  || \
+        [[ $? == 1 ]]", return_value=True).strip()
+        #check we have the output indicating finish with a specific way, in uppercase and separated by "#", so we avoid the flag "--ignore-case". Ask for the count.
+        #as in the previous case, we add a line to avoid errors if the count is zero. We will deal with the lack of FINISH in the next line indicating also the chromosome name for which we found an error
+    if check_finish == "1":
+        print("YES! GOOD TO GO!")
+    else:
+        raise ValueError("ERROR! FALSE! THE SCRIPT HAS NOT FINISHED FOR CHROMOSOME NUMBER " + str(chrom))
 
 
 
