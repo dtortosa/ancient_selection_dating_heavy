@@ -1255,7 +1255,13 @@ def master_processor(selected_chromosome, debugging=False):
 
 
 
-    print_text("Initial operations", header=2)        
+    print_text("Initial operations", header=2)
+    print_text("Create a new folder for the selected chromosome", header=3)
+    run_bash(" \
+        mkdir \
+            -p \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/")
+
     print_text("chr" + selected_chromosome + ": see VCF file version", header=3)
     vcf_version = run_bash(" \
         bcftools head \
@@ -1338,26 +1344,7 @@ def master_processor(selected_chromosome, debugging=False):
         #list the samples and count them
         #if the number of samples is equal to the number of samples in the pedigree, perfect
 
-
-    print_text("chr " + selected_chromosome + ": the chromosome name of the first variant is correct?", header=3)
-    run_bash(" \
-        chr_vcf=$( \
-            bcftools query \
-                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz \
-                --format '%CHROM\n' | \
-            head -1); \
-        if [[ $chr_vcf == 'chr" + selected_chromosome + "' ]]; then \
-            echo 'TRUE'; \
-        else \
-            echo 'FALSE'; \
-        fi")
-        #with bcftools, query for the chromosome of the first variant
-        #we should have only case, being equal to the selected chromosome
-        #equality for strings using 1 bracket is "="
-            #https://stackoverflow.com/questions/18102454/why-am-i-getting-an-unexpected-operator-error-in-bash-string-equality-test
-
-
-    print_text("chr " + selected_chromosome + ": show the variant type, ID, chromosome, position, alleles and frequency for the first snps")
+    print_text("chr " + selected_chromosome + ": show the variant type, ID, chromosome, position, alleles and frequency for the first snps", header=3)
     run_bash(" \
         bcftools query \
             --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF\n' \
@@ -1366,24 +1353,6 @@ def master_processor(selected_chromosome, debugging=False):
         #select the format of the query indicating the columns you want to show per SNP.
             #you can include data from INFO
             #end with \n to have different lines per SNPs
-
-    print_text("chr " + selected_chromosome + ": check that all variants has '.' for filter, but only if you are NOT in debugging mode because it takes a few minutes", header=3)
-    if debugging==False:
-        run_bash(" \
-            uniq_filters=$( \
-                bcftools query \
-                    --format '%FILTER\n' \
-                    " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-                uniq); \
-            if [[ $uniq_filters == '.' ]]; then \
-                echo 'True'; \
-            else \
-                echo 'False';\
-            fi")
-            #according to the specific readme of the dataset we are using (http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/README_1kGP_phased_panel_110722.pdf), prior phasing they applied several filters, being one of them that all variants has to be PASS for FILTER. I understand that, because of this, all variants in the chromosome have now ".", being this the unique character. Let's check this for all chromosomes:
-                #make a query asking for the FILTER value of all variants
-                #select unique cases
-                #the unique cases should be a single string with a dot ("."), if yes, perfect.
 
 
     print_text("chr " + selected_chromosome + ": see genotypes of first samples", header=3)
@@ -1400,23 +1369,24 @@ def master_processor(selected_chromosome, debugging=False):
         #number of variants
             #http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/README_1kGP_phased_panel_110722.pdf
     print_text("apply the SNP filter always, but in the case of debugging=True reduce the sample size more", header=4)
+    print("Important: From this step, we are going to remove non-SNPs. We can have a SNP and a INDEL in the same position. This generates problems with the tabix index will be use later to add AA_upcase to the VCF file. Specifically, when this index (position and ancestral allele) tries to add the Ancestral allele of a given variant. For example, it can give the AA to the SNP and leave the INDEL without AA or viceversa, even though both the SNP and the INDEL have AA. The problem is that they are in the same position.")
     if debugging==True:
         run_bash(" \
             bcftools view \
                 --types snps \
                 " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-            head -n 5000 > 00_ancestral_debug_subset_chr" + selected_chromosome + ".vcf; \
+            head -n 5000 > ./results/00_vep_vcf_files/chr" + selected_chromosome + "/00_ancestral_debug_subset_chr" + selected_chromosome + ".vcf; \
             ls -l")
-        input_vcf_file_vep="00_ancestral_debug_subset_chr" + selected_chromosome + ".vcf"
+        input_vcf_file_vep="./results/00_vep_vcf_files/chr" + selected_chromosome + "/00_ancestral_debug_subset_chr" + selected_chromosome + ".vcf"
     else:
         run_bash(" \
             bcftools view \
                 --types snps \
                 --output-type z \
-                --output ./1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vcf.gz \
+                --output ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vcf.gz \
                 " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz; \
             ls -l")
-        input_vcf_file_vep="./1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vcf.gz"
+        input_vcf_file_vep="./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vcf.gz"
     print(input_vcf_file_vep)
         #--types
             #comma-separated list of variant types to select. Site is selected if any of the ALT alleles is of the type requested. Types are determined by comparing the REF and ALT alleles in the VCF record not INFO tags like INFO/INDEL or INFO/VT. Use --include to select based on INFO tags.
@@ -1453,7 +1423,7 @@ def master_processor(selected_chromosome, debugging=False):
             --assembly GRCh38 \
             --input_file " + input_vcf_file_vep + " \
             --format vcf \
-            --output_file ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz\
+            --output_file ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz\
             --vcf \
             --compress_output gzip \
             --force_overwrite \
@@ -1470,13 +1440,13 @@ def master_processor(selected_chromosome, debugging=False):
     run_bash(" \
         bcftools view \
             --header \
-            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz")
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz")
 
     print_text("do some checks about about whether we have used the VEP/ensemble/cache/assembly versions using the row added to the header in the VCF file by VEP", header=4)
     line_checks_after = run_bash(" \
         gunzip \
             --stdout \
-            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
         grep '##VEP='", return_value=True)
     #extract the row of the header with that information
     line_checks_after_split = line_checks_after.split(" ")
@@ -1512,51 +1482,50 @@ def master_processor(selected_chromosome, debugging=False):
     run_bash(" \
         bcftools query \
             --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF CSQ: %CSQ\n' \
-            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
         head -n 1000")
 
-    print_text("According to the VEP manual, vep does not change the vcf file, only add the CSQ field. Therefore, we could process the original vcf files and then process with our cleaning. Let's check if the vep VCF is exactly the same after we removed the CSQ field, which is the one added by AncestralAllele plugin of VEP. Only do it if NOT in debugging mode because we need the whole dataset to this check to work", header=4)
-    if debugging==False:
-        run_bash(" \
-            bcftools query \
-                -f '%TYPE %ID %CHROM %POS %REF %ALT %QUAL %FILTER %INFO %FORMAT\n' \
-                " + input_vcf_file_vep + " > chr" + selected_chromosome + "_file_check_1.txt; \
-            bcftools annotate \
-                --remove INFO/CSQ \
-                ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
-            bcftools query \
-                -f '%TYPE %ID %CHROM %POS %REF %ALT %QUAL %FILTER %INFO %FORMAT\n' > chr" + selected_chromosome + "_file_check_2.txt; \
-            echo '##See head first check file:'; head -n 5 chr" + selected_chromosome + "_file_check_1.txt; \
-            echo '##See head second check file:'; head -n 5 chr" + selected_chromosome + "_file_check_2.txt; \
-            check_status=$(cmp --silent chr" + selected_chromosome + "_file_check_1.txt chr" + selected_chromosome + "_file_check_2.txt; echo $?); \
-            echo '##Do the check'; \
-            if [[ $check_status -eq 0 ]]; then \
-                echo 'TRUE'; \
-            else \
-                echo 'FALSE'; \
-            fi; \
-            rm chr" + selected_chromosome + "_file_check_1.txt; rm chr" + selected_chromosome + "_file_check_2.txt; \
-            ls -l")
+    print_text("According to the VEP manual, vep does not change the vcf file, only add the CSQ field. Therefore, we could process the original vcf files and then process with our cleaning. Let's check if the vep VCF is exactly the same after we removed the CSQ field, which is the one added by AncestralAllele plugin of VEP.", header=4)
+    run_bash(" \
+        bcftools query \
+            -f '%TYPE %ID %CHROM %POS %REF %ALT %QUAL %FILTER %INFO %FORMAT\n' \
+            " + input_vcf_file_vep + " > ./results/00_vep_vcf_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_file_check_1.txt; \
+        bcftools annotate \
+            --remove INFO/CSQ \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
+        bcftools query \
+            -f '%TYPE %ID %CHROM %POS %REF %ALT %QUAL %FILTER %INFO %FORMAT\n' > ./results/00_vep_vcf_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_file_check_2.txt; \
+        echo '##See head first check file:'; head -n 5 ./results/00_vep_vcf_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_file_check_1.txt; \
+        echo '##See head second check file:'; head -n 5 ./results/00_vep_vcf_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_file_check_2.txt; \
+        check_status=$(cmp --silent ./results/00_vep_vcf_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_file_check_1.txt ./results/00_vep_vcf_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_file_check_2.txt; echo $?); \
+        echo '##Do the check'; \
+        if [[ $check_status -eq 0 ]]; then \
+            echo 'TRUE'; \
+        else \
+            echo 'FALSE'; \
+        fi; \
+        rm ./results/00_vep_vcf_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_file_check_1.txt; rm ./results/00_vep_vcf_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_file_check_2.txt; \
+        ls -l")
     
     
     print_text("Create a new AA field using the ancestral allele stored in CSQ/AA", header=3)
     print_text("see again the header of the VCF file after VEP processing", header=4)
     run_bash("\
         bcftools head \
-            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz")
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz")
     
     print_text("see all the tags in the CSQ field", header=4)
     run_bash("\
         bcftools +split-vep \
             --list \
-            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz")
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz")
 
     print_text("make tags inside CSQ available and then extract AA as a new column outside CSQ. You can then make a query and call AA without +split-vep", header=4)
     run_bash("\
         bcftools +split-vep \
             --annotation CSQ \
             --columns AA:String \
-            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
         bcftools query \
             --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n' | \
         head -n 1000")
@@ -1571,7 +1540,7 @@ def master_processor(selected_chromosome, debugging=False):
             bcftools +split-vep \
                 --annotation CSQ \
                 --columns AA:String \
-                ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
+                ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
             bcftools query \
                 --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n' | \
             head -n 4")
@@ -1579,13 +1548,13 @@ def master_processor(selected_chromosome, debugging=False):
             bcftools +split-vep \
                 --annotation CSQ \
                 --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n' \
-                ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
+                ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
             head -n 3")
         run_bash(" \
             bcftools +split-vep \
                 --annotation CSQ \
                 --format '%TYPE %ID %CHROM %POS %REF %ALT\n' \
-                ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
+                ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
             head -n 3")
 
     print_text("use AA to filter", header=4)
@@ -1594,7 +1563,7 @@ def master_processor(selected_chromosome, debugging=False):
         bcftools +split-vep \
             --annotation CSQ \
             --columns AA:String \
-            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
         bcftools query \
             --exclude 'REF=AA' \
             --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n' | \
@@ -1604,7 +1573,7 @@ def master_processor(selected_chromosome, debugging=False):
         bcftools +split-vep \
             --annotation CSQ \
             --columns AA:String \
-            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
         bcftools query \
             --include 'REF=AA' \
             --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n' | \
@@ -1614,7 +1583,7 @@ def master_processor(selected_chromosome, debugging=False):
     print_text("extract AA tag from CSQ and then remove CSQ", header=4)
     run_bash("\
         bcftools +split-vep \
-            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz \
             --annotation CSQ \
             --columns AA:String | \
         bcftools annotate \
@@ -1628,20 +1597,20 @@ def master_processor(selected_chromosome, debugging=False):
     print_text("First, extract the AA field, where we have 1 row per SNP and each consequence across transcripts is separated by ',', these are going to by our columns", header=4)
     run_bash(" \
         bcftools +split-vep \
-            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz \
             --annotation CSQ \
             --columns AA:String | \
         bcftools annotate \
             --remove INFO/CSQ | \
         bcftools query \
-            --format '%AA\n' > check_ancestral_transcripts_chr" + selected_chromosome + ".csv; \
-        head -n 50 check_ancestral_transcripts_chr" + selected_chromosome + ".csv")
+            --format '%AA\n' > ./results/00_vep_vcf_files/chr" + selected_chromosome + "/check_ancestral_transcripts_chr" + selected_chromosome + ".csv; \
+        head -n 50 ./results/00_vep_vcf_files/chr" + selected_chromosome + "/check_ancestral_transcripts_chr" + selected_chromosome + ".csv")
     
     print_text("get the number of rows of the file", header=4)
     total_ancestral_check_before = run_bash(" \
         awk \
             'END{print NR}'\
-            check_ancestral_transcripts_chr" + selected_chromosome + ".csv", return_value=True).strip()
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/check_ancestral_transcripts_chr" + selected_chromosome + ".csv", return_value=True).strip()
     
     print_text("Then add a new lines at the beginning with two different alleles to check our approach is able to discard these cases. Also add two lines with the same alleles, i.e., two spaces and two empty fields, which should be considered as equal", header=4)
     run_bash(" \
@@ -1655,8 +1624,8 @@ def master_processor(selected_chromosome, debugging=False):
             --expression '1i \\ ,' \
             --expression '1i \\ , ' \
             --expression '1i ,' \
-            check_ancestral_transcripts_chr" + selected_chromosome + ".csv; \
-        head -n 50 check_ancestral_transcripts_chr" + selected_chromosome + ".csv")
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/check_ancestral_transcripts_chr" + selected_chromosome + ".csv; \
+        head -n 50 ./results/00_vep_vcf_files/chr" + selected_chromosome + "/check_ancestral_transcripts_chr" + selected_chromosome + ".csv")
         #Change directly in the file (in place), and add 
             #"A,a": 
                 #So we can be sure awk differentiate even the same letter in different case
@@ -1696,7 +1665,7 @@ def master_processor(selected_chromosome, debugging=False):
             }END{ \
                 print count_2++ \
             }' \
-            check_ancestral_transcripts_chr" + selected_chromosome + ".csv", return_value=True).strip()
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/check_ancestral_transcripts_chr" + selected_chromosome + ".csv", return_value=True).strip()
         #load the file using the commas as field separator
         #if the row has more than 1 column:
             #remember that each row can have a different number of columns because each SNP can have more or less consequences. Therefore our loop across columns only work only for those rows with more than 1 column
@@ -1725,7 +1694,7 @@ def master_processor(selected_chromosome, debugging=False):
         raise ValueError("SERIOUS ERROR! THE CHECK FOR 1 UNIQUE ANCESTRAL ALLELE PER VARIANT FAILED. WE NEED TO CAREFULLY CHECK THIS BECAUSE WE CAN ONLY SELECT ONE ANCESTRAL ALLELE PER VARIANT")
     print("remove the csv files used to do the check")
     run_bash(" \
-        rm check_ancestral_transcripts_chr" + selected_chromosome + ".csv; \
+        rm ./results/00_vep_vcf_files/chr" + selected_chromosome + "/check_ancestral_transcripts_chr" + selected_chromosome + ".csv; \
         ls -l")
 
 
@@ -1735,7 +1704,7 @@ def master_processor(selected_chromosome, debugging=False):
         bcftools +split-vep \
             --annotation CSQ \
             --columns AA:String \
-            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
         bcftools annotate \
             --remove INFO/CSQ | \
         bcftools norm \
@@ -1752,7 +1721,7 @@ def master_processor(selected_chromosome, debugging=False):
         bcftools +split-vep \
             --annotation CSQ \
             --columns AA:String \
-            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
         bcftools query\
             --include 'AA=\"A,C,G,T,a,c,g,t\"'\
             --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n' | \
@@ -1784,7 +1753,7 @@ def master_processor(selected_chromosome, debugging=False):
     run_bash("\
         bcftools view \
             --exclude 'INFO/AC=INFO/AN || INFO/AC=0' \
-            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
         bcftools norm \
             --multiallelic +snps | \
         bcftools view \
@@ -1816,7 +1785,7 @@ def master_processor(selected_chromosome, debugging=False):
     run_bash("\
         bcftools view \
             --exclude 'INFO/AC=INFO/AN || INFO/AC=0' \
-            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
         bcftools norm \
             --multiallelic +snps | \
         bcftools view \
@@ -1836,17 +1805,13 @@ def master_processor(selected_chromosome, debugging=False):
         head -n 20")
 
 
-    print_text("Problem upper vs. lower case ancestral allele", header=3)
-    print("We have a problem with case sensitive. We have previously seen that if REF=C and AA=c, REF is NOT considered to be equal to AA. Therefore, if ALT=C and AA=c, ALT is NOT considered to be equal to AA. So I am creating a new AA field with all alleles as upper case, so we avoid this problem and we can consider ancestral alleles with high and low confidence (upper and lower case, respectively)")
-    
-    print_text("extract the position (index) of the columns CHROM and POS in the VCF file, so we can be sure we are selecting these two columns. We need these columns to create a file with chrom, pos and upper ancestral allele that will be included as a new field in the VCF file using tabix (see below)", header=4)
-    print("Important: From this step, we are going to remove non-SNPs. We can have a SNP and a INDEL in the same position. This generates errors when the index (position and ancestral allele) tries to add the Ancestral allele of a given variant. For example, it can give the AA to the SNP and leave the INDEL without AA or viceversa, even though both the SNP and the INDEL have AA. The problem is that they are in the same position.")
-    print("obtain the position of these columns using awk")
+    print_text("extract the position (index) of several columns in the VCF file, so we can be sure we are selecting these columns in later steps", header=3)
+    print_text("obtain the position of these columns using awk", header=4)
     indexes_chrom_pos = run_bash(" \
         bcftools +split-vep \
             --annotation CSQ \
             --columns AA:String \
-            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
         bcftools annotate \
             --remove INFO/CSQ | \
         bcftools view \
@@ -1869,12 +1834,15 @@ def master_processor(selected_chromosome, debugging=False):
                     if($i == \"ALT\"){ \
                         alt_index=i \
                     }; \
+                    if($i == \"FILTER\"){ \
+                        filter_index=i \
+                    }; \
                     if($i ~/^HG/ || $i ~/^NA/){ \
                         n_samples++\
                     } \
                 }; \
                 n_fields=NF; \
-                printf \"n_fields=%s,n_samples=%s,chrom=%s,pos=%s,ref=%s,alt=%s\", n_fields, n_samples, chrom_index, pos_index, ref_index, alt_index \
+                printf \"n_fields=%s,n_samples=%s,chrom=%s,pos=%s,ref=%s,alt=%s,filter=%s\", n_fields, n_samples, chrom_index, pos_index, ref_index, alt_index, filter_index \
             }'", return_value=True).strip()
         #get the header of the VCF file after extracting AA from CSQ, removing CSQ and select SNPs, just like we are going to do when we replace lower for upper case in the next line
         #open the header with AWK
@@ -1884,7 +1852,7 @@ def master_processor(selected_chromosome, debugging=False):
                         #"i" is the index, like 1, 2, 3... because of this, when you do $i is like you are doing $1.
                         #if we save "i", we are saving the index, the number
                         #https://unix.stackexchange.com/a/616495
-                    #also look for REF and ALT because we will use these columns later
+                    #also look for REF, ALT, FILTER because we will use these columns later
                     #if the header starts with HG or NA, add 1 to the count of n_samples, because this is a GT column for a given sample
                         #"~" let you use regular expression
                         #"/.../" is a regular expression to match text that meet condition
@@ -1900,24 +1868,92 @@ def master_processor(selected_chromosome, debugging=False):
     index_pos = indexes_chrom_pos.split(",")[3].replace("pos=", "")
     index_ref = indexes_chrom_pos.split(",")[4].replace("ref=", "")
     index_alt = indexes_chrom_pos.split(",")[5].replace("alt=", "")
+    index_filter = indexes_chrom_pos.split(",")[6].replace("filter=", "")
     print("total number of fields: " + n_fields)
     print("number of samples: " + n_samples)
     print("index of column CHROM: " + index_chrom)
     print("index of column POS: " + index_pos)
     print("index of column REF: " + index_ref)
     print("index of column ALT: " + index_alt)
-    print("the total number of fields minus the number of samples should be 9. The number of fixed fields in VCF v4.2 is 8 and then FORMAT, which in our case only has GT, thus we should have 9 fields. Also, the index of CHROM and POS should be 1 and 2, respectively")
-    if (int(n_fields)-int(n_samples) == 9) & (index_chrom=="1") & (index_pos=="2") & (index_ref=="4") & (index_alt=="5"):
+    print("index of column FILTER: " + index_filter)
+    print("the total number of fields minus the number of samples should be 9. The number of fixed fields in VCF v4.2 is 8 and then FORMAT, which in our case only has GT, thus we should have 9 fields. Also, the index of CHROM, POS, REF, ALT and FILTER should be 1, 2, 4, 5 and 7, respectively")
+    if (int(n_fields)-int(n_samples) == 9) & (index_chrom=="1") & (index_pos=="2") & (index_ref=="4") & (index_alt=="5") & (index_filter=="7"):
         print("YES! GOOD TO GO!")
     else:
         raise ValueError("FALSE! ERROR! WE HAVE A PROBLEM WITH THE FIELDS OF THE VCF FILE BEFORE CONVERTING TO UPPER CASE ANCESTRAL ALLELES")
 
+    print_text("the chromosome name is correct? We do this check here because in the previous line we obtained the number of the column of CHROM", header=4)
+    print("calculate the number of times each chromosome appears")
+    chrom_count = run_bash(" \
+        bcftools view \
+            --drop-genotypes \
+            --no-header \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
+        awk \
+            'BEGIN{FS=OFS=\"\t\"}{ \
+                for(i=1;i<=NF;i++){ \
+                    if(i==" + index_chrom + "){ \
+                        a[$i]++ \
+                    } \
+                } \
+            }END{for(i in a){print i,a[i]\n}}'", return_value=True).strip()
+        #extract all rows of the VCF file without header and genotypes
+        #load into awk using tabs as separator. In this way, we get separated the main columns, i.e., CHROM, POS...
+            #iterate over i, from 1 to the number of columns, adding 1 to i in each iteration
+                #if the number of the column is that of CHROM (previously calculated)
+                    #add an entry to array "a" using the chromosome name ($i) as index and adding 1 to the previous value
+                    #if the same chromosome appears 2 times, it will have a value of 2...
+            #at the END, print each index of "a" (i; chromosome name) and its value (a[$i]; the count). Both values are separated by tab as OFS=\t, and each new pair is a new line (\n)
+    print("convert the output of awk into a pandas DF")
+    chrom_count_df = pd.DataFrame([chrom.split("\t") for chrom in chrom_count.split("\n")], columns=["chrom", "count"])
+        #split each pair of values using "\n" and for each one
+            #split each pair into the two value using \t
+            #this is the input for pandas
+        #select the column names
+        #https://stackoverflow.com/a/54103026/12772630
+    print("check that we only have 1 chromosome and that is the selected chromosome")
+    if (chrom_count_df.shape[0]==1) & (chrom_count_df["chrom"].to_numpy()=="chr"+selected_chromosome):
+        print("YES! GOOD TO GO!")
+    else:
+        raise ValueError("FALSE! ERROR! WE HAVE A PROBLEM WITH THE CHROMOSOMES INCLUDED IN THE VCF FILE")
+
+    print_text("check that no SNP has filter different from '.' We do this check here because in the previous line we obtained the number of the column of FILTER", header=4)
+        #according to the specific readme of the dataset we are using (http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/README_1kGP_phased_panel_110722.pdf), prior phasing they applied several filters, being one of them that all variants has to be PASS for FILTER. I understand that, because of this, all variants in the chromosome have now ".", being this the unique character.
+    print("calculate the number of SNPs for which FILTER is not '.'")
+    problematic_fiter = run_bash(" \
+        bcftools view \
+            --no-header \
+            --drop-genotypes \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
+        awk \
+            'BEGIN{FS=OFS=\"\t\"}{ \
+                for(i=1;i<=NF;i++){ \
+                    if(i==" + index_filter + "){ \
+                        if($i!=\".\"){count++} \
+                    } \
+                } \
+            }END{print count}'", return_value=True).strip()
+        #load the VCF file after VEP without header and genotypes
+        #open in awk using tabs as separator, so we separate the main columns, i.e., CHROM, POS, ID, REF, ALT....FILTER
+            #iterate over i from 1 to the number of columns, adding 1 to "i" in each iteration
+            #if the number of the column is that of FILTER (previously calculated)
+                #if the value of that column ($i) is NOT ".", then add 1 to the array called count
+            #END by printing the array count.
+    print("check that the number of SNPs with FILTER different from '.' is 0")
+    if problematic_fiter=="":
+        print("YES! GOOD TO GO!")
+    else:
+        raise ValueError("FALSE! ERROR! WE HAVE SNPS FOR WHICH FILTER IS NOT '.'!!!")
+
+
+    print_text("Problem upper vs. lower case ancestral allele", header=3)
+    print("We have a problem with case sensitive. We have previously seen that if REF=C and AA=c, REF is NOT considered to be equal to AA. Therefore, if ALT=C and AA=c, ALT is NOT considered to be equal to AA. So I am creating a new AA field with all alleles as upper case, so we avoid this problem and we can consider ancestral alleles with high and low confidence (upper and lower case, respectively)")
     print_text("create a tab separated file with the position info and ancestral allele in upper case of each SNP", header=4)
     run_bash(" \
         bcftools +split-vep \
             --annotation CSQ \
             --columns AA:String \
-            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
         bcftools annotate \
             --remove INFO/CSQ | \
         bcftools view \
@@ -1938,18 +1974,18 @@ def master_processor(selected_chromosome, debugging=False):
                     } \
                 } \
             }' \
-        > ./results/00_vep_vcf_files/anc_alleles_uppercase_chr" + selected_chromosome + ".tsv; \
+        > ./results/00_vep_vcf_files/chr" + selected_chromosome + "/anc_alleles_uppercase_chr" + selected_chromosome + ".tsv; \
         sed  \
             --in-place \
             --expression '1i #CHROM\tPOS\tAA_upcase' \
-            ./results/00_vep_vcf_files/anc_alleles_uppercase_chr" + selected_chromosome + ".tsv; \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/anc_alleles_uppercase_chr" + selected_chromosome + ".tsv; \
         bgzip \
             --force \
-            ./results/00_vep_vcf_files/anc_alleles_uppercase_chr" + selected_chromosome + ".tsv; \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/anc_alleles_uppercase_chr" + selected_chromosome + ".tsv; \
         echo 'See first lines of the tab file with upper case ancestral alleles'; \
         gunzip \
             --stdout \
-            ./results/00_vep_vcf_files/anc_alleles_uppercase_chr" + selected_chromosome + ".tsv.gz | head -n 70")
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/anc_alleles_uppercase_chr" + selected_chromosome + ".tsv.gz | head -n 70")
             #convert to upper case the ancestral alleles using awk
                 #Based on "#https://www.biostars.org/p/304979/"
                 #start and set 
@@ -1981,7 +2017,7 @@ def master_processor(selected_chromosome, debugging=False):
     list_pos = run_bash(" \
         gunzip \
             --stdout \
-            ./results/00_vep_vcf_files/anc_alleles_uppercase_chr" + selected_chromosome + ".tsv.gz | \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/anc_alleles_uppercase_chr" + selected_chromosome + ".tsv.gz | \
         awk \
             'BEGIN{FS=\"\t\"}{ \
                 if(NR>1){print $2} \
@@ -2002,7 +2038,7 @@ def master_processor(selected_chromosome, debugging=False):
     uniq_chrom = run_bash(" \
         gunzip \
             --stdout \
-            ./results/00_vep_vcf_files/anc_alleles_uppercase_chr" + selected_chromosome + ".tsv.gz | \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/anc_alleles_uppercase_chr" + selected_chromosome + ".tsv.gz | \
         awk \
             'BEGIN{FS=\"\t\"}{ \
                 if(NR>1 && !a[$1]++){print $1} \
@@ -2025,7 +2061,7 @@ def master_processor(selected_chromosome, debugging=False):
     run_bash(" \
         gunzip \
             --stdout \
-            ./results/00_vep_vcf_files/anc_alleles_uppercase_chr" + selected_chromosome + ".tsv.gz | \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/anc_alleles_uppercase_chr" + selected_chromosome + ".tsv.gz | \
         awk \
             'BEGIN{FS=OFS=\"\t\"}{ \
                 if(NR>1){ \
@@ -2038,10 +2074,10 @@ def master_processor(selected_chromosome, debugging=False):
                 for(i in val){ \
                     print i,val[i] \
                 } \
-            }' > check_unique_aa_chr" + selected_chromosome + ".tsv; \
+            }' > ./results/00_vep_vcf_files/chr" + selected_chromosome + "/check_unique_aa_chr" + selected_chromosome + ".tsv; \
             gzip \
                 --force \
-                check_unique_aa_chr" + selected_chromosome + ".tsv; \
+                ./results/00_vep_vcf_files/chr" + selected_chromosome + "/check_unique_aa_chr" + selected_chromosome + ".tsv; \
             ls -l")
             #avoid the first row with the header, we only want to process actual positions and AA_upcase
             #found[$0]++
@@ -2080,7 +2116,7 @@ def master_processor(selected_chromosome, debugging=False):
                 #https://stackoverflow.com/a/62467589/12772630
     print("load the tsv file into pandas")
     check_unique_aa = pd.read_csv(
-        "check_unique_aa_chr" + selected_chromosome + ".tsv.gz", 
+        "./results/00_vep_vcf_files/chr" + selected_chromosome + "/check_unique_aa_chr" + selected_chromosome + ".tsv.gz", 
         sep="\t", 
         header=0, 
         low_memory=False)
@@ -2098,7 +2134,7 @@ def master_processor(selected_chromosome, debugging=False):
         raise ValueError("FALSE! ERROR! WE HAVE A PROBLEM WHEN CHECKING THE NUMBER OF UNIQUE CASES OF AA_UPCASE")
     print("remove the file used to do the check")
     run_bash(" \
-        rm check_unique_aa_chr" + selected_chromosome + ".tsv.gz; \
+        rm ./results/00_vep_vcf_files/chr" + selected_chromosome + "/check_unique_aa_chr" + selected_chromosome + ".tsv.gz; \
         ls -l")
 
     print_text("Then create an index for this tab-delimited file using tabix.", header=4)
@@ -2109,12 +2145,12 @@ def master_processor(selected_chromosome, debugging=False):
             --end 2 \
             --force \
             --comment '#' \
-            ./results/00_vep_vcf_files/anc_alleles_uppercase_chr" + selected_chromosome + ".tsv.gz; \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/anc_alleles_uppercase_chr" + selected_chromosome + ".tsv.gz; \
         echo 'See first lines of the tab file with upper case ancestral alleles after creating the index'; \
         gunzip \
             --keep \
             --stdout \
-            ./results/00_vep_vcf_files/anc_alleles_uppercase_chr" + selected_chromosome + ".tsv.gz | head -n 70")
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/anc_alleles_uppercase_chr" + selected_chromosome + ".tsv.gz | head -n 70")
             #create index of the tab delimited file with SNP positions and upper ancestral alleles
                 #Tabix indexes a TAB-delimited genome position file in.tab.bgz and creates an index file (in.tab.bgz.tbi or in.tab.bgz.csi) when region is absent from the command-line. The input data file must be position sorted and compressed by bgzip which has a gzip(1) like interface.
                 #After indexing, tabix is able to quickly retrieve data lines overlapping regions specified in the format "chr:beginPos-endPos". (Coordinates specified in this region format are 1-based and inclusive.)
@@ -2136,20 +2172,20 @@ def master_processor(selected_chromosome, debugging=False):
         bcftools +split-vep \
             --annotation CSQ \
             --columns AA:String \
-            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
         bcftools annotate \
             --remove INFO/CSQ | \
         bcftools view \
             --types snps | \
         bcftools annotate \
-            --annotations ./results/00_vep_vcf_files/anc_alleles_uppercase_chr" + selected_chromosome + ".tsv.gz \
+            --annotations ./results/00_vep_vcf_files/chr" + selected_chromosome + "/anc_alleles_uppercase_chr" + selected_chromosome + ".tsv.gz \
             --columns CHROM,POS,.AA_upcase \
             --header-line '##INFO=<ID=AA_upcase,Number=.,Type=String,Description=\"The AA field from INFO/CSQ after converting alleles to uppercase\">' \
             --output-type z\
-            --output ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz; \
+            --output ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz; \
         bcftools query \
             --format '%TYPE %ID %CHROM %POS %REF %ALT AA:%AA AA_upcase:%AA_upcase\n' \
-            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
         head -n 100")
             #From the CSQ field added by VEP, extract the tag "AA" as a string, which is the ancestral state.
             #remove the CSQ field
@@ -2173,35 +2209,34 @@ def master_processor(selected_chromosome, debugging=False):
                     #u/b: un/compressed BCF, v/z: un/compressed VCF, 0-9: compression level [v]
     print("We can see how the new tag AA_upcase has ACTG in uppercase, while the rest of characters ('.', '-', 'N') remain the same")
 
-    print_text("Check whether the new VCF file is exactly the same than the previous one but with the addition of AA_upcase. Only do it if NOT in debugging mode because we need the whole dataset to this check to work", header=4)
-    if debugging==False:
-        run_bash(" \
-            bcftools +split-vep \
-                --annotation CSQ \
-                --columns AA:String \
-                ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
-            bcftools annotate \
-                --remove INFO/CSQ | \
-            bcftools view \
-                --types snps | \
-            bcftools query \
-                -f '%TYPE %ID %CHROM %POS %REF %ALT %QUAL %FILTER %INFO %FORMAT\n' > chr" + selected_chromosome + "_file_check_1.txt; \
-            bcftools annotate \
-                --remove INFO/AA_upcase \
-                ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
-            bcftools query \
-                -f '%TYPE %ID %CHROM %POS %REF %ALT %QUAL %FILTER %INFO %FORMAT\n' > chr" + selected_chromosome + "_file_check_2.txt; \
-            echo '##See head first check file:'; head -n 1 chr" + selected_chromosome + "_file_check_1.txt; \
-            echo '##See head second check file:'; head -n 1 chr" + selected_chromosome + "_file_check_2.txt; \
-            check_status=$(cmp --silent chr" + selected_chromosome + "_file_check_1.txt chr" + selected_chromosome + "_file_check_2.txt; echo $?); \
-            echo '##Do the check'; \
-            if [[ $check_status -eq 0 ]]; then \
-                echo 'TRUE'; \
-            else \
-                echo 'FALSE'; \
-            fi; \
-            rm chr" + selected_chromosome + "_file_check_1.txt; rm chr" + selected_chromosome + "_file_check_2.txt; \
-            ls -l")
+    print_text("Check whether the new VCF file is exactly the same than the previous one but with the addition of AA_upcase.", header=4)
+    run_bash(" \
+        bcftools +split-vep \
+            --annotation CSQ \
+            --columns AA:String \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
+        bcftools annotate \
+            --remove INFO/CSQ | \
+        bcftools view \
+            --types snps | \
+        bcftools query \
+            -f '%TYPE %ID %CHROM %POS %REF %ALT %QUAL %FILTER %INFO %FORMAT\n' > ./results/00_vep_vcf_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_file_check_1.txt; \
+        bcftools annotate \
+            --remove INFO/AA_upcase \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
+        bcftools query \
+            -f '%TYPE %ID %CHROM %POS %REF %ALT %QUAL %FILTER %INFO %FORMAT\n' > ./results/00_vep_vcf_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_file_check_2.txt; \
+        echo '##See head first check file:'; head -n 1 ./results/00_vep_vcf_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_file_check_1.txt; \
+        echo '##See head second check file:'; head -n 1 ./results/00_vep_vcf_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_file_check_2.txt; \
+        check_status=$(cmp --silent ./results/00_vep_vcf_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_file_check_1.txt ./results/00_vep_vcf_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_file_check_2.txt; echo $?); \
+        echo '##Do the check'; \
+        if [[ $check_status -eq 0 ]]; then \
+            echo 'TRUE'; \
+        else \
+            echo 'FALSE'; \
+        fi; \
+        rm ./results/00_vep_vcf_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_file_check_1.txt; rm ./results/00_vep_vcf_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_file_check_2.txt; \
+        ls -l")
         #open the vep VCF file without AA_upcase using bcftools
             #extract AA as a new field and then remove CSQ. This is exactly what we did with VCF file before creating AA_upcase, so we need to recreate that.
         #open the new VCF with AA_upcase
@@ -2213,7 +2248,7 @@ def master_processor(selected_chromosome, debugging=False):
     counts_case = run_bash(" \
         bcftools query \
             --format '%TYPE\t%AA\n' \
-            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
         awk \
             'BEGIN{ \
                 FS=\"\t\"} \
@@ -2248,41 +2283,22 @@ def master_processor(selected_chromosome, debugging=False):
                     #add 1 to count_3
             #at the END, print all counts
     print("extract the counts")
-    count_snps_acgt = int(counts_case.split(",")[0].replace("count_snps_acgt=", ""))
-    count_snps_acgt_upper_anc = int(counts_case.split(",")[1].replace("count_snps_acgt_upper_anc=", ""))
-    count_snps_acgt_lower_anc = int(counts_case.split(",")[2].replace("count_snps_acgt_lower_anc=", ""))
+    count_snps_acgt = counts_case.split(",")[0].replace("count_snps_acgt=", "")
+    count_snps_acgt = [int(count_snps_acgt) if count_snps_acgt!="" else 0][0]
+    count_snps_acgt_upper_anc = counts_case.split(",")[1].replace("count_snps_acgt_upper_anc=", "")
+    count_snps_acgt_upper_anc = [int(count_snps_acgt_upper_anc) if count_snps_acgt_upper_anc!="" else 0][0]
+    count_snps_acgt_lower_anc = counts_case.split(",")[2].replace("count_snps_acgt_lower_anc=", "")
+    count_snps_acgt_lower_anc = [int(count_snps_acgt_lower_anc) if count_snps_acgt_lower_anc!="" else 0][0]
     print("The number of SNPs with high-confidence ancestral alleles is " + str(count_snps_acgt_upper_anc))
     print("The number of SNPs with low-confidence ancestral alleles is " + str(count_snps_acgt_lower_anc))
     print("The total number of SNPs with lower or upper ancestral allele in this chromosome is " + str(count_snps_acgt))
     print("Calculate the percentage of SNPs with high-confidence ancestral alleles")
-    percent_lower_anc = (count_snps_acgt_lower_anc/count_snps_acgt)*100
+    if count_snps_acgt!=0:
+        percent_lower_anc=(count_snps_acgt_lower_anc/count_snps_acgt)*100
+    else:
+        percent_lower_anc=0
     if(count_snps_acgt == count_snps_acgt_lower_anc+count_snps_acgt_upper_anc):
         print("IMPORTANT RESULT: The percentage of SNPs with low-confidence ancestral allele is " + str(percent_lower_anc))
-    else:
-        raise ValueError("SERIOUS ERROR! We have not correctly calculated the number of snps with lower/upper case ancestral allele")
-
-    print_text("calculate again the number of SNPs with low- and high-confidence ancestral alleles using bcftools this time", header=4)
-    count_snps_acgt_lower_anc_2 = int(run_bash(" \
-        bcftools query \
-            --include 'TYPE=\"SNP\" && AA=\"a,c,g,t\"' \
-            --format '%TYPE\t%AA\n' \
-            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
-        awk \
-            'BEGIN{FS=\"\t\"}END{print NR}'", return_value=True).strip())
-    count_snps_acgt_upper_anc_2 = int(run_bash(" \
-        bcftools query \
-            --include 'TYPE=\"SNP\" && AA=\"A,C,G,T\"' \
-            --format '%TYPE\t%AA\n' \
-            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
-        awk \
-            'BEGIN{FS=\"\t\"}END{print NR}'", return_value=True).strip())
-        #select those variants that are SNPs and whose AA field is ACGT or acgt and obtain the type and AA
-            #we have cases like A,A,A because every consequence has an ancestral allele.
-            #AA=A includes also A,A,A. I checked that, with ACGT we are selecting any SNP that has ACGT in the AA field, even if you have several "A"s separated by comma.
-            #This is ok because we know that every consequence has always the same ancestral allele for the same SNP (I have checked that). So if A is present, the rest of ancestral alleles for this SNP will be also A. That SNPs will not have "-", "N" or ".". Indeed, it will not have anything else than "A".
-        #then calculate the number of rows after the filtering
-    if(count_snps_acgt_lower_anc_2 == count_snps_acgt_lower_anc) & (count_snps_acgt_upper_anc_2 == count_snps_acgt_upper_anc):
-        print("YES! GOOD TO GO!")
     else:
         raise ValueError("SERIOUS ERROR! We have not correctly calculated the number of snps with lower/upper case ancestral allele")
 
@@ -2292,7 +2308,7 @@ def master_processor(selected_chromosome, debugging=False):
         bcftools view \
             --no-header \
             --drop-genotypes \
-            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
         awk \
             'BEGIN{FS=\"\t|;|=\"}{ \
                 for(i=1;i<=NF;i++){ \
@@ -2327,7 +2343,7 @@ def master_processor(selected_chromosome, debugging=False):
         bcftools view \
             --drop-genotypes \
             --no-header \
-            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
         awk 'END{print NR}'", return_value=True).strip())
     print("check that the total number of SNPs is equal to the number of snps with non-AA, lower and upper case AA")
     if snps_total == snps_no_ancestral + count_snps_acgt_upper_anc + count_snps_acgt_lower_anc:
@@ -2342,7 +2358,7 @@ def master_processor(selected_chromosome, debugging=False):
         bcftools view \
             --drop-genotypes \
             --no-header \
-            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
         awk \
             'BEGIN{ \
                 FS=\"\t|;|=\"; \
@@ -2366,7 +2382,7 @@ def master_processor(selected_chromosome, debugging=False):
             bcftools view \
                 --drop-genotypes \
                 --no-header \
-                ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
+                ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
             awk \
                 'END{print NR}'); \
         if [[ " + count_aa +  " -eq $n_variants ]]; then \
@@ -2385,7 +2401,7 @@ def master_processor(selected_chromosome, debugging=False):
         bcftools view \
             --drop-genotypes \
             --no-header \
-            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
         awk \
             'BEGIN{ \
                 FS=\"\t|;|=\"; \
@@ -2416,7 +2432,7 @@ def master_processor(selected_chromosome, debugging=False):
             bcftools view \
                 --drop-genotypes \
                 --no-header \
-                ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
+                ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
             awk \
                 'END{print NR}'); \
         if [[ " + count_ref_alt_upper +  " -eq $n_variants ]]; then \
@@ -2438,19 +2454,19 @@ def master_processor(selected_chromosome, debugging=False):
         bcftools query \
             --include 'AA_upcase=\"A,C,G,T\" && REF=AA_upcase' \
             --format '%TYPE %ID %CHROM %POS %REF %ALT %AA_upcase\n' \
-            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
         head -n 20")
     print("SNPs where REF is NOT ancestral but ALT is")
     run_bash("\
         bcftools query \
             --include 'AA_upcase=\"A,C,G,T\" && REF!=AA_upcase && ALT=AA_upcase' \
             --format '%TYPE %ID %CHROM %POS %REF %ALT %AA_upcase\n' \
-            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz")
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz")
     print("see cases where, after removing monomorphic alleles belonging to multiallelic SNPs, we get SNPs where the ancestral is not the REF nor the ALT. You can lose the line with the ancestral allele if that one is monomorphic, thus the SNP does not longer have the ancestral allele")
     run_bash("\
         bcftools view \
             --exclude 'INFO/AC=INFO/AN || INFO/AC=0' \
-            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
         bcftools norm \
             --multiallelic +snps | \
         bcftools view \
@@ -2461,12 +2477,12 @@ def master_processor(selected_chromosome, debugging=False):
         bcftools query \
             --format '%TYPE %ID %CHROM %POS %REF %ALT %AA_upcase\n' | \
         head -n 50")
-    print("Another reason to remove multiallelic before filter by ancestral is that, if we have REF=A, and ALT=C,G and AA=G, if we do ALT!=AA, we get this case because C is not G, and C is one of the ALT alleles. However, if you do ALT==AA, you also get this case because G is another ALT allele. This is a problem if we have multiallelic SNPs in the same line with several ALT alleles in the ALT column separated by comma")
+    print("Another reason to remove multiallelic before filter by ancestral is that, if we have REF=A, and ALT=C,G and AA=G, if we do ALT!=AA, we get this case because C is not G, and C is one of the ALT alleles. However, if you do ALT==AA, you also get this case because G is another ALT allele. NOTE that in this script we are analyzing all samples, all pops, so it is unlikely we lose any line of a multiallelic SNP due to subseting as there is no subseting. We could still have cases where REF nor ALT are the AA because other causes, but this should not be a very high number. If we have many cases like this, we may have a problem in the calculation of ancestral alleles")
     print("calculate the number of these problematic cases, to check this is not a problem")
     number_no_aa_ref_alt = run_bash("\
         bcftools view \
             --exclude 'INFO/AC=INFO/AN || INFO/AC=0' \
-            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
         bcftools norm \
             --multiallelic +snps | \
         bcftools view \
@@ -2481,13 +2497,13 @@ def master_processor(selected_chromosome, debugging=False):
     if (int(number_no_aa_ref_alt)/snps_total)*100 < 2:
         print("YES! GOOD TO GO!")
     else:
-        raise ValueError("ERROR: FALSE! MORE THAN 2% OF THE SNPS HAVE NO ANCESTRAL ALLELE MATCHING REF NOR ALT EVEN HAVING A,C,G,T AS ANCESTRAL ALLELE!")
+        raise ValueError("ERROR: FALSE! MORE THAN 2% OF THE SNPS HAVE NO ANCESTRAL ALLELE MATCHING REF NOR ALT EVEN HAVING A,C,G,T AS ANCESTRAL ALLELE! Problems with multiallelics are unlikely here because we are not subseting pops. We can still have cases where REF nor ALT are AA, but these should not be too high. If they are, then we may have made an error during the calculation of the ancestral allele")
 
     print("now, filter out those snps without AA being REF or ALT and then select those were AA is ALT but not REF, these are the ones that require the switch")
     run_bash("\
         bcftools view \
             --exclude 'INFO/AC=INFO/AN || INFO/AC=0' \
-            ./results/00_vep_vcf_files/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
         bcftools norm \
             --multiallelic +snps | \
         bcftools view \
@@ -2500,10 +2516,6 @@ def master_processor(selected_chromosome, debugging=False):
         bcftools query \
             --format '%TYPE %ID %CHROM %POS %REF %ALT %AA_upcase\n' | \
         head -n 20")
-
-
-    #por aqui
-    #think quick again about this previous lines
 
 
     print_text("remove the file that was used as input for VEP", header=3)
@@ -2550,16 +2562,17 @@ pool.close()
 
 
 
-###########################################################################################
-#### Number of SNPs with low- and high-confidence ancestral alleles across chromosomes ####
-###########################################################################################
-print_text("Number of SNPs with low- and high-confidence ancestral alleles across chromosomes", header=1)
-print_text("empty lists to save the counts of high and low confidence ancestral alleles across chromosomes", header=4)
+########################################################
+#### Do some checks after analyzing all chromosomes ####
+########################################################
+print_text("Do some checks after analyzing all chromosomes", header=1)
+print_text("Number of SNPs with low- and high-confidence ancestral alleles across chromosomes", header=2)
+print_text("empty lists to save the counts of high and low confidence ancestral alleles across chromosomes", header=3)
 count_snps_acgt_list = []
 count_snps_acgt_upper_anc_list = []
 count_snps_acgt_lower_anc_list = []
 
-print_text("run loop across chromosomes", header=4)
+print_text("run loop across chromosomes", header=3)
 #chrom=1
 for chrom in chromosomes:
     print("Doing chromosome " + str(chrom))
@@ -2584,12 +2597,18 @@ for chrom in chromosomes:
         raise ValueError("FALSE! ERROR! We have a problem calculating the number of SNPs with low and high confidence ancestral alleles")
 
     print("append to each list the corresponding count")
-    count_snps_acgt_list.append(int(row_results_split[0].replace("count_snps_acgt=", "")))
-    count_snps_acgt_upper_anc_list.append(int(row_results_split[1].replace("count_snps_acgt_upper_anc=", "")))
-    count_snps_acgt_lower_anc_list.append(int(row_results_split[2].replace("count_snps_acgt_lower_anc=", "")))
+    count_snps_acgt_list.append(row_results_split[0].replace("count_snps_acgt=", ""))
+    count_snps_acgt_upper_anc_list.append(row_results_split[1].replace("count_snps_acgt_upper_anc=", ""))
+    count_snps_acgt_lower_anc_list.append(row_results_split[2].replace("count_snps_acgt_lower_anc=", ""))
 
-print_text("process the results", header=4)
-print("check we have all chromosomes")
+
+print_text("process the results", header=3)
+print_text("convert to int each count if the count is NOt zero", header=4)
+count_snps_acgt_list = [int(x) if x!="" else 0 for x in count_snps_acgt_list]
+count_snps_acgt_upper_anc_list = [int(x) if x!="" else 0 for x in count_snps_acgt_upper_anc_list]
+count_snps_acgt_lower_anc_list = [int(x) if x!="" else 0 for x in count_snps_acgt_lower_anc_list]
+
+print_text("check we have all chromosomes", header=4)
 #selected_list=list_results[0]
 check_count = [len(selected_list) == 22 for selected_list in [count_snps_acgt_list, count_snps_acgt_upper_anc_list, count_snps_acgt_lower_anc_list]]
 if sum(check_count) == len(check_count):
@@ -2597,26 +2616,66 @@ if sum(check_count) == len(check_count):
 else:
     raise ValueError("FALSE! ERROR! We have a problem calculating the number of SNPs with low and high confidence ancestral alleles")
 
-print("make the sum across chromosomes")
+print_text("make the sum across chromosomes", header=4)
 count_snps_acgt_total = sum(count_snps_acgt_list)
 count_snps_acgt_upper_anc_total = sum(count_snps_acgt_upper_anc_list)
 count_snps_acgt_lower_anc_total = sum(count_snps_acgt_lower_anc_list)
 
-print("check the total is equal to the sum of high and low-confidence")
+print_text("check the total is equal to the sum of high and low-confidence", header=4)
 if count_snps_acgt_total == count_snps_acgt_upper_anc_total+count_snps_acgt_lower_anc_total:
     print("YES! GOOD TO GO!")
 else:
     raise ValueError("FALSE! ERROR! We have a problem calculating the number of SNPs with low and high confidence ancestral alleles")
 
-print("see the sums")
+print_text("see the sums", header=4)
 print("Total number of SNPs with ancestral allele: " + str(count_snps_acgt_total))
 print("Total number of SNPs with high-confidence ancestral allele: " + str(count_snps_acgt_upper_anc_total))
 print("Total number of SNPs with low-confidence ancestral allele: " + str(count_snps_acgt_lower_anc_total))
 
-print("calculate the percentage of SNPs with low-confidence ancestral allele across all chromosomes")
+print_text("calculate the percentage of SNPs with low-confidence ancestral allele across all chromosomes", header=4)
 print(count_snps_acgt_lower_anc_total/count_snps_acgt_total*100)
 
-print("IMPORTANT: if you need the number of SNPs without ancestral allele data, you can find it per chromosome in the line starting with 'The number of SNPs without ancestral allele data is'")
+print_text("IMPORTANT: if you need the number of SNPs without ancestral allele data, you can find it per chromosome in the line starting with 'The number of SNPs without ancestral allele data is'", header=4)
+
+
+
+print_text("now check we do NOT have any errors in the output files of all chromosomes", header=2)
+print_text("run loop across chromosomes", header=3)
+#chrom=1
+for chrom in chromosomes:
+    print_text("Doing chromosome " + str(chrom), header=4)
+
+    print_text("count number of cases with 'error' or 'false' in the output file", header=4)
+    count_error_false = run_bash(" \
+        grep \
+            'error|false' \
+            --extended-regexp \
+            --ignore-case \
+            --count \
+            ./scripts/00_ancestral_calcs_outputs/chr" + str(chrom) + ".out || \
+        [[ $? == 1 ]]", return_value=True).strip()
+        #using grep, look for 
+            #"error" OR "false" using "|". In order to avoid escaping the symbol, i.e., "\|", we need to use the flag "--extended-regexp"
+                #"error" include any string combing after like "errorS", "errores", etc... If the string "error" is present alone or in combination with other strings, you will get a hit
+            #ignore the case, so "Error" and "ERROR" are also included
+            #get the count, not the rows matching
+        #if the exit code of grep indicates error run the code after "||". This is the function of "||", run the code at the right only if the code at the left failed
+            #check if the exit code ("$?") is 1, if so, output True
+            #In the case of grep, we have three options for the exit codes
+                #0: no error and one or more lines were selected
+                #1: no error but no lines were selected
+                #>1: an error occurred
+            #This is different from other programs where exit code equals to 1 is error, and we coded that accordingly in run_bash.
+            #Because of this, in this particular case, we add an additional line in case grep gives non-zero exist status, and avoid error if the exit status is 1. If the exit status is >1 and thus, there is an error, this will fail, so we are not hiding errors. If the exist code is 0, "||" avoids running the if (I have checked looking for "ancestral"), so we are good.
+            #https://unix.stackexchange.com/a/427598
+            #https://pubs.opengroup.org/onlinepubs/9699919799/utilities/grep.html#tag_20_55_14
+        #https://linuxize.com/post/grep-multiple-patterns/
+
+    print_text("check the count of problematic cases is zero", header=4)
+    if count_error_false == "0":
+        print("YES! GOOD TO GO!")
+    else:
+        raise ValueError("ERROR! FALSE! WE HAVE ERROR/FALSE IN THE OUTPUT FILE OF CHROMOSOME NUMBER " + str(chrom))
 
 
 
