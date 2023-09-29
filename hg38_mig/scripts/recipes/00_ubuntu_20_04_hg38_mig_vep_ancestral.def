@@ -61,9 +61,6 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 
 %post
 
-	#give rights to run script
-	chmod +x ./opt/scripts/01b_vep_ancestral.py
-
 	#we use the flag -y for the cases when apt-get asks for installing
 
 	#update the packages
@@ -271,6 +268,9 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 	#go out of this directory to the directories outside the container
 	cd
 
+	#give rights to run script
+	chmod +x /opt/scripts/01b_vep_ancestral.py
+
 
 
 #############################
@@ -337,7 +337,7 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 %runscript
 
 	#run scripts. NOT USE "&", each script have to be run after the previous one have been run
-	./opt/scripts/01b_vep_ancestral.py > ./scripts/01b_vep_ancestral.out 2>&1
+	/opt/scripts/01b_vep_ancestral.py > ./scripts/01b_vep_ancestral.out 2>&1
 		#to get output and errors in the same file
 		#see bash script for details
 
