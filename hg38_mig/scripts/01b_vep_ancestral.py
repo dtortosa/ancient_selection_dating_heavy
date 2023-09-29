@@ -1483,7 +1483,7 @@ def master_processor(selected_chromosome, debugging=False):
         bcftools query \
             --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF CSQ: %CSQ\n' \
             ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
-        head -n 1000")
+        head -n 100")
 
     print_text("According to the VEP manual, vep does not change the vcf file, only add the CSQ field. Therefore, we could process the original vcf files and then process with our cleaning. Let's check if the vep VCF is exactly the same after we removed the CSQ field, which is the one added by AncestralAllele plugin of VEP.", header=4)
     run_bash(" \
@@ -1495,8 +1495,8 @@ def master_processor(selected_chromosome, debugging=False):
             ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
         bcftools query \
             -f '%TYPE %ID %CHROM %POS %REF %ALT %QUAL %FILTER %INFO %FORMAT\n' > ./results/00_vep_vcf_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_file_check_2.txt; \
-        echo '##See head first check file:'; head -n 5 ./results/00_vep_vcf_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_file_check_1.txt; \
-        echo '##See head second check file:'; head -n 5 ./results/00_vep_vcf_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_file_check_2.txt; \
+        echo '##See head first check file:'; head -n 1 ./results/00_vep_vcf_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_file_check_1.txt; \
+        echo '##See head second check file:'; head -n 1 ./results/00_vep_vcf_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_file_check_2.txt; \
         check_status=$(cmp --silent ./results/00_vep_vcf_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_file_check_1.txt ./results/00_vep_vcf_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_file_check_2.txt; echo $?); \
         echo '##Do the check'; \
         if [[ $check_status -eq 0 ]]; then \
@@ -1528,7 +1528,7 @@ def master_processor(selected_chromosome, debugging=False):
             ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz | \
         bcftools query \
             --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n' | \
-        head -n 1000")
+        head -n 100")
 
 
     print_text("why I am directly calling AA using +split-vep?", header=4)
@@ -2013,25 +2013,39 @@ def master_processor(selected_chromosome, debugging=False):
                 #https://github.com/samtools/bcftools/issues/668
 
     print_text("check whether the position in the new file is position sorted, as this is a requirement of tabix", header=4)
-    print("extract the second column (POS) avoiding the header (NR=1)")
-    list_pos = run_bash(" \
+    print("check increasing order in awk")
+    check_increasing_pos_index = run_bash(" \
         gunzip \
             --stdout \
             ./results/00_vep_vcf_files/chr" + selected_chromosome + "/anc_alleles_uppercase_chr" + selected_chromosome + ".tsv.gz | \
         awk \
-            'BEGIN{FS=\"\t\"}{ \
-                if(NR>1){print $2} \
-            }'", return_value=True).split()
-    print("convert to integer each position because we get it in the form of string from run_bash")
-    list_pos = [int(pos) for pos in list_pos]
-    print("sort in ascending order") 
-    list_pos_sorted = sorted(list_pos)
-        #sorted([1,2,3,5,4]) gives [1, 2, 3, 4, 5]
-    print("check that both lists are the same and hence the original was already sorted")
-    if list_pos==list_pos_sorted:
+            'BEGIN{FS=\"\t\"; result=\"TRUE\"}{ \
+                if(NR==2){prev=$2}; \
+                if(NR>2){ \
+                    if($2 < prev){result=\"FALSE\"}; \
+                    prev=$2 \
+                } \
+            }END{print result}'", return_value=True).strip()
+        #decompress the file with pos and AA and sent to stdout
+        #open in awk
+            #first set the delimiter to tabs and create a variable to save the result. The original value is TRUE, but it will change to FALSE if the positions are not in increasing order
+            #if the row is the second one, i.e., the first after the header
+                #create a variable called "prev" and add the POS ($2) of that row.
+                #when the next row comes, we will check whether its position is lower than the position stored at "prev"
+                #this part is not necessary because $2<prev is False if prev is empty, but just in case
+            #if we are above the second row
+                #check whether its position is lower than the position of the previous row, if it is, we have a problem, so set result as FALSE. If not, do nothing, we are good.
+                    #we can have rows two rows with the same position together because they belong to multiallelic SNPs, thus we avoid "=" in the condition. If the current row has a POS equal to the previous row, it is ok.
+                #update the "prev" variable with the POS of the current row ($2) so we can next in the next row if POS is lower.
+            #print the "result" variable
+            #based on
+                #https://unix.stackexchange.com/a/420670
+        #echo 'chrom\tpos\nchr1\t-1\nchr1\t1\nchr1\t2\nchr1\t3' |
+    print("check if TRUE")
+    if check_increasing_pos_index=="TRUE":
         print("YES! GOOD TO GO!")
     else:
-        raise ValueError("FALSE! ERROR! Coordinates are not sorted in ascending order")
+        raise ValueError("FALSE! ERROR! THE POSITIONS IN THE FILE WITH POS AND AA ARE NOT SORTED IN INCREASING ORDER AND THIS REQUIRED BY TABIX!!!")
 
     print_text("check also that the first column of chrom only have one unique chromosome", header=4)
     print("extract the unique chromosomes avoiding the header (NR=1)")
@@ -2121,8 +2135,8 @@ def master_processor(selected_chromosome, debugging=False):
         header=0, 
         low_memory=False)
     print(check_unique_aa)
-    print("check that the position column has no duplicates, i.e., we have results per distinct value of pos AND these distinct position values are the same than those in list_pos (after selecting unique)")  
-    if (sum(check_unique_aa["pos"].duplicated(keep=False))==0) & (sorted(check_unique_aa["pos"].unique().tolist()) == sorted(set(list_pos))):
+    print("check that the position column has no duplicates, i.e., we have results per distinct value of pos")  
+    if sum(check_unique_aa["pos"].duplicated(keep=False))==0:
         print("YES! GOOD TO GO!")
     else:
         raise ValueError("FALSE! ERROR! WE HAVE A PROBLEM WHEN CHECKING THE NUMBER OF UNIQUE CASES OF AA_UPCASE")
@@ -2351,6 +2365,11 @@ def master_processor(selected_chromosome, debugging=False):
         print("The number of SNPs without ancestral allele data is " + str(snps_no_ancestral) + " out a total of " + str(snps_total) + ". This is a " + str((snps_no_ancestral/snps_total*100)) + " percent")
     else:
         raise ValueError("FALSE! ERROR! We have a problem with the counts of SNPs with and without ancestral allele data")
+    print("check whether the number of SNPs without ancestral data is NOT the total number of SNPs")
+    if snps_total!=snps_no_ancestral:
+        print("YES! GOOD TO GO!")
+    else:
+        raise ValueError("FALSE! ERROR! NO SNP HAVE ANCESTRAL ALLELE DATA")
 
     print_text("check that the new INFO/TAG with ancestral alleles in upper case is exactly the same than the original AA tag but in uppercase always", header=4)
     print("calculate the number of SNPs for which AA is just AA_upcase but in lowercase")
@@ -2461,7 +2480,8 @@ def master_processor(selected_chromosome, debugging=False):
         bcftools query \
             --include 'AA_upcase=\"A,C,G,T\" && REF!=AA_upcase && ALT=AA_upcase' \
             --format '%TYPE %ID %CHROM %POS %REF %ALT %AA_upcase\n' \
-            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz")
+            ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
+        head -n 20")
     print("see cases where, after removing monomorphic alleles belonging to multiallelic SNPs, we get SNPs where the ancestral is not the REF nor the ALT. You can lose the line with the ancestral allele if that one is monomorphic, thus the SNP does not longer have the ancestral allele")
     run_bash("\
         bcftools view \

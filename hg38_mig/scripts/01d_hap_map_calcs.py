@@ -2845,3 +2845,6 @@ pool.map(master_processor, full_combinations_pop_chroms)
 
 #close the pool
 pool.close()
+
+
+##according to david, you can check whether the REF/ALT alleles and frequencies match between the old and new hap files, but taking into account we have different coordinated, hg19 vs hg38
