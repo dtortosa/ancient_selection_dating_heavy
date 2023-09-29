@@ -1,5 +1,10 @@
 - Ask jesus 
-	- about VEP 
+	- about VEP
+		- finish writting email
+		- show him output of installing VEP, the test is OK, but we have a few warnings like "The feature_type chromosome is being skipped". I have not found info in github about this. 
+			- /Desktop/output_installing_vep.txt 
+			- when running VEP I get a warning, but it is not the same
+				- "Smartmatch is experimental at /opt/ensembl-vep/modules/Bio/EnsEMBL/VEP/AnnotationSource/File.pm line 472."
 		- should I also use ancestral alleles that are lower case? i.e., they have low confidence?
 			- check number of variants wiht low confidnce
     			- if only 2% is ok, half of the variants is not

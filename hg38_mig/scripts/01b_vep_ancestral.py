@@ -1513,6 +1513,8 @@ def master_processor(selected_chromosome, debugging=False):
     run_bash("\
         bcftools head \
             ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz")
+
+    #por aqui
     
     print_text("see all the tags in the CSQ field", header=4)
     run_bash("\
