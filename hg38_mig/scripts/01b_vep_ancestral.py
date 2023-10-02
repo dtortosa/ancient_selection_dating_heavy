@@ -1513,8 +1513,6 @@ def master_processor(selected_chromosome, debugging=False):
     run_bash("\
         bcftools head \
             ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz")
-
-    #por aqui
     
     print_text("see all the tags in the CSQ field", header=4)
     run_bash("\
@@ -1560,7 +1558,7 @@ def master_processor(selected_chromosome, debugging=False):
             head -n 3")
 
     print_text("use AA to filter", header=4)
-    print("exclude those SNPs for which the REF allele IS NOT the ancestral. Note that 'A' and 'a' are considered different, this is something we will deal later")
+    print("include those SNPs for which the REF allele IS NOT the ancestral. Note that 'A' and 'a' are considered different, this is something we will deal later")
     run_bash("\
         bcftools +split-vep \
             --annotation CSQ \
@@ -1570,7 +1568,7 @@ def master_processor(selected_chromosome, debugging=False):
             --exclude 'REF=AA' \
             --format '%TYPE %ID %CHROM %POS %REF %ALT %AA\n' | \
         head -n 70")
-    print("exclude those SNPs for which the REF allele IS the ancestral")
+    print("include those SNPs for which the REF allele IS the ancestral")
     run_bash("\
         bcftools +split-vep \
             --annotation CSQ \
@@ -2729,6 +2727,7 @@ print_text("Next steps", header=1)
         #WE HAVE TO EXCLUDE CASES WHERE REF NOR ALT ARE THE ANCESTRAL ALLELE
             #these can be multiallelic SNPs for which one of the ALTs is not present in the selected population and that very ALT is the ancestral. We need these SNPs OUT, if no ancestral, we cannot estimate selection.
             #you hav eto do it after removing truly multiallelci snps in the population
+            #COUNT THESE CASES TO SEE THE IMPACT
             #see line 812 of 01b_vep_ancestral.py
         #then create the list of SNPs for which REF is not AA
         #alternatively, you can directly export chrom, pos, REF, ALT, for all SNPs, then select rows with different REF than Ancestral using awk and generate a BED file, which is also accpeted by annotate
