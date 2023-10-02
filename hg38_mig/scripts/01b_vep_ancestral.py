@@ -2499,6 +2499,8 @@ def master_processor(selected_chromosome, debugging=False):
         head -n 50")
     print("Another reason to remove multiallelic before filter by ancestral is that, if we have REF=A, and ALT=C,G and AA=G, if we do ALT!=AA, we get this case because C is not G, and C is one of the ALT alleles. However, if you do ALT==AA, you also get this case because G is another ALT allele. NOTE that in this script we are analyzing all samples, all pops, so it is unlikely we lose any line of a multiallelic SNP due to subseting as there is no subseting. We could still have cases where REF nor ALT are the AA because other causes, but this should not be a very high number. If we have many cases like this, we may have a problem in the calculation of ancestral alleles")
     print("calculate the number of these problematic cases, to check this is not a problem")
+
+    #por aqui
     number_no_aa_ref_alt = run_bash("\
         bcftools view \
             --exclude 'INFO/AC=INFO/AN || INFO/AC=0' \

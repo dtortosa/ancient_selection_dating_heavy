@@ -80,3 +80,35 @@ done
 
 #see the sum
 echo "The total number of SNPs without ancestral allele is "$sum
+
+
+## check the number of SNPs for which AA is not REF nor ALT ##
+#go to the working directory
+cd ../..
+cd ./scripts/00_ancestral_calcs_outputs/
+
+#set variable with zero. Here we will be summing the number of SNPs for which AA is not REF nor ALT
+sum_2=0
+
+#for each autosomal chromosome (sequence from 1 to 22)
+#chrom=1
+for i in $(seq 1 22); do 
+	number_to_sum_2=$( \
+		awk '{ \
+				if(/calculate the number of these problematic cases, to check this is not a problem/){ \
+					getline; \
+					print $0 \
+				} \
+			}' \
+			"chr"$i".out")
+		#if the text of the current line includes the string about this specific check, go to the next line (getline), which is the one with only the count of cases where AA is not REF nor ALT, and print it
+		#https://stackoverflow.com/a/7451456/12772630
+		#https://unix.stackexchange.com/a/127684
+	
+	#save that number to the previous total
+	sum_2=$(($sum_2 + $number_to_sum_2))
+		#https://unix.stackexchange.com/a/499036
+done
+
+#see the sum
+echo "The total number of SNPs without ancestral allele is "$sum_2
