@@ -1,0 +1,52 @@
+
+## check we have the correct files for each chromosome after calculating the ancestral allele ##
+chromosome 1
+TRUE
+chromosome 2
+TRUE
+chromosome 3
+TRUE
+chromosome 4
+TRUE
+chromosome 5
+TRUE
+chromosome 6
+TRUE
+chromosome 7
+TRUE
+chromosome 8
+TRUE
+chromosome 9
+TRUE
+chromosome 10
+TRUE
+chromosome 11
+TRUE
+chromosome 12
+TRUE
+chromosome 13
+TRUE
+chromosome 14
+TRUE
+chromosome 15
+TRUE
+chromosome 16
+TRUE
+chromosome 17
+TRUE
+chromosome 18
+TRUE
+chromosome 19
+TRUE
+chromosome 20
+TRUE
+chromosome 21
+TRUE
+chromosome 22
+TRUE
+
+## check the number of variants with '.', 'N' or '-' for ancestral allele ##
+The total number of SNPs without ancestral allele is 4254500
+
+## check the number of SNPs for which the ancestral allele is not REF nor ALT ##
+We have 296703 SNPs for which the ancestral allele is NOT the REF nor the ALT allele
