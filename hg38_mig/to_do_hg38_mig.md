@@ -1,31 +1,23 @@
-- Ask jesus 
-	- about VEP
-		- finish writting email
-		- show him output of installing VEP, the test is OK, but we have a few warnings like "The feature_type chromosome is being skipped". I have not found info in github about this. 
-			- /home/dftortosa/singularity/dating_climate_adaptation/hg38_mig/output_installing_vep.txt 
-			- when running VEP I get a warning, but it is not the same
-				- "Smartmatch is experimental at /opt/ensembl-vep/modules/Bio/EnsEMBL/VEP/AnnotationSource/File.pm line 472."
-		- should I also use ancestral alleles that are lower case? i.e., they have low confidence?
-			- check number of variants wiht low confidnce
-    			- if only 2% is ok, half of the variants is not
-	- about what accesibility masks is he using: L, Z and Q? also H?
-		- These masks help to identify regions of the genome that are more or less accesible to next generation sequencing methods using short reads.
+- Ask jesus
+
+	- Instalación: Siguiendo tus instrucciones, he sido muy cuidadoso con el lugar de instalación del caché y los plugins, además de usar la misma versión de caché y de VEP. A la hora de instalar VEP, no me descargo el caché para evitar tener que descargarlo cada vez que construya el container. Lo que he hecho ha sido descargarlo por mi cuenta una vez (vigilando la versión) en una localización concreta que luego indico a VEP con "--dir_cache". Lo mismo he hecho con los fasta ancestrales. Mi pregunta: ¿es necesario seleccional la opción "f" (FASTA) cuando instalamos VEP con INSTALL.pl? Yo he usado "--auto ap", así que no he descargado nada más durante la instalación a parte de la api y el AncestralAllele plugin. Según el manual, "f" instala fastas que se pueden usar para incluir anotaciones HGVS, comparar con la secuencia de referencia y construir transcript models desde un GFF file. Entiendo que si yo no necesito nada de eso, no me hacen falta los fasta. De hecho, ya he corrido VEP en todos los cromosomas y no me ha dado problemas. ¿Tu recomendarías utilizar la opción "f" aun así para mi caso?
+		- /home/dftortosa/singularity/dating_climate_adaptation/hg38_mig/scripts/recipes
+		- http://useast.ensembl.org/info/docs/tools/vep/script/vep_cache.html#fasta
+	- Warnings VEP 
+		- A la hora de correr INSTALL.pl, el perl script hace automaticamente varios checks para ver si la instalación se ha hecho bien. El resultado final del test en mi caso es PASS, es decir, no hay ningún error. Sin embargo, hay unos warnings que no termino de entender muy bien. Por ejemplo, cuando corre "AnnotationSource_File_GFF", dice "WARNING: The feature_type chromosome is being skipped", y lo mismo con "biological_region" , "five_prime_UTR", etc.... ¿Has visto alguna vez esto? No he encontrado información al respecto, ni hilos de github. Imagino que no será grave porque todo parece funcionar.... Adjunto el output con los checks de VEP por si le quieres echar un vistazo.
+		- También obtengo este warning cada vez que corro VEP: "Smartmatch is experimental at /opt/ensembl-vep/modules/Bio/EnsEMBL/VEP/AnnotationSource/File.pm". Entiendo que esto es un warning que viene directamente de perl por usar "Smartmatch" y no de VEP. Según he leido, Smartmatch es muy problemático ya que puede dar lugar a errores, pero entiendo que no podemos hacer nada. ¿A ti te sale el mismo warning?
+			- https://stackoverflow.com/questions/55819998/smartmatch-from-5-27-vs
+	- Número de SNPs con/sin alelo ancestral
+		- En total, hay 4,254,500 SNPs que no tienen alelo ancestral, mientras 57,344,650 si lo tienen. ¿Te parece un número razonable de missing? ¿Ó crees que mis análisis pueden estar fallando?
+		- Dentro de los SNPs con alelo ancestral:
+			- Hay 53,023,522 SNPs con alelo de alta confianza (apoyado por dos secuencias) y 4,321,128 con alelo de baja confianza (apoyado solo por una de las comparaciones). Esto es un 7.5%. ¿Tu usarías estos alelos con baja confianza ó directamente los eliminarías? 
+			- Dentro de los SNPs con alelo ancestral (high and low confidence), hay 296,703 SNPs para los que el alelo ancestral no es el REF ni el ALT. Así que estos también serán considerados missing. ¿Te parece un número razonable ó podría ser indicativo de que hay algún problema? Imagino que no debería haber problemas con la hebra ya que Byrska-Bishop et al. hicieron strand checks comparando con el panel de referencia, así que no se a que se debe este mismatch.
+	- Procesado de los alelos ancestrales: He usado bcftools +split-vep para extraer "AA" del field CSQ. Luego me he llevado "AA" a un tsv indexado con tabix donde todos los alelos ancestrales pasan a estar en mayuscula. Entonces he usado ese tsv para crear un nuevo campo con bcftools annotation. Así que al final tengo dos campos, uno con AA directamente obtenido de VEP y otro donde todos los alelos ancestrales están en mayuscula. Por tanto, el segundo campo no discrimina entre alelos de baja o alta confianza, por si al final queremos usarlos todos. ¿Le ves sentido al approach ó se te ocurre algo que me pueda faltar?
+	- Máscaras de accesibilidad: A la hora de aplicar la máscara, estoy usando directamente el bed file, el cual contiene solo sitios marcados como "passed" (P). Por tanto, dejo fuera sitios marcados como L, H, Z o Q en los fastas (README). ¿Son estos los sitios que tu usas ó incluyes tambien otros marcados con LHZQ? Entiendo que al descartar LHZQ, evitamos regiones con máyor probabilidad de falsos positivos y eso es lo que queremos.
 		- David say to avoid regions with a very low depth when it is not possible to do variant call.
 			- Note that the average depth in past versions was 3X, but now the average is 10 times higher.
-		- Info from README
-			- masks
-				- N - the base is an N in the reference genome GRCh37
-				- L - depth of coverage is much lower than average
-				- H - depth of coverage is much higher than average
-				- Z - too many reads with zero mapping quality overlap this position
-				- Q - the average mapping quality at the position is too low
-				- P - the base passed all filters
-				- 0 - an overlapping base was never observed in aligned reads 
-			- Regions marked as L, H, Z or Q are less accessible to short reads. Although they can still be analyzed they are more prone to false positives.
-				- http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/working/20160622_genome_mask_GRCh38/
-	- I guess the samples in the VCF files have the same order than in the pedigree right? So using that and the pedigree with population codes, we can subset the VCF file of each chromosome per population
-		- http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/20130606_g1k_3202_samples_ped_population.txt
-		- http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/1kGP.3202_samples.pedigree_info.txt
+		- http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/working/20160622_genome_mask_GRCh38/README.accessible_genome_mask.20160622
+
 
 
 - calculate map file using genetic distance from decode hg38 original

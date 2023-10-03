@@ -1,0 +1,107 @@
+Downloading required Ensembl API files
+ - fetching ensembl
+ - unpacking ./Bio/tmp/ensembl.zip
+ - moving files
+ - getting version information
+ - fetching ensembl-variation
+ - unpacking ./Bio/tmp/ensembl-variation.zip
+ - moving files
+ - getting version information
+ - fetching ensembl-funcgen
+ - unpacking ./Bio/tmp/ensembl-funcgen.zip
+ - moving files
+ - getting version information
+ - fetching ensembl-io
+ - unpacking ./Bio/tmp/ensembl-io.zip
+ - moving files
+ - getting version information
+
+Testing VEP installation
+./t/OutputFactory_VCF.t .............................. Possible attempt to separate words with commas at ./t/OutputFactory_VCF.t line 598.
+./t/OutputFactory_VCF.t .............................. 1/? Smartmatch is experimental at /opt/ensembl-vep/modules/Bio/EnsEMBL/VEP/AnnotationSource/File.pm line 472.
+./t/OutputFactory_VCF.t .............................. ok    
+./t/Parser_Region.t .................................. ok    
+./t/Runner.t ......................................... Smartmatch is experimental at /opt/ensembl-vep/modules/Bio/EnsEMBL/VEP/AnnotationSource/File.pm line 472.
+./t/Runner.t ......................................... ok     
+./t/AnnotationSource.t ............................... ok    
+./t/AnnotationSource_Database_Transcript.t ........... ok    
+./t/AnnotationSource_Database_RegFeat.t .............. ok    
+./t/CacheDir.t ....................................... ok    
+./t/AnnotationSource_File_BED.t ...................... Smartmatch is experimental at /opt/ensembl-vep/modules/Bio/EnsEMBL/VEP/AnnotationSource/File.pm line 472.
+./t/AnnotationSource_File_BED.t ...................... ok    
+./t/AnnotationSource_File_GTF.t ...................... Smartmatch is experimental at /opt/ensembl-vep/modules/Bio/EnsEMBL/VEP/AnnotationSource/File.pm line 472.
+./t/AnnotationSource_File_GTF.t ...................... 1/? WARNING: The feature_type three_prime_utr is being skipped
+WARNING: The feature_type start_codon is being skipped
+WARNING: The feature_type five_prime_utr is being skipped
+WARNING: The feature_type start_codon is being skipped
+./t/AnnotationSource_File_GTF.t ...................... ok    
+./t/Stats.t .......................................... 1/? Smartmatch is experimental at /opt/ensembl-vep/modules/Bio/EnsEMBL/VEP/AnnotationSource/File.pm line 472.
+./t/Stats.t .......................................... ok    
+./t/Config.t ......................................... ok    
+./t/AnnotationSource_File.t .......................... Smartmatch is experimental at /opt/ensembl-vep/modules/Bio/EnsEMBL/VEP/AnnotationSource/File.pm line 472.
+./t/AnnotationSource_File.t .......................... ok    
+./t/OutputFactory_JSON.t ............................. ok    
+./t/AnnotationSource_Cache.t ......................... ok   
+./t/Parser_CAID.t .................................... ok    
+./t/Parser_HGVS.t .................................... ok    
+./t/AnnotationSource_Cache_VariationTabix.t .......... ok    
+./t/TranscriptTree.t ................................. ok    
+./t/AnnotationSource_Database_Variation.t ............ ok    
+./t/AnnotationSource_Database_StructuralVariation.t .. ok    
+./t/Utils.t .......................................... ok    
+./t/AnnotationSource_File_BigWig.t ................... Smartmatch is experimental at /opt/ensembl-vep/modules/Bio/EnsEMBL/VEP/AnnotationSource/File.pm line 472.
+./t/AnnotationSource_File_BigWig.t ................... ok    
+./t/AnnotationSource_Cache_RegFeat.t ................. ok    
+./t/AnnotationSource_Cache_Variation.t ............... ok    
+./t/OutputFactory_Tab.t .............................. 1/? Smartmatch is experimental at /opt/ensembl-vep/modules/Bio/EnsEMBL/VEP/AnnotationSource/File.pm line 472.
+./t/OutputFactory_Tab.t .............................. ok    
+./t/AnnotationSourceAdaptor.t ........................ Smartmatch is experimental at /opt/ensembl-vep/modules/Bio/EnsEMBL/VEP/AnnotationSource/File.pm line 472.
+./t/AnnotationSourceAdaptor.t ........................ ok    
+./t/Parser_SPDI.t .................................... ok   
+./t/OutputFactory.t .................................. 1/? Smartmatch is experimental at /opt/ensembl-vep/modules/Bio/EnsEMBL/VEP/AnnotationSource/File.pm line 472.
+./t/OutputFactory.t .................................. ok     
+./t/FilterSet.t ...................................... ok     
+./t/AnnotationSource_File_GFF.t ...................... Smartmatch is experimental at /opt/ensembl-vep/modules/Bio/EnsEMBL/VEP/AnnotationSource/File.pm line 472.
+./t/AnnotationSource_File_GFF.t ...................... 1/? WARNING: The feature_type chromosome is being skipped
+WARNING: The feature_type three_prime_UTR is being skipped
+WARNING: The feature_type biological_region is being skipped
+WARNING: The feature_type five_prime_UTR is being skipped
+WARNING: The feature_type chromosome is being skipped
+WARNING: The feature_type biological_region is being skipped
+WARNING: The feature_type three_prime_UTR is being skipped
+WARNING: The feature_type five_prime_UTR is being skipped
+WARNING: The feature_type region is being skipped
+WARNING: The feature_type match is being skipped
+./t/AnnotationSource_File_GFF.t ...................... ok    
+./t/OutputFactory_VEP_output.t ....................... 1/? Smartmatch is experimental at /opt/ensembl-vep/modules/Bio/EnsEMBL/VEP/AnnotationSource/File.pm line 472.
+./t/OutputFactory_VEP_output.t ....................... ok    
+./t/Parser_ID.t ...................................... ok   
+./t/AnnotationSource_Cache_Transcript.t .............. ok    
+./t/BaseVEP.t ........................................ 1/? Smartmatch is experimental at /opt/ensembl-vep/modules/Bio/EnsEMBL/VEP/AnnotationSource/File.pm line 472.
+./t/BaseVEP.t ........................................ ok    
+./t/Parser_VCF.t ..................................... ok    
+./t/Parser_VEP_input.t ............................... ok    
+./t/AnnotationSource_File_VCF.t ...................... Smartmatch is experimental at /opt/ensembl-vep/modules/Bio/EnsEMBL/VEP/AnnotationSource/File.pm line 472.
+./t/AnnotationSource_File_VCF.t ...................... ok    
+./t/InputBuffer.t .................................... ok    
+./t/version.t ........................................ ok   
+./t/bam_edit.t ....................................... Smartmatch is experimental at /opt/ensembl-vep/modules/Bio/EnsEMBL/VEP/AnnotationSource/File.pm line 472.
+./t/bam_edit.t ....................................... 1/? WARNING: The feature_type cDNA_match is being skipped
+./t/bam_edit.t ....................................... ok    
+./t/Parser.t ......................................... ok     
+./t/VariantRecoder.t ................................. Smartmatch is experimental at /opt/ensembl-vep/modules/Bio/EnsEMBL/VEP/AnnotationSource/File.pm line 472.
+"my" variable $sth masks earlier declaration in same scope at Bio/EnsEMBL/DBSQL/TranslationAdaptor.pm line 607.
+./t/VariantRecoder.t ................................. ok    
+All tests successful.
+Files=42, Tests=1794, 89 wallclock secs ( 0.22 usr  0.08 sys + 85.45 cusr  4.39 csys = 90.14 CPU)
+Result: PASS
+ - OK!
+
+ - installing "AncestralAllele"
+ - This plugin requires data
+ - See ./vep_plugins/AncestralAllele.pm for details
+ - OK
+
+NB: One or more plugins that you have installed will not work without installation or downloading data; see logs above
+
+All done

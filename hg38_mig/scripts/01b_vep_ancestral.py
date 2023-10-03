@@ -1433,7 +1433,10 @@ def master_processor(selected_chromosome, debugging=False):
             --plugin AncestralAllele,./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38_final.fa.gz \
             --dir_plugins /opt/ensembl-vep/vep_plugins")
         #see dummy example for details about the arguments
-
+        #argument not used
+            #--buffer_size
+                #You can use it to increase speed but using more memory! We already had dumping core using the default and had to increase memory in HPC... see slrum file
+                #Sets the internal buffer size, corresponding to the number of variants that are read in to memory simultaneously. Set this lower to use less memory at the expense of longer run time, and higher to use more memory with a faster run time. Default = 5000
 
     print_text("explore the generated VCF file and do checks", header=3)
     print_text("view the file", header=4)
