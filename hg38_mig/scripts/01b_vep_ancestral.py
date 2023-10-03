@@ -2499,8 +2499,6 @@ def master_processor(selected_chromosome, debugging=False):
         head -n 50")
     print("Another reason to remove multiallelic before filter by ancestral is that, if we have REF=A, and ALT=C,G and AA=G, if we do ALT!=AA, we get this case because C is not G, and C is one of the ALT alleles. However, if you do ALT==AA, you also get this case because G is another ALT allele. NOTE that in this script we are analyzing all samples, all pops, so it is unlikely we lose any line of a multiallelic SNP due to subseting as there is no subseting. We could still have cases where REF nor ALT are the AA because other causes, but this should not be a very high number. If we have many cases like this, we may have a problem in the calculation of ancestral alleles")
     print("calculate the number of these problematic cases, to check this is not a problem")
-
-    #por aqui
     number_no_aa_ref_alt = run_bash("\
         bcftools view \
             --exclude 'INFO/AC=INFO/AN || INFO/AC=0' \
@@ -2634,7 +2632,7 @@ count_snps_acgt_upper_anc_list = [int(x) if x!="" else 0 for x in count_snps_acg
 count_snps_acgt_lower_anc_list = [int(x) if x!="" else 0 for x in count_snps_acgt_lower_anc_list]
 
 print_text("check we have all chromosomes", header=4)
-#selected_list=list_results[0]
+#selected_list=[count_snps_acgt_list, count_snps_acgt_upper_anc_list, count_snps_acgt_lower_anc_list][0]
 check_count = [len(selected_list) == 22 for selected_list in [count_snps_acgt_list, count_snps_acgt_upper_anc_list, count_snps_acgt_lower_anc_list]]
 if sum(check_count) == len(check_count):
     print("YES! GOOD TO GO!")
@@ -2685,13 +2683,15 @@ for chrom in chromosomes:
             #ignore the case, so "Error" and "ERROR" are also included
             #get the count, not the rows matching
         #if the exit code of grep indicates error run the code after "||". This is the function of "||", run the code at the right only if the code at the left failed
-            #check if the exit code ("$?") is 1, if so, output True
-            #In the case of grep, we have three options for the exit codes
+            #check if the exit code ("$?") is 1, if so, this will give 0 as exist status (i.e., no error and True) and give the count, which is zero, as stdout. As explained below, if the count is zero (stdout=0), the exit code is 1 in grep:
                 #0: no error and one or more lines were selected
                 #1: no error but no lines were selected
                 #>1: an error occurred
             #This is different from other programs where exit code equals to 1 is error, and we coded that accordingly in run_bash.
-            #Because of this, in this particular case, we add an additional line in case grep gives non-zero exist status, and avoid error if the exit status is 1. If the exit status is >1 and thus, there is an error, this will fail, so we are not hiding errors. If the exist code is 0, "||" avoids running the if (I have checked looking for "ancestral"), so we are good.
+            #Because of this, in this particular case, we add an additional line in case grep gives non-zero exist status, and avoid error if the exit status is 1.
+                #If grep gives "1" as exit status because the string is not present in the file, we run [[ $? == 1 ]]. This will give "0" as exist status if the previous exit status was "1", while maintaining the previous stdout, i.e., the "count=0" because grep did not find the string in the file.
+                #If the exit status is >1 and thus, there is an error, this will give "1" as exist status and run_bash will fail, so we are not hiding errors. 
+                #If the exist status is 0, "||" avoids running the conditional (I have checked looking for "ancestral"), so we are good.
             #https://unix.stackexchange.com/a/427598
             #https://pubs.opengroup.org/onlinepubs/9699919799/utilities/grep.html#tag_20_55_14
         #https://linuxize.com/post/grep-multiple-patterns/

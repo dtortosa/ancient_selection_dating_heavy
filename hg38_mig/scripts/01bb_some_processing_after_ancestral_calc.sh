@@ -10,16 +10,19 @@
 		#https://www.cyberciti.biz/faq/linux-redirect-error-output-to-file/
 
 
-## check we have the correct files after calculating the ancestral allele ##
+####
+echo -e "\n## check we have the correct files for each chromosome after calculating the ancestral allele ##"
 
 #go to the working directory
+cd ../
 cd ./results/00_vep_vcf_files
 
 #for each autosomal chromosome (sequence from 1 to 22)
 #chrom=1
 for chrom in $(seq 1 22) #https://stackoverflow.com/a/169517/12772630
 do
-	
+	echo "chromosome "$chrom
+
 	#list the files in the directory of the selected chromosome
 	#then count the number of times we have files with specific names
 	count_1=$(ls "./chr"$chrom | grep --count "1kGP_high_coverage_Illumina.chr"$chrom".filtered.SNV_phased_panel.vep.anc_up.vcf.gz")
@@ -41,8 +44,9 @@ do
 done
 
 
-## check the number of variants with ".", "N" or "-" for ancestral allele ##
-#we could still lose more than these snps because some can have AA that is not REF nor ALT. To be checked in the next steps.
+####
+echo -e "\n## check the number of variants with '.', 'N' or '-' for ancestral allele ##"
+#we could still lose more than these snps because some can have AA that is not REF nor ALT. See below.
 
 #go to the working directory
 cd ../..
@@ -53,12 +57,12 @@ sum=0
 
 #for each autosomal chromosome (sequence from 1 to 22)
 #chrom=1
-for i in $(seq 1 22)
+for chrom in $(seq 1 22)
 do
 	
 	#calculate the number of snps without ancestral data
 	number_to_sum=$( \
-		grep "The number of SNPs without ancestral allele data is" "chr"$i".out" | \
+		grep "The number of SNPs without ancestral allele data is" "chr"$chrom".out" | \
 		awk \
 			'BEGIN{FS=" |\\."}{ \
 				for(i=1;i<=NF;i++){ \
@@ -69,7 +73,7 @@ do
 			}')
 		#first get, from the output file of the corresponding chromosome, the line with the percentage of SNPs without ancestral data
 		#in awk
-			#use space and "." as delimiters, so we have the "." in the middle of the sentence
+			#use space and "." as delimiters, so we have the "." in the middle of the sentence removed (we have to escape "." in order to be considered as "." and not as a special character)
 			#for each field
 				#if the field is "data" and the next one is "is", then print the next next field, which is the number of snps without ancestral data
 
@@ -82,7 +86,8 @@ done
 echo "The total number of SNPs without ancestral allele is "$sum
 
 
-## check the number of SNPs for which AA is not REF nor ALT ##
+####
+echo -e "\n## check the number of SNPs for which the ancestral allele is not REF nor ALT ##"
 #go to the working directory
 cd ../..
 cd ./scripts/00_ancestral_calcs_outputs/
@@ -92,7 +97,7 @@ sum_2=0
 
 #for each autosomal chromosome (sequence from 1 to 22)
 #chrom=1
-for i in $(seq 1 22); do 
+for chrom in $(seq 1 22); do 
 	number_to_sum_2=$( \
 		awk '{ \
 				if(/calculate the number of these problematic cases, to check this is not a problem/){ \
@@ -100,7 +105,7 @@ for i in $(seq 1 22); do
 					print $0 \
 				} \
 			}' \
-			"chr"$i".out")
+			"chr"$chrom".out")
 		#if the text of the current line includes the string about this specific check, go to the next line (getline), which is the one with only the count of cases where AA is not REF nor ALT, and print it
 		#https://stackoverflow.com/a/7451456/12772630
 		#https://unix.stackexchange.com/a/127684
@@ -111,4 +116,4 @@ for i in $(seq 1 22); do
 done
 
 #see the sum
-echo "The total number of SNPs without ancestral allele is "$sum_2
+echo "We have "$sum_2" SNPs for which the ancestral allele is NOT the REF nor the ALT allele"
