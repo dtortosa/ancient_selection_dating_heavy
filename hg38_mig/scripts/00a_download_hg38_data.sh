@@ -122,9 +122,22 @@ fi
 #download the strict accessibility mask to select variant in regions that are accessible to short-reads sequencing (see 01_hap_map_calcs.py for further details)
 wget -nv http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/working/20160622_genome_mask_GRCh38/StrictMask/20160622.allChr.mask.bed --directory-prefix=../masks/
 	#-nv: turn off verboseness, without being quiet, so you get only a bit of output
+	#--directory-prefix to indicate we want the mask in a folder outside the current folder (../) and called "masks"
 	#https://linuxize.com/post/bash-concatenate-strings/
 
 #compress the file
 gzip --force --keep ../masks/20160622.allChr.mask.bed
 	#--force: force overwrite of output file and compress links
 	#--keep: keep (don't delete) input files
+
+
+
+########################
+# get pilot mask file #
+########################
+
+#download the pilot accessibility mask 
+wget -nv http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/working/20160622_genome_mask_GRCh38/PilotMask/20160622.allChr.pilot_mask.bed --directory-prefix=../masks/
+	#-nv: turn off verboseness, without being quiet, so you get only a bit of output
+	#--directory-prefix to indicate we want the mask in a folder outside the current folder (../) and called "masks"
+	#https://linuxize.com/post/bash-concatenate-strings/
