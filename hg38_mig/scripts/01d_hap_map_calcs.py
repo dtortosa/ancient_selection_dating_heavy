@@ -18,13 +18,38 @@
 
 #We are going to migrate to hg38 as the new release of 1KGP matches this genome reference version (https://www.internationalgenome.org/data-portal/data-collection/30x-grch38). This script is going to take the VCF files for SNPs in the hg38 high coverage data from 1000GP and obtain hap and map files that will be used as input by flex sweep.
 
-#For information about the download of the pedigrees and the VCF files, see 01a_selecting_pedegree.py and 01b_vep_ancestral.py, respectively.
+#We will use as input the VCF files that include the ancestral allele as a new field, which was obtained with VEP.
+
+#For more information about the download of the pedigrees and the VCF files with the original 1KGP data, see 01a_selecting_pedegree.py and 01b_vep_ancestral.py, respectively.
 
 
 
 ##################
 #### Starting ####
 ##################
+
+
+########################################
+# define function to print text nicely #
+########################################
+
+#text="checking function to print nicely"
+#header=1
+def print_text(text, header=2):
+    if header==1:
+        print("\n#######################################\n#######################################")
+        print(text)
+        print("#######################################\n#######################################")
+    elif header==2:
+        print("\n###### " + text + " ######")
+    elif header==3:
+        print("\n## " + text + " ##")
+    elif header==4:
+        print("\n# " + text + " #")
+print_text("checking function to print nicely: header 1", header=1)
+print_text("checking function to print nicely: header 2", header=2)
+print_text("checking function to print nicely: header 3", header=3)
+print_text("checking function to print nicely: header 4", header=4)
 
 
 ########################################
@@ -136,13 +161,13 @@ input_vcfs_path = "results/00_vep_vcf_files"
 #create folders to save the results
 run_bash(" \
     mkdir \
-        -p ./data/dummy_vcf_files/01_dummy_vcf_files_clean \
+        -p ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep; \
     mkdir \
-        -p ./results/hap_map_files_raw; \
+        -p ./results/01_cleaned_vep_vcf_files; \
     mkdir \
-        -p ./results/hap_map_files; \
+        -p ./results/02_hap_map_files_raw; \
     mkdir \
-        -p ./results/cleaned_vcf_files; \
+        -p ./results/03_hap_map_files; \
     mkdir \
         -p ./scripts/01_hap_map_calcs_outputs")
     #-p: no error if the folder already exists, make parent directories as needed
@@ -152,7 +177,7 @@ run_bash(" \
 #############
 # pops prep #
 #############
-
+print_text("Preparate pedigree data", header=1)
 #load original 2504 unrelated samples from phase 3. This includes sample IDs and pop/superpop codes. This is the definitive ped we will use both for pop codes and sample IDs
 #Data:
     #http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/integrated_call_samples_v3.20130502.ALL.panel
@@ -183,7 +208,7 @@ samples_pedigree_pop = pd.read_csv(
 
 #load the final pedigree we will use to select samples per pop
 unrelated_samples = pd.read_csv(
-    "/data/pedigrees/unrelated_samples.tsv", 
+    "data/pedigrees/unrelated_samples.tsv", 
     sep="\t", 
     header=0, 
     low_memory=False)
@@ -192,10 +217,10 @@ unrelated_samples = pd.read_csv(
 
 
 
-
 #################
 # bcftools prep #
 #################
+print_text("Prepare bcftool", header=1)
 
 #see version of bcftools
 print("\n#######################################\n#######################################")
@@ -208,57 +233,53 @@ run_bash("bcftools -v")
 
 
 ####################################################
-# check bcftools's behaviour with a dummy vcf file #
+# check bcftools's behaviour with a dummy vcf file including ancestral alleles calculated with VEP #
 ####################################################
-print("\n#######################################\n#######################################")
-print("We are going to use dummy vcf file to check the behaviour of bcftools: ")
-print("#######################################\n#######################################")
+print_text("Check bcftools's behaviour with a dummy vcf file including ancestral alleles calculated with VEP", header=1)
 
+print_text("explore the dummy VCF file and do some operations", header=2)
 #
-print("\n#######################################\n#######################################")
-print("see the dummy variants")
-print("#######################################\n#######################################")
+print_text("see the dummy variants", header=3)
 run_bash(" \
     bcftools view \
-        data/dummy_vcf_files/dummy_example.vcf | \
+        data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
     bcftools query \
-        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AF AA: %AA AA_upcase: %AA_upcase GTs:[ %GT]\n'")
         #We have variants with different characteristics. In some cases, the AN, AC fields are not correct, but we use this to check whether the different commands we use can correctly update these fields.
             #Biallelic SNPs:
-                #SNP rs6054247 chr20 14280 T A 5 0 0.2 GTs: 0|0 0|0 1|1
-                #SNP rs6054248 chr20 14290 C A 5 0 0.2 GTs: 0|0 0|0 1|.
-                #SNP rs6054249 chr20 14300 C A 5 1 0.2 GTs: 0|0 0|0 1|.
-                #SNP rs6054250 chr20 14310 C A 3 0 0 GTs: 1|0 .|. .|.
-                #SNP rs6054251 chr20 14320 C A 6 2 0.333 GTs: 0|0 0|0 1|1
-                #SNP rs6054252 chr20 14350 C A 4 2 0.5 GTs: 1|0 1|0 .|.
-                #SNP rs6054257 chr20 14370 G A 6 3 0.5 GTs: 1|0 1|1 0|0
-                #SNP rs6054255 chr20 14371 G C 6 3 0.667 GTs: 0|1 1|1 1|0
-                #SNP rs6040351 chr20 17330 T A 6 2 0.333 GTs: 0|0 1|0 1|0
+                #SNP rs6054247 chr20 14280 T A 5 0 0.2 AA: . AA_upcase: . GTs: 0|0 0|0 1|1
+                #SNP rs6054248 chr20 14290 C A 5 0 0.2 AA: . AA_upcase: . GTs: 0|0 0|0 1|.
+                #SNP rs6054249 chr20 14300 C A 5 1 0.2 AA: . AA_upcase: . GTs: 0|0 0|0 1|.
+                #SNP rs6054250 chr20 14310 C A 3 0 0 AA: N AA_upcase: N GTs: 1|0 .|. .|.
+                #SNP rs6054251 chr20 14320 C A 6 2 0.333 AA: - AA_upcase: - GTs: 0|0 0|0 1|1
+                #SNP rs6054252 chr20 14350 C A 4 2 0.5 AA: c AA_upcase: C GTs: 1|0 1|0 .|.
+                #SNP rs6054257 chr20 14370 G A 6 3 0.5 AA: c AA_upcase: C GTs: 1|0 1|1 0|0
+                #SNP rs6054255 chr20 14371 G C 6 3 0.667 AA: . AA_upcase: . GTs: 0|1 1|1 1|0
+                #SNP rs6040351 chr20 17330 T A 6 2 0.333 AA: . AA_upcase: . GTs: 0|0 1|0 1|0
             #Multiallelic SNPs:
-                #SNP rs6040355 chr20 1110696 A G,T 6 2,2 0.333,0.333 GTs: 1|1 2|2 0|0
-                #SNP rs6040356 chr20 1110697 A C,T 6 2,1 0.333,0 GTs: 1|1 0|0 0|0
-                #SNP rs6040357 chr20 1110698 A G,T 6 3,3 0.5,0.5 GTs: 1|1 2|2 1|2
-                #SNP rs6040358 chr20 1110699 G A,T 6 2,0 0.333,0 GTs: 1|1 0|0 .|.
-                #SNP rs6040359 chr20 1110700 A G,T 4 0,3 0,0.6 GTs: 2|2 2|2 2|.
+                #SNP rs6040355 chr20 1110696 A G,T 6 2,2 0.333,0.333 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 1|1 2|2 0|0
+                #SNP rs6040356 chr20 1110697 A C,T 6 2,1 0.333,0 AA: C,C,C,C,C,C,C,C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C,C,C,C,C,C,C,C GTs: 1|1 0|0 0|0
+                #SNP rs6040357 chr20 1110698 A G,T 6 3,3 0.5,0.5 AA: A,A,A,A,A,A,A,A,A,A,A,A,A,A AA_upcase: A,A,A,A,A,A,A,A,A,A,A,A,A,A GTs: 1|1 2|2 1|2
+                #SNP rs6040358 chr20 1110699 G A,T 6 2,0 0.333,0 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 1|1 0|0 .|.
+                #SNP rs6040359 chr20 1110700 A G,T 4 0,3 0,0.6 AA: T,T,T,T,T,T,T,T,T,T,T,T,T,T AA_upcase: T,T,T,T,T,T,T,T,T,T,T,T,T,T GTs: 2|2 2|2 2|.
             #Exact duplicate SNPs, i.e., pos, chr, REF, alt
-                #SNP rs6040360 chr20 1110701 A G 6 3 0.5 GTs: 1|1 0|0 0|1
-                #SNP rs6040360_copy chr20 1110701 A G 6 3 0.5 GTs: 1|1 1|0 0|1
+                #SNP rs6040360 chr20 1110701 A G 6 3 0.5 AA: G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G GTs: 1|1 0|0 0|1
+                #SNP rs6040360_copy chr20 1110701 A G 6 3 0.5 AA: G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G GTs: 1|1 1|0 0|1
             #SNP with unphased data
-                #SNP rs6040361 chr20 1110702 A G 6 3 0.5 GTs: 1|1 0/0 0|1
+                #SNP rs6040361 chr20 1110702 A G 6 3 0.5 AA: C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C GTs: 1|1 0/0 0|1
             #microsatellite (indel)
-                #INDEL microsat1 chr20 1110703 GTC G,GTCT . . . GTs: 0/1 0/2 1/1
+                #INDEL microsat1 chr20 1110703 GTC G,GTCT . . . AA: TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT AA_upcase: TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT GTs: 0/1 0/2 1/1
+
 
 #
-print("\n#######################################\n#######################################")
-print("split multiallelic SNPs ")
-print("#######################################\n#######################################")
+print_text("split multiallelic SNPs ", header=3)
 run_bash(" \
     bcftools view \
-        data/dummy_vcf_files/dummy_example.vcf | \
+        data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
     bcftools norm \
         --multiallelic -snps | \
     bcftools query \
-        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AF AA: %AA AA_upcase: %AA_upcase GTs:[ %GT]\n'")
     #split multiallelic SNPs in different lines
         #--multiallelic -snps
             #split multiallelic sites into biallelic records (-) or join biallelic sites into multiallelic records (+).
@@ -267,6 +288,7 @@ run_bash(" \
         #"Lines   total/split/realigned/skipped: 18/5/0/0"
             #as we are splitting multiallelics and we have 5 multi, 5 lines are split.
     #when a multiallelic snp (e.g., REF=A, ALT=G,T) is split in several lines, these lines have the same position and REF allele, but different ALT. This was done in 1000 genomes data. They also add 1 to the position of each new line to do the phasing, but then they put all lines back in the same position.
+    #Both lines of the same SNP have the same ancestral allele, which makes sense.
     #In these new lines, the ALT is now only one, but the AC still has two fields, i.e., count for both ALTs in both lines. the 1000 genomes project SNPs that are multiallelic have their AC field just with one value so I guess they used +fill-tags to update these fields (see below).
             #http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/README_1kGP_phased_panel_110722.pdf 
         #First scenario: rs6040355
@@ -286,17 +308,15 @@ run_bash(" \
             #the first row (0|0 0|0 .|.) and the second (1|1 1|1 1|.) should be removed. Our approach will consder both as monomorphic as in the first case AC=0 and in the second AC=AN.
 
 #
-print("\n#######################################\n#######################################")
-print("select only two samples to check whether AC, AN and AF changes")
-print("#######################################\n#######################################")
+print_text("select only two samples to check whether AC, AN and AF changes", header=3)
 run_bash(" \
     bcftools view \
         --samples NA00001,NA00002 \
-        data/dummy_vcf_files/dummy_example.vcf | \
+        data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
     bcftools norm \
         --multiallelic -snps | \
     bcftools query \
-        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AF AA: %AA AA_upcase: %AA_upcase GTs:[ %GT]\n'")
         #the order you use in --samples is the order that will follow the genotypes. So if you --samples NA00002,NA00001, you get first the genotype of NA00002 and then those of NA00001. In other words, the genotype columns are ordered based on the sample ID you used as input.
         #you can see how AN and AC are updated but not AF. 
             #For example, rs6040357 has three copies of the two ALT alleles (AC=3,3) and a total number of 6 alleles (AN=6), but after removing the third sample (1|2), AC becomes 2,2 and AN becomes 4.
@@ -311,29 +331,25 @@ run_bash(" \
         #SUMMARY: AC and AN are updated after subsetting, but not AF.
 
 #
-print("\n#######################################\n#######################################")
-print("select SNPs")
-print("#######################################\n#######################################")
+print_text("select SNPs", header=3)
 run_bash(" \
     bcftools view \
-        data/dummy_vcf_files/dummy_example.vcf | \
+        data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
     bcftools norm \
         --multiallelic -snps | \
     bcftools view \
         --types snps | \
     bcftools query \
-        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AF AA: %AA AA_upcase: %AA_upcase GTs:[ %GT]\n'")
         #--types/--exclude-types LIST
             #Select/exclude comma-separated list of variant types: snps,indels,mnps,ref,bnd,other
 
 #
-print("\n#######################################\n#######################################")
-print("see monomorphic snps: rs6054249 (0|0 0|0 1|.) is not considered as monomorphic which is right, given that the last genotype not only has missing but also an ALT allele. rs6054248 (0|0 0|0 1|.) is not included even having AC erronously set as zero, thanks we update AC field with +fill-tags. The cases considered as monomorphic are those with all REF (e.g., rs6040358) or all ALT (e.g., rs6040359) irrespectively if they have missing. For example, rs6040359 has '1|1 1|1 1|.' as GT and it is considered monomorphic despite having a missing allele in the last genotype")
-print("#######################################\n#######################################")
+print_text("see monomorphic snps: rs6054249 (0|0 0|0 1|.) is not considered as monomorphic which is right, given that the last genotype not only has missing but also an ALT allele. rs6054248 (0|0 0|0 1|.) is not included even having AC erronously set as zero, thanks we update AC field with +fill-tags. The cases considered as monomorphic are those with all REF (e.g., rs6040358) or all ALT (e.g., rs6040359) irrespectively if they have missing. For example, rs6040359 has '1|1 1|1 1|.' as GT and it is considered monomorphic despite having a missing allele in the last genotype", header=3)
 run_bash(" \
     bcftools norm \
         --multiallelic -snps \
-        data/dummy_vcf_files/dummy_example.vcf | \
+        data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
     bcftools view \
         --types snps | \
     bcftools +fill-tags \
@@ -341,7 +357,7 @@ run_bash(" \
     bcftools view \
         --include 'INFO/AC=INFO/AN || INFO/AC=0' | \
     bcftools query \
-        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AF AA: %AA AA_upcase: %AA_upcase GTs:[ %GT]\n'")
         #first update the AN and AC fields so we have the current number of non-ref alleles for each SNP and we avoid two allele counts for multiallelic because they are now separated in different lines (--multiallelic -snps) as found in the 1KGP data. 
             #remember that AC is "allele count in genotypes, for each ALT allele" while AN is "total number of alleles in called genotypes".
             #therefore
@@ -355,13 +371,12 @@ run_bash(" \
         #https://www.biostars.org/p/360620/
 
 #
-print("\n#######################################\n#######################################")
-print("see monomorphic snps after subseting two first samples: rs6054249 is now considered monomorphic because it has 0|0 0|0 1|., being 1|. removed after filtering out the third sample. We get a warning after subsetting because --sampls updated AC, but for splitted multiallelic snps, we have several allele counts in each line, so the first time it sees this (rs6040355), print warning and no more. But AC is correctly updated anyway, leaving just one count, thus breaking the connection between the allele counts of the lines of a given multiallelic snp.")
+print_text("see monomorphic snps after subseting two first samples: rs6054249 is now considered monomorphic because it has 0|0 0|0 1|., being 1|. removed after filtering out the third sample. We get a warning after subsetting because --sampls updated AC, but for splitted multiallelic snps, we have several allele counts in each line, so the first time it sees this (rs6040355), print warning and no more. But AC is correctly updated anyway, leaving just one count, thus breaking the connection between the allele counts of the lines of a given multiallelic snp", header=3)
 print("#######################################\n#######################################")
 run_bash(" \
     bcftools norm \
         --multiallelic -snps \
-        data/dummy_vcf_files/dummy_example.vcf | \
+        data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
     bcftools view \
         --types snps | \
     bcftools view \
@@ -371,16 +386,14 @@ run_bash(" \
     bcftools view \
         --include 'INFO/AC=INFO/AN || INFO/AC=0' | \
     bcftools query \
-        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AF AA: %AA AA_upcase: %AA_upcase GTs:[ %GT]\n'")
 
 #
-print("\n#######################################\n#######################################")
-print("exlcude monomorphic snps")
-print("#######################################\n#######################################")
+print_text("exlcude monomorphic snps", header=3)
 run_bash(" \
     bcftools norm \
         --multiallelic -snps \
-        data/dummy_vcf_files/dummy_example.vcf | \
+        data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
     bcftools view \
         --types snps | \
     bcftools +fill-tags \
@@ -388,16 +401,14 @@ run_bash(" \
     bcftools view \
         --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
     bcftools query \
-        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AF AA: %AA AA_upcase: %AA_upcase GTs:[ %GT]\n'")
 
 #
-print("\n#######################################\n#######################################")
-print("check that subseting and the updating AN, AC, AF fields does not change REF/AF: I select only the third sample. For rs6054247, the genotype is 0|0 0|0 1|1, being the third sample the only one with ALT. Thus, after subseting, the genotype is 1|1. AN and AC are both 2 now, while AF is 1. In other words, the ALT is the most frequent, but this alleles remains as the ALT. REF and ALT are not switched")
-print("#######################################\n#######################################")
+print_text("check that subseting and the updating AN, AC, AF fields does not change REF/AF: I select only the third sample. For rs6054247, the genotype is 0|0 0|0 1|1, being the third sample the only one with ALT. Thus, after subseting, the genotype is 1|1. AN and AC are both 2 now, while AF is 1. In other words, the ALT is the most frequent, but this alleles remains as the ALT. REF and ALT are not switched", header=3)
 run_bash(" \
     bcftools norm \
         --multiallelic -snps \
-        data/dummy_vcf_files/dummy_example.vcf | \
+        data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
     bcftools view \
         --types snps | \
     bcftools view \
@@ -405,16 +416,14 @@ run_bash(" \
     bcftools +fill-tags \
         -- --tags AN,AC,AF | \
     bcftools query \
-        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AF AA: %AA AA_upcase: %AA_upcase GTs:[ %GT]\n'")
 
 #
-print("\n#######################################\n#######################################")
-print("see what missing definition uses bcftools in stats: Stats considers as missing both '.|.' and '0|.', resulting in 5 missing for the third sample (3 cases with .|. and 2 cases with 1|.). This makes sense because we are looking for the proportion of genotypes with missing data, '0|.' has missing data besides the allele '0'. Therefore, it should be counted as missing. We can consider this using GT='mis' (see below). Note that we are not going to filter by missingness anyways because the 1KGP data is already filtered for 5% missingness and David said that we should stick to that.")
-print("#######################################\n#######################################")
+print_text("see what missing definition uses bcftools in stats: Stats considers as missing both '.|.' and '0|.', resulting in 5 missing for the third sample (3 cases with .|. and 2 cases with 1|.). This makes sense because we are looking for the proportion of genotypes with missing data, '0|.' has missing data besides the allele '0'. Therefore, it should be counted as missing. We can consider this using GT='mis' (see below). Note that we are not going to filter by missingness anyways because the 1KGP data is already filtered for 5% missingness and David said that we should stick to that", header=3)
 run_bash(" \
     bcftools norm \
         --multiallelic -snps \
-        data/dummy_vcf_files/dummy_example.vcf | \
+        data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
     bcftools view \
         --types snps | \
     bcftools +fill-tags \
@@ -426,14 +435,12 @@ run_bash(" \
         #produce stats per sample (--sample) considering all samples ("-")
 
 #
-print("\n#######################################\n#######################################")
-print("filter by frequency of missing. This approach counts the number of missing genotypes with GT='mis' ('.|.', '.', '0|.') and divided by the number of samples, so you get the proportion of samples with missing genotypes. The strength of this approach over calculating the tag F_MISSING (+fill-tags) is that you are counting anything with '.', so even '1|.' would be considered missing. To me this is more correct because we are filtering by genotype missingness, i.e., the proportion of genotypes with missing. Therefore, '1|.' has missing even though it has one allele. It is different in previous filters when we want to check if a SNP is monomorphic. In that situation, having 0|0 1|. is not monomorphic if we count the last allele in the genotype with missing. At the same time the genotype has missing (it should be count for missingness) and has an ALT allele (it is not monomorphic), we should consider both aspects. Note that we are not going to filter by missingness anyways because the 1KGP data is already filtered for 5% missingness and David said that we should stick to that.")
-print("#######################################\n#######################################")
+print_text("filter by frequency of missing. This approach counts the number of missing genotypes with GT='mis' ('.|.', '.', '0|.') and divided by the number of samples, so you get the proportion of samples with missing genotypes. The strength of this approach over calculating the tag F_MISSING (+fill-tags) is that you are counting anything with '.', so even '1|.' would be considered missing. To me this is more correct because we are filtering by genotype missingness, i.e., the proportion of genotypes with missing. Therefore, '1|.' has missing even though it has one allele. It is different in previous filters when we want to check if a SNP is monomorphic. In that situation, having 0|0 1|. is not monomorphic if we count the last allele in the genotype with missing. At the same time the genotype has missing (it should be count for missingness) and has an ALT allele (it is not monomorphic), we should consider both aspects. Note that we are not going to filter by missingness anyways because the 1KGP data is already filtered for 5% missingness and David said that we should stick to that", header=3)
 print("#### SNPs with 1/3 or more of missing: we have snps with 1 out of 3 missing genotypes (e.g., rs6040358) and variants with 2 out of 3 missing (rs6054250) ####")
 run_bash(" \
     bcftools norm \
         --multiallelic -snps \
-        data/dummy_vcf_files/dummy_example.vcf | \
+        data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
     bcftools view \
         --types snps | \
     bcftools +fill-tags \
@@ -443,12 +450,12 @@ run_bash(" \
     bcftools view \
         --include 'COUNT(GT=\"mis\")/N_SAMPLES >= 1/3' | \
     bcftools query \
-        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AF AA: %AA AA_upcase: %AA_upcase GTs:[ %GT]\n'")
 print("#### SNPs with 2/3 of missing: We get a variant with 2 out of 3 missing (rs6054250) ####")
 run_bash(" \
     bcftools norm \
         --multiallelic -snps \
-        data/dummy_vcf_files/dummy_example.vcf | \
+        data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
     bcftools view \
         --types snps | \
     bcftools +fill-tags \
@@ -458,12 +465,12 @@ run_bash(" \
     bcftools view \
         --include 'COUNT(GT=\"mis\")/N_SAMPLES = 2/3' | \
     bcftools query \
-        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AF AA: %AA AA_upcase: %AA_upcase GTs:[ %GT]\n'")
 print("#### select variants with less than 1/3 of missing: We have lost all variants with missing because we only have variants 2/3 and 1/3 of missing ####")
 run_bash(" \
     bcftools norm \
         --multiallelic -snps \
-        data/dummy_vcf_files/dummy_example.vcf | \
+        data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
     bcftools view \
         --types snps | \
     bcftools +fill-tags \
@@ -473,13 +480,13 @@ run_bash(" \
     bcftools view \
         --include 'COUNT(GT=\"mis\")/N_SAMPLES < 1/3' | \
     bcftools query \
-        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AF AA: %AA AA_upcase: %AA_upcase GTs:[ %GT]\n'")
         #Lines of multiallelic rs6040358 have been removed because the last sample has a missing genotype. Note that rs6040358 has not been excluded as monomorphic as it has 1 and 0, but because it has missing.
 print("#### select variants with less than 0.05 of missing: We have lost all variants with missing because we only have variants 2/3 and 1/3 of missing ####")
 run_bash(" \
     bcftools norm \
         --multiallelic -snps \
-        data/dummy_vcf_files/dummy_example.vcf | \
+        data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
     bcftools view \
         --types snps | \
     bcftools +fill-tags \
@@ -489,17 +496,15 @@ run_bash(" \
     bcftools view \
         --include 'COUNT(GT=\"mis\")/N_SAMPLES < 0.05' | \
     bcftools query \
-        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AF AA: %AA AA_upcase: %AA_upcase GTs:[ %GT]\n'")
         #1/2 would be 0.5, i.e., 50%. Therefore, 5% would be 0.05 (i.e., 0.5/10).
 
 #
-print("\n#######################################\n#######################################")
-print("remove now the exact duplicates: it does not matter if we remove duplicates before or after subsetting samples. Subseting does not update chrom, pos and REF/ALT, which are the fields used by '--rm-dup exact' to remove exact duplicates. In an hypothetically scenario where we have two duplicated SNPs and one of them is monomorphic, we would remove first the monomorphic due to the previous filters and then retain the second. If you use --rm-dup before, you would select the SNP that appears first, that could be the monomorphic or the other one. Removing mono first force to select always the second, while removing duplicates before makes possible to select one or the other. I do not think this is relevant")
-print("#######################################\n#######################################")
+print_text("remove now the exact duplicates: it does not matter if we remove duplicates before or after subsetting samples. Subseting does not update chrom, pos and REF/ALT, which are the fields used by '--rm-dup exact' to remove exact duplicates. In an hypothetically scenario where we have two duplicated SNPs and one of them is monomorphic, we would remove first the monomorphic due to the previous filters and then retain the second. If you use --rm-dup before, you would select the SNP that appears first, that could be the monomorphic or the other one. Removing mono first force to select always the second, while removing duplicates before makes possible to select one or the other. I do not think this is relevant", header=3)
 run_bash(" \
     bcftools norm \
         --multiallelic -snps \
-        data/dummy_vcf_files/dummy_example.vcf | \
+        data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
     bcftools view \
         --types snps | \
     bcftools +fill-tags \
@@ -511,20 +516,18 @@ run_bash(" \
     bcftools norm \
         --rm-dup exact | \
     bcftools query \
-        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AF AA: %AA AA_upcase: %AA_upcase GTs:[ %GT]\n'")
         #remove those snps that are exact duplicates, meaning identical chr, pos, ref, and alt. As you can see for rs6040360, it does not matter the ID or the genotypes, this command only targets chr, pos, ref, and alt. 
         #bcftools norm --rm-dup exact selects only the first appearance and remove the next. Consequently, rs6040360_copy is filtered out, retaining rs6040360.
             #https://github.com/samtools/bcftools/issues/1089
         #https://samtools.github.io/bcftools/bcftools.html#norm
 
 #
-print("\n#######################################\n#######################################")
-print("combine lines of multialleic snps in just one line")
-print("#######################################\n#######################################")
+print_text("combine lines of multialleic snps in just one line", header=3)
 run_bash(" \
     bcftools norm \
         --multiallelic -snps \
-        data/dummy_vcf_files/dummy_example.vcf | \
+        data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
     bcftools view \
         --types snps | \
     bcftools +fill-tags \
@@ -538,7 +541,7 @@ run_bash(" \
     bcftools norm \
         --multiallelic +snps | \
     bcftools query \
-        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AF AA: %AA AA_upcase: %AA_upcase GTs:[ %GT]\n'")
         #by combining the different lines of each multiallelic SNP, we update the ALT column, which now includes several ALT alleles. Therefore, we can filter out these SNPs with --max-alleles.
         #--multiallelic +snps
             #split multiallelic sites into biallelic records (-) or join biallelic sites into multiallelic records (+). An optional type string can follow which controls variant types which should be split or merged together: If only SNP records should be split or merged, specify snps
@@ -559,13 +562,11 @@ run_bash(" \
         #some genotypes appear as not phased within the new fused multiallelic SNPs, but that is not a problem because these will be removed anyway.
 
 #
-print("\n#######################################\n#######################################")
-print("check what happens if we remove the third sample and then rs6040355 have no REF anymore, only two ALTs: Despite losing the REF, both lines of rs6040355 are merged into a multiallelic SNP, thus it can be removed with --max-alleles 2. This makes sense because --multiallelics +snps looks for snps with the same position and same REF or ALT columns")
-print("#######################################\n#######################################")
+print_text("check what happens if we remove the third sample and then rs6040355 have no REF anymore, only two ALTs: Despite losing the REF, both lines of rs6040355 are merged into a multiallelic SNP, thus it can be removed with --max-alleles 2. This makes sense because --multiallelics +snps looks for snps with the same position and same REF or ALT columns", header=3)
 run_bash(" \
     bcftools norm \
         --multiallelic -snps \
-        data/dummy_vcf_files/dummy_example.vcf | \
+        data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
     bcftools view \
         --samples NA00001,NA00002 | \
     bcftools view \
@@ -581,16 +582,14 @@ run_bash(" \
     bcftools norm \
         --multiallelic +snps | \
     bcftools query \
-        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AF AA: %AA AA_upcase: %AA_upcase GTs:[ %GT]\n'")
 
 #
-print("\n#######################################\n#######################################")
-print("now we can remove those SNPs with more than 1 allele in ALT. rs6040358 is now included because the second ALT is not present, only REF and ALT, having no missing (it has missing for the last sample that is filtered out)")
-print("#######################################\n#######################################")
+print_text("now we can remove those SNPs with more than 1 allele in ALT. rs6040358 is now included because the second ALT is not present, only REF and ALT, having no missing (it has missing for the last sample that is filtered out)", header=3)
 run_bash(" \
     bcftools norm \
         --multiallelic -snps \
-        data/dummy_vcf_files/dummy_example.vcf | \
+        data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
     bcftools view \
         --samples NA00001,NA00002 | \
     bcftools view \
@@ -609,20 +608,18 @@ run_bash(" \
         --max-alleles 2 \
         --min-alleles 2 | \
     bcftools query \
-        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AF AA: %AA AA_upcase: %AA_upcase GTs:[ %GT]\n'")
         #--min-alleles/--max-alleles INT  
             #Minimum/maximum number of alleles listed in REF and ALT
         #This looks at REF/ALT, so we need these columns updated in order to use this. If you just do this when the multiallelic SNPs are splitted across different lines, then you would not remove them, because each one is presented like a biallelic SNP.
         #As explained above, it seems we cannot have more than 1 allele in REF, but we can have several allele in the ALT column, thus we are indeed filtering here those SNPs with a given number of ALT alleles.
 
 #   
-print("\n#######################################\n#######################################")
-print("select only phased data")
-print("#######################################\n#######################################")
+print_text("select only phased data", header=3)
 run_bash(" \
     bcftools norm \
         --multiallelic -snps \
-        data/dummy_vcf_files/dummy_example.vcf | \
+        data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
     bcftools view \
         --samples NA00001,NA00002 | \
     bcftools view \
@@ -643,19 +640,17 @@ run_bash(" \
     bcftools view \
         --phased | \
     bcftools query \
-        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AF AA: %AA AA_upcase: %AA_upcase GTs:[ %GT]\n'")
         #rs6040361 has "1|1 0/0 0|1" as GT, thus the second sample does not have phased data.
         #it is removed after applying the phased filter.
         #We separate --phased from --max/min-allele filter to be completely sure that first we remove multiallelic snps, and then we remove those snps with unphased data for any sample.
         #I guess it is not mandatory to do it in this order because if a SNP that is multiallelic has also unphased data, will be removed anyways, and biallelic and phased SNPs will not be affected. 
-        #The order is more important in the case of --samples, as you could remove a SNP that has unphased data for some samples, but any of those samples are included in the subset, so you are removing it while it has complete phased data for the samples you selected.
+        #The order is more important in the case of --samples, as you could remove a SNP that has unphased data for some samples, but none of these samples are included in the subset, so you are removing the SNP while it has complete phased data for the samples you selected.
 
 #   
-print("\n#######################################\n#######################################")
-print("select only SNPs in regions with high accessibility")
-print("#######################################\n#######################################")
+print_text("select only SNPs in regions with high accessibility", header=3)
 #general info
-    #The 1000 Genomes Project created what they defined as accessibilty masks for the pilot phase, phase one and phase three of the Project. Some other studies have similar files.
+    #The 1000 Genomes Project created what they defined as accessibility masks for the pilot phase, phase one and phase three of the Project. Some other studies have similar files.
     #In phase three of the 1000 Genomes Project, using the pilot criteria 95.9% of the genome was found to be accessible. For the stricter mask created during phase three, 76.9% was found to be accessible. A detailed description of the accessibility masks created during phase three, the final phase of the Project, can be found in section 9.2 of the supplementary material for the main publication. The percentages quoted are for non-N bases.
     #While the above was generated on GRCh37, similar files were created on GRCh38 for the reanalysis of the 1000 Genomes Project data on GRCh38. HGSVC2 also have files listing regions of the genome that were not analysed.
         #https://www.internationalgenome.org/faq/are-there-any-genomic-regions-that-have-not-been-studied/
@@ -678,25 +673,38 @@ print("#######################################\n################################
     #there are two masks
         #the pilot masks that uses the definition of the pilot project and it is less stringent, accepting 95% of the genome. In other words, this mask was created during the pilot, the definition, and then applied to phase 3.
         #the strict mask that uses a more stringent definition and I think this is based on phase 3, accepting only 76% of the genome. This mask was defined during phase 3.
+    #IMPORTANT:
+        #We are going to use the bed file that contains the regions marked as "passed" (P) across all chromosomes. Therefore, we avoid LHZQ regions, which are more prone to false positives (see above).
 #mask data here
     #http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/working/20160622_genome_mask_GRCh38/
     #we will use the bed files with the regions has to be retained
         #"In addition to masked fasta files, a bed file of all passed sites can be found in this directory."
-#dummy mask here:
-    #/home/dftortosa/singularity/dating_climate_adaptation/hg38_mig/data/dummy_vcf_files/dummy_pilot_mask.bed
-#compress the dummy (mask) bed file to match what we will do with the real data. bcftools --targets-file can take a .bed.gz file as input (see below).
+
+#por aqui
+#echo -e required?
+
+print_text("create a dummy mask", header=4)
+run_bash(" \
+    cd ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/; \
+    echo \
+        'chr20\t14369\t14370\tpilot\nchr20\t1110695\t1110700\tpilot\nchr20\t1110690\t1110696\tpilot\nchr1\t14369\t17330\tpilot' \
+    > dummy_pilot_mask.bed; \
+    cat dummy_pilot_mask.bed")
+
+print_text("compress the dummy (mask) bed file to match what we will do with the real data. bcftools --targets-file can take a .bed.gz file as input (see below)", header=4)
 run_bash(" \
     gzip \
         --force \
         --keep \
-        ./data/dummy_vcf_files/dummy_pilot_mask.bed")
+        ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_pilot_mask.bed")
     #--force: force overwrite of output file and compress links
     #--keep: keep (don't delete) input files
-#apply the dummy mask
+
+print_text("apply the dummy mask", header=4)
 run_bash(" \
     bcftools norm \
         --multiallelic -snps \
-        ./data/dummy_vcf_files/dummy_example.vcf |\
+        data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
     bcftools view \
         --samples NA00001,NA00002 | \
     bcftools view \
@@ -717,9 +725,9 @@ run_bash(" \
     bcftools view \
         --phased | \
     bcftools view \
-        --targets-file ./data/dummy_vcf_files/dummy_pilot_mask.bed.gz | \
+        --targets-file ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_pilot_mask.bed.gz | \
     bcftools query \
-        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AF AA: %AA AA_upcase: %AA_upcase GTs:[ %GT]\n'")
         #select variants inside interest regions. We can do this after applying the rest of filters because if some of the previous filters consider position, it is the same position. For example, you remove exact duplicates, i.e., SNPs with the same chromosome, position and REF/ALT. Therefore, if we have two rows with the same position, they will be both remove if they are outside the interest regions, it does not matter if remove them together or first the duplicate and then remaining non-duplicate row. The same goes for multiallelic....
         #Also, no info field will be modified, we are just removing complete rows, i.e., SNPs, not samples or genotypes.
             #--targets-file
@@ -773,13 +781,13 @@ print("\n#######################################\n##############################
 print("check you can filter the BED file by chromosome using awk")
 print("#######################################\n#######################################")
 run_bash(" \
-    gunzip -c ./data/dummy_vcf_files/dummy_pilot_mask.bed.gz | \
+    gunzip -c ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_pilot_mask.bed.gz | \
     awk \
         -F '\t' \
         '{if ($1 == \"chr20\") print $0}' \
-        > ./data/dummy_vcf_files/dummy_pilot_mask_chr20.bed; \
-    gzip --force ./data/dummy_vcf_files/dummy_pilot_mask_chr20.bed; \
-    gunzip -c ./data/dummy_vcf_files/dummy_pilot_mask_chr20.bed.gz")
+        > ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_pilot_mask_chr20.bed; \
+    gzip --force ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_pilot_mask_chr20.bed; \
+    gunzip -c ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_pilot_mask_chr20.bed.gz")
         #decompress the dummy bed file and sent it to stdout
         #process it with awk
             #-F is the delimiter, "\t" in this case
@@ -794,7 +802,7 @@ print("check the cleaning of the BED file with awk")
 print("#######################################\n#######################################")
 run_bash(" \
     uniq_chrom=$(\
-        gunzip -c ./data/dummy_vcf_files/dummy_pilot_mask_chr20.bed.gz | \
+        gunzip -c ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_pilot_mask_chr20.bed.gz | \
         awk \
             -F '\t' \
             '{print $1}' | \
@@ -822,7 +830,7 @@ print("#######################################\n################################
 run_bash(" \
     bcftools view \
         --samples NA00001,NA00002 \
-        data/dummy_vcf_files/dummy_example.vcf | \
+        data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example.vcf | \
     bcftools query \
         -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
         #As expected, after the subset of samples AN and AC are updated considering only the selected samples, while AF is not. For example, rs6040351 has only 1 ALT allele after selecting the two first samples, so AN=4, AC=1 but AF is still 0.333 instead of 0.25 (1/4).
@@ -834,7 +842,7 @@ print("#######################################\n################################
 run_bash(" \
     bcftools view \
         --samples NA00001,NA00002 \
-        data/dummy_vcf_files/dummy_example.vcf | \
+        data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example.vcf | \
     bcftools +fill-tags \
         -- --tags AN,AC,AF | \
     bcftools query \
@@ -850,7 +858,7 @@ print("#######################################\n################################
 run_bash(" \
     bcftools view \
         --samples NA00001,NA00002 \
-        data/dummy_vcf_files/dummy_example.vcf | \
+        data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example.vcf | \
     bcftools +fill-tags \
         -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
     bcftools query \
@@ -895,7 +903,7 @@ print("#######################################\n################################
 run_bash(" \
     bcftools norm \
         --multiallelic -snps \
-        ./data/dummy_vcf_files/dummy_example.vcf |\
+        ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example.vcf |\
     bcftools view \
         --samples NA00001,NA00002 | \
     bcftools view \
@@ -916,7 +924,7 @@ run_bash(" \
     bcftools view \
         --phased | \
     bcftools view \
-        --targets-file ./data/dummy_vcf_files/dummy_pilot_mask.bed.gz | \
+        --targets-file ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_pilot_mask.bed.gz | \
     bcftools annotate \
         --remove INFO,^FORMAT/GT | \
     bcftools +fill-tags \
@@ -941,7 +949,7 @@ print("#######################################\n################################
 run_bash(" \
     bcftools norm \
         --multiallelic -snps \
-        ./data/dummy_vcf_files/dummy_example.vcf |\
+        ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example.vcf |\
     bcftools view \
         --samples NA00001,NA00002 | \
     bcftools view \
@@ -962,7 +970,7 @@ run_bash(" \
     bcftools view \
         --phased | \
     bcftools view \
-        --targets-file ./data/dummy_vcf_files/dummy_pilot_mask.bed.gz | \
+        --targets-file ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_pilot_mask.bed.gz | \
     bcftools annotate \
         --remove INFO,^FORMAT/GT | \
     bcftools +fill-tags \
@@ -972,7 +980,7 @@ run_bash(" \
 run_bash(" \
     bcftools norm \
         --multiallelic -snps \
-        ./data/dummy_vcf_files/dummy_example.vcf |\
+        ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example.vcf |\
     bcftools view \
         --samples NA00001,NA00002 | \
     bcftools view \
@@ -993,7 +1001,7 @@ run_bash(" \
     bcftools view \
         --phased | \
     bcftools view \
-        --targets-file ./data/dummy_vcf_files/dummy_pilot_mask.bed.gz | \
+        --targets-file ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_pilot_mask.bed.gz | \
     bcftools view \
         --no-header")
         #I have checked that the genotypes remain the same despite removing all previous INFO fields and all FORMAT fields (except GT) and then adding new INFO fields, so we are good here.
@@ -1005,7 +1013,7 @@ print("#######################################\n################################
 run_bash(" \
     bcftools norm \
         --multiallelic -snps \
-        ./data/dummy_vcf_files/dummy_example.vcf |\
+        ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example.vcf |\
     bcftools view \
         --samples NA00001,NA00002 | \
     bcftools view \
@@ -1026,7 +1034,7 @@ run_bash(" \
     bcftools view \
         --phased | \
     bcftools view \
-        --targets-file ./data/dummy_vcf_files/dummy_pilot_mask.bed.gz | \
+        --targets-file ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_pilot_mask.bed.gz | \
     bcftools annotate \
         --remove INFO,^FORMAT/GT | \
     bcftools +fill-tags \
@@ -1046,7 +1054,7 @@ print("#######################################\n################################
 run_bash(" \
     bcftools norm \
         --multiallelic -snps \
-        ./data/dummy_vcf_files/dummy_example.vcf |\
+        ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example.vcf |\
     bcftools view \
         --samples NA00001,NA00002 | \
     bcftools view \
@@ -1067,13 +1075,13 @@ run_bash(" \
     bcftools view \
         --phased | \
     bcftools view \
-        --targets-file ./data/dummy_vcf_files/dummy_pilot_mask.bed.gz | \
+        --targets-file ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_pilot_mask.bed.gz | \
     bcftools annotate \
         --remove INFO,^FORMAT/GT | \
     bcftools +fill-tags \
         -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
     bcftools view \
-        --output ./data/dummy_vcf_files/dummy_example_cleaned.vcf.gz \
+        --output ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_cleaned.vcf.gz \
         --output-type z \
         --compression-level 1")
         #--output
@@ -1090,7 +1098,7 @@ print("see the header of the recently created dummy vcf file")
 print("#######################################\n#######################################")
 run_bash(" \
     bcftools head \
-        ./data/dummy_vcf_files/dummy_example_cleaned.vcf.gz")
+        ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_cleaned.vcf.gz")
     #we get first the fields of FILTER and FORMAT that have been not removed (you removed INFO fields and all FORMAT except GT). 
     #Then we get all the commands we have run and the fields we have added.
 
@@ -1100,7 +1108,7 @@ print("see the genotypes of a few individuals from the recently created dummy vc
 print("#######################################\n#######################################")
 run_bash(" \
     bcftools view \
-        ./data/dummy_vcf_files/dummy_example_cleaned.vcf.gz \
+        ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_cleaned.vcf.gz \
         --no-header")
 
 #
@@ -1110,7 +1118,7 @@ print("#######################################\n################################
 run_bash(" \
     bcftools stats \
         --samples - \
-        ./data/dummy_vcf_files/dummy_example_cleaned.vcf.gz")
+        ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_cleaned.vcf.gz")
         #Produce stats of a VCF file using bcftool stats
             #Parses VCF or BCF and produces stats which can be plotted using plot-vcfstats. 
                 #When two files are given, the program generates separate stats for intersection and the complements. 
@@ -1132,15 +1140,15 @@ print("First convert the raw dummy VCF file but adding a filter for SNPs in the 
 run_bash(" \
     bcftools convert \
         --include 'TYPE == \"SNP\"' \
-        ./data/dummy_vcf_files/dummy_example.vcf \
-        --hapsample ./data/dummy_vcf_files/dummy_example_IMPUTE2_raw; \
-    gunzip -c ./data/dummy_vcf_files/dummy_example_IMPUTE2_raw.hap.gz")
+        ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example.vcf \
+        --hapsample ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_IMPUTE2_raw; \
+    gunzip -c ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_IMPUTE2_raw.hap.gz")
 print("Then convert the cleaned dummy VCF file. The output shows 0/0/0 because no variant has been removed, they were filtered in previous lines. The number of written records is 3. The input had 3 and no filter was applied, nor variant lose due to lack of alt or non-biallelic, thus we save a hap file with 3 variants")
 run_bash(" \
     bcftools convert \
-        ./data/dummy_vcf_files/dummy_example_cleaned.vcf.gz \
-        --hapsample ./data/dummy_vcf_files/dummy_example_IMPUTE2_raw; \
-    gunzip -c ./data/dummy_vcf_files/dummy_example_IMPUTE2_raw.hap.gz")
+        ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_cleaned.vcf.gz \
+        --hapsample ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_IMPUTE2_raw; \
+    gunzip -c ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_IMPUTE2_raw.hap.gz")
         #see hap file calculation of the real data to see details about hap format.
 
 #SUMMARY: 
@@ -1371,7 +1379,7 @@ def master_processor(chr_pop_combination):
     #save as txt to use it later
     #it is redundant to do it in each chromosome of the same population (same samples) but I do it anyway to avoid confusion between chromosomes
     selected_samples.to_csv(
-        "results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_samples_to_bcftools.txt", 
+        "results/02_hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_samples_to_bcftools.txt", 
         sep="\t", 
         header=None, 
         index=False)
@@ -1844,7 +1852,7 @@ def master_processor(chr_pop_combination):
         bcftools +fill-tags \
             -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
         bcftools view \
-            --output ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz \
+            --output ./results/01_cleaned_vep_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz \
             --output-type z \
             --compression-level 1")
                 #after subseting and filtering, save as a compressed VCF file, selecting the option for best speed (see dummy example for further details)
@@ -1921,7 +1929,7 @@ def master_processor(chr_pop_combination):
     print("#######################################\n#######################################")
     run_bash(" \
         bcftools head \
-            ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz")
+            ./results/01_cleaned_vep_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz")
 
     #
     print("\n#######################################\n#######################################")
@@ -1929,7 +1937,7 @@ def master_processor(chr_pop_combination):
     print("#######################################\n#######################################")
     run_bash(" \
         bcftools view \
-            ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz \
+            ./results/01_cleaned_vep_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz \
             --no-header | \
         head -5")
             #As expected, we have 
@@ -1977,12 +1985,12 @@ def master_processor(chr_pop_combination):
     #extract snps from the cleaned VCF file
     run_bash(" \
         bcftools view \
-            ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz | \
+            ./results/01_cleaned_vep_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz | \
         bcftools query \
             --format '%CHROM %ID %POS %REF %ALT\n' | \
         gzip \
             --force \
-        > ./results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_raw.map.gz")
+        > ./results/02_hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_raw.map.gz")
             #from the cleaned VCF file, extract the chromosome, position, REF/ALT to compare with the positions in the raw hap file (see below), compress and save as a file
 
     #Note about the format of the positions
@@ -2003,7 +2011,7 @@ def master_processor(chr_pop_combination):
 
     ##load the raw_map file
     snp_map_raw = pd.read_csv(\
-        "./results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_raw.map.gz", \
+        "./results/02_hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_raw.map.gz", \
         sep=" ", \
         header=None)
     print("See raw map file loaded in python")
@@ -2017,7 +2025,7 @@ def master_processor(chr_pop_combination):
         n_snps=$(\
             bcftools view \
                 --no-header \
-                ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz | \
+                ./results/01_cleaned_vep_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz | \
             wc -l); \
         if [[ $n_snps -eq " + str(snp_map_raw.shape[0]) + " ]]; then \
             echo 'TRUE'; \
@@ -2334,7 +2342,7 @@ def master_processor(chr_pop_combination):
         n_snps=$(\
             bcftools view \
                 --no-header \
-                ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz | \
+                ./results/01_cleaned_vep_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz | \
             wc -l); \
         if [[ $n_snps -eq " + str(final_genetic_pos_df.shape[0]) + " ]]; then \
             echo 'TRUE'; \
@@ -2431,7 +2439,7 @@ def master_processor(chr_pop_combination):
     print(final_genetic_pos_map_file.shape[0] - len(snps_id_with_gen_pos))
 
     #save the names in a txt file
-    with open(r"./results/cleaned_vcf_files/list_snps_with_gen_pos.txt", "w") as fp:
+    with open(r"./results/01_cleaned_vep_vcf_files/list_snps_with_gen_pos.txt", "w") as fp:
         fp.write("\n".join(snps_id_with_gen_pos))
             #each name in a different line so we have to add "\n" to the name
             #https://pynative.com/python-write-list-to-file/
@@ -2448,10 +2456,10 @@ def master_processor(chr_pop_combination):
     #filter
     run_bash("\
         bcftools view \
-            --include ID==@./results/cleaned_vcf_files/list_snps_with_gen_pos.txt\
-            ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz | \
+            --include ID==@./results/01_cleaned_vep_vcf_files/list_snps_with_gen_pos.txt\
+            ./results/01_cleaned_vep_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz | \
         bcftools view \
-            --output ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + "_only_snps_gen_pos.vcf.gz \
+            --output ./results/01_cleaned_vep_vcf_files/chr" + selected_chromosome + "_" + selected_pop + "_only_snps_gen_pos.vcf.gz \
             --output-type z \
             --compression-level 1")
             #include those SNPs for which ID is included in the list of SNPs with genetic position and save the resulting VCF file
@@ -2461,10 +2469,10 @@ def master_processor(chr_pop_combination):
     print("see header of the fully filtered VCF file and some genotypes")
     run_bash(" \
         bcftools head \
-            ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + "_only_snps_gen_pos.vcf.gz")
+            ./results/01_cleaned_vep_vcf_files/chr" + selected_chromosome + "_" + selected_pop + "_only_snps_gen_pos.vcf.gz")
     run_bash(" \
         bcftools view \
-            ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + "_only_snps_gen_pos.vcf.gz \
+            ./results/01_cleaned_vep_vcf_files/chr" + selected_chromosome + "_" + selected_pop + "_only_snps_gen_pos.vcf.gz \
             --no-header | \
         head -5")
 
@@ -2472,11 +2480,11 @@ def master_processor(chr_pop_combination):
     print("check that IDs in the filtered VCF file are the same than the ones in the list of IDs used as input to filter")
     run_bash(" \
         bcftools query \
-            ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + "_only_snps_gen_pos.vcf.gz \
+            ./results/01_cleaned_vep_vcf_files/chr" + selected_chromosome + "_" + selected_pop + "_only_snps_gen_pos.vcf.gz \
             --format '%ID\n' \
-        > ./results/cleaned_vcf_files/ids_vcf_after_filter.txt; \
-        file1='./results/cleaned_vcf_files/list_snps_with_gen_pos.txt'; \
-        file2='./results/cleaned_vcf_files/ids_vcf_after_filter.txt'; \
+        > ./results/01_cleaned_vep_vcf_files/ids_vcf_after_filter.txt; \
+        file1='./results/01_cleaned_vep_vcf_files/list_snps_with_gen_pos.txt'; \
+        file2='./results/01_cleaned_vep_vcf_files/ids_vcf_after_filter.txt'; \
         STATUS=$(cmp --silent $file1 $file2; echo $?); \
         if [[ $STATUS -eq 0 ]]; then \
             echo 'TRUE'; \
@@ -2520,7 +2528,7 @@ def master_processor(chr_pop_combination):
                 #genetic position
                 #physical position.
     final_genetic_pos_map_file.to_csv(\
-        "./results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz", \
+        "./results/03_hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz", \
         sep=" ", \
         header=False, \
         index=False)
@@ -2530,14 +2538,14 @@ def master_processor(chr_pop_combination):
         n_rows=$( \
             gunzip \
                 --stdout \
-                ./results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz | \
+                ./results/03_hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz | \
             awk \
                 -F ' ' \
                 'END {print NR}'); \
         n_cols=$( \
             gunzip \
                 --stdout \
-                ./results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz | \
+                ./results/03_hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz | \
             awk \
                 -F ' ' \
                 'END {print NF}'); \
@@ -2557,8 +2565,8 @@ def master_processor(chr_pop_combination):
     print("#######################################\n#######################################")
     run_bash(" \
         bcftools convert \
-            ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + "_only_snps_gen_pos.vcf.gz \
-            --hapsample ./results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw")
+            ./results/01_cleaned_vep_vcf_files/chr" + selected_chromosome + "_" + selected_pop + "_only_snps_gen_pos.vcf.gz \
+            --hapsample ./results/02_hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw")
             #load the cleaned vcf file
             #--vcf-ids 
                 #when this option is given, the second column is set to match the ID column of the VCF.
@@ -2589,8 +2597,8 @@ def master_processor(chr_pop_combination):
 
     #note about the output of hap conversion
         #I get an output like this
-            #Hap file: ./results/hap_map_files_raw/chr1_GBR_IMPUTE2_raw.hap.gz
-            #Sample file: ./results/hap_map_files_raw/chr1_GBR_IMPUTE2_raw.samples
+            #Hap file: ./results/02_hap_map_files_raw/chr1_GBR_IMPUTE2_raw.hap.gz
+            #Sample file: ./results/02_hap_map_files_raw/chr1_GBR_IMPUTE2_raw.samples
             #852072 records written, 0 skipped: 0/0/0 no-ALT/non-biallelic/filtered
 
         #I guess non-biallelic and non-alt should be removed to meet impute requirements, but in our case we already selected those SNPs with 2 alleles only. This explains why we get 0/0/0. This is the number of SNPs with no-ALT, no-biallelic and filtered. All the filters were previously applied.
@@ -2610,7 +2618,7 @@ def master_processor(chr_pop_combination):
     print("chr " + selected_chromosome + " - " + selected_pop + ": see first variants of the hap file")
     print("#######################################\n#######################################")
     run_bash(
-        "gunzip -c ./results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
+        "gunzip -c ./results/02_hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
         head -3")
             #decompress the hap file and show in stdout 
     
@@ -2619,13 +2627,13 @@ def master_processor(chr_pop_combination):
     print("chr " + selected_chromosome + " - " + selected_pop + ": remove first columns of hap file to leave only haplotype columns")
     print("#######################################\n#######################################")
     run_bash(
-        "gunzip -c results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
+        "gunzip -c results/02_hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
         cut \
             --complement \
             --delimiter ' ' \
             --fields 1-5 \
-        > results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap; \
-        gzip -f results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap")
+        > results/03_hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap; \
+        gzip -f results/03_hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap")
             #extract the content of compressed hap file
             #remove the first 5 columns
                 #--complement keeps the columns other than the ones specified in -f
@@ -2654,13 +2662,13 @@ def master_processor(chr_pop_combination):
     #do comparison
     run_bash(" \
         gunzip \
-            -c results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
+            -c results/02_hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
         awk -F ' ' '{print " + fields_selected_samples + "}' > \
-        results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw_clean_check.hap; \
+        results/02_hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw_clean_check.hap; \
         gunzip \
-            -kf results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap.gz; \
-        file1='results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap'; \
-        file2='results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw_clean_check.hap'; \
+            -kf results/03_hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap.gz; \
+        file1='results/03_hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap'; \
+        file2='results/02_hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw_clean_check.hap'; \
         STATUS=$(cmp --silent $file1 $file2; echo $?); \
         if [[ $STATUS -eq 0 ]]; then \
             echo 'TRUE'; \
@@ -2696,16 +2704,16 @@ def master_processor(chr_pop_combination):
     run_bash(" \
         n_snps_vcf=$( \
             bcftools view \
-                ./results/cleaned_vcf_files/chr" + selected_chromosome + "_" + selected_pop + "_only_snps_gen_pos.vcf.gz \
+                ./results/01_cleaned_vep_vcf_files/chr" + selected_chromosome + "_" + selected_pop + "_only_snps_gen_pos.vcf.gz \
                 --no-header | \
             wc -l); \
         n_snps_map=$( \
             gunzip \
-                -c ./results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz | \
+                -c ./results/03_hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz | \
             wc -l); \
         n_snps_hap=$( \
             gunzip \
-                -c results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap.gz | \
+                -c results/03_hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap.gz | \
             wc -l); \
         if [[ $n_snps_vcf -eq $n_snps_hap && $n_snps_vcf -eq $n_snps_map ]];then \
             echo 'TRUE'; \
@@ -2723,7 +2731,7 @@ def master_processor(chr_pop_combination):
     run_bash(" \
         nfields_hap=$( \
             gunzip \
-                -c results/hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap.gz | \
+                -c results/03_hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap.gz | \
             awk -F ' ' '{print NF}' | \
             sort | \
             uniq); \
@@ -2733,7 +2741,7 @@ def master_processor(chr_pop_combination):
         if [[ $nfields_hap_nlines -eq 1 ]]; then \
             nsamples_hap=$(($nfields_hap/2)); \
             nsamples_bcftools=$( \
-                cat results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_samples_to_bcftools.txt | \
+                cat results/02_hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_samples_to_bcftools.txt | \
                 grep -c '^'); \
             if [[ $nsamples_hap -eq $nsamples_bcftools ]]; then \
                 echo 'TRUE'; \
@@ -2768,7 +2776,7 @@ def master_processor(chr_pop_combination):
     print("#######################################\n#######################################")
     #read the sample file
     sample_list_from_hap = pd.read_csv(
-        "./results/hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.samples",
+        "./results/02_hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.samples",
         header=0, 
         sep=" ", 
         low_memory=False)
@@ -2845,6 +2853,10 @@ pool.map(master_processor, full_combinations_pop_chroms)
 
 #close the pool
 pool.close()
+
+
+##when checking false/error also check you do not have the following warning in ANY pop-chrom:
+    #THIS WARNING SHOULD BE ONLY IN DUMMY DATA NOT IN 1KGP DATA as AC field should have only 1 value per line in the data.
 
 
 ##according to david, you can check whether the REF/ALT alleles match between the old and new hap files, but taking into account we have different coordinated, hg19 vs hg38

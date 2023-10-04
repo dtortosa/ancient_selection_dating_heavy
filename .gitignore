@@ -11,6 +11,8 @@ ihs_eur_ranks*
 ihs_eas_ranks*
 ihs_all_ranks*
 
+hg38_mig/dummy_pilot_mask.bed
+IDEA_FOR_HEALTH_PART.TXT
 hg38_mig/scripts/00_ancestral_calcs_outputs
 hg38_mig/scripts/addison/
 sweep_enrichments/david_pipeline/exdef_folder/ensembl_gene_coords_v99.txt
