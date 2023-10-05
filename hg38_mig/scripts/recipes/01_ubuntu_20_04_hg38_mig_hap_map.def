@@ -72,6 +72,9 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 	#install nano, just in case we have to take a look after the image is created
 	apt -y install nano
 
+	#install bc so we can do mathematical operations. Note that $(()) does not produce decimals
+	apt -y install bc
+
 	#update repos to install python
 	apt -y install software-properties-common #APT automates the retrieval, configuration and installation of software packages. Type these two commands in your terminal and hit enter each time. https://medium.com/analytics-vidhya/installing-python-3-8-3-66701d3db134
 

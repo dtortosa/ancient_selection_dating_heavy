@@ -680,16 +680,21 @@ print_text("select only SNPs in regions with high accessibility", header=3)
     #we will use the bed files with the regions has to be retained
         #"In addition to masked fasta files, a bed file of all passed sites can be found in this directory."
 
-#por aqui
-#echo -e required?
-
 print_text("create a dummy mask", header=4)
 run_bash(" \
     cd ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/; \
-    echo \
-        'chr20\t14369\t14370\tpilot\nchr20\t1110695\t1110700\tpilot\nchr20\t1110690\t1110696\tpilot\nchr1\t14369\t17330\tpilot' \
+    awk \
+        'BEGIN{FS=OFS=\"\t\"}{print $0}' \
+        <<< \"chr20\t14369\t14370\tpilot\nchr20\t1110695\t1110700\tpilot\nchr20\t1110690\t1110696\tpilot\nchr1\t14369\t17330\tpilot\" \
     > dummy_pilot_mask.bed; \
     cat dummy_pilot_mask.bed")
+    #we are not using echo to create the file from a string, because "echo" changes a lot between versions. In some of them you need to use "-e" to be able to use slashs (e.g., \t), while in others not.
+        #https://stackoverflow.com/a/8161194/12772630
+    #we are directly using a string as input to awk using "<<<". We use a here-string:
+        #<<< is known as here-string. Instead of typing in text, you give a pre-made string of text to a program. For example, with such program as bc we can do bc <<< 5*4 to just get output for that specific case, no need to run bc interactively. Think of it as the equivalent of echo '5*4' | bc. Here-strings in bash are implemented via temporary files, usually in the format /tmp/sh-thd.<random string>.
+            #https://askubuntu.com/a/678919
+            #https://stackoverflow.com/a/10959179/12772630
+    #load a string with columns separated as tabs ("\t") and several lines indicated with "\n". Use as field delimiter both for input and output "\t". Print all fields in each row.
 
 print_text("compress the dummy (mask) bed file to match what we will do with the real data. bcftools --targets-file can take a .bed.gz file as input (see below)", header=4)
 run_bash(" \
@@ -777,9 +782,7 @@ run_bash(" \
                 #rs6040351 (chr20:17330) does not fall within this or the previous intervals. Note that this interval is in chr1 but this variant is in chr20. This means that --targets correctly selects only intervals of the corresponding chromosome.
 
 #
-print("\n#######################################\n#######################################")
-print("check you can filter the BED file by chromosome using awk")
-print("#######################################\n#######################################")
+print_text("check you can filter the BED file by chromosome using awk", header=4)
 run_bash(" \
     gunzip -c ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_pilot_mask.bed.gz | \
     awk \
@@ -797,9 +800,7 @@ run_bash(" \
                 #https://stackoverflow.com/questions/2961635/using-awk-to-print-all-columns-from-the-nth-to-the-last
 
 #
-print("\n#######################################\n#######################################")
-print("check the cleaning of the BED file with awk")
-print("#######################################\n#######################################")
+print_text("check the cleaning of the BED file with awk", header=4)
 run_bash(" \
     uniq_chrom=$(\
         gunzip -c ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_pilot_mask_chr20.bed.gz | \
@@ -820,49 +821,40 @@ run_bash(" \
         #save into a variable
         #if the variable is "chr20", perfect
 
-#   
-print("\n#######################################\n#######################################")
-print("use +fill-tag to update INFO fields")
-print("#######################################\n#######################################")
-print("\n#######################################\n#######################################")
-print("first, see the sample 1 and 2 to check AF is not updated")
-print("#######################################\n#######################################")
+#
+print_text("use +fill-tags to update INFO fields", header=3)
+print_text("before using +fill-tags to update INFO fields, see the sample 1 and 2 to check AF is not updated", header=4)
 run_bash(" \
     bcftools view \
         --samples NA00001,NA00002 \
-        data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example.vcf | \
+        data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
     bcftools query \
-        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AF AA: %AA AA_upcase: %AA_upcase GTs:[ %GT]\n'")
         #As expected, after the subset of samples AN and AC are updated considering only the selected samples, while AF is not. For example, rs6040351 has only 1 ALT allele after selecting the two first samples, so AN=4, AC=1 but AF is still 0.333 instead of 0.25 (1/4).
 
-#
-print("\n#######################################\n#######################################")
-print("update AF with fill-tags")
-print("#######################################\n#######################################")
+print_text("update AF with fill-tags", header=4)
 run_bash(" \
     bcftools view \
         --samples NA00001,NA00002 \
-        data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example.vcf | \
+        data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
     bcftools +fill-tags \
         -- --tags AN,AC,AF | \
     bcftools query \
-        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %INFO/AF GTs:[ %GT]\n'")
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AF AA: %AA AA_upcase: %AA_upcase GTs:[ %GT]\n'")
         #we use +fill-tags to update fields that are not updated after subsetting like frequency of the alternative allele and create some additional fields.
             #+fill-tags has updated AF, so for example, rs6040355 has 0.5 for the frequency of both ALTs, while before it was 0.333. Similarly, the frequency of the ALT is 0.25 in rs6040351, which is correct.
         #I understand that when using --multiallelic + or -, there is no update because the genotypes should not change, you are just spliting or merging the different ALT alleles. If AC/AN has changed due to the subset, this is updated in the AC/AN fields and these are used to do the combine/split AC/AN fields. The problem is that only AC/AN are updated, not the rest of fields.
 
 #
-print("\n#######################################\n#######################################")
-print("update and create more fields with fill-tags")
-print("#######################################\n#######################################")
+print_text("update and create more fields with fill-tags", header=4)
 run_bash(" \
     bcftools view \
         --samples NA00001,NA00002 \
-        data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example.vcf | \
+        data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
     bcftools +fill-tags \
         -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
     bcftools query \
-        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AC_Hom %AC_Het %AF %MAF %ExcHet %HWE %NS GTs:[ %GT]\n'")
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AC_Hom %AC_Het %AF %MAF %ExcHet %HWE %NS AA: %AA AA_upcase: %AA_upcase GTs:[ %GT]\n'")
         #we have create several fields that are included the 1KGDP vcf files or are related:
             #INFO/AN: Total number of alleles in called genotypes
             #INFO/AC: Allele count in genotypes
@@ -897,13 +889,11 @@ run_bash(" \
                 #NS=2
 
 #
-print("\n#######################################\n#######################################")
-print("remove all previous INFO and FORMAT fields except GT and create the fields you are interested in by using fill-tags but after applying all the filters")
-print("#######################################\n#######################################")
+print_text("remove all previous INFO and FORMAT fields except GT and create the fields you are interested in by using fill-tags but after applying all the filters", header=4)
 run_bash(" \
     bcftools norm \
         --multiallelic -snps \
-        ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example.vcf |\
+        data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
     bcftools view \
         --samples NA00001,NA00002 | \
     bcftools view \
@@ -926,12 +916,12 @@ run_bash(" \
     bcftools view \
         --targets-file ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_pilot_mask.bed.gz | \
     bcftools annotate \
-        --remove INFO,^FORMAT/GT | \
+        --remove ^INFO/AA,INFO/AA_upcase,^FORMAT/GT | \
     bcftools +fill-tags \
         -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
     bcftools query \
-        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AC_Hom %AC_Het %AF %MAF %ExcHet %HWE %NS GTs:[ %GT]\n'")
-        #before updating/creating fields, remove all INFO fields and all FORMAT fields (except GT) using annotate and then add the fields we are interested in.
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AC_Hom %AC_Het %AF %MAF %ExcHet %HWE %NS AA: %AA AA_upcase: %AA_upcase GTs:[ %GT]\n'")
+        #before updating/creating fields, remove all INFO fields (except AA and AA_upcase) and all FORMAT fields (except GT) using annotate and then add the fields we are interested in.
             #--remove LIST
                 #List of annotations to remove. 
                     #Use "FILTER" to remove all filters or "FILTER/SomeFilter" to remove a specific filter. Similarly, "INFO" can be used to remove all INFO tags and "FORMAT" to remove all FORMAT tags. 
@@ -943,13 +933,11 @@ run_bash(" \
             #In addition, 1KGDP data is already split and the AC/AN fields seem to be updated, with just one value per line. So we should not see this warning.
 
 #
-print("\n#######################################\n#######################################")
-print("compare GT between applying or not the +fill-tags commands and the removal of fields")
-print("#######################################\n#######################################")
+print_text("compare GT between applying or not the +fill-tags commands and the removal of fields", header=4)
 run_bash(" \
     bcftools norm \
         --multiallelic -snps \
-        ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example.vcf |\
+        data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
     bcftools view \
         --samples NA00001,NA00002 | \
     bcftools view \
@@ -972,7 +960,7 @@ run_bash(" \
     bcftools view \
         --targets-file ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_pilot_mask.bed.gz | \
     bcftools annotate \
-        --remove INFO,^FORMAT/GT | \
+        --remove ^INFO/AA,INFO/AA_upcase,^FORMAT/GT | \
     bcftools +fill-tags \
         -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
     bcftools view \
@@ -980,7 +968,7 @@ run_bash(" \
 run_bash(" \
     bcftools norm \
         --multiallelic -snps \
-        ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example.vcf |\
+        data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
     bcftools view \
         --samples NA00001,NA00002 | \
     bcftools view \
@@ -1006,14 +994,13 @@ run_bash(" \
         --no-header")
         #I have checked that the genotypes remain the same despite removing all previous INFO fields and all FORMAT fields (except GT) and then adding new INFO fields, so we are good here.
 
-#
-print("\n#######################################\n#######################################")
-print("see the new header")
-print("#######################################\n#######################################")
+
+print_text("switch REF/ALT columns for which REF is not AA", header=3)
+print_text("see first cases where REF nor ALT are AA. You can see how we get a case with REF=G and AA_upcase=C. These could be cases where a multiallelic SNP has lost one of the ALT alleles in the subset population and that ALT allele is the ancestral. Therefore, there is no more ancestral in the population. Note, however, that I have found 200K cases like this across all chromosomes without subsetting when running 01b_vep_ancestral.py. Therefore, these could be also errors and should not be a high number", header=4)
 run_bash(" \
     bcftools norm \
         --multiallelic -snps \
-        ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example.vcf |\
+        data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
     bcftools view \
         --samples NA00001,NA00002 | \
     bcftools view \
@@ -1036,7 +1023,265 @@ run_bash(" \
     bcftools view \
         --targets-file ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_pilot_mask.bed.gz | \
     bcftools annotate \
-        --remove INFO,^FORMAT/GT | \
+        --remove ^INFO/AA,INFO/AA_upcase,^FORMAT/GT | \
+    bcftools +fill-tags \
+        -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
+    bcftools view \
+        --include 'REF!=AA_upcase && ALT!=AA_upcase' | \
+    bcftools query \
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AF AA:%AA AA_upcase:%AA_upcase GTs:[ %GT]\n'")
+
+print_text("check now what happens if we add a dummy SNP with AA=g and REF=G. As you can see, this SNP is considered to have AA different from REF and ALT because bcftools in case sensitive. Therefore, we need to use AA_upcase if we want to consider both high and low-confidence SNPs", header=4)
+run_bash(" \
+    awk \
+        'BEGIN{FS=OFS=\"\t\"}{print $0}END{ \
+            print \"chr20\t1110691\trsdummy\tG\tA\t29\tPASS\tNS=3;DP=14;AN=6;AC=3;AF=0.5;DB;H2;AA=g;AA_upcase=G\tGT\t1|0\t1|1\t0|0\" \
+        }'\
+        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
+    bcftools norm \
+        --multiallelic -snps | \
+    bcftools view \
+        --samples NA00001,NA00002 | \
+    bcftools view \
+        --types snps | \
+    bcftools +fill-tags \
+        -- --tags AN,AC | \
+    bcftools view \
+        --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
+    bcftools view \
+        --include 'COUNT(GT=\"mis\")/N_SAMPLES < 0.05' | \
+    bcftools norm \
+        --rm-dup exact | \
+    bcftools norm \
+        --multiallelic +snps | \
+    bcftools view \
+        --max-alleles 2 \
+        --min-alleles 2 | \
+    bcftools view \
+        --phased | \
+    bcftools view \
+        --targets-file ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_pilot_mask.bed.gz | \
+    bcftools annotate \
+        --remove ^INFO/AA,INFO/AA_upcase,^FORMAT/GT | \
+    bcftools +fill-tags \
+        -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
+    bcftools view \
+        --include 'REF!=AA && ALT!=AA' | \
+    bcftools query \
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AF AA:%AA AA_upcase:%AA_upcase GTs:[ %GT]\n'")
+    #print all the rows of the dummy VCF file and, at the END, add a new row with a dummy snp having AA=g and REF=G. It has position inside the third interval of the dummy_mask so it passes all filters. The new row is printed using \t as separator between the VCF columns, i.e., REF, ALT, INFO....
+
+print_text("count these cases but in the original dummy vcf file without filtering and just using AWK, so it is faster. Note that we are assuming REF and ALT to be columns 4 and 5, but you can extract the position from the VCF file in the real data. Look 01b_vep_ancestral.py", header=4)
+run_bash(" \
+    awk \
+        'BEGIN{FS=OFS=\"\t\"}{print $0}END{ \
+            print \"chr20\t1110691\trsdummy\tG\tA\t29\tPASS\tNS=3;DP=14;AN=6;AC=3;AF=0.5;DB;H2;AA=g;AA_upcase=G\tGT\t1|0\t1|1\t0|0\" \
+        }'\
+        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
+    bcftools view \
+        --no-header \
+        --drop-genotypes | \
+    awk \
+        'BEGIN{FS=\"\t|;|=|,\"}{ \
+            for(i=1;i<=NF;i++){ \
+                if($i==\"AA\"){ \
+                    aa_row=toupper($(i+1)); \
+                    if(index(aa_row, \",\")==0){ \
+                        if(aa_row!=\"N\" && aa_row!=\"-\" && aa_row!=\".\"){ \
+                            if(index($4, aa_row)==0 && index($5, aa_row)==0){ \
+                               printf \"%s, REF=%s, ALT=%s, AA=%s\\n\", $3, $4, $5, $(i+1); \
+                               count++ \
+                            } \
+                        } \
+                    } else {exit 1} \
+                } \
+            } \
+        }END{printf \"The number of these cases is %s\", count}'")
+    #add again a line with the dummy SNP (REF=G and AA=g)
+    #get all fields removing genotypes and header using bcftools
+    #then in awk
+        #use as separators "\t", ";", "=" and ",". In this way we separate not only the main fields (REF, ALT, INFO), but we also separate the INFO fields (AF, AA...) and their values (AA=g). The last delimiter is to get the first copy of the ancestral allele if the SNP have multiple consequences (AA=g,g,g). In this way, we get just one value that can be compared with REF, as REF has only one value.
+        #run loop across each field
+            #if we are in the field corresponding to AA
+                #save the next field, i.e., the ancestral allele (first copy is multiple consequence) but in upper case, to consider both low and high-confidence alleles. This will be "aa_row"
+                #if aa_row does not include ",", i.e., we do not have several ancestral alleles separated by comma (we can have TT for microsatellites, but this is 1 ancestral)
+                    #if aa_row is not missing (N, -, .). We can just do aa_row!= because we should not have more than 1 ancestral allele
+                        #if the field 4 (REF) and the field 5 (ALT) do not include aa_row, 
+                            #then print the row and add 1 to the count
+                            #we use index() because if ALT has two alleles, we want to know if one of them is aa_row, i.e., whether aa_row is included in ALT.
+                            #we do the same for REF, but it is not necessary because we should have only 1 REF allele always.
+                #else, then we failed to extract just 1 ancestral allele per SNP from AA=G,G,G,G.... So we need to stop and get an exist status of "1", which is considered as error by run_bash. If we do not add "1", the awk will end without raising an error, and then the python script will continue. We do not want that.
+                    #https://unix.stackexchange.com/a/16567
+
+print_text("exclude now cases where REF nor ALT are AA_upcase. This filter in cases where AA_upcase is the REF (rs6040358) or the ALT (rs6040356).", header=4)
+print("Remember that one of the reasons for these cases to exist is that a multiallelic SNP lose one ALT when subsetting, and that very ALT is the ancestral. Therefore, we have to do the multiallelic-monomorphic filter before. Indeed, we are doing all filters before. As this filter acts only on REF, ALT and AA_upcase, not considering genotypes or samples, other filters should not affect. If one SNP is not phased or biallelic, then it will be removed before, because we do not want to do the switch for it")
+run_bash(" \
+    bcftools norm \
+        --multiallelic -snps \
+        data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
+    bcftools view \
+        --samples NA00001,NA00002 | \
+    bcftools view \
+        --types snps | \
+    bcftools +fill-tags \
+        -- --tags AN,AC | \
+    bcftools view \
+        --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
+    bcftools view \
+        --include 'COUNT(GT=\"mis\")/N_SAMPLES < 0.05' | \
+    bcftools norm \
+        --rm-dup exact | \
+    bcftools norm \
+        --multiallelic +snps | \
+    bcftools view \
+        --max-alleles 2 \
+        --min-alleles 2 | \
+    bcftools view \
+        --phased | \
+    bcftools view \
+        --targets-file ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_pilot_mask.bed.gz | \
+    bcftools annotate \
+        --remove ^INFO/AA,INFO/AA_upcase,^FORMAT/GT | \
+    bcftools +fill-tags \
+        -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
+    bcftools view \
+        --exclude 'REF!=AA_upcase && ALT!=AA_upcase' | \
+    bcftools query \
+        -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AF AA:%AA AA_upcase:%AA_upcase GTs:[ %GT]\n'")
+
+print_text("create a list with SNPs to be switched?", header=4)
+print("create a new vcf file with a new case with AA=a and ALT=A, to check behaviour with lower-case")
+run_bash(" \
+    awk \
+        'BEGIN{FS=OFS=\"\t\"}{print $0}END{ \
+            print \"chr20\t1110691\trsdummy\tG\tA\t29\tPASS\tNS=3;DP=14;AN=6;AC=3;AF=0.5;DB;H2;AA=a;AA_upcase=G\tGT\t1|0\t1|1\t0|0\" \
+        }'\
+        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf > ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up_2.vcf")
+print("from that VCF file, make a tsv file with the SNPs having AA=ALT")
+run_bash(" \
+    bcftools norm \
+        --multiallelic -snps \
+        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up_2.vcf | \
+    bcftools view \
+        --samples NA00001,NA00002 | \
+    bcftools view \
+        --types snps | \
+    bcftools +fill-tags \
+        -- --tags AN,AC | \
+    bcftools view \
+        --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
+    bcftools view \
+        --include 'COUNT(GT=\"mis\")/N_SAMPLES < 0.05' | \
+    bcftools norm \
+        --rm-dup exact | \
+    bcftools norm \
+        --multiallelic +snps | \
+    bcftools view \
+        --max-alleles 2 \
+        --min-alleles 2 | \
+    bcftools view \
+        --phased | \
+    bcftools view \
+        --targets-file ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_pilot_mask.bed.gz | \
+    bcftools annotate \
+        --remove ^INFO/AA,INFO/AA_upcase,^FORMAT/GT | \
+    bcftools +fill-tags \
+        -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
+    bcftools view \
+        --exclude 'REF!=AA_upcase && ALT!=AA_upcase' \
+        --drop-genotypes \
+        --no-header | \
+    awk \
+        'BEGIN{FS=\"\t|;|=|,\"; OFS=\"\t\"}{ \
+            for(i=1;i<=NF;i++){ \
+                if($i==\"AA\"){ \
+                    aa_row=toupper($(i+1)); \
+                    if(index(aa_row, \",\")==0){ \
+                        if(aa_row!=\"N\" && aa_row!=\"-\" && aa_row!=\".\"){ \
+                            if(index($4, aa_row)==0 && index($5, aa_row)!=0){ \
+                               print $1, $2, $4, $5; \
+                            } \
+                        } \
+                    } else {exit 1} \
+                } \
+            } \
+        }' > ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/snps_to_switch_anc.tsv; \
+        sed  \
+            --in-place \
+            --expression '1i #CHROM\tPOS\tAA_upcase' \
+            ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/snps_to_switch_anc.tsv; \
+        bgzip \
+            --force \
+            ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/snps_to_switch_anc.tsv; \
+        echo 'See first lines of the tab file with upper case ancestral alleles'; \
+        gunzip \
+            --stdout \
+            ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/snps_to_switch_anc.tsv.gz | head -n 70")
+
+
+    
+    #asumimos posiciones de las columnas fijas, chrom, pos, ref, alt..
+    #this is like a new check because we are calculating problematic cases without AA, so at the end, we can check if REF is always equals to AA_upcase, which was obtained using other approach
+
+##make list following the steps we did for the tsv tabix indexed file in the previous script
+
+
+
+
+#fix-ref
+    #Do not use the program blindly, make an effort to understand what strand convention your data uses! Make sure the reason for mismatching REF alleles is not a different reference build!! Also do NOT use bcftools norm --check-ref s for this purpose, as it will result in nonsense genotypes!!!
+    #1KGP VCF files are in hg38, and I also used hg38 for VEP, VEP cache and ancestral fasta
+
+
+#The list must be one of the support types by bcftools annotate and must contain an ID
+#Use this list and bcftools annotate to fill the ID column in the vcf file, you want to switch REF/ALT
+#Use bcftools +fixref file.bcf -Ob -o out.bcf -- -i List_of_1.vcf.gz to switch REF/ALT based on the ID
+    #https://www.biostars.org/p/411202/
+    #https://www.htslib.org/doc/bcftools.html#annotate
+    #https://samtools.github.io/bcftools/howtos/plugin.fixref.html
+
+
+# Swap the alleles
+#bcftools +fixref broken.bcf -Ob -o fixref.bcf -- -d -f /path/to/reference.fasta -i All_20151104.vcf.gz
+
+# The above command might have changed the coordinates, we must sort the VCF.
+#bcftools sort fixref.bcf -Ob -o fixref.sorted.bcf
+    #this last part is needed?
+
+
+
+#see end of previous script for the steps
+
+
+#
+print_text("see the new header", header=3)
+run_bash(" \
+    bcftools norm \
+        --multiallelic -snps \
+        data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
+    bcftools view \
+        --samples NA00001,NA00002 | \
+    bcftools view \
+        --types snps | \
+    bcftools +fill-tags \
+        -- --tags AN,AC | \
+    bcftools view \
+        --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
+    bcftools view \
+        --include 'COUNT(GT=\"mis\")/N_SAMPLES < 0.05' | \
+    bcftools norm \
+        --rm-dup exact | \
+    bcftools norm \
+        --multiallelic +snps | \
+    bcftools view \
+        --max-alleles 2 \
+        --min-alleles 2 | \
+    bcftools view \
+        --phased | \
+    bcftools view \
+        --targets-file ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_pilot_mask.bed.gz | \
+    bcftools annotate \
+        --remove ^INFO/AA,INFO/AA_upcase,^FORMAT/GT | \
     bcftools +fill-tags \
         -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
     bcftools head")
@@ -1077,7 +1322,7 @@ run_bash(" \
     bcftools view \
         --targets-file ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_pilot_mask.bed.gz | \
     bcftools annotate \
-        --remove INFO,^FORMAT/GT | \
+        --remove ^INFO/AA,INFO/AA_upcase,^FORMAT/GT | \
     bcftools +fill-tags \
         -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
     bcftools view \
