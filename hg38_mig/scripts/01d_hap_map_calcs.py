@@ -995,6 +995,173 @@ run_bash(" \
         #I have checked that the genotypes remain the same despite removing all previous INFO fields and all FORMAT fields (except GT) and then adding new INFO fields, so we are good here.
 
 
+print_text("extract the position (index) of several columns in the VCF file, so we can be sure we are selecting these columns in later steps", header=3)
+print_text("obtain the position of these columns using awk", header=4)
+indexes_chrom_pos = run_bash(" \
+    bcftools norm \
+        --multiallelic -snps \
+        data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
+    bcftools view \
+        --samples NA00001,NA00002 | \
+    bcftools view \
+        --types snps | \
+    bcftools +fill-tags \
+        -- --tags AN,AC | \
+    bcftools view \
+        --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
+    bcftools view \
+        --include 'COUNT(GT=\"mis\")/N_SAMPLES < 0.05' | \
+    bcftools norm \
+        --rm-dup exact | \
+    bcftools norm \
+        --multiallelic +snps | \
+    bcftools view \
+        --max-alleles 2 \
+        --min-alleles 2 | \
+    bcftools view \
+        --phased | \
+    bcftools view \
+        --targets-file ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_pilot_mask.bed.gz | \
+    bcftools annotate \
+        --remove ^INFO/AA,INFO/AA_upcase,^FORMAT/GT | \
+    bcftools +fill-tags \
+        -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
+    bcftools view \
+        --header | \
+    awk \
+        'BEGIN{FS=\"\t\"}; \
+        END{ \
+            for(i=1;i<=NF;i++){ \
+                if($i == \"#CHROM\"){ \
+                    chrom_index=i \
+                }; \
+                if($i == \"POS\"){ \
+                    pos_index=i \
+                }; \
+                if($i == \"ID\"){ \
+                    id_index=i \
+                }; \
+                if($i == \"REF\"){ \
+                    ref_index=i \
+                }; \
+                if($i == \"ALT\"){ \
+                    alt_index=i \
+                }; \
+                if($i == \"FILTER\"){ \
+                    filter_index=i \
+                }; \
+                if($i ~/^HG/ || $i ~/^NA/){ \
+                    n_samples++\
+                } \
+            }; \
+            n_fields=NF; \
+            printf \"n_fields=%s,n_samples=%s,chrom=%s,pos=%s,id=%s,ref=%s,alt=%s,filter=%s\", n_fields, n_samples, chrom_index, pos_index, id_index, ref_index, alt_index, filter_index \
+        }'", return_value=True).strip()
+    #get the header of the VCF file after extracting AA from CSQ, removing CSQ and select SNPs, just like we are going to do when we replace lower for upper case in the next line
+    #open the header with AWK
+        #when you reach the last line, which includes the headers
+            #run loop across fields, i.e., headers
+                #if the header is CHROM or POS then save the index of the field as a new variable, chrom_index and pos_index, respectively.
+                    #"i" is the index, like 1, 2, 3... because of this, when you do $i is like you are doing $1.
+                    #if we save "i", we are saving the index, the number
+                    #https://unix.stackexchange.com/a/616495
+                #also look for REF, ALT, FILTER because we will use these columns later
+                #if the header starts with HG or NA, add 1 to the count of n_samples, because this is a GT column for a given sample
+                    #"~" let you use regular expression
+                    #"/.../" is a regular expression to match text that meet condition
+                    #"^" text that starts with...
+                    #https://unix.stackexchange.com/a/72763
+            #save the number of fields
+        #then print the number of fields, the number of sample and the index of both CHROM and POS
+            #https://www.gnu.org/software/gawk/manual/html_node/Printf-Examples.html
+print("extract the numbers")
+n_fields = indexes_chrom_pos.split(",")[0].replace("n_fields=", "")
+n_samples = indexes_chrom_pos.split(",")[1].replace("n_samples=", "")
+index_chrom = indexes_chrom_pos.split(",")[2].replace("chrom=", "")
+index_pos = indexes_chrom_pos.split(",")[3].replace("pos=", "")
+index_id = indexes_chrom_pos.split(",")[4].replace("id=", "")
+index_ref = indexes_chrom_pos.split(",")[5].replace("ref=", "")
+index_alt = indexes_chrom_pos.split(",")[6].replace("alt=", "")
+index_filter = indexes_chrom_pos.split(",")[7].replace("filter=", "")
+print("total number of fields: " + n_fields)
+print("number of samples: " + n_samples)
+print("index of column CHROM: " + index_chrom)
+print("index of column POS: " + index_pos)
+print("index of column ID: " + index_id)
+print("index of column REF: " + index_ref)
+print("index of column ALT: " + index_alt)
+print("index of column FILTER: " + index_filter)
+print("the total number of fields minus the number of samples should be 9. The number of fixed fields in VCF v4.2 is 8 and then FORMAT, which in our case only has GT, thus we should have 9 fields. Also, the index of CHROM, POS, REF, ALT and FILTER should be 1, 2, 4, 5 and 7, respectively")
+if (int(n_fields)-int(n_samples) == 9) & (index_chrom=="1") & (index_pos=="2") & (index_id=="3") & (index_ref=="4") & (index_alt=="5") & (index_filter=="7"):
+    print("YES! GOOD TO GO!")
+else:
+    raise ValueError("FALSE! ERROR! WE HAVE A PROBLEM WITH THE FIELDS OF THE VCF FILE BEFORE CONVERTING TO UPPER CASE ANCESTRAL ALLELES")
+
+print_text("the chromosome name is correct? We do this check here because in the previous line we obtained the number of the column of CHROM", header=4)
+print("calculate the number of times each chromosome appears")
+chrom_count = run_bash(" \
+    bcftools view \
+        --drop-genotypes \
+        --no-header \
+        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
+    awk \
+        'BEGIN{FS=OFS=\"\t\"}{ \
+            for(i=1;i<=NF;i++){ \
+                if(i==" + index_chrom + "){ \
+                    a[$i]++ \
+                } \
+            } \
+        }END{for(i in a){print i,a[i]\n}}'", return_value=True).strip()
+    #extract all rows of the VCF file without header and genotypes
+    #load into awk using tabs as separator. In this way, we get separated the main columns, i.e., CHROM, POS...
+        #iterate over i, from 1 to the number of columns, adding 1 to i in each iteration
+            #if the number of the column is that of CHROM (previously calculated)
+                #add an entry to array "a" using the chromosome name ($i) as index and adding 1 to the previous value
+                #if the same chromosome appears 2 times, it will have a value of 2...
+        #at the END, print each index of "a" (i; chromosome name) and its value (a[$i]; the count). Both values are separated by tab as OFS=\t, and each new pair is a new line (\n)
+print("convert the output of awk into a pandas DF")
+chrom_count_df = pd.DataFrame([chrom.split("\t") for chrom in chrom_count.split("\n")], columns=["chrom", "count"])
+    #split each pair of values using "\n" and for each one
+        #split each pair into the two value using \t
+        #this is the input for pandas
+    #select the column names
+    #https://stackoverflow.com/a/54103026/12772630
+print("check that we only have 1 chromosome and that is the selected chromosome")
+if (chrom_count_df.shape[0]==1) & (chrom_count_df["chrom"].to_numpy()=="chr20"):
+    print("YES! GOOD TO GO!")
+else:
+    raise ValueError("FALSE! ERROR! WE HAVE A PROBLEM WITH THE CHROMOSOMES INCLUDED IN THE VCF FILE")
+
+print_text("check that no SNP has filter different from 'PASS' or 'q10', which are the cases we have in our dummy example. In the case of the real data, FILTER should be '.'", header=4)
+    #info for filter in 1KGP
+        #according to the specific readme of the dataset we are using (http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/README_1kGP_phased_panel_110722.pdf), prior phasing they applied several filters, being one of them that all variants has to be PASS for FILTER. I understand that, because of this, all variants in the chromosome have now ".", being this the unique character.
+print("calculate the number of SNPs for which FILTER is not 'PASS' or 'q10'")
+problematic_fiter = run_bash(" \
+    bcftools view \
+        --no-header \
+        --drop-genotypes \
+        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
+    awk \
+        'BEGIN{FS=OFS=\"\t\"}{ \
+            for(i=1;i<=NF;i++){ \
+                if(i==" + index_filter + "){ \
+                    if($i!=\"PASS\" && $i!=\"q10\"){count++} \
+                } \
+            } \
+        }END{print count}'", return_value=True).strip()
+    #load the VCF file after VEP without header and genotypes
+    #open in awk using tabs as separator, so we separate the main columns, i.e., CHROM, POS, ID, REF, ALT....FILTER
+        #iterate over i from 1 to the number of columns, adding 1 to "i" in each iteration
+        #if the number of the column is that of FILTER (previously calculated)
+            #if the value of that column ($i) is NOT ".", then add 1 to the array called count
+        #END by printing the array count.
+print("check that the number of SNPs with FILTER different from 'PASS' or 'q10' is 0")
+if problematic_fiter=="":
+    print("YES! GOOD TO GO!")
+else:
+    raise ValueError("FALSE! ERROR! WE HAVE SNPS FOR WHICH FILTER IS NOT '.'!!!")
+
+
 print_text("switch REF/ALT columns for which REF is not AA", header=3)
 print_text("see first cases where REF nor ALT are AA. You can see how we get a case with REF=G and AA_upcase=C. These could be cases where a multiallelic SNP has lost one of the ALT alleles in the subset population and that ALT allele is the ancestral. Therefore, there is no more ancestral in the population. Note, however, that I have found 200K cases like this across all chromosomes without subsetting when running 01b_vep_ancestral.py. Therefore, these could be also errors and should not be a high number", header=4)
 run_bash(" \
@@ -1071,7 +1238,7 @@ run_bash(" \
         -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AF AA:%AA AA_upcase:%AA_upcase GTs:[ %GT]\n'")
     #print all the rows of the dummy VCF file and, at the END, add a new row with a dummy snp having AA=g and REF=G. It has position inside the third interval of the dummy_mask so it passes all filters. The new row is printed using \t as separator between the VCF columns, i.e., REF, ALT, INFO....
 
-print_text("count these cases but in the original dummy vcf file without filtering and just using AWK, so it is faster. Note that we are assuming REF and ALT to be columns 4 and 5, but you can extract the position from the VCF file in the real data. Look 01b_vep_ancestral.py", header=4)
+print_text("count these cases but in the original dummy vcf file without filtering and just using AWK, so it is faster", header=4)
 run_bash(" \
     awk \
         'BEGIN{FS=OFS=\"\t\"}{print $0}END{ \
@@ -1079,6 +1246,7 @@ run_bash(" \
         }'\
         ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf | \
     bcftools view \
+        --types snps \
         --no-header \
         --drop-genotypes | \
     awk \
@@ -1086,9 +1254,9 @@ run_bash(" \
             for(i=1;i<=NF;i++){ \
                 if($i==\"AA\"){ \
                     aa_row=toupper($(i+1)); \
-                    if(index(aa_row, \",\")==0){ \
+                    if(index(aa_row, \",\")==0 && length(aa_row)==1){ \
                         if(aa_row!=\"N\" && aa_row!=\"-\" && aa_row!=\".\"){ \
-                            if(index($4, aa_row)==0 && index($5, aa_row)==0){ \
+                            if(index($" + index_ref + ", aa_row)==0 && index($" + index_alt + ", aa_row)==0){ \
                                printf \"%s, REF=%s, ALT=%s, AA=%s\\n\", $3, $4, $5, $(i+1); \
                                count++ \
                             } \
@@ -1104,13 +1272,13 @@ run_bash(" \
         #run loop across each field
             #if we are in the field corresponding to AA
                 #save the next field, i.e., the ancestral allele (first copy is multiple consequence) but in upper case, to consider both low and high-confidence alleles. This will be "aa_row"
-                #if aa_row does not include ",", i.e., we do not have several ancestral alleles separated by comma (we can have TT for microsatellites, but this is 1 ancestral)
+                #if aa_row does not include ",", i.e., we do not have several ancestral alleles separated by comma and its number of characters is 1, i.e., we do not have more than 1 base (i.e., not TTG...)
                     #if aa_row is not missing (N, -, .). We can just do aa_row!= because we should not have more than 1 ancestral allele
                         #if the field 4 (REF) and the field 5 (ALT) do not include aa_row, 
                             #then print the row and add 1 to the count
                             #we use index() because if ALT has two alleles, we want to know if one of them is aa_row, i.e., whether aa_row is included in ALT.
                             #we do the same for REF, but it is not necessary because we should have only 1 REF allele always.
-                #else, then we failed to extract just 1 ancestral allele per SNP from AA=G,G,G,G.... So we need to stop and get an exist status of "1", which is considered as error by run_bash. If we do not add "1", the awk will end without raising an error, and then the python script will continue. We do not want that.
+                #else, then we failed to extract just 1 ancestral allele per SNP from AA=G,G,G,G.... and we may have more than 1 ancestral allele (e.g., microsatellite TT...) So we need to stop and get an exist status of "1", which is considered as error by run_bash. If we do not add "1", the awk will end without raising an error, and then the python script will continue. We do not want that.
                     #https://unix.stackexchange.com/a/16567
 
 print_text("exclude now cases where REF nor ALT are AA_upcase. This filter in cases where AA_upcase is the REF (rs6040358) or the ALT (rs6040356).", header=4)
@@ -1150,18 +1318,20 @@ run_bash(" \
         -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AF AA:%AA AA_upcase:%AA_upcase GTs:[ %GT]\n'")
 
 print_text("create a list with SNPs to be switched?", header=4)
-print("create a new vcf file with a new case with AA=a and ALT=A, to check behaviour with lower-case")
+print("create a new vcf file with a new case with AA=a and ALT=A, to check behavior with lower-case")
 run_bash(" \
     awk \
         'BEGIN{FS=OFS=\"\t\"}{print $0}END{ \
-            print \"chr20\t1110691\trsdummy\tG\tA\t29\tPASS\tNS=3;DP=14;AN=6;AC=3;AF=0.5;DB;H2;AA=a;AA_upcase=G\tGT\t1|0\t1|1\t0|0\" \
+            print \"chr20\t1110691\trsdummy\tG\tA\t29\tPASS\tNS=3;DP=14;AN=6;AC=3;AF=0.5;DB;H2;AA=a;AA_upcase=A\tGT\t1|0\t1|1\t0|0\" \
         }'\
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf > ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up_2.vcf")
+        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf > ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_vep_2_anc_up_2.vcf")
+    #print all lines of the VCF file
+    #add at the end a line with the main columns (ALT, REF, CHROM, genotypes...) separated by tabs and indicate that with FS
 print("from that VCF file, make a tsv file with the SNPs having AA=ALT")
 run_bash(" \
     bcftools norm \
         --multiallelic -snps \
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up_2.vcf | \
+        ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_vep_2_anc_up_2.vcf | \
     bcftools view \
         --samples NA00001,NA00002 | \
     bcftools view \
@@ -1196,10 +1366,10 @@ run_bash(" \
             for(i=1;i<=NF;i++){ \
                 if($i==\"AA\"){ \
                     aa_row=toupper($(i+1)); \
-                    if(index(aa_row, \",\")==0){ \
+                    if(index(aa_row, \",\")==0 && length(aa_row)==1){ \
                         if(aa_row!=\"N\" && aa_row!=\"-\" && aa_row!=\".\"){ \
-                            if(index($4, aa_row)==0 && index($5, aa_row)!=0){ \
-                               print $1, $2, $4, $5; \
+                            if(index($" + index_ref + ", aa_row)==0 && index($" + index_alt + ", aa_row)!=0){ \
+                               print $" + index_chrom + ", $" + index_pos + ", $" + index_id + ", $" + index_ref + ", $" + index_alt + "; \
                             } \
                         } \
                     } else {exit 1} \
@@ -1208,7 +1378,7 @@ run_bash(" \
         }' > ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/snps_to_switch_anc.tsv; \
         sed  \
             --in-place \
-            --expression '1i #CHROM\tPOS\tAA_upcase' \
+            --expression '1i CHROM\tPOS\tID\tREF\tALT' \
             ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/snps_to_switch_anc.tsv; \
         bgzip \
             --force \
@@ -1220,8 +1390,11 @@ run_bash(" \
 
 
     
-    #asumimos posiciones de las columnas fijas, chrom, pos, ref, alt..
     #this is like a new check because we are calculating problematic cases without AA, so at the end, we can check if REF is always equals to AA_upcase, which was obtained using other approach
+
+##make the checks of tabix as in 01b_vep
+
+ 
 
 ##make list following the steps we did for the tsv tabix indexed file in the previous script
 
@@ -1234,6 +1407,8 @@ run_bash(" \
 
 
 #The list must be one of the support types by bcftools annotate and must contain an ID
+    #indicate "#" as header row
+    #ID is rs?
 #Use this list and bcftools annotate to fill the ID column in the vcf file, you want to switch REF/ALT
 #Use bcftools +fixref file.bcf -Ob -o out.bcf -- -i List_of_1.vcf.gz to switch REF/ALT based on the ID
     #https://www.biostars.org/p/411202/
