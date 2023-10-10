@@ -1,5 +1,17 @@
 - Ask jesus
 
+	- answer jesus
+		- Respecto del smartmatch warning, he encontrado un pull request para la siguiente versión de VEP (111) donde se dice lo siguiente: "Smartmatch is an experimental feature that throws warnings in newer versions of Perl. This PR intends to replace a smart match with an equivalent if statement". Esto es de julio de 2023, así que creo que tiene sentido que me salga este warning al estar usando la versión de VEP publicada justo en ese mes (la 110).
+			- https://github.com/Ensembl/ensembl-vep/pull/1461
+		- I have found multiple cases of people using VEP from their own installation and the smartmatch warning. También un caso usando docker. Siempre se trata de hilos donde la gente pregunta a los desarrolladores de VEP o de herramientas que usan VEP, y no dicen nada al OP sobre esto, vamos que pasan del warning. Así que imagino que no habrá problema.
+			- https://github.com/konradjk/loftee/issues/49
+			- https://discuss.hail.is/t/error-when-writing-a-large-vep-annotated-hail-table/3157
+			- https://groups.google.com/g/biovalidation/c/ss3wTUCbUWM
+			- https://github.com/konradjk/loftee/issues/69
+			- https://github.com/Ensembl/ensembl-vep/issues/961
+			- https://github.com/konradjk/loftee/issues/72
+			- https://github.com/Ensembl/ensembl-vep/issues/576
+
 	- Instalación: Siguiendo tus instrucciones, he sido muy cuidadoso con el lugar de instalación del caché y los plugins, además de usar la misma versión de caché y de VEP. A la hora de instalar VEP, no me descargo el caché para evitar tener que descargarlo cada vez que construya el container. Lo que he hecho ha sido descargarlo por mi cuenta una vez (vigilando la versión) en una localización concreta que luego indico a VEP con "--dir_cache". Lo mismo he hecho con los fasta ancestrales. Mi pregunta: ¿es necesario seleccional la opción "f" (FASTA) cuando instalamos VEP con INSTALL.pl? Yo he usado "--auto ap", así que no he descargado nada más durante la instalación a parte de la api y el AncestralAllele plugin. Según el manual, "f" instala fastas que se pueden usar para incluir anotaciones HGVS, comparar con la secuencia de referencia y construir transcript models desde un GFF file. Entiendo que si yo no necesito nada de eso, no me hacen falta los fasta. De hecho, ya he corrido VEP en todos los cromosomas y no me ha dado problemas. ¿Tu recomendarías utilizar la opción "f" aun así para mi caso?
 		- /home/dftortosa/singularity/dating_climate_adaptation/hg38_mig/scripts/recipes
 		- http://useast.ensembl.org/info/docs/tools/vep/script/vep_cache.html#fasta

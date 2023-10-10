@@ -1050,12 +1050,15 @@ indexes_chrom_pos = run_bash(" \
                 if($i == \"FILTER\"){ \
                     filter_index=i \
                 }; \
+                if($i == \"INFO\"){ \
+                    info_index=i \
+                }; \
                 if($i ~/^HG/ || $i ~/^NA/){ \
                     n_samples++\
                 } \
             }; \
             n_fields=NF; \
-            printf \"n_fields=%s,n_samples=%s,chrom=%s,pos=%s,id=%s,ref=%s,alt=%s,filter=%s\", n_fields, n_samples, chrom_index, pos_index, id_index, ref_index, alt_index, filter_index \
+            printf \"n_fields=%s,n_samples=%s,chrom=%s,pos=%s,id=%s,ref=%s,alt=%s,filter=%s,info=%s\", n_fields, n_samples, chrom_index, pos_index, id_index, ref_index, alt_index, filter_index, info_index \
         }'", return_value=True).strip()
     #get the header of the VCF file after extracting AA from CSQ, removing CSQ and select SNPs, just like we are going to do when we replace lower for upper case in the next line
     #open the header with AWK
@@ -1083,6 +1086,7 @@ index_id = indexes_chrom_pos.split(",")[4].replace("id=", "")
 index_ref = indexes_chrom_pos.split(",")[5].replace("ref=", "")
 index_alt = indexes_chrom_pos.split(",")[6].replace("alt=", "")
 index_filter = indexes_chrom_pos.split(",")[7].replace("filter=", "")
+index_info = indexes_chrom_pos.split(",")[8].replace("info=", "")
 print("total number of fields: " + n_fields)
 print("number of samples: " + n_samples)
 print("index of column CHROM: " + index_chrom)
@@ -1091,8 +1095,9 @@ print("index of column ID: " + index_id)
 print("index of column REF: " + index_ref)
 print("index of column ALT: " + index_alt)
 print("index of column FILTER: " + index_filter)
+print("index of column INFO: " + index_info)
 print("the total number of fields minus the number of samples should be 9. The number of fixed fields in VCF v4.2 is 8 and then FORMAT, which in our case only has GT, thus we should have 9 fields. Also, the index of CHROM, POS, REF, ALT and FILTER should be 1, 2, 4, 5 and 7, respectively")
-if (int(n_fields)-int(n_samples) == 9) & (index_chrom=="1") & (index_pos=="2") & (index_id=="3") & (index_ref=="4") & (index_alt=="5") & (index_filter=="7"):
+if (int(n_fields)-int(n_samples) == 9) & (index_chrom=="1") & (index_pos=="2") & (index_id=="3") & (index_ref=="4") & (index_alt=="5") & (index_filter=="7") & (index_info=="8"):
     print("YES! GOOD TO GO!")
 else:
     raise ValueError("FALSE! ERROR! WE HAVE A PROBLEM WITH THE FIELDS OF THE VCF FILE BEFORE CONVERTING TO UPPER CASE ANCESTRAL ALLELES")
@@ -1318,114 +1323,198 @@ run_bash(" \
         -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AF AA:%AA AA_upcase:%AA_upcase GTs:[ %GT]\n'")
 
 print_text("create a list with SNPs to be switched?", header=4)
-print("create a new vcf file with a new case with AA=a and ALT=A, to check behavior with lower-case")
+print("create a new vcf file with a new case with AA=a and ALT=A, to check behavior with lower-case. Also add two cases with AA equals to ',' and '' to check behaviour")
 run_bash(" \
     awk \
         'BEGIN{FS=OFS=\"\t\"}{print $0}END{ \
-            print \"chr20\t1110691\trsdummy\tG\tA\t29\tPASS\tNS=3;DP=14;AN=6;AC=3;AF=0.5;DB;H2;AA=a;AA_upcase=A\tGT\t1|0\t1|1\t0|0\" \
+            print \"chr20\t1110691\trsdummy\tG\tA\t29\tPASS\tNS=3;DP=14;AN=6;AC=3;AF=0.5;DB;H2;AA=a;AA_upcase=A\tGT\t1|0\t1|1\t0|0\"; \
+            print \"chr20\t1110692\trsdummy2\tG\tA\t29\tPASS\tNS=3;DP=14;AN=6;AC=3;AF=0.5;DB;H2;AA=,;AA_upcase=A\tGT\t1|0\t1|1\t0|0\" \
         }'\
-        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf > ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_vep_2_anc_up_2.vcf")
+        ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf > ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_vep_2_anc_up_2.vcf; \
+        bcftools view \
+            --no-header \
+            ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_vep_2_anc_up_2.vcf")
     #print all lines of the VCF file
     #add at the end a line with the main columns (ALT, REF, CHROM, genotypes...) separated by tabs and indicate that with FS
-print("from that VCF file, make a tsv file with the SNPs having AA=ALT")
+
+print("create a awk script that switch REF/ALT in those rows where AA==ALT, while not doing anything to rows where REF==AA and discarding those rows where REF nor ALT are equal to AA. First apply it to all variants without filter to check behaviour")
 run_bash(" \
+    last_header_row=$( \
+        bcftools norm \
+            --multiallelic -snps \
+            ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_vep_2_anc_up_2.vcf | \
+        awk \
+            '{ \
+                if($0 ~ /^#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT/){print NR} \
+            }'); \
     bcftools norm \
         --multiallelic -snps \
         ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_vep_2_anc_up_2.vcf | \
-    bcftools view \
-        --samples NA00001,NA00002 | \
-    bcftools view \
-        --types snps | \
-    bcftools +fill-tags \
-        -- --tags AN,AC | \
-    bcftools view \
-        --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
-    bcftools view \
-        --include 'COUNT(GT=\"mis\")/N_SAMPLES < 0.05' | \
-    bcftools norm \
-        --rm-dup exact | \
-    bcftools norm \
-        --multiallelic +snps | \
-    bcftools view \
-        --max-alleles 2 \
-        --min-alleles 2 | \
-    bcftools view \
-        --phased | \
-    bcftools view \
-        --targets-file ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_pilot_mask.bed.gz | \
-    bcftools annotate \
-        --remove ^INFO/AA,INFO/AA_upcase,^FORMAT/GT | \
-    bcftools +fill-tags \
-        -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
-    bcftools view \
-        --exclude 'REF!=AA_upcase && ALT!=AA_upcase' \
-        --drop-genotypes \
-        --no-header | \
     awk \
-        'BEGIN{FS=\"\t|;|=|,\"; OFS=\"\t\"}{ \
-            for(i=1;i<=NF;i++){ \
-                if($i==\"AA\"){ \
-                    aa_row=toupper($(i+1)); \
-                    if(index(aa_row, \",\")==0 && length(aa_row)==1){ \
-                        if(aa_row!=\"N\" && aa_row!=\"-\" && aa_row!=\".\"){ \
-                            if(index($" + index_ref + ", aa_row)==0 && index($" + index_alt + ", aa_row)!=0){ \
-                               print $" + index_chrom + ", $" + index_pos + ", $" + index_id + ", $" + index_ref + ", $" + index_alt + "; \
-                            } \
-                        } \
-                    } else {exit 1} \
-                } \
-            } \
-        }' > ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/snps_to_switch_anc.tsv; \
-        sed  \
-            --in-place \
-            --expression '1i CHROM\tPOS\tID\tREF\tALT' \
-            ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/snps_to_switch_anc.tsv; \
-        bgzip \
-            --force \
-            ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/snps_to_switch_anc.tsv; \
-        echo 'See first lines of the tab file with upper case ancestral alleles'; \
-        gunzip \
-            --stdout \
-            ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/snps_to_switch_anc.tsv.gz | head -n 70")
+        -v last_header_row=$last_header_row \
+        'BEGIN{ \
+            FS=\"\t\"; \
+            OFS=\"\t\"; \
+            index_ref=" + index_ref + "; \
+            index_alt=" + index_alt + "; \
+            index_info=" + index_info + " \
+        }{ \
+            if(NR > last_header_row ){ \
+                for(i=1;i<=length($index_info);i++){ \
+                    if(substr($index_info,i,3)==\"AA=\"){ \
+                        k=i; \
+                        while(substr($index_info, k, 1)!=\";\"){ \
+                            end_aa=k; \
+                            k=k+1; \
+                        }; \
+                        if(i+3 != end_aa){ \
+                            full_aa = substr($index_info, i+3, end_aa-(i+3)+1) \
+                        } else { \
+                            full_aa = substr($index_info, i+3, 1) \
+                        }; \
+                        if(index(full_aa, \",\")!=0 && full_aa!=\",\"){ \
+                            full_aa_no_comma = full_aa; \
+                            gsub(/,/, \"\", full_aa_no_comma); \
+                            count=0; \
+                            for(k=1;k<=length(full_aa_no_comma);k++){ \
+                                char=substr(full_aa_no_comma, k, 1); \
+                                if(!array_alleles[char]++){count++}; \
+                            }; \
+                            if(count==1){ \
+                                check_n_csq=\"false\"; \
+                                for(k in array_alleles){ \
+                                    if(array_alleles[k]==length(full_aa_no_comma)){ \
+                                        check_n_csq=\"true\" \
+                                    } \
+                                }; \
+                                if(check_n_csq==\"true\"){ \
+                                    k=1; \
+                                    while(substr(full_aa, k, 1)!=\",\"){ \
+                                       before_comma=k; \
+                                       k=k+1\
+                                    }; \
+                                    unique_aa = substr(full_aa, 1, before_comma); \
+                                } else { \
+                                    exit 1 \
+                                }; \
+                            } else { \
+                                exit 1 \
+                            }; \
+                            delete array_alleles; \
+                        } else { \
+                            unique_aa=full_aa \
+                        }; \
+                        unique_aa = toupper(unique_aa); \
+                    } else { \
+                        if(substr($index_info,i,3)==\"AA;\"){exit 1} \
+                    } \
+                }; \
+                if($index_ref==unique_aa || $index_alt==unique_aa){ \
+                    if($index_ref!=unique_aa && $index_alt==unique_aa){ \
+                        tmp_ref=$index_ref; \
+                        $index_ref=$index_alt; \
+                        $index_alt=tmp_ref; \
+                        print $0 \
+                    } else { \
+                        print $0 \
+                    }; \
+                    if($index_ref!=unique_aa && $index_alt==unique_aa){exit 1} \
+                }; \
+            } else { print $0 } \
+        }'")
+        #load the VCF file with only the header into awk, then extract the number of the row (whole row; $0) starting with "CHROM REF...."
+            #https://unix.stackexchange.com/a/72763
+        #awk
+            #load the number of rows of the header as a variable
+            #if the row is after the header
+                #begin awk
+                    #loading the data into awk using \t for input and output. In this way, we are going to work with the main columns of the VCF file, REF, ALT, INFO, FORMAT, GT...
+                    #This means that the whole INFO field is going to be a string for each row, i.e., "AA=g;AA_upcase=G...." because we are not using ";" nor "=" as delimiters.
+                    #we do this to get as output the original INFO field with the ";",  "=", because if you use these as delimiters, they disappear from the data.
+                    #create variables with the position of the columns of interest that we will use later
+                #in each row
+                    #for each character of the INFO field
+                        #use substring to extract specific characters from the INFO string. 
+                            #substr(string, start [, length ])
+                            #Return a length-character-long substring of string, starting at character number start. The first character of a string is character number one. For example, substr("washington", 5, 3) returns "ing".
+                                #https://www.gnu.org/software/gawk/manual/html_node/String-Functions.html
+                        #if a substring starting at i up to two positions after (i.e., length=3) is equals to "AA=" (this avoids "AA_upcase=")
+                            #while loop: iterate from the starting position of "AA=", i.e., "A". You save the position of the character "end_aa", overwritting the position of the previous character until we reach ";", which is NOT saved. 
+                                #this will give the position of the last character before ";", i.e., before the next INFO field.
+                                #https://opensource.com/article/19/11/loops-awk
+                            #Use this position to select only the ancestral allele data wihthout "AA=" and ";". If the last character before ";" is the position just after "AA=", i.e., "AA" is equal to a single character (e.g., AA=T or AA=-). In other words, three positions after "AA=" starts (i+3) is equals to the last position before ";" (end_aa)
+                                #select just the character in that position
+                            #else, means that the we have several characters within "AA="
+                                #select a substring starting after "AA=" and ending just before ";"
+                                #we obtain that position by substracting the start of "AA=" from "end_aa"
+                                #For example: In "AA=G,G,G;", "AA=" starts at 1 (i=1), while the first base is in 1+3=4 (i+3=4), and the last character before ";" is at position 8 (end_aa=8). The length of the substring is 8-4+1=5 (end_aa-(i+3)+1). Therefore, if from the position of the last base (end_aa=8), we subtract the position of the first base just after "AA=" (i+3=4), we get the distance between the two characters without including one of them, so you have to add 1 to include botch extremes of this interval: 8-(1+3)+1=5. We want a substring of length 5 to include all alleles.
+                                    #Note that, in substr, the start is included so you have to start at 4, including 4, and then add 5 positions starting from 4 to reach the final base. First G is at 4, last G is at 8, so 8-4+1=5. This is 5,6,7 plus the extremes, 4 and 8.
+                            #if "full_aa" does not include "," or it is exactly "," but it has no other character, this means that "AA" is just a base or a missing including "," (",", "N", "-", ".").
+                                #then you can just save "full_aa" in "unique_aa" because there is only 1 character, so it is already unique.
+                                #Note that we use bcftools to extract AA from the CSQ field, and I checked that this makes cases with empty "AA" (AA="") as "AA=.". So we will always have a character after AA, and no space.
+                                    #We have added other "if" to check we have no empty AA field just in case
+                            #if it includes "," but it is not exactly ",", this means that we have several alleles for this SNP, e.g., "A,A,A,A", so we need to get just one. 
+                                #first check again (we did before) that we only have one ancestral allele per variant
+                                    #copy "full_aa" into "full_aa_no_comma"
+                                    #using gsub, change every "," by empty (""), so now we should have only AA data and no commas, the same allele repeated many times
+                                        #https://unix.stackexchange.com/a/492502
+                                    #set a "count" variable as zero
+                                    #for each character in full_aa_no_comma
+                                        #extract that character
+                                        #save it in array "a", 
+                                            #if it is previously present then add 1 more to its count. 
+                                            #if is not present before, add it as a new entry with value 1.
+                                                #Negate the expression so this case is true and then we can add 1 to our "count" variable.
+                                                #In other words, count the number of unique characters in full_aa_no_comma
+                                #We do operations if count==1, if it is higher than 1 and hence we have more than 1 distinct characters, STOP (non-zero exit status). 
+                                    #this check will fail for microsatellites with different bases like TAT, but this should be ok because we should have only SNPs. If we have different bases in a variant, I want an error.
+                                    #we do operations if another check works, if non, stop with non-zero exit status. Take the number of counts we have in array "a", which stores the unique characters seens in "full_aa_no_comma" with its count. This number should be the same than the total length of "full_aa_no_comma", i.e., the number of characters without comma should be the same than the count for the single character we got. Remember that the previous if check if 'count'==1, so we already know we have only 1 different character.
+                                    #If true:
+                                        #iterate across characters of "full_aa"
+                                            #while the character is NOT ",", save the position of the character in "before_comma" and move to the next position
+                                            #if "," it reached, then "before_comma" is not updated more, and hence we have the last position just before ","
+                                        #now extract a substring from "full_aa" from the start to the position just before the first comma. For example, in TT,TT,TT: would be from to 2, because the first comma is in position 3.
+                                #delete "a", so we have it clean for the next iteration of the larger loop (iterated over i)
+                            #else, means that we only have 1 character after "AA=" and before ";", therefore just take that character.
+                            #convert the resulting unique ancestral allele (unique_aa) into uppercase to consdier both low and high-confidence alleles.
+                        #else means that we do not have "AA=". This is ok because we can have other INFO fields, BUT
+                            #if the INFO field is "AA;" STOP, because we should have always at least "." in case AA is missing.
+                    #if the REF or the ALT fields are equal to the unique ancestral allele
+                        #if the REF is NOT the AA, but the ALT it is, we need to switch them
+                            #save the REF in a temp variable
+                            #overwrite the original REF with the ALT
+                            #save as new ALT the REF value stored in the temp variable
+                        #else just print the row without changes
+                    #else, we do not have ancestral allele for this variant in the panel, so we can discard the SNP, so no print. Without ancestral allele there is anything we can do with that allele.
+            #else means the row belongs to the header, so just print it
 
 
-    
+
+
+print("save the subset of filtered variants and then apply on it the awk script")
+
+
+
+
+#check the heade rpart of the script, you can check you get the exact same output with and without doing the header addition
+#then save the subset of snps and use it as input to the awk script
+#check the result is the same without the SNPs that have no AA in ALT or REF and removing REF and ALT column
+#check REF now is always equals to AA_upcase
     #this is like a new check because we are calculating problematic cases without AA, so at the end, we can check if REF is always equals to AA_upcase, which was obtained using other approach
 
-##make the checks of tabix as in 01b_vep
+
+
+
 
  
 
-##make list following the steps we did for the tsv tabix indexed file in the previous script
 
 
 
 
-#fix-ref
-    #Do not use the program blindly, make an effort to understand what strand convention your data uses! Make sure the reason for mismatching REF alleles is not a different reference build!! Also do NOT use bcftools norm --check-ref s for this purpose, as it will result in nonsense genotypes!!!
-    #1KGP VCF files are in hg38, and I also used hg38 for VEP, VEP cache and ancestral fasta
-
-
-#The list must be one of the support types by bcftools annotate and must contain an ID
-    #indicate "#" as header row
-    #ID is rs?
-#Use this list and bcftools annotate to fill the ID column in the vcf file, you want to switch REF/ALT
-#Use bcftools +fixref file.bcf -Ob -o out.bcf -- -i List_of_1.vcf.gz to switch REF/ALT based on the ID
-    #https://www.biostars.org/p/411202/
-    #https://www.htslib.org/doc/bcftools.html#annotate
-    #https://samtools.github.io/bcftools/howtos/plugin.fixref.html
-
-
-# Swap the alleles
-#bcftools +fixref broken.bcf -Ob -o fixref.bcf -- -d -f /path/to/reference.fasta -i All_20151104.vcf.gz
-
-# The above command might have changed the coordinates, we must sort the VCF.
-#bcftools sort fixref.bcf -Ob -o fixref.sorted.bcf
-    #this last part is needed?
 
 
 
-#see end of previous script for the steps
 
 
 #
@@ -3273,6 +3362,19 @@ pool.map(master_processor, full_combinations_pop_chroms)
 
 #close the pool
 pool.close()
+
+##por aqui
+##mail de jesus
+    #https://mail.google.com/mail/u/0/?tab=rm&ogbl#drafts/QgrcJHsHpDRJdfjndBxlCjQHdCNBwJJqNSl
+    ## primero termina dummy example
+        #extract again AA the first base
+            #print substr($0,1,2)
+            #https://stackoverflow.com/a/1406061/12772630
+        #then check that this base is REF
+    ##luego run VEP from jesus container on chrom22 and check we get the same results, same AA, same number of missing...
+        #in this way we cna be sure we do not have problems avodiing fasta, smartmach error 
+    ##think about mask, jesus says we do not need it
+
 
 
 ##when checking false/error also check you do not have the following warning in ANY pop-chrom:
