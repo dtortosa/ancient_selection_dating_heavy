@@ -1746,7 +1746,8 @@ run_bash(" \
     #get the switched VCF file but removing REF and ALT columns
     #check byte by byte that both files are the same with cmp, is equal, the exit status should be zero.
 
-print_text("see the new header", header=4)
+
+print_text("see the new header", header=3)
 run_bash(" \
     bcftools view \
         --header \
@@ -1758,13 +1759,15 @@ run_bash(" \
             #version of +fill-tags, flags selected
         #Therefore, the new header includes a history of the changes made to the VCF file inside of the file itself.
 
-print_text("see the variants", header=4)
+
+print_text("see the variants", header=3)
 run_bash(" \
     bcftools view \
         --no-header \
         ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_vep_2_anc_up_2_cleaned_ref_alt_switched.vcf")
 
-print_text("calculate stats of the VCF file, show them here and then use them to make summary plots", header=4)
+
+print_text("calculate stats of the VCF file, show them here and then use them to make summary plots", header=3)
 run_bash(" \
     bcftools stats \
         --samples - \
@@ -1782,7 +1785,8 @@ run_bash(" \
         #The final looks can be customized by editing the generated outdir/plot.py' script and re-running manually
             #cd outdir && python3 plot.py && pdflatex summary.tex
 
-print_text("convert VCF file to hap file", header=4)
+
+print_text("convert VCF file to hap file", header=3)
 print("First convert the raw dummy VCF file but adding a filter for SNPs in the same line, i.e. removing the microsatellite. The output shows 0/5/1 no-ALT/non-biallelic/filtered indicating that we lose 5 variants that are not biallelic and 1 due to the filter we applied, i.e., removal of non-snps, the microsatellite. Also, the number of records written is 6, which is the result of subtracting 5+1 from 12, the total number of variants. We have included missing alleles, which are shown as '?', while non-phased alleles are shown as '*'")
 run_bash(" \
     bcftools convert \
@@ -1798,10 +1802,8 @@ run_bash(" \
     gunzip -c ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_IMPUTE2.hap.gz")
         #see hap file calculation of the real data to see details about hap format.
 
-##por aqui
-
 #SUMMARY: 
-    #With all these commands, we have recreated the scenario we have in 1KGP data, with multiallelic SNPs separated into different lines, select some samples, we then select snps, exclude those SNPs that have the same allele for all samples (considering alleles in genotypes with missing, e.g., 0|.), remove those with genotype missingness < 5%, remove exact duplicates (this does not touch different lines of the same multiallelic snp because they have different ALT). Then we combine all lines of each multiallelic snp and now they have ALT column with several alleles, so we can filter them using --max-alleles 2. Add filter for selecting phased data only. Select only those variants included in interest regions (mask). We also use bcftools +fill-tags to update important fields for each SNP, so if a SNP was multiallelic, but it is not multiallelic in the subset population (i.e., only REF and 1 ALT), we no longer will have two allele frequencies, two allele counts.... for the remainder biallelic SNP in the subset. although in 1KGP data, multiallelic SNPs are already separated and have only 1 value for these fields (see below).
+    #With all these commands, we have recreated the scenario we have in 1KGP data, with multiallelic SNPs separated into different lines, select some samples, we then select snps, exclude those SNPs that have the same allele for all samples (considering alleles in genotypes with missing, e.g., 0|.), remove exact duplicates (this does not touch different lines of the same multiallelic snp because they have different ALT). Then we combine all lines of each multiallelic snp and now they have ALT column with several alleles, so we can filter them using --max-alleles 2. Add filter for selecting phased data only. Select only those variants included in interest regions (mask). We also use bcftools +fill-tags to update important fields for each SNP, so if a SNP was multiallelic, but it is not multiallelic in the subset population (i.e., only REF and 1 ALT), we no longer will have two allele frequencies, two allele counts.... for the remainder biallelic SNP in the subset. Although in 1KGP data, multiallelic SNPs are already separated and have only 1 value for these fields (see below). We have also switched REF/ALT columns for those SNPs whose ancestral allele was not REF, also removed those SNPs for which REF nor ALT are the ancestral allele.
 
 #Note about the update of the INFO fields
     #it is important to be sure that the fields you are using for filtering, are updated after subseting samples. Of course, type="snp" will be always "snp" irrespectively of the samples we select, but this is not the case of the number of alleles, because you can have SNPs with 3 alleles considering all 26 populations, but then in GBR they can have only 2 or 1. We are interested in SNPs that are biallelic within the selected population.
@@ -1810,10 +1812,11 @@ run_bash(" \
 
 
 
+
 ################################################################
 #### function to clean vcf files and create hap - map files ####
 ################################################################
-
+print_text("function to clean vcf files and create hap - map files", header=1)
 #chr_pop_combination="GBR_1"
 def master_processor(chr_pop_combination):
 
