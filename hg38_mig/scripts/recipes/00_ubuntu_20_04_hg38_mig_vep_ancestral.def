@@ -238,7 +238,7 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 	#make folder to save vep plugins
 	mkdir ./vep_plugins
 	#install vep
-	perl INSTALL.pl --ASSEMBLY GRCh38 --AUTO ap --PLUGINS AncestralAllele --PLUGINSDIR ./vep_plugins --SPECIES "homo_sapiens"
+	perl INSTALL.pl --ASSEMBLY GRCh38 --AUTO afp --PLUGINS AncestralAllele --PLUGINSDIR ./vep_plugins --SPECIES "homo_sapiens"
 		#https://useast.ensembl.org/info/docs/tools/vep/script/vep_download.html
 	    #--ASSEMBLY GRCh38
 	        #If using the --AUTO functionality to install without prompts, remember to add the assembly version required using e.g. "--ASSEMBLY GRCh38"

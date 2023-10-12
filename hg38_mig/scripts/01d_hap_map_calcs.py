@@ -1244,9 +1244,6 @@ run_bash(" \
     #print all the rows of the dummy VCF file and, at the END, add a new row with a dummy snp having AA=g and REF=G. It has position inside the third interval of the dummy_mask so it passes all filters. The new row is printed using \t as separator between the VCF columns, i.e., REF, ALT, INFO....
 
 print_text("count these cases but in the original dummy vcf file without filtering and just using AWK, so it is faster", header=4)
-
-###por aquii
-
 run_bash(" \
     awk \
         'BEGIN{FS=OFS=\"\t\"}{print $0}END{ \
@@ -1330,7 +1327,7 @@ run_bash(" \
     awk \
         'BEGIN{FS=OFS=\"\t\"}{print $0}END{ \
             print \"chr20\t1110691\trsdummy\tG\tA\t29\tPASS\tNS=3;DP=14;AN=6;AC=3;AF=0.5;DB;H2;AA=a;AA_upcase=A\tGT\t1|0\t1|1\t0|0\"; \
-            print \"chr20\t1110692\trsdummy2\tG\tA\t29\tPASS\tNS=3;DP=14;AN=6;AC=3;AF=0.5;DB;H2;AA=,;AA_upcase=A\tGT\t1|0\t1|1\t0|0\" \
+            print \"chr20\t1110692\trsdummy2\tG\tA\t29\tPASS\tNS=3;DP=14;AN=6;AC=3;AF=0.5;DB;H2;AA=,;AA_upcase=,\tGT\t1|0\t1|1\t0|0\" \
         }'\
         ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf > ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_vep_2_anc_up_2.vcf; \
         bcftools view \
@@ -1339,13 +1336,14 @@ run_bash(" \
     #print all lines of the VCF file
     #add at the end a line with the main columns (ALT, REF, CHROM, genotypes...) separated by tabs and indicate that with FS
 
-print_text("Before the next step, check that REF and ALT are always ACGT, because our awk script relies on the fact that we discard those rows for which the unique ancestral allele in upper case is NOT equal to REF or ALT, removing in that way variants with ancestral allele equal to '.', 'N', '-', etc...", header=4)
+print_text("Before the next step, check that REF and ALT are always ACGT, because our awk script relies on the fact that we discard those rows for which the unique ancestral allele in upper case is NOT equal to REF or ALT, removing in that way variants with ancestral allele equal to '.', 'N', '-', etc.... Also check that REF and ALT are NOT the same", header=4)
 problematic_cases_ref_alt = run_bash(" \
     awk \
         'BEGIN{FS=OFS=\"\t\"}{print $0}END{ \
             print \"chr20\t1110693\trsdummy3\t.\tA\t29\tPASS\tNS=3;DP=14;AN=6;AC=3;AF=0.5;DB;H2;AA=a;AA_upcase=A\tGT\t1|0\t1|1\t0|0\"; \
             print \"chr20\t1110694\trsdummy4\tG\t.\t29\tPASS\tNS=3;DP=14;AN=6;AC=3;AF=0.5;DB;H2;AA=a;AA_upcase=A\tGT\t1|0\t1|1\t0|0\"; \
-            print \"chr20\t1110704\trsdummy5\tG\t \t29\tPASS\tNS=3;DP=14;AN=6;AC=3;AF=0.5;DB;H2;AA=,;AA_upcase=A\tGT\t1|0\t1|1\t0|0\" \
+            print \"chr20\t1110704\trsdummy5\tG\t \t29\tPASS\tNS=3;DP=14;AN=6;AC=3;AF=0.5;DB;H2;AA=,;AA_upcase=A\tGT\t1|0\t1|1\t0|0\"; \
+            print \"chr20\t1110705\trsdummy6\tG\tG\t29\tPASS\tNS=3;DP=14;AN=6;AC=3;AF=0.5;DB;H2;AA=,;AA_upcase=A\tGT\t1|0\t1|1\t0|0\" \
         }'\
         ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_vep_2_anc_up_2.vcf | \
     bcftools norm \
@@ -1359,14 +1357,14 @@ problematic_cases_ref_alt = run_bash(" \
             index_ref=" + index_ref + "; \
             index_alt=" + index_alt + "; \
         }{ \
-            if($index_ref !~ /A|C|T|G/ || $index_alt !~ /A|C|T|G/){ \
+            if($index_ref !~ /A|C|T|G/ || $index_alt !~ /A|C|T|G/ || $index_ref==$index_alt){ \
                 count++ \
             } \
         }END{print count}'", return_value=True).strip()
-if(problematic_cases_ref_alt == "3"):
+if(problematic_cases_ref_alt == "4"):
     print("YES! GOOD TO GO!")
 else:
-    raise ValueError("ERROR! FALSE! WE HAVE A PROBLEM, REF OR ALT ARE NOT ALWAYS ACGT")
+    raise ValueError("ERROR! FALSE! WE HAVE A PROBLEM, REF OR ALT ARE NOT ALWAYS ACGT OR REF IS EQUAL TO ALT!!")
     #on the fly, modify the VCF file adding new dummy SNPs for which REF or ALT are not ACGT
     #then split multiallelics and remove the header
     #awk
@@ -1379,6 +1377,7 @@ else:
     #check that the count is exactly 3, because we have added 3 more dummy SNPs for which REF or ALT does not include ACGT
 
 print_text("create a awk script that switch REF/ALT in those rows where AA==ALT, while not doing anything to rows where REF==AA and discarding those rows where REF nor ALT are equal to AA. First apply it to all variants without filter to check behaviour", header=4)
+selected_chrom_dummy="chr20"
 run_bash(" \
     last_header_row=$( \
         bcftools norm \
@@ -1402,11 +1401,12 @@ run_bash(" \
             OFS=\"\t\"; \
             index_ref=" + index_ref + "; \
             index_alt=" + index_alt + "; \
-            index_info=" + index_info + " \
+            index_info=" + index_info + "; \
+            selected_chrom_dummy=\"" + selected_chrom_dummy + "\"; \
         }{ \
             if(NR > last_header_row){ \
                 if(NR==(last_header_row+1)){ \
-                    if($1 != \"chr20\"){exit 1} \
+                    if($1 != selected_chrom_dummy){exit 1} \
                 } \
                 for(i=1;i<=length($index_info);i++){ \
                     if(substr($index_info,i,3)==\"AA=\"){ \
@@ -1591,7 +1591,6 @@ run_bash(" \
         -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS > ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_vep_2_anc_up_2_cleaned.vcf")
 
 print_text("apply the awk script to the cleaned VCF", header=4)
-selected_chrom_dummy="chr20"
 run_bash(" \
     last_header_row=$( \
         bcftools view \
@@ -1613,7 +1612,7 @@ run_bash(" \
             OFS=\"\t\"; \
             index_ref=" + index_ref + "; \
             index_alt=" + index_alt + "; \
-            index_info=" + index_info +"; \
+            index_info=" + index_info + "; \
             selected_chrom_dummy=\"" + selected_chrom_dummy + "\"; \
         }{ \
             if(NR > last_header_row){ \
@@ -1721,7 +1720,7 @@ if(count_problem_ref_aa == ""):
     print("YES! GOOD TO GO!")
 else:
     raise ValueError("ERROR! FALSE! WE HAVE A PROBLEM: AFTER SWITCHING, REF IS NOT ALWAYS AA_upcase OR ALT IS EQUAL TO AA_upcase")
-    #this is a very good check because we are calculating problematic cases without AA_upcase, so at the end, we can check if REF is always equals to AA_upcase, which was obtained using other approach.
+    #this is a very good check because we have previously done the switch without using AA_upcase, and now we check  if REF is always equals to AA_upcase, which was obtained using other approach.
 
 print_text("We get the same rows if we take the original VCF and select only rows where AA is REF or ALT and removing REF/ALT columns (which where the ones switched)?", header=4)
 run_bash(" \
@@ -1859,6 +1858,9 @@ run_bash(" \
 #### function to clean vcf files and create hap - map files ####
 ################################################################
 print_text("function to clean vcf files and create hap - map files", header=1)
+
+####por aqui
+
 #chr_pop_combination="GBR_1"
 def master_processor(chr_pop_combination):
 
@@ -3551,14 +3553,26 @@ pool.close()
 ##por aqui
 ##mail de jesus
     #https://mail.google.com/mail/u/0/?tab=rm&ogbl#drafts/QgrcJHsHpDRJdfjndBxlCjQHdCNBwJJqNSl
-    ## primero termina dummy example
-        #extract again AA the first base
-            #print substr($0,1,2)
-            #https://stackoverflow.com/a/1406061/12772630
-        #then check that this base is REF
+    ##fasta 
+        #fasta weigts 800MB, so we would have 1.6GB container
+        #where it is going to be placed? inside the container?
+        #vep is going to be able to use it or we have to use --fasta flag?
+            #./vep -i input.vcf --offline --hgvs --fasta Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
+        #you could download it manually and then point at the file "Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz" with --fasta, but they say it is better to use install.PL...
+            #curl -O https://ftp.ensembl.org/pub/release-110/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
+            #gzip -d Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
+            #bgzip Homo_sapiens.GRCh38.dna.primary_assembly.fa
+            #./vep -i input.vcf --offline --hgvs --fasta Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
+            #https://useast.ensembl.org/info/docs/tools/vep/script/vep_cache.html#fasta
+        #problem installing vep again!!! Mysql fails and tell me to use --force but
+            #It likely failed in the building phase and not the testing phase. The --force option just allows cpanm to ignore the results of tests. You should also almost never use --force. Use --prompt instead, and then choose the look option when prompted. 
+                #https://stackoverflow.com/a/40033403/12772630
     ##luego run VEP from jesus container on chrom22 and check we get the same results, same AA, same number of missing...
         #in this way we cna be sure we do not have problems avodiing fasta, smartmach error 
     ##think about mask, jesus says we do not need it
+        #coverage x30 makes all regions accesible?
+            #https://www.cell.com/cell/fulltext/S0092-8674(22)00991-6?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867422009916%3Fshowall%3Dtrue
+            #https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/working/20160622_genome_mask_GRCh38/README.accessible_genome_mask.20160622
 
 
 
