@@ -1054,7 +1054,7 @@ indexes_chrom_pos = run_bash(" \
                     info_index=i \
                 }; \
                 if($i ~/^HG/ || $i ~/^NA/){ \
-                    n_samples++\
+                    n_samples++ \
                 } \
             }; \
             n_fields=NF; \
@@ -1244,6 +1244,9 @@ run_bash(" \
     #print all the rows of the dummy VCF file and, at the END, add a new row with a dummy snp having AA=g and REF=G. It has position inside the third interval of the dummy_mask so it passes all filters. The new row is printed using \t as separator between the VCF columns, i.e., REF, ALT, INFO....
 
 print_text("count these cases but in the original dummy vcf file without filtering and just using AWK, so it is faster", header=4)
+
+###por aquii
+
 run_bash(" \
     awk \
         'BEGIN{FS=OFS=\"\t\"}{print $0}END{ \
@@ -1322,7 +1325,7 @@ run_bash(" \
     bcftools query \
         -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AF AA:%AA AA_upcase:%AA_upcase GTs:[ %GT]\n'")
 
-print("create a new vcf file with a new case with AA=a and ALT=A, to check behavior with lower-case. Also add two cases with AA equals to ',' and '' to check behaviour", header=4)
+print_text("create a new vcf file with a new case with AA=a and ALT=A, to check behavior with lower-case. Also add two cases with AA equals to ',' and '' to check behaviour", header=4)
 run_bash(" \
     awk \
         'BEGIN{FS=OFS=\"\t\"}{print $0}END{ \
@@ -1335,6 +1338,45 @@ run_bash(" \
             ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_vep_2_anc_up_2.vcf")
     #print all lines of the VCF file
     #add at the end a line with the main columns (ALT, REF, CHROM, genotypes...) separated by tabs and indicate that with FS
+
+print_text("Before the next step, check that REF and ALT are always ACGT, because our awk script relies on the fact that we discard those rows for which the unique ancestral allele in upper case is NOT equal to REF or ALT, removing in that way variants with ancestral allele equal to '.', 'N', '-', etc...", header=4)
+problematic_cases_ref_alt = run_bash(" \
+    awk \
+        'BEGIN{FS=OFS=\"\t\"}{print $0}END{ \
+            print \"chr20\t1110693\trsdummy3\t.\tA\t29\tPASS\tNS=3;DP=14;AN=6;AC=3;AF=0.5;DB;H2;AA=a;AA_upcase=A\tGT\t1|0\t1|1\t0|0\"; \
+            print \"chr20\t1110694\trsdummy4\tG\t.\t29\tPASS\tNS=3;DP=14;AN=6;AC=3;AF=0.5;DB;H2;AA=a;AA_upcase=A\tGT\t1|0\t1|1\t0|0\"; \
+            print \"chr20\t1110704\trsdummy5\tG\t \t29\tPASS\tNS=3;DP=14;AN=6;AC=3;AF=0.5;DB;H2;AA=,;AA_upcase=A\tGT\t1|0\t1|1\t0|0\" \
+        }'\
+        ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_vep_2_anc_up_2.vcf | \
+    bcftools norm \
+        --multiallelic -snps | \
+    bcftools view \
+        --no-header | \
+    awk \
+        'BEGIN{ \
+            FS=\"\t\"; \
+            OFS=\"\t\"; \
+            index_ref=" + index_ref + "; \
+            index_alt=" + index_alt + "; \
+        }{ \
+            if($index_ref !~ /A|C|T|G/ || $index_alt !~ /A|C|T|G/){ \
+                count++ \
+            } \
+        }END{print count}'", return_value=True).strip()
+if(problematic_cases_ref_alt == "3"):
+    print("YES! GOOD TO GO!")
+else:
+    raise ValueError("ERROR! FALSE! WE HAVE A PROBLEM, REF OR ALT ARE NOT ALWAYS ACGT")
+    #on the fly, modify the VCF file adding new dummy SNPs for which REF or ALT are not ACGT
+    #then split multiallelics and remove the header
+    #awk
+        #begin with tabs as delimiter and create variables with the index of REF and ALT columns
+        #if REF or ALT does NOT include ACGT, count
+            #use regex expression to have multiple conditions using "|"
+            #negate with "!"
+            #https://stackoverflow.com/a/8481180/12772630
+        #print count
+    #check that the count is exactly 3, because we have added 3 more dummy SNPs for which REF or ALT does not include ACGT
 
 print_text("create a awk script that switch REF/ALT in those rows where AA==ALT, while not doing anything to rows where REF==AA and discarding those rows where REF nor ALT are equal to AA. First apply it to all variants without filter to check behaviour", header=4)
 run_bash(" \
