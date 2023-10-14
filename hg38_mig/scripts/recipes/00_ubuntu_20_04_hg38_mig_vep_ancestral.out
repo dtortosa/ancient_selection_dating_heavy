@@ -1,4 +1,4 @@
-(base) dftortosa@dftortosa-GS65-Stealth-8SF:~/singularity/dating_climate_adaptation/hg38_mig$ sudo singularity build /home/dftortosa/singularity/dating_climate_adaptation/hg38_mig/00_ubuntu_20_04_hg38_mig_vep_ancestral.sif /home/dftortosa/singularity/dating_climate_adaptation/hg38_mig/scripts/recipes/00_ubuntu_20_04_hg38_mig_vep_ancestral.def
+sudo singularity build /home/dftortosa/singularity/dating_climate_adaptation/hg38_mig/00_ubuntu_20_04_hg38_mig_vep_ancestral.sif /home/dftortosa/singularity/dating_climate_adaptation/hg38_mig/scripts/recipes/00_ubuntu_20_04_hg38_mig_vep_ancestral.def
 [sudo] password for dftortosa: 
 Build target already exists. Do you want to overwrite? [N/y] y
 INFO:    Starting build...
