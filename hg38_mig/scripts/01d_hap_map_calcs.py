@@ -3555,9 +3555,7 @@ pool.close()
 ##mail de jesus
     #https://mail.google.com/mail/u/0/?tab=rm&ogbl#drafts/QgrcJHsHpDRJdfjndBxlCjQHdCNBwJJqNSl
     #compare files VEP results between versions, if the same and cosndierng smartmatch reaosns, I think we are good, ask jesus
-    
-    ##luego run VEP from jesus container on chrom22 and check we get the same results, same AA, same number of missing...
-        #in this way we cna be sure we do not have problems avodiing fasta, smartmach error 
+
     ##think about mask, jesus says we do not need it
         #coverage x30 makes all regions accesible?
             #https://www.cell.com/cell/fulltext/S0092-8674(22)00991-6?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867422009916%3Fshowall%3Dtrue
