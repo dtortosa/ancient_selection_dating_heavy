@@ -2541,10 +2541,11 @@ def master_processor(selected_chromosome, debugging=False):
         head -n 20")
 
 
-    print_text("remove the file that was used as input for VEP", header=3)
+    print_text("remove the file that was used as input for VEP and also the original output of VEP", header=3)
     run_bash(" \
         rm " + input_vcf_file_vep + "; \
-        ls -l")
+        rm ./results/00_vep_vcf_files/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.vcf.gz; \
+        ls -l ./results/00_vep_vcf_files/chr" + selected_chromosome)
 
 
     print_text("FINISH", header=3)

@@ -3551,22 +3551,11 @@ pool.map(master_processor, full_combinations_pop_chroms)
 pool.close()
 
 ##por aqui
+
 ##mail de jesus
     #https://mail.google.com/mail/u/0/?tab=rm&ogbl#drafts/QgrcJHsHpDRJdfjndBxlCjQHdCNBwJJqNSl
-    ##fasta 
-        #fasta weigts 800MB, so we would have 1.6GB container
-        #where it is going to be placed? inside the container?
-        #vep is going to be able to use it or we have to use --fasta flag?
-            #./vep -i input.vcf --offline --hgvs --fasta Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
-        #you could download it manually and then point at the file "Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz" with --fasta, but they say it is better to use install.PL...
-            #curl -O https://ftp.ensembl.org/pub/release-110/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
-            #gzip -d Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
-            #bgzip Homo_sapiens.GRCh38.dna.primary_assembly.fa
-            #./vep -i input.vcf --offline --hgvs --fasta Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
-            #https://useast.ensembl.org/info/docs/tools/vep/script/vep_cache.html#fasta
-        #problem installing vep again!!! Mysql fails and tell me to use --force but
-            #It likely failed in the building phase and not the testing phase. The --force option just allows cpanm to ignore the results of tests. You should also almost never use --force. Use --prompt instead, and then choose the look option when prompted. 
-                #https://stackoverflow.com/a/40033403/12772630
+    #compare files VEP results between versions, if the same and cosndierng smartmatch reaosns, I think we are good, ask jesus
+    
     ##luego run VEP from jesus container on chrom22 and check we get the same results, same AA, same number of missing...
         #in this way we cna be sure we do not have problems avodiing fasta, smartmach error 
     ##think about mask, jesus says we do not need it

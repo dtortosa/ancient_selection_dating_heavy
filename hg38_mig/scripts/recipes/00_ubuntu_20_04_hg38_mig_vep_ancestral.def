@@ -61,6 +61,12 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 
 %post
 
+	#we are using a perl module version (DBD-mysql-4.051) that was released in October 2023 instead of the newest version because newer versions require MySQL 8.x and I was unable to install it in the container. This perl module version is still recent and it will receive critical updates (see below), but if you run this so much later, you should check if you can install the new version to avoid problems, because the version 4 would be maybe too older by that time.
+	current_date=$(date "+%B %Y")
+	echo "The current date is "$current_date". Is this too late to use the version 4 for perl module DBD-MYSQL?"
+	echo "IMPORTANT: I am stopping this for precaution, so you can check this. If it is later October 2024, I think you should check the building script and see if a new version of that perl module can be installed"
+	exit 1
+
 	#we use the flag -y for the cases when apt-get asks for installing
 
 	#update the packages
@@ -215,7 +221,16 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 		#https://superuser.com/a/670341
     #modules required for VEP
     cpanm DBI
-    cpanm DBD::mysql
+    #cpanm DBD::mysql
+    cpanm DVEEDEN/DBD-mysql-4.051.tar.gz
+    	#In october 2023, two new versions of DBD::mysql were released, substituting the previous 2019 version. There are 2 options: DBD-mysql-4.051 and DBD-mysql-5.001.
+    		#https://metacpan.org/release/DVEEDEN/DBD-mysql-4.051
+    		#https://metacpan.org/release/DVEEDEN/DBD-mysql-5.001
+    	#The second one is newer but it requires MySQL 8.x to be installed. This gives some problems in Ubuntu 18+. After trying many possible solutions to install MySQL 8.x, I was unsuccessful, so I have used the previous version, not the 2019 but the 2023. This is not the latest and it will only receive critical updates, but for me it is ok because I will just use this container one time for VEP here. This is one of the solutions indicated by DBD::MySQL module, so we are ok right now but, in the future, it will be very likely required to use the newer versions of DBD::mysql.
+    		#https://github.com/perl5-dbi/DBD-mysql/issues/361
+    	#you can install a specific module version you need to provide the full module distribution filename including the author and then add .tar.gz. You can find it in in the URL of that module version
+    		#https://www.perl.com/article/4/2013/3/27/How-to-install-a-specific-version-of-a-Perl-module-with-CPAN/
+    		#https://metacpan.org/release/DVEEDEN/DBD-mysql-4.051
     cpanm Archive::Zip
     cpanm Archive::Extract
 	cpanm Bio::DB::Fasta
@@ -254,7 +269,15 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 	                #SO INSTALL CACHE EACH TIME YOU INSTALL VEP
 	                    #https://useast.ensembl.org/info/docs/tools/vep/script/vep_cache.html#cache
 	            #f: download fasta files
-	                #I do not think I have to download all fasta files as we are only going to use ancestral alleles, which are in a specific fasta file.
+	                #By pointing VEP to a FASTA file (or directory containing several files), it is possible to retrieve reference sequence locally when using --cache or --offline. This enables VEP to retrieve HGVS notations (--hgvs), check the reference sequence given in input data (--check_ref), and construct transcript models from a GFF or GTF file without accessing a database
+	                #IMPORTANT:
+	                	#FASTA files can be set up using the installer; files set up using the installer are automatically detected by VEP when using --cache or --offline; you should not need to use --fasta to manually specify them.
+	                	#Therefore, even if we do not use --fasta, the fasta files could be still used by VEP because we use both --cache and --offline, so better to download them just in case so VEP can use them is required. The whole container weights 1.7GB, so it acceptable.
+					#To enable this VEP uses one of two modules:
+						#The Bio::DB::HTS Perl XS module with HTSlib. This module uses compiled C code and can access compressed (bgzipped) or uncompressed FASTA files. IT IS SET UP BY THE VEP INSTALLER.
+						#The Bio::DB::Fasta module. This may be used on systems where installation of the Bio::DB::HTS module has not been possible. It can access only uncompressed FASTA files. It is also set up by the VEP installer and comes as part of the BioPerl package.
+					#The first time you run VEP with a specific FASTA file, an index will be built. This can take a few minutes, depending on the size of the FASTA file and the speed of your system. On subsequent runs the index does not need to be rebuilt (if the FASTA file has been modified, VEP will force a rebuild of the index).
+					#you can download it manually and then point at it with --fast but it is recommended to use "f" option of INSTALL.pl
 	                #https://useast.ensembl.org/info/docs/tools/vep/script/vep_cache.html#fasta
 	            #p: install plugins indicated with --PLUGINS
 	    #--PLUGINS AncestralAllele
