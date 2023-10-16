@@ -1,3 +1,8 @@
+- ask David
+	- we are NOT using the mask!!!
+		- Jesus: "Respecto a la máscara, creo que no hace falta usarla. La máscara está hecha para evitar los sitios con bajo de coverage del phase3. Si asumimos que los datos de Byrska-Bishop tienen un coverage 30X de media, no debería de ser necesario aplicarla."
+		- I understand that If we have 30X coverage, we should be ok even those regions with low-depth for the low-coverage dataset, right? Or they could be still low-depth even having for 30X average depth?
+
 - Ask jesus
 
 	- answer jesus
@@ -29,6 +34,7 @@
 		- David say to avoid regions with a very low depth when it is not possible to do variant call.
 			- Note that the average depth in past versions was 3X, but now the average is 10 times higher.
 		- http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/working/20160622_genome_mask_GRCh38/README.accessible_genome_mask.20160622
+
 
 
 

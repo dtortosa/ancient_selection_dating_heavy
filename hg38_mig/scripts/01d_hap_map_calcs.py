@@ -3559,12 +3559,9 @@ pool.close()
         #run 01bb_some_processing_after_ancestral_calc.sh to do checks about the FALSEs
         #then calculate hashes
             #01bc_shasum_vep_results.py
+            #CHECK THE SCRIPT BEFORE, JUST QUICK
     #compare files VEP results between versions, if the same and cosndierng smartmatch reaosns, I think we are good, ask jesus
 
-    ##think about mask, jesus says we do not need it
-        #coverage x30 makes all regions accesible?
-            #https://www.cell.com/cell/fulltext/S0092-8674(22)00991-6?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS0092867422009916%3Fshowall%3Dtrue
-            #https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/working/20160622_genome_mask_GRCh38/README.accessible_genome_mask.20160622
 
 
 

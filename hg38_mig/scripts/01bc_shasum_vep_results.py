@@ -12,6 +12,25 @@
 
 
 
+
+########################################################################
+######## CHECK THE OLD AND NEW VCF FILES AFTER VEP ARE THE SAME ########
+########################################################################
+
+#We have run again VEP installing it this time with the option "f" in INSTALL.pl, meaning that fastas have been downloaded during installation. These are not the ancestral fastas, see next lines:
+
+#By pointing VEP to a FASTA file (or directory containing several files), it is possible to retrieve reference sequence locally when using --cache or --offline. This enables VEP to retrieve HGVS notations (--hgvs), check the reference sequence given in input data (--check_ref), and construct transcript models from a GFF or GTF file without accessing a database
+
+#IMPORTANT:
+    #FASTA files can be set up using the installer; files set up using the installer are automatically detected by VEP when using --cache or --offline; you should not need to use --fasta to manually specify them.
+    #Therefore, even if we do not use --fasta, the fasta files could be still used by VEP because we use both --cache and --offline, so better to download them just in case so VEP can use them is required. The whole container weights 1.7GB, so it acceptable.
+
+#see next link for more info
+    #https://useast.ensembl.org/info/docs/tools/vep/script/vep_cache.html#fasta
+
+
+
+
 ##################
 #### Starting ####
 ##################
