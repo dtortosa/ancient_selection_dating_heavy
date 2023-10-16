@@ -1858,307 +1858,353 @@ run_bash(" \
 #### function to clean vcf files and create hap - map files ####
 ################################################################
 print_text("function to clean vcf files and create hap - map files", header=1)
-
-####por aqui
-
-#chr_pop_combination="GBR_1"
-def master_processor(chr_pop_combination):
+#chr_pop_combination="GBR_1"; debugging=True
+def master_processor(chr_pop_combination, debugging=False):
 
     #extract selected population and chromosome
     selected_pop = chr_pop_combination.split("_")[0]
     selected_chromosome = chr_pop_combination.split("_")[1]
 
     #redirect standard output
-    import sys
-    original_stdout = sys.stdout
-        #save off a reference to sys.stdout so we can restore it at the end of the function with "sys.stdout = original_stdout"
-    sys.stdout = open("./scripts/01_hap_map_calcs_outputs/chr" + selected_chromosome + "_" + selected_pop + ".out", "w")
-        #https://www.blog.pythonlibrary.org/2016/06/16/python-101-redirecting-stdout/
+    if (debugging==True):
+        import sys
+        original_stdout = sys.stdout
+            #save off a reference to sys.stdout so we can restore it at the end of the function with "sys.stdout = original_stdout"
+        sys.stdout = open("./scripts/01_hap_map_calcs_outputs/chr" + selected_chromosome + "_" + selected_pop + ".out", "w")
+            #https://www.blog.pythonlibrary.org/2016/06/16/python-101-redirecting-stdout/
 
 
-    #######################
-    # one time operations #
-    #######################
 
-    #do first some operations that need to be done just one time per chromosome
-    if selected_pop == "GBR":
-        
-        #see file format
-        print("\n#######################################\n#######################################")
-        print("chr " + selected_chromosome + ": see VCF file version")
-        print("#######################################\n#######################################")
-        run_bash(" \
-            bcftools head \
-                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-            grep -i '^##fileformat'")
-                #use bcftools to see the header and then select the row starting with ##fileformat to see the version.
-                #https://www.htslib.org/howtos/headers.html
+    print_text("Initial operations", header=2)
+    print_text("create folder for the selected chrom and pop", header=3)
+    run_bash(" \
+        mkdir \
+            -p \
+            ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "; \
+        mkdir \
+            -p \
+            ./results/02_hap_map_files_raw/" + selected_pop + "/chr" + selected_chromosome + "; \
+        mkdir \
+            -p \
+            ./results/03_hap_map_files/" + selected_pop + "/chr" + selected_chromosome + "; \
+        mkdir \
+            -p \
+            ./scripts/01_hap_map_calcs_outputs/" + selected_pop)
 
-        #The Variant Call Format Specification v4.2 is the one used in the 1000GP high coverage
-            #https://samtools.github.io/hts-specs/VCFv4.2.pdf
 
-        #Fixed fields of this format v4.2
-            #CHROM - chromosome: An identifier from the reference genome or an angle-bracketed ID String (“<ID>”) pointing to a contig in the assembly file (cf. the ##assembly line in the header). All entries for a specific CHROM should form a contiguous block within the VCF file. (String, no whitespace permitted, Required).
-            #POS - position: The reference position, WITH THE 1ST BASE HAVING POSITION 1. Positions are sorted numerically, in increasing order, within each reference sequence CHROM. It is permitted to have multiple records with the same POS. Telomeres are indicated by using positions 0 or N+1, where N is the length of the corresponding chromosome or contig. (Integer, Required).
-                #THIS IS 1 BASED.
-            #ID - identifier: Semicolon-separated list of unique identifiers where available. If this is a dbSNP variant it is encouraged to use the rs number(s). NO IDENTIFIER SHOULD BE PRESENT IN MORE THAN ONE DATA RECORD. If there is no identifier available, then the missing value should be used. (String, no whitespace or semicolons permitted).
-            #REF - reference base(s): Each base must be one of A,C,G,T,N (case insensitive). Multiple bases are permitted. The value in the POS field refers to the position of the first base in the String. See Variant Call Format Specification v4.2 for further details.
-            #ALT - alternate base(s): Comma separated list of alternate non-reference alleles. These alleles do not have to be called in any of the samples. See Variant Call Format Specification v4.2 for further details.
-            # QUAL - quality: Phred-scaled quality score for the assertion made in ALT. ee Variant Call Format Specification v4.2 for further details.
-            #FILTER - filter status: PASS if this position has passed all filters, i.e., a call is made at this position. See Variant Call Format Specification v4.2 for further details.
-                #Our datasets was previously filter selecting only those variants with PASS, see readme.
-                    #http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/README_1kGP_phased_panel_110722.pdf
-            #INFO - additional information: (String, no whitespace, semicolons, or equals-signs permitted; commas are permitted only as delimiters for lists of values) INFO fields are encoded as a semicolon-separated series of short keys with optional values in the format: <key>=<data>[,data]. If no keys are present, the missing value must be used. Arbitrary keys are permitted, although the following sub-fields are reserved (albeit optional):
-                #NOTE ABOUT GENOTYPES USED TO CALCULATE INFO DATA:
-                    #First, note, that INFO is fixed, you cannot modify, so whatever you do ni the VCF like subseting individuals or filtering variants, INFO wal remain without out changes. 
-                    #For example, if you look the number of alleles after subseting samples, it is going to give you the number of alleles considering the whole sample, not just for the subset of samples. I have checked this.
-                    #Second, I understand that the called genotypes are those included in my VCF file before subseting or doing anything and primary data should be original data before the filtering that generated the VCF I have received from 1000 genomes project.
-                #AA: ancestral allele
-                #AC: allele count in genotypes, for each ALT allele, in the same order as listed.
-                #AF: allele frequency for each ALT allele in the same order as listed: use this when estimated from primary data, not from called genotypes.
-                #AN: total number of alleles in called genotypes
-                #BQ: RMS base quality at this position
-                #CIGAR: cigar string describing how to align an alternate allele to the reference allele
-                #DB: dbSNP membership
-                #DP: combined depth across samples, e.g. DP=154
-                #EN: end position of the variant described in this record (for use with symbolic alleles)
-                #H2: membership in hapmap2
-                #H3: membership in hapmap3
-                #MQ: RMS mapping quality, e.g. MQ=52
-                #MQ0: Number of MAPQ == 0 reads covering this record
-                #NS: Number of samples with data
-                #SB: strand bias at this position
-                #SOMATIC: indicates that the record is a somatic mutation, for cancer genomics
-                #VALIDATED: validated by follow-up experiment
-                #1000G:  membership in 1000 Genomes
-                #You can add more fields to INFO, that can be specific for your study if you want to add information per variant.
-            #Genotype fields
-                #If genotype information is present, then the same types of data must be present for all samples. First a FORMAT field is given specifying the data types and order (colon-separated alphanumeric String). This is followed by one field per sample, with the colon-separated data in this field corresponding to the types specified in the format. The first sub-field must always be the genotype (GT) if it is present. There are no required sub-fields. 1KGP only has GT, if other fields present, you would have 0|0.... al genotypes, the : number : number :...
-                    #GT : genotype, encoded as allele values separated by either of / or | (UNPHASED AND PHASED RESPECTIVELY). The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be 0/1, 1 | 0, or 1/2, etc. For haploid calls, e.g. on Y, male nonpseudoautosomal X, or mitochondrion, only one allele value should be given; a triploid call might look like 0/0/1. If a call cannot be made for a sample at a given locus, ‘.’ should be specified for each missing allele in the GT field (for example ‘./.’ for a diploid genotype and ‘.’ for haploid genotype). The meanings of the separators are as follows (see the PS field below for more details on incorporating phasing information into the genotypes):
-                        #/ : genotype unphased
-                        #| : genotype phased
+    print_text("chr " + selected_chromosome + " - " + selected_pop + ": see VCF file version", header=3)
+    run_bash(" \
+        bcftools head \
+            " + input_vcfs_path + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
+        grep -i '^##fileformat'")
+            #use bcftools to see the header and then select the row starting with ##fileformat to see the version.
+            #https://www.htslib.org/howtos/headers.html
 
-        #see samples
-        print("\n#######################################\n#######################################")
-        print("chr " + selected_chromosome + ": see first 10 samples")
-        print("#######################################\n#######################################")
-        run_bash(" \
+    #The Variant Call Format Specification v4.2 is the one used in the 1000GP high coverage
+        #https://samtools.github.io/hts-specs/VCFv4.2.pdf
+
+    #Fixed fields of this format v4.2
+        #CHROM - chromosome: An identifier from the reference genome or an angle-bracketed ID String (“<ID>”) pointing to a contig in the assembly file (cf. the ##assembly line in the header). All entries for a specific CHROM should form a contiguous block within the VCF file. (String, no whitespace permitted, Required).
+        #POS - position: The reference position, WITH THE 1ST BASE HAVING POSITION 1. Positions are sorted numerically, in increasing order, within each reference sequence CHROM. It is permitted to have multiple records with the same POS. Telomeres are indicated by using positions 0 or N+1, where N is the length of the corresponding chromosome or contig. (Integer, Required).
+            #THIS IS 1 BASED.
+        #ID - identifier: Semicolon-separated list of unique identifiers where available. If this is a dbSNP variant it is encouraged to use the rs number(s). NO IDENTIFIER SHOULD BE PRESENT IN MORE THAN ONE DATA RECORD. If there is no identifier available, then the missing value should be used. (String, no whitespace or semicolons permitted).
+        #REF - reference base(s): Each base must be one of A,C,G,T,N (case insensitive). Multiple bases are permitted. The value in the POS field refers to the position of the first base in the String. See Variant Call Format Specification v4.2 for further details.
+        #ALT - alternate base(s): Comma separated list of alternate non-reference alleles. These alleles do not have to be called in any of the samples. See Variant Call Format Specification v4.2 for further details.
+        # QUAL - quality: Phred-scaled quality score for the assertion made in ALT. ee Variant Call Format Specification v4.2 for further details.
+        #FILTER - filter status: PASS if this position has passed all filters, i.e., a call is made at this position. See Variant Call Format Specification v4.2 for further details.
+            #Our datasets was previously filter selecting only those variants with PASS, see readme.
+                #http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/README_1kGP_phased_panel_110722.pdf
+        #INFO - additional information: (String, no whitespace, semicolons, or equals-signs permitted; commas are permitted only as delimiters for lists of values) INFO fields are encoded as a semicolon-separated series of short keys with optional values in the format: <key>=<data>[,data]. If no keys are present, the missing value must be used. Arbitrary keys are permitted, although the following sub-fields are reserved (albeit optional):
+            #NOTE ABOUT GENOTYPES USED TO CALCULATE INFO DATA:
+                #First, note, that INFO is fixed, you cannot modify, so whatever you do ni the VCF like subseting individuals or filtering variants, INFO wal remain without out changes. 
+                #For example, if you look the number of alleles after subseting samples, it is going to give you the number of alleles considering the whole sample, not just for the subset of samples. I have checked this.
+                #Second, I understand that the called genotypes are those included in my VCF file before subseting or doing anything and primary data should be original data before the filtering that generated the VCF I have received from 1000 genomes project.
+            #AA: ancestral allele
+            #AC: allele count in genotypes, for each ALT allele, in the same order as listed.
+            #AF: allele frequency for each ALT allele in the same order as listed: use this when estimated from primary data, not from called genotypes.
+            #AN: total number of alleles in called genotypes
+            #BQ: RMS base quality at this position
+            #CIGAR: cigar string describing how to align an alternate allele to the reference allele
+            #DB: dbSNP membership
+            #DP: combined depth across samples, e.g. DP=154
+            #EN: end position of the variant described in this record (for use with symbolic alleles)
+            #H2: membership in hapmap2
+            #H3: membership in hapmap3
+            #MQ: RMS mapping quality, e.g. MQ=52
+            #MQ0: Number of MAPQ == 0 reads covering this record
+            #NS: Number of samples with data
+            #SB: strand bias at this position
+            #SOMATIC: indicates that the record is a somatic mutation, for cancer genomics
+            #VALIDATED: validated by follow-up experiment
+            #1000G:  membership in 1000 Genomes
+            #You can add more fields to INFO, that can be specific for your study if you want to add information per variant.
+        #Genotype fields
+            #If genotype information is present, then the same types of data must be present for all samples. First a FORMAT field is given specifying the data types and order (colon-separated alphanumeric String). This is followed by one field per sample, with the colon-separated data in this field corresponding to the types specified in the format. The first sub-field must always be the genotype (GT) if it is present. There are no required sub-fields. 1KGP only has GT, if other fields present, you would have 0|0.... al genotypes, the : number : number :...
+                #GT : genotype, encoded as allele values separated by either of / or | (UNPHASED AND PHASED RESPECTIVELY). The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be 0/1, 1 | 0, or 1/2, etc. For haploid calls, e.g. on Y, male nonpseudoautosomal X, or mitochondrion, only one allele value should be given; a triploid call might look like 0/0/1. If a call cannot be made for a sample at a given locus, ‘.’ should be specified for each missing allele in the GT field (for example ‘./.’ for a diploid genotype and ‘.’ for haploid genotype). The meanings of the separators are as follows (see the PS field below for more details on incorporating phasing information into the genotypes):
+                    #/ : genotype unphased
+                    #| : genotype phased
+
+
+    print_text("chr " + selected_chromosome + ": see first 10 samples", header=3)
+    run_bash(" \
+        bcftools query \
+            --list-samples \
+            " + input_vcfs_path + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
+        head -10")
+        #https://samtools.github.io/bcftools/howtos/query.html
+
+
+    print_text("chr " + selected_chromosome + ": the number of samples is equal to the number of samples considering unrelated individuals and trios-duos?", header=3)
+    run_bash(" \
+        n_samples=$( \
             bcftools query \
                 --list-samples \
-                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-            head -10")
-            #https://samtools.github.io/bcftools/howtos/query.html
-
-        #check
-        print("\n#######################################\n#######################################")
-        print("chr " + selected_chromosome + ": do we have as samples as the total number of samples considering unrelated individuals and trios-duos?")
-        print("#######################################\n#######################################")
-        run_bash(" \
-            n_samples=$( \
-                bcftools query \
-                    --list-samples \
-                    " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-                    wc -l); \
-            if [[ $n_samples -eq " + str(samples_pedigree.shape[0]) + " ]]; then \
-                echo 'TRUE'; \
-            else \
-                echo 'FALSE'; \
-            fi")
-            #list the samples and count them
-            #if the number of samples is equal to the number of samples in the pedigree, perfect
-
-        #check
-        print("\n#######################################\n#######################################")
-        print("chr " + selected_chromosome + ": the chromosome name of the first variant is correct?")
-        print("#######################################\n#######################################")
-        run_bash(" \
-            chr_vcf=$( \
-                bcftools query \
-                    " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz \
-                    --format '%CHROM\n' | \
-                head -1); \
-            if [[ $chr_vcf == 'chr" + selected_chromosome + "' ]]; then \
-                echo 'TRUE'; \
-            else \
-                echo 'FALSE'; \
-            fi")
-            #with bcftools, query for the chromosome of the first variant
-            #we should have only case, being equal to the selected chromosome
-            #equality for strings using 1 bracket is "="
-                #https://stackoverflow.com/questions/18102454/why-am-i-getting-an-unexpected-operator-error-in-bash-string-equality-test
-
-        #inspect
-        print("\n#######################################\n#######################################")
-        print("chr " + selected_chromosome + ": show the variant type, ID, chromosome, position, alleles and frequency for the first snps")
-        print("#######################################\n#######################################")
-        run_bash(" \
-            bcftools query \
-                --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF\n' \
-                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-                head -5")
-            #select the format of the query indicating the columns you want to show per SNP.
-                #you can include data from INFO
-                #end with \n to have different lines per SNPs
-
-        #inspect
-        print("\n#######################################\n#######################################")
-        print("chr " + selected_chromosome + ": all variants has '.' for filter?")
-        print("#######################################\n#######################################")
-        run_bash(" \
-            uniq_filters=$( \
-                bcftools query \
-                    --format '%FILTER\n' \
-                    " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-                uniq); \
-            if [[ $uniq_filters == '.' ]]; then \
-                echo 'True'; \
-            else \
-                echo 'False';\
-            fi")
-            #according to the specific readme of the dataset we are using (http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/README_1kGP_phased_panel_110722.pdf), prior phasing they applied several filters, being one of them that all variants has to be PASS for FILTER. I understand that, because of this, all variants in the chromosome have now ".", being this the unique character. Let's check this for all chromosomes:
-                #make a query asking for the FILTER value of all variants
-                #select unique cases
-                #the unique cases should be a single string with a dot ("."), if yes, perfect.
-
-        #stats with and without accessibility mask. See dummy example about details of the masks
-        print("\n#######################################\n#######################################")
-        print("chr " + selected_chromosome + ": See the stats of the whole VCF file with and without selecting SNPs inside the regions that PASS in the pilot and the strict mask")
-        print("#######################################\n#######################################")
-        print("\n##### NO MASK ####")
-        run_bash(" \
-            bcftools view \
-                --types snps \
-                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-            bcftools stats")
-        print("\n##### PILOT MASK ####")
-        run_bash(" \
-            bcftools view \
-                --types snps \
-                --targets-file ./data/masks/20160622.allChr.pilot_mask.bed \
-                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-            bcftools stats")
-        print("\n##### STRICT MASK ####")
-        run_bash(" \
-            bcftools view \
-                --types snps \
-                --targets-file ./data/masks/20160622.allChr.mask.bed.gz \
-                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-            bcftools stats")
-                #load the whole VCf file of the selected chromosome, select only SNPs and in one case select variants inside mask "PASS" regions (pilot and strict), while in the second do nothing more. Then see the stats of the resulting BCF files. See dummy examples for further details.
+                " + input_vcfs_path + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
+                wc -l); \
+        if [[ $n_samples -eq " + str(samples_pedigree.shape[0]) + " ]]; then \
+            echo 'TRUE'; \
+        else \
+            echo 'FALSE'; \
+        fi")
+        #list the samples and count them
+        #if the number of samples is equal to the number of samples in the pedigree, perfect
 
 
+    print_text("chr " + selected_chromosome + ": show the variant type, ID, chromosome, position, alleles and frequency for the first snps", header=3)
+    run_bash(" \
+        bcftools query \
+            --format '%TYPE %ID %CHROM %POS %REF %ALT %AA %AA_upcase %INFO/AF\n' \
+            " + input_vcfs_path + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
+            head -5")
+        #select the format of the query indicating the columns you want to show per SNP.
+            #you can include data from INFO
+            #end with \n to have different lines per SNPs
 
-    #######################
-    # extract samples IDs #
-    #######################
 
-    #select the sample IDs for the selected population
+    print_text("chr " + selected_chromosome + ": see genotypes of first samples", header=3)
+    run_bash(" \
+        bcftools query \
+            --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' \
+            " + input_vcfs_path + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
+        head -2")
+
+
+    print_text("extract the position (index) of several columns in the VCF file, so we can be sure we are selecting these columns in later steps", header=3)
+    print_text("obtain the position of these columns using awk", header=4)
+    indexes_chrom_pos = run_bash(" \
+        bcftools view \
+            --header \
+            " + input_vcfs_path + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
+        awk \
+            'BEGIN{FS=\"\t\"}; \
+            END{ \
+                for(i=1;i<=NF;i++){ \
+                    if($i == \"#CHROM\"){ \
+                        chrom_index=i \
+                    }; \
+                    if($i == \"POS\"){ \
+                        pos_index=i \
+                    }; \
+                    if($i == \"ID\"){ \
+                        id_index=i \
+                    }; \
+                    if($i == \"REF\"){ \
+                        ref_index=i \
+                    }; \
+                    if($i == \"ALT\"){ \
+                        alt_index=i \
+                    }; \
+                    if($i == \"FILTER\"){ \
+                        filter_index=i \
+                    }; \
+                    if($i ~/^HG/ || $i ~/^NA/){ \
+                        n_samples++\
+                    } \
+                }; \
+                n_fields=NF; \
+                printf \"n_fields=%s,n_samples=%s,chrom=%s,pos=%s,id=%s,ref=%s,alt=%s,filter=%s\", n_fields, n_samples, chrom_index, pos_index, id_index, ref_index, alt_index, filter_index \
+            }'", return_value=True).strip()
+        #get the header of the VCF file after extracting AA from CSQ, removing CSQ and select SNPs, just like we are going to do when we replace lower for upper case in the next line
+        #open the header with AWK
+            #when you reach the last line, which includes the headers
+                #run loop across fields, i.e., headers
+                    #if the header is CHROM or POS then save the index of the field as a new variable, chrom_index and pos_index, respectively.
+                        #"i" is the index, like 1, 2, 3... because of this, when you do $i is like you are doing $1.
+                        #if we save "i", we are saving the index, the number
+                        #https://unix.stackexchange.com/a/616495
+                    #also look for REF, ALT, FILTER because we will use these columns later
+                    #if the header starts with HG or NA, add 1 to the count of n_samples, because this is a GT column for a given sample
+                        #"~" let you use regular expression
+                        #"/.../" is a regular expression to match text that meet condition
+                        #"^" text that starts with...
+                        #https://unix.stackexchange.com/a/72763
+                #save the number of fields
+            #then print the number of fields, the number of sample and the index of both CHROM and POS
+                #https://www.gnu.org/software/gawk/manual/html_node/Printf-Examples.html
+    print("extract the numbers")
+    n_fields = indexes_chrom_pos.split(",")[0].replace("n_fields=", "")
+    n_samples = indexes_chrom_pos.split(",")[1].replace("n_samples=", "")
+    index_chrom = indexes_chrom_pos.split(",")[2].replace("chrom=", "")
+    index_pos = indexes_chrom_pos.split(",")[3].replace("pos=", "")
+    index_id = indexes_chrom_pos.split(",")[4].replace("id=", "")
+    index_ref = indexes_chrom_pos.split(",")[5].replace("ref=", "")
+    index_alt = indexes_chrom_pos.split(",")[6].replace("alt=", "")
+    index_filter = indexes_chrom_pos.split(",")[7].replace("filter=", "")
+    print("total number of fields: " + n_fields)
+    print("number of samples: " + n_samples)
+    print("index of column CHROM: " + index_chrom)
+    print("index of column POS: " + index_pos)
+    print("index of column ID: " + index_id)
+    print("index of column REF: " + index_ref)
+    print("index of column ALT: " + index_alt)
+    print("index of column FILTER: " + index_filter)
+    print("the total number of fields minus the number of samples should be 9. The number of fixed fields in VCF v4.2 is 8 and then FORMAT, which in our case only has GT, thus we should have 9 fields. Also, the index of CHROM, POS, REF, ALT and FILTER should be 1, 2, 4, 5 and 7, respectively")
+    if (int(n_fields)-int(n_samples) == 9) & (index_chrom=="1") & (index_pos=="2") & (index_id=="3") & (index_ref=="4") & (index_alt=="5") & (index_filter=="7"):
+        print("YES! GOOD TO GO!")
+    else:
+        raise ValueError("FALSE! ERROR! WE HAVE A PROBLEM WITH THE FIELDS OF THE VCF FILE BEFORE CONVERTING TO UPPER CASE ANCESTRAL ALLELES")
+
+
+    print_text("extract samples IDs", header=3)
+    print_text("select the sample IDs for the selected population", header=4)
     subset_pop = unrelated_samples.loc[unrelated_samples["pop"] == selected_pop, :]
-
-    #reset index
-    subset_pop = subset_pop.reset_index(
-        drop=True)
+    subset_pop = subset_pop.reset_index(drop=True)
+        #reset index
         #drop=True to avoid adding the index as a column
 
-    #check
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": check we only have the selected pop")
-    print("#######################################\n#######################################")
+    print_text("chr " + selected_chromosome + " - " + selected_pop + ": check we only have the selected pop", header=4)
     print(subset_pop["pop"].unique() == selected_pop)
-    #stop if False in this check
     if subset_pop["pop"].unique() != selected_pop:
         raise ValueError("SERIOUS ERROR! WE HAVE NOT CORRECTLY SELECTED THE SAMPLES OF POP '" + selected_pop + "' in chromosome '" + selected_chromosome + "'")
 
-    #select the sample IDs
+    print_text("select the sample IDs and save as a file", header=4)
     selected_samples = subset_pop["sample"]
-
-    #save as txt to use it later
-    #it is redundant to do it in each chromosome of the same population (same samples) but I do it anyway to avoid confusion between chromosomes
     selected_samples.to_csv(
-        "results/02_hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_samples_to_bcftools.txt", 
+        "results/02_hap_map_files_raw/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_samples_to_bcftools.txt", 
         sep="\t", 
         header=None, 
         index=False)
+        #it is redundant to do it in each chromosome of the same population (same samples) but I do it anyway to avoid confusion between chromosomes
 
 
+    print_text("Select the input for the next steps. Use only a subset of the samples. Also select only a subset of SNPs if we are on debugging mode", header=3)
+    if debugging==True:
+        run_bash(" \
+            bcftools view \
+                --samples " + ",".join(selected_samples) + " \
+                " + input_vcfs_path + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
+            head -n 5000 > ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/01_debug_subset_chr" + selected_chromosome + "_" + selected_pop + ".vcf; \
+            ls -l")
+        input_vcf_file="./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/01_debug_subset_chr" + selected_chromosome + "_" + selected_pop + ".vcf"
+    else:
+        run_bash(" \
+            bcftools view \
+                --samples " + ",".join(selected_samples) + " \
+                --output-type z \
+                --output ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".vcf.gz \
+                " + input_vcfs_path + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz")
+        input_vcf_file="./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".vcf.gz"
+    print(input_vcf_file)
+    #select a few samples and then select biallelic snps
+        #IMPORTANT: If filtering (by number of alleles) and subseting (by sample) is in the same line (command), the filtering will be done first. Therefore, you could select SNPs that have 2 alleles when considering the 26 pops, but that are monomorphic (1 allele) for the selected population. Because of this, we have to first subset by sample and then filter by number of alleles whitin the selected samples in separated commands (see dummy example).
+    #query multiple fields for each snp
 
-    ##########################################
-    # calculate hap file within selected pop #
-    ##########################################
 
-    #
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": see genotypes of selected samples")
-    print("#######################################\n#######################################")
-    run_bash(" \
-        bcftools view \
-            --samples " + ",".join(selected_samples) + " \
-            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+    print_text("check that the samples we have in the VCF subset are the correct ones", header=3)
+    print(run_bash(" \
         bcftools query \
-            --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | \
-        head -7")
-            #select a few samples and then select biallelic snps
-                #IMPORTANT: If filtering (by number of alleles) and subseting (by sample) is in the same line (command), the filtering will be done first. Therefore, you could select SNPs that have 2 alleles when considering the 26 pops, but that are monomorphic (1 allele) for the selected population. Because of this, we have to first subset by sample and then filter by number of alleles whitin the selected samples in separated commands (see dummy example).
-            #query multiple fields for each snp
+            --list-samples \
+            " + input_vcf_file, return_value=True).strip().split("\n") == \
+    selected_samples.to_list())
+        #extract the samples from the new VCF file and then compare them with the list of selected samples previously obtained in python.
+            #the bcftools output needs to be split with "\n" in order to separate the IDs of the different samples in a list.
 
-    #
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": show now only SNPs")
-    print("#######################################\n#######################################")
+
+    print_text("chr " + selected_chromosome + ": the chromosome name of is correct?", header=3)
+    count_problems_chrom_name = run_bash(" \
+        bcftools view \
+            --no-header \
+            --drop-genotypes \
+            " + input_vcf_file + " | \
+        awk \
+            'BEGIN{ \
+                FS=OFS=\"\t\"; \
+                selected_chromosome=\"chr" + selected_chromosome + "\"; \
+                chrom_index=" + index_chrom + "; \
+            }{ \
+                if($chrom_index!=selected_chromosome){count++} \
+            }END{print count}'", return_value=True).strip()
+    if(count_problems_chrom_name==""):
+        print("YES! GOOD TO GO!")
+    else:
+        raise ValueError("ERROR! FALSE! We have a problem with the chromosome names in the VCF file")
+        #load the VCF file without header
+        #awk
+            #load using tabs, so the we have separated CHROM, REF, ALT....
+            #save two variables with the name of the chromosome and the position of the column of the chromosome name in the VCF file
+            #if the chromosome name is not the selected one, add 1 to count
+        #extract count and if it is not empty, then raise error!
+
+
+    print_text("check that no SNP has filter different from '.' We do this check here because in the previous line we obtained the number of the column of FILTER", header=3)
+        #according to the specific readme of the dataset we are using (http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/README_1kGP_phased_panel_110722.pdf), prior phasing they applied several filters, being one of them that all variants has to be PASS for FILTER. I understand that, because of this, all variants in the chromosome have now ".", being this the unique character.
+    print("calculate the number of SNPs for which FILTER is not '.'")
+    problematic_fiter = run_bash(" \
+        bcftools view \
+            --no-header \
+            --drop-genotypes \
+            " + input_vcf_file + " | \
+        awk \
+            'BEGIN{FS=OFS=\"\t\"; index_filter=" + index_filter + "}{ \
+                if($index_filter!=\".\"){count++} \
+            }END{print count}'", return_value=True).strip()
+    print("check that the number of SNPs with FILTER different from '.' is 0")
+    if problematic_fiter=="":
+        print("YES! GOOD TO GO!")
+    else:
+        raise ValueError("FALSE! ERROR! WE HAVE SNPS FOR WHICH FILTER IS NOT '.'!!!")
+
+
+
+    print_text("calculate hap file within selected pop", header=2)
+    print_text("chr " + selected_chromosome + " - " + selected_pop + ": see more SNPs and their allele count to see how this data is presented for multiallelic SNPs", header=3)
     run_bash(" \
-        bcftools view \
-            --samples " + ",".join(selected_samples) + " \
-            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-        bcftools view \
-            --types snps | \
         bcftools query \
-            --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | \
-        head -7")
-            #include only those variants with TYPE=snp
+            --format '%TYPE %ID %CHROM %POS %REF %ALT %AA %AA_upcase %INFO/AN %INFO/AC %INFO/AF GTs:[ %GT]\n' \
+            " + input_vcf_file + " \
+            | \
+        head -40")
+        #IMPORTANT:
+            #It seems that multiallelic variants separated in different lines have already updated the AC field. Therefore, each line does not have two allele counts, but one.
+            #For example, 1:10453:A:C and 1:10452:A:C are both in the same position (10452) and have the same reference allele. They seem to be multiallelic, but each one has only one allele count, which is 1. 
+            #This count is correctly updated for the subset of samples, but remember that --samples does not remove the second count. As we saw in the dummy example, we have to update the field with +fill-tags.
+            #My hypothesis is that they updated this field using +fill-tags because they indeed say in the paper that they used bcftools to split the multiallelic SNPs in different lines.
+            #Note that AF has also 1 value but it is not correct because we subset samples with --samples, and this command only updates AC and AN.
 
-    #
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": see more SNPs and their allele count to see how this data is presented for multiallelic SNPs")
-    print("#######################################\n#######################################")
+    print_text("chr " + selected_chromosome + " - " + selected_pop + ": see monomorphic", header=3)
+
+
+    ##por aquii
+
     run_bash(" \
         bcftools view \
-            --samples " + ",".join(selected_samples) + " \
-            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-        bcftools view \
-            --types snps | \
-        bcftools query \
-            --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AN %INFO/AC %INFO/AF GTs:[ %GT]\n' | \
-        head -12")
-            #IMPORTANT:
-                #It seems that multiallelic variants separated in different lines have already updated the AC field. Therefore, each line does not have two allele counts, but one.
-                #For example, 1:10453:A:C and 1:10452:A:C are both in the same position (10452) and have the same reference allele. They seem to be multiallelic, but each one has only one allele count, which is 1. 
-                #This count is correctly updated for the subset of samples, but remember that --samples does not remove the second count. As we saw in the dummy example, we have to update the field with +fill-tags.
-                #My hypothesis is that they updated this field using +fill-tags because they indeed say in the paper that they used bcftools to split the multiallelic SNPs in different lines.
-                #Note that AF has also 1 value but it is not correct because we subset samples with --samples, and this command only updates AC and AN.
-
-    #
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": see monomorphic")
-    print("#######################################\n#######################################")
-    run_bash(" \
-        bcftools view \
-            --samples " + ",".join(selected_samples) + " \
-            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
-        bcftools view \
-            --types snps | \
-        bcftools +fill-tags \
-            -- --tags AN,AC | \
+            " + input_vcf_file + " | \
         bcftools view \
             --include 'INFO/AC=INFO/AN || INFO/AC=0' | \
+        bcftools +fill-tags \
+            -- --tags AN,AC,AF | \
         bcftools query \
-            --format '%TYPE %ID %CHROM %POS %REF %ALT %INFO/AF GTs:[ %GT]\n' | \
-        head -7")
+            --format '%TYPE %ID %CHROM %POS %REF %ALT %AA %INFO/AF %AC %AN GTs:[ %GT]\n' | \
+        head -40")
             #update the INFO/AC and INFO/AN fields so we avoid two allele counts in the different lines of multiallelic snps. --samples update AC but maintaining the connection between the different lines of the same multialllelic SNP.
                 #it seems that 1KGP data has already updated the AC field for each line separated line of a multiallelic SNP.
                 #Therefore, this line would not be necessary, but we are applying just in case, to ensure we have only 1 allele count per line.
                 #updating again the AC fields would not do anything wrong, just adding the same value that is was.
             #select those variants for which the number of ALT alleles (allele count) is equal to 0 (no ALT at all) or equal to the total number of alleles (AN), i.e., all alleles are ALT.
             #See dummy example for further details.
+
+
+
 
     #
     print("\n#######################################\n#######################################")
@@ -2167,7 +2213,7 @@ def master_processor(chr_pop_combination):
     run_bash(" \
         bcftools view \
             --samples " + ",".join(selected_samples) + " \
-            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+            " + input_vcfs_path + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
         bcftools view \
             --types snps | \
         bcftools +fill-tags \
@@ -2186,7 +2232,7 @@ def master_processor(chr_pop_combination):
         n_snps_with_filter=$( \
             bcftools view \
                 --samples " + ",".join(selected_samples) + " \
-                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+                " + input_vcfs_path + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
             bcftools view \
                 --types snps | \
             bcftools +fill-tags \
@@ -2201,7 +2247,7 @@ def master_processor(chr_pop_combination):
         n_snps_without_filter=$( \
             bcftools view \
                 --samples " + ",".join(selected_samples) + " \
-                " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+                " + input_vcfs_path + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
             bcftools view \
                 --types snps | \
             bcftools +fill-tags \
@@ -2230,7 +2276,7 @@ def master_processor(chr_pop_combination):
     run_bash(" \
         bcftools view \
             --samples " + ",".join(selected_samples) + " \
-            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+            " + input_vcfs_path + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
         bcftools view \
             --types snps | \
         bcftools +fill-tags \
@@ -2251,7 +2297,7 @@ def master_processor(chr_pop_combination):
     run_bash(" \
         bcftools view \
             --samples " + ",".join(selected_samples) + " \
-            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+            " + input_vcfs_path + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
         bcftools view \
             --types snps | \
         bcftools +fill-tags \
@@ -2278,7 +2324,7 @@ def master_processor(chr_pop_combination):
     run_bash(" \
         bcftools view \
             --samples " + ",".join(selected_samples) + " \
-            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+            " + input_vcfs_path + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
         bcftools view \
             --types snps | \
         bcftools +fill-tags \
@@ -2303,7 +2349,7 @@ def master_processor(chr_pop_combination):
     run_bash(" \
         bcftools view \
             --samples " + ",".join(selected_samples) + " \
-            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+            " + input_vcfs_path + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
         bcftools view \
             --types snps | \
         bcftools +fill-tags \
@@ -2389,7 +2435,7 @@ def master_processor(chr_pop_combination):
     run_bash(" \
         bcftools view \
             --samples " + ",".join(selected_samples) + " \
-            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+            " + input_vcfs_path + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
         bcftools view \
             --types snps | \
         bcftools +fill-tags \
@@ -2421,7 +2467,7 @@ def master_processor(chr_pop_combination):
     run_bash(" \
         bcftools view \
             --samples " + ",".join(selected_samples) + " \
-            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+            " + input_vcfs_path + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
         bcftools view \
             --types snps | \
         bcftools +fill-tags \
@@ -2455,7 +2501,7 @@ def master_processor(chr_pop_combination):
     run_bash(" \
         bcftools view \
             --samples " + ",".join(selected_samples) + " \
-            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+            " + input_vcfs_path + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
         bcftools view \
             --types snps | \
         bcftools +fill-tags \
@@ -2491,7 +2537,7 @@ def master_processor(chr_pop_combination):
     run_bash(" \
         bcftools view \
             --samples " + ",".join(selected_samples) + " \
-            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+            " + input_vcfs_path + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
         bcftools view \
             --types snps | \
         bcftools +fill-tags \
@@ -2525,7 +2571,7 @@ def master_processor(chr_pop_combination):
     run_bash(" \
         bcftools view \
             --samples " + ",".join(selected_samples) + " \
-            " + input_vcfs_path + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_INDEL_SV_phased_panel.vcf.gz | \
+            " + input_vcfs_path + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
         bcftools view \
             --types snps | \
         bcftools +fill-tags \
