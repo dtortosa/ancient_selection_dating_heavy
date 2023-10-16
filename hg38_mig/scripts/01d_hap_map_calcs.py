@@ -3554,6 +3554,11 @@ pool.close()
 
 ##mail de jesus
     #https://mail.google.com/mail/u/0/?tab=rm&ogbl#drafts/QgrcJHsHpDRJdfjndBxlCjQHdCNBwJJqNSl
+    
+    #after the run
+        #run 01bb_some_processing_after_ancestral_calc.sh to do checks about the FALSEs
+        #then calculate hashes
+            #01bc_shasum_vep_results.py
     #compare files VEP results between versions, if the same and cosndierng smartmatch reaosns, I think we are good, ask jesus
 
     ##think about mask, jesus says we do not need it
