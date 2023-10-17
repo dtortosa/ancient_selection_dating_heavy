@@ -150,7 +150,7 @@ run_bash("ls")
 print_text("do the comparisons", header=1)
 print_text("run function across chromosomes", header=2)
 print_text("define function", header=3)
-#chrom=1
+#chrom=str(22)
 def check_per_chrom(chrom):
 
     print_text("Starting chromosome " + str(chrom), header=4)
@@ -188,7 +188,14 @@ def check_per_chrom(chrom):
             #cmp --silent <(echo "hola mundo") <(echo "hola mundos"); echo $?
                 #exist status -> 1
             #echo "hola mundo">file_1.txt; cmp --silent file_1.txt <(echo "hola mundo"); echo $?; rm file_1.txt
+                #exist status -> 0
             #https://stackoverflow.com/a/48672774/12772630
+    #remember that an exit status of 0 is what we want
+        #An exit status of 0 means no differences were found, 1 means some differences were found, and 2 means trouble
+        #https://www.gnu.org/software/diffutils/manual/diffutils.html#Invoking-cmp
+        #https://unix.stackexchange.com/questions/697753/cmp-command-return-value
+    #you can check the exit status with $?
+        #https://unix.stackexchange.com/a/501129
 
     print_text("convert to boolean", header=4)
     test_bool = [True if exit_status_check=="0" else False][0]
@@ -224,9 +231,10 @@ pool.close()
 print_text("now check that we have true for all chromosomes", header=3)
 if (len(bool_results)==22) & (sum(bool_results) == len(bool_results)):
     print("We have all TRUE, so we can just remove the previous VCF files because they are identical to the new ones")
-    print("YES! GOOD TO GO!")
+    run_bash(" \
+        rm \
+            --recursive \
+            --force \
+            ./results/00_vep_vcf_files_old")
 else:
     raise ValueError("ERROR! FALSE! We have at least one chromosome for which the old and the new VCF files (after adding the download of fasta ('f' option in INSTALL.pl for VEP) are not the same")
-
-
-###remove files???? too much space...
