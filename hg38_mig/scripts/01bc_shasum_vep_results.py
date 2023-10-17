@@ -148,59 +148,85 @@ run_bash("ls")
 # do the comparisons #
 ######################
 print_text("do the comparisons", header=1)
-
-
-
-print_text("run loop across chromosomes", header=2)
-print_text("open empty list to save booleans from comparisons", header=3)
-bool_results=list()
-
-
-print_text("run the loop", header=3)
+print_text("run function across chromosomes", header=2)
+print_text("define function", header=3)
 #chrom=1
-for chrom in range(1,23,1):
+def check_per_chrom(chrom):
 
     print_text("Starting chromosome " + str(chrom), header=4)
     #convert the chrom number to string
     chrom_str = str(chrom)
 
-    print("calculate sh256 digest of the new and old VCF files")
-    digest_new = run_bash(" \
-        bcftools view \
-            --no-header \
-            ./results/00_vep_vcf_files/chr" + chrom_str + "/1kGP_high_coverage_Illumina.chr" + chrom_str + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
-        head -n 10 | \
-        shasum --algorithm 256", return_value=True).strip()
-    digest_old = run_bash(" \
-        bcftools view \
-            --no-header \
-            ./results/00_vep_vcf_files_old/chr" + chrom_str + "/1kGP_high_coverage_Illumina.chr" + chrom_str + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
-        head -n 10 | \
-        shasum --algorithm 256", return_value=True).strip()
-        #you have several hash functions available, but you should use sha256
-            #Hash functions are one-way functions that takes a message as its argument. This message can be of any size, but the function always returns a fixed size hash. A hash is considered impossible (within the bounds of practicality) to reverse and to find two different messages with the same hash (called a collision).
-        #Differences between some hash functions
-            #MD5 was invented in the early 1990s and is considered flawed and obsolete by now.
-            #SHA1 was also developed in the early 1990s. It is considered stronger than MD5, but not strong enough. Its use is currently being withdrawn from the digital signature on X.509 digital certificates.
-            #SHA256 is the currently recommended hash function.
-        #https://unix.stackexchange.com/a/260519
-        #sha256 is very resistant to collision, i.e., two different files generating the same digest, at least at the moment of writing this code. Therefore, if two files have the same digest, we can consider them as the same, unaltered.
+    print_text("use cmp to compare byte by byte both files and then obtain the exit status", header=4)
+    exit_status_check = run_bash(" \
+        cmp \
+            --silent \
+            <( \
+                bcftools view \
+                    --no-header \
+                    ./results/00_vep_vcf_files/chr" + chrom_str + "/1kGP_high_coverage_Illumina.chr" + chrom_str + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz \
+            ) \
+            <( \
+                bcftools view \
+                    --no-header \
+                    ./results/00_vep_vcf_files_old/chr" + chrom_str + "/1kGP_high_coverage_Illumina.chr" + chrom_str + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz \
+            ); \
+        echo $?", return_value=True).strip()
+    #we are using bash substitution
+        #Piping the stdout of a command into the stdin of another is a powerful technique. But, what if you need to pipe the stdout of multiple commands? This is where process substitution comes in.
+            #You have to use "<(command_list)"
+            #Process substitution uses /dev/fd/<n> files to send the results of the process(es) within parentheses to another process. [1]
+            #Caution 
+                #There is no space between the the "<" or ">" and the parentheses. Space there would give an error message.
+            #https://tldp.org/LDP/abs/html/process-sub.html
+        #It seems that "/dev/fd" includes stdin and stdout.
+            #For example, the reason /dev/stdin and friends exist is that sometimes a program requires a file name, but you want to tell it to use a file that's already open (a pipe, for instance). So you can pass /dev/stdin to tell the program to read its standard input.
+            #https://askubuntu.com/a/183243
+        #we can use two process substitutions for the two inputs of cmp. We could even use subprocess for one input and use an saved file as another input
+            #cmp --silent <(echo "hola mundo") <(echo "hola mundo"); echo $?
+                #exist status -> 0
+            #cmp --silent <(echo "hola mundo") <(echo "hola mundos"); echo $?
+                #exist status -> 1
+            #echo "hola mundo">file_1.txt; cmp --silent file_1.txt <(echo "hola mundo"); echo $?; rm file_1.txt
+            #https://stackoverflow.com/a/48672774/12772630
 
-    print("check both digests are the same")
-    test_bool = digest_new == digest_old
+    print_text("convert to boolean", header=4)
+    test_bool = [True if exit_status_check=="0" else False][0]
     print(test_bool)
 
     print("save the result")
-    bool_results.append(test_bool)
+    return test_bool
+
+
+print_text("create list with all chromosomes", header=3)
+print("get chromosome names")
+chromosomes = [str(i) for i in range(1, 23, 1)]
+
+print("we are going to analyze 22 chromosomes?")
+print((len(chromosomes) == 22))
+
+print("See them")
+print(chromosomes)
+
+
+print_text("run it in parallel", header=3)
+print_text("open the pool", header=4)
+import multiprocessing as mp
+pool = mp.Pool(8)
+
+print_text("run function across pandas rows", header=4)
+bool_results = pool.map(check_per_chrom, chromosomes)
+
+print_text("close the pool", header=4)
+pool.close()
 
 
 print_text("now check that we have true for all chromosomes", header=3)
-if(sum(bool_results) == len(bool_results)):
+if (len(bool_results)==22) & (sum(bool_results) == len(bool_results)):
     print("We have all TRUE, so we can just remove the previous VCF files because they are identical to the new ones")
-    run_bash(" \
-        rm \
-            --recursive \
-            --force \
-            ./results/00_vep_vcf_files_old")
+    print("YES! GOOD TO GO!")
 else:
     raise ValueError("ERROR! FALSE! We have at least one chromosome for which the old and the new VCF files (after adding the download of fasta ('f' option in INSTALL.pl for VEP) are not the same")
+
+
+###remove files???? too much space...
