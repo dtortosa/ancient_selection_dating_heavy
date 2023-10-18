@@ -26,8 +26,8 @@ list files/folders there
 #######################################
 00_ubuntu_20_04_hg38_mig_vep_ancestral.sif
 00_ubuntu_20_04_hg38_mig_vep_ancestral.slurm
-00_ubuntu_20_04_hg38_mig_vep_ancestral.slurm.e8316920
-00_ubuntu_20_04_hg38_mig_vep_ancestral.slurm.o8316920
+00_ubuntu_20_04_hg38_mig_vep_ancestral.slurm.e8405219
+00_ubuntu_20_04_hg38_mig_vep_ancestral.slurm.o8405219
 01_ubuntu_20_04_hg38_mig_hap_map.sif
 data
 results
@@ -98,16 +98,16 @@ INDEL microsat1 chr20 1110703 GTC G,GTCT . . . GTs: 0/1 0/2 1/1
 
 ## compress the dummy file ##
 total 88
--rw-r--r-- 1 dftortosa denard   497 Sep 29 05:37 anc_alleles_uppercase.tsv
--rw-r--r-- 1 dftortosa denard   215 Sep 29 05:37 anc_alleles_uppercase.tsv.gz
--rw-r--r-- 1 dftortosa denard   131 Sep 29 05:37 anc_alleles_uppercase.tsv.gz.tbi
+-rw-r--r-- 1 dftortosa denard   497 Oct 14 04:18 anc_alleles_uppercase.tsv
+-rw-r--r-- 1 dftortosa denard   215 Oct 14 04:18 anc_alleles_uppercase.tsv.gz
+-rw-r--r-- 1 dftortosa denard   131 Oct 14 04:18 anc_alleles_uppercase.tsv.gz.tbi
 -rw-r--r-- 1 dftortosa denard  2599 Sep 28 19:21 dummy_example.vcf
--rw-r--r-- 1 dftortosa denard   861 Sep 29 12:59 dummy_example.vcf.gz
--rw-r--r-- 1 dftortosa denard  2149 Sep 29 05:37 dummy_example_vep.vcf.gz
--rw-r--r-- 1 dftortosa denard 10759 Sep 29 05:37 dummy_example_vep.vcf.gz_summary.html
--rw-r--r-- 1 dftortosa denard 15484 Sep 29 05:37 dummy_example_vep_2.vcf
--rw-r--r-- 1 dftortosa denard  2192 Sep 29 05:37 dummy_example_vep_2.vcf.gz
--rw-r--r-- 1 dftortosa denard  4972 Sep 29 05:37 dummy_example_vep_2_anc_up.vcf
+-rw-r--r-- 1 dftortosa denard   861 Oct 16 21:29 dummy_example.vcf.gz
+-rw-r--r-- 1 dftortosa denard  2149 Oct 14 04:18 dummy_example_vep.vcf.gz
+-rw-r--r-- 1 dftortosa denard 10759 Oct 14 04:18 dummy_example_vep.vcf.gz_summary.html
+-rw-r--r-- 1 dftortosa denard 15484 Oct 14 04:18 dummy_example_vep_2.vcf
+-rw-r--r-- 1 dftortosa denard  2193 Oct 14 04:18 dummy_example_vep_2.vcf.gz
+-rw-r--r-- 1 dftortosa denard  4972 Oct 14 04:18 dummy_example_vep_2_anc_up.vcf
 
 
 ###### Instructions for installing and using VEP in order to polarize alleles ######
@@ -759,12 +759,12 @@ both awk and wc -l give the same number of rows across all fastas?
 YES! GOOD TO GO!
 
 # combine all fasta files and remove the unzipped folder #
-total 4752416
+total 4752444
 -rw-r--r-- 1 dftortosa denard  862180990 Sep  1 06:36 homo_sapiens_ancestor_GRCh38.tar.gz
--rw-r--r-- 1 dftortosa denard 3130758087 Sep 29 13:00 homo_sapiens_ancestor_GRCh38_final.fa
--rw-r--r-- 1 dftortosa denard  872578659 Sep 29 05:36 homo_sapiens_ancestor_GRCh38_final.fa.gz
--rw-r--r-- 1 dftortosa denard      14446 Sep 29 05:37 homo_sapiens_ancestor_GRCh38_final.fa.gz.fai
--rw-r--r-- 1 dftortosa denard     767736 Sep 29 05:37 homo_sapiens_ancestor_GRCh38_final.fa.gz.gzi
+-rw-r--r-- 1 dftortosa denard 3130758087 Oct 16 21:30 homo_sapiens_ancestor_GRCh38_final.fa
+-rw-r--r-- 1 dftortosa denard  872578659 Oct 14 04:17 homo_sapiens_ancestor_GRCh38_final.fa.gz
+-rw-r--r-- 1 dftortosa denard      14446 Oct 14 04:18 homo_sapiens_ancestor_GRCh38_final.fa.gz.fai
+-rw-r--r-- 1 dftortosa denard     767736 Oct 14 04:18 homo_sapiens_ancestor_GRCh38_final.fa.gz.gzi
 
 
 # see the number of lines of the combined fasta file #
@@ -1787,12 +1787,12 @@ GAGAATGTAAATTAGTACAGCCACTGTGGAAAGCGGTGTGGAGATTTCTCAAGAgCTTAGAACTATCATTCCACCCAGCA
 
 
 # bgzip the fasta file with ancestral alleles because this should make things faster when running VEP (see documentation below) #
-total 4752420
+total 4752436
 -rw-r--r-- 1 dftortosa denard  862180990 Sep  1 06:36 homo_sapiens_ancestor_GRCh38.tar.gz
--rw-r--r-- 1 dftortosa denard 3130758087 Sep 29 13:00 homo_sapiens_ancestor_GRCh38_final.fa
--rw-r--r-- 1 dftortosa denard  872578659 Sep 29 13:05 homo_sapiens_ancestor_GRCh38_final.fa.gz
--rw-r--r-- 1 dftortosa denard      14446 Sep 29 05:37 homo_sapiens_ancestor_GRCh38_final.fa.gz.fai
--rw-r--r-- 1 dftortosa denard     767736 Sep 29 05:37 homo_sapiens_ancestor_GRCh38_final.fa.gz.gzi
+-rw-r--r-- 1 dftortosa denard 3130758087 Oct 16 21:30 homo_sapiens_ancestor_GRCh38_final.fa
+-rw-r--r-- 1 dftortosa denard  872578659 Oct 16 21:35 homo_sapiens_ancestor_GRCh38_final.fa.gz
+-rw-r--r-- 1 dftortosa denard      14446 Oct 14 04:18 homo_sapiens_ancestor_GRCh38_final.fa.gz.fai
+-rw-r--r-- 1 dftortosa denard     767736 Oct 14 04:18 homo_sapiens_ancestor_GRCh38_final.fa.gz.gzi
 
 
 # check integrity of the bgzipped file #
@@ -1801,16 +1801,16 @@ The integrity of the bgzipped fasta file with ancestral allele estimations is OK
 
 # remove previous indexes of the fasta file if they are present. These are created the first time VEP is run on the files, so just to be sure we are using the correct index, we remove those existing previously. these indexes will be used estimating the ancestral allele of all chromosomes #
 We have fasta index previously generated, removing related files...
-total 4751644
+total 4751660
 -rw-r--r-- 1 dftortosa denard  862180990 Sep  1 06:36 homo_sapiens_ancestor_GRCh38.tar.gz
--rw-r--r-- 1 dftortosa denard 3130758087 Sep 29 13:00 homo_sapiens_ancestor_GRCh38_final.fa
--rw-r--r-- 1 dftortosa denard  872578659 Sep 29 13:05 homo_sapiens_ancestor_GRCh38_final.fa.gz
+-rw-r--r-- 1 dftortosa denard 3130758087 Oct 16 21:30 homo_sapiens_ancestor_GRCh38_final.fa
+-rw-r--r-- 1 dftortosa denard  872578659 Oct 16 21:35 homo_sapiens_ancestor_GRCh38_final.fa.gz
 
 
 ## run VEP's plugin ancestral allele on the cleaned VCF file ##
 
 # make a run of VEP #
-2023-09-29 13:05:39 - Read configuration from environment variables
+2023-10-16 21:35:43 - Read configuration from environment variables
 
 Smartmatch is experimental at /opt/ensembl-vep/modules/Bio/EnsEMBL/VEP/AnnotationSource/File.pm line 472.
 
@@ -1832,7 +1832,7 @@ Smartmatch is experimental at /opt/ensembl-vep/modules/Bio/EnsEMBL/VEP/Annotatio
 ##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">
 ##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">
 ##FORMAT=<ID=HQ,Number=2,Type=Integer,Description="Haplotype Quality">
-##VEP="v110" time="2023-09-29 13:05:59" cache="./data/vep_cache/cache_110/homo_sapiens/110_GRCh38" ensembl-io=110.b1a0d57 ensembl-funcgen=110.24e6da6 ensembl-variation=110.d34d25e ensembl=110.584a8f3 1000genomes="phase3" COSMIC="97" ClinVar="202301" HGMD-PUBLIC="20204" assembly="GRCh38.p14" dbSNP="154" gencode="GENCODE 44" genebuild="2014-07" gnomADe="r2.1.1" gnomADg="v3.1.2" polyphen="2.2.3" regbuild="1.0" sift="6.2.1"
+##VEP="v110" time="2023-10-16 21:36:04" cache="./data/vep_cache/cache_110/homo_sapiens/110_GRCh38" ensembl-variation=110.d34d25e ensembl-io=110.b1a0d57 ensembl=110.584a8f3 ensembl-funcgen=110.24e6da6 1000genomes="phase3" COSMIC="97" ClinVar="202301" HGMD-PUBLIC="20204" assembly="GRCh38.p14" dbSNP="154" gencode="GENCODE 44" genebuild="2014-07" gnomADe="r2.1.1" gnomADg="v3.1.2" polyphen="2.2.3" regbuild="1.0" sift="6.2.1"
 ##INFO=<ID=CSQ,Number=.,Type=String,Description="Consequence annotations from Ensembl VEP. Format: Uploaded_variation|Location|Allele|Gene|Feature|Feature_type|Consequence|STRAND|AA">
 ##AA=Ancestral allele from ./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38_final.fa.gz
 ##VEP-command-line='vep --assembly GRCh38 --cache --compress_output gzip --database 0 --dir_cache [PATH]/cache_110 --dir_plugins [PATH]/vep_plugins --fields Uploaded_variation,Location,Allele,Gene,Feature,Feature_type,Consequence,STRAND,AA --force_overwrite --format vcf --input_file [PATH]/dummy_example.vcf.gz --offline --output_file [PATH]/dummy_example_vep.vcf.gz --plugin [PATH]/homo_sapiens_ancestor_GRCh38_final.fa.gz --vcf --verbose'
@@ -1858,7 +1858,7 @@ chr20	1110703	microsat1	GTC	G,GTCT	50	PASS	NS=3;DP=9;CSQ=microsat1|chr20:1110704
 
 
 # do some checks about about whether we have used the correct data using the row added to the header in the VCF file by VEP #
-##VEP="v110" time="2023-09-29 13:05:59" cache="./data/vep_cache/cache_110/homo_sapiens/110_GRCh38" ensembl-io=110.b1a0d57 ensembl-funcgen=110.24e6da6 ensembl-variation=110.d34d25e ensembl=110.584a8f3 1000genomes="phase3" COSMIC="97" ClinVar="202301" HGMD-PUBLIC="20204" assembly="GRCh38.p14" dbSNP="154" gencode="GENCODE 44" genebuild="2014-07" gnomADe="r2.1.1" gnomADg="v3.1.2" polyphen="2.2.3" regbuild="1.0" sift="6.2.1"
+##VEP="v110" time="2023-10-16 21:36:04" cache="./data/vep_cache/cache_110/homo_sapiens/110_GRCh38" ensembl-variation=110.d34d25e ensembl-io=110.b1a0d57 ensembl=110.584a8f3 ensembl-funcgen=110.24e6da6 1000genomes="phase3" COSMIC="97" ClinVar="202301" HGMD-PUBLIC="20204" assembly="GRCh38.p14" dbSNP="154" gencode="GENCODE 44" genebuild="2014-07" gnomADe="r2.1.1" gnomADg="v3.1.2" polyphen="2.2.3" regbuild="1.0" sift="6.2.1"
 
 Do we have the correct VEP version in the VCF file?
 True
@@ -1902,16 +1902,16 @@ SNP rs6040355 chr20 1110696 A G,T 67 PASS 6 2,2 0.333,0.333 2 10 . 1 . GTs: 1|1 
 ##Do the check
 TRUE
 total 88
--rw-r--r-- 1 dftortosa denard   497 Sep 29 05:37 anc_alleles_uppercase.tsv
--rw-r--r-- 1 dftortosa denard   215 Sep 29 05:37 anc_alleles_uppercase.tsv.gz
--rw-r--r-- 1 dftortosa denard   131 Sep 29 05:37 anc_alleles_uppercase.tsv.gz.tbi
+-rw-r--r-- 1 dftortosa denard   497 Oct 14 04:18 anc_alleles_uppercase.tsv
+-rw-r--r-- 1 dftortosa denard   215 Oct 14 04:18 anc_alleles_uppercase.tsv.gz
+-rw-r--r-- 1 dftortosa denard   131 Oct 14 04:18 anc_alleles_uppercase.tsv.gz.tbi
 -rw-r--r-- 1 dftortosa denard  2599 Sep 28 19:21 dummy_example.vcf
--rw-r--r-- 1 dftortosa denard   861 Sep 29 12:59 dummy_example.vcf.gz
--rw-r--r-- 1 dftortosa denard  2150 Sep 29 13:05 dummy_example_vep.vcf.gz
--rw-r--r-- 1 dftortosa denard 10759 Sep 29 13:05 dummy_example_vep.vcf.gz_summary.html
--rw-r--r-- 1 dftortosa denard 15484 Sep 29 05:37 dummy_example_vep_2.vcf
--rw-r--r-- 1 dftortosa denard  2192 Sep 29 05:37 dummy_example_vep_2.vcf.gz
--rw-r--r-- 1 dftortosa denard  4972 Sep 29 05:37 dummy_example_vep_2_anc_up.vcf
+-rw-r--r-- 1 dftortosa denard   861 Oct 16 21:29 dummy_example.vcf.gz
+-rw-r--r-- 1 dftortosa denard  2147 Oct 16 21:36 dummy_example_vep.vcf.gz
+-rw-r--r-- 1 dftortosa denard 10759 Oct 16 21:36 dummy_example_vep.vcf.gz_summary.html
+-rw-r--r-- 1 dftortosa denard 15484 Oct 14 04:18 dummy_example_vep_2.vcf
+-rw-r--r-- 1 dftortosa denard  2193 Oct 14 04:18 dummy_example_vep_2.vcf.gz
+-rw-r--r-- 1 dftortosa denard  4972 Oct 14 04:18 dummy_example_vep_2_anc_up.vcf
 
 
 ## Create a new AA field using the ancestral allele stored in CSQ/AA ##
@@ -1934,7 +1934,7 @@ total 88
 ##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">
 ##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">
 ##FORMAT=<ID=HQ,Number=2,Type=Integer,Description="Haplotype Quality">
-##VEP="v110" time="2023-09-29 13:05:59" cache="./data/vep_cache/cache_110/homo_sapiens/110_GRCh38" ensembl-io=110.b1a0d57 ensembl-funcgen=110.24e6da6 ensembl-variation=110.d34d25e ensembl=110.584a8f3 1000genomes="phase3" COSMIC="97" ClinVar="202301" HGMD-PUBLIC="20204" assembly="GRCh38.p14" dbSNP="154" gencode="GENCODE 44" genebuild="2014-07" gnomADe="r2.1.1" gnomADg="v3.1.2" polyphen="2.2.3" regbuild="1.0" sift="6.2.1"
+##VEP="v110" time="2023-10-16 21:36:04" cache="./data/vep_cache/cache_110/homo_sapiens/110_GRCh38" ensembl-variation=110.d34d25e ensembl-io=110.b1a0d57 ensembl=110.584a8f3 ensembl-funcgen=110.24e6da6 1000genomes="phase3" COSMIC="97" ClinVar="202301" HGMD-PUBLIC="20204" assembly="GRCh38.p14" dbSNP="154" gencode="GENCODE 44" genebuild="2014-07" gnomADe="r2.1.1" gnomADg="v3.1.2" polyphen="2.2.3" regbuild="1.0" sift="6.2.1"
 ##INFO=<ID=CSQ,Number=.,Type=String,Description="Consequence annotations from Ensembl VEP. Format: Uploaded_variation|Location|Allele|Gene|Feature|Feature_type|Consequence|STRAND|AA">
 ##AA=Ancestral allele from ./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38_final.fa.gz
 ##VEP-command-line='vep --assembly GRCh38 --cache --compress_output gzip --database 0 --dir_cache [PATH]/cache_110 --dir_plugins [PATH]/vep_plugins --fields Uploaded_variation,Location,Allele,Gene,Feature,Feature_type,Consequence,STRAND,AA --force_overwrite --format vcf --input_file [PATH]/dummy_example.vcf.gz --offline --output_file [PATH]/dummy_example_vep.vcf.gz --plugin [PATH]/homo_sapiens_ancestor_GRCh38_final.fa.gz --vcf --verbose'
@@ -2023,15 +2023,15 @@ As you can see, we can just filter by the ancestral allele using AA and it does 
 ##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">
 ##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">
 ##FORMAT=<ID=HQ,Number=2,Type=Integer,Description="Haplotype Quality">
-##VEP="v110" time="2023-09-29 13:05:59" cache="./data/vep_cache/cache_110/homo_sapiens/110_GRCh38" ensembl-io=110.b1a0d57 ensembl-funcgen=110.24e6da6 ensembl-variation=110.d34d25e ensembl=110.584a8f3 1000genomes="phase3" COSMIC="97" ClinVar="202301" HGMD-PUBLIC="20204" assembly="GRCh38.p14" dbSNP="154" gencode="GENCODE 44" genebuild="2014-07" gnomADe="r2.1.1" gnomADg="v3.1.2" polyphen="2.2.3" regbuild="1.0" sift="6.2.1"
+##VEP="v110" time="2023-10-16 21:36:04" cache="./data/vep_cache/cache_110/homo_sapiens/110_GRCh38" ensembl-variation=110.d34d25e ensembl-io=110.b1a0d57 ensembl=110.584a8f3 ensembl-funcgen=110.24e6da6 1000genomes="phase3" COSMIC="97" ClinVar="202301" HGMD-PUBLIC="20204" assembly="GRCh38.p14" dbSNP="154" gencode="GENCODE 44" genebuild="2014-07" gnomADe="r2.1.1" gnomADg="v3.1.2" polyphen="2.2.3" regbuild="1.0" sift="6.2.1"
 ##AA=Ancestral allele from ./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38_final.fa.gz
 ##VEP-command-line='vep --assembly GRCh38 --cache --compress_output gzip --database 0 --dir_cache [PATH]/cache_110 --dir_plugins [PATH]/vep_plugins --fields Uploaded_variation,Location,Allele,Gene,Feature,Feature_type,Consequence,STRAND,AA --force_overwrite --format vcf --input_file [PATH]/dummy_example.vcf.gz --offline --output_file [PATH]/dummy_example_vep.vcf.gz --plugin [PATH]/homo_sapiens_ancestor_GRCh38_final.fa.gz --vcf --verbose'
 ##bcftools_split-vepVersion=1.17+htslib-1.17
-##bcftools_split-vepCommand=split-vep --annotation CSQ --columns AA:String ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep.vcf.gz; Date=Fri Sep 29 13:06:00 2023
+##bcftools_split-vepCommand=split-vep --annotation CSQ --columns AA:String ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep.vcf.gz; Date=Mon Oct 16 21:36:04 2023
 ##bcftools_annotateVersion=1.17+htslib-1.17
-##bcftools_annotateCommand=annotate --remove INFO/CSQ; Date=Fri Sep 29 13:06:00 2023
+##bcftools_annotateCommand=annotate --remove INFO/CSQ; Date=Mon Oct 16 21:36:04 2023
 ##bcftools_viewVersion=1.17+htslib-1.17
-##bcftools_viewCommand=view; Date=Fri Sep 29 13:06:00 2023
+##bcftools_viewCommand=view; Date=Mon Oct 16 21:36:04 2023
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA00001	NA00002	NA00003
 chr20	14280	rs6054247	T	A	29	PASS	NS=3;DP=14;AN=5;AC=0;AF=0.2;DB;H2;AA=.	GT	0|0	0|0	1|1
 chr20	14290	rs6054248	C	A	29	PASS	NS=3;DP=14;AN=5;AC=0;AF=0.2;DB;H2;AA=.	GT	0|0	0|0	1|.
@@ -2087,16 +2087,16 @@ Warning: comma is interpreted as a separator and OR logic is used in string comp
 
 see how rs6054252 and rs6054257 are now included between those with ancestral allele. We will maintain these changes to have lower case ancestral allele and learn to deal with that (see below)
 total 88
--rw-r--r-- 1 dftortosa denard   497 Sep 29 05:37 anc_alleles_uppercase.tsv
--rw-r--r-- 1 dftortosa denard   215 Sep 29 05:37 anc_alleles_uppercase.tsv.gz
--rw-r--r-- 1 dftortosa denard   131 Sep 29 05:37 anc_alleles_uppercase.tsv.gz.tbi
+-rw-r--r-- 1 dftortosa denard   497 Oct 14 04:18 anc_alleles_uppercase.tsv
+-rw-r--r-- 1 dftortosa denard   215 Oct 14 04:18 anc_alleles_uppercase.tsv.gz
+-rw-r--r-- 1 dftortosa denard   131 Oct 14 04:18 anc_alleles_uppercase.tsv.gz.tbi
 -rw-r--r-- 1 dftortosa denard  2599 Sep 28 19:21 dummy_example.vcf
--rw-r--r-- 1 dftortosa denard   861 Sep 29 12:59 dummy_example.vcf.gz
--rw-r--r-- 1 dftortosa denard  2150 Sep 29 13:05 dummy_example_vep.vcf.gz
--rw-r--r-- 1 dftortosa denard 10759 Sep 29 13:05 dummy_example_vep.vcf.gz_summary.html
--rw-r--r-- 1 dftortosa denard 15484 Sep 29 13:06 dummy_example_vep_2.vcf
--rw-r--r-- 1 dftortosa denard  2192 Sep 29 13:06 dummy_example_vep_2.vcf.gz
--rw-r--r-- 1 dftortosa denard  4972 Sep 29 05:37 dummy_example_vep_2_anc_up.vcf
+-rw-r--r-- 1 dftortosa denard   861 Oct 16 21:29 dummy_example.vcf.gz
+-rw-r--r-- 1 dftortosa denard  2147 Oct 16 21:36 dummy_example_vep.vcf.gz
+-rw-r--r-- 1 dftortosa denard 10759 Oct 16 21:36 dummy_example_vep.vcf.gz_summary.html
+-rw-r--r-- 1 dftortosa denard 15484 Oct 16 21:36 dummy_example_vep_2.vcf
+-rw-r--r-- 1 dftortosa denard  2191 Oct 16 21:36 dummy_example_vep_2.vcf.gz
+-rw-r--r-- 1 dftortosa denard  4972 Oct 14 04:18 dummy_example_vep_2_anc_up.vcf
 
 
 # see the new VCF file #
@@ -2195,16 +2195,16 @@ chr20	1110701	G,G,G,G,G,G,G
 chr20	1110702	C,C,C,C,C,C,C
 chr20	1110703	TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT
 total 88
--rw-r--r-- 1 dftortosa denard   497 Sep 29 13:06 anc_alleles_uppercase.tsv
--rw-r--r-- 1 dftortosa denard   215 Sep 29 13:06 anc_alleles_uppercase.tsv.gz
--rw-r--r-- 1 dftortosa denard   131 Sep 29 13:06 anc_alleles_uppercase.tsv.gz.tbi
+-rw-r--r-- 1 dftortosa denard   497 Oct 16 21:36 anc_alleles_uppercase.tsv
+-rw-r--r-- 1 dftortosa denard   215 Oct 16 21:36 anc_alleles_uppercase.tsv.gz
+-rw-r--r-- 1 dftortosa denard   131 Oct 16 21:36 anc_alleles_uppercase.tsv.gz.tbi
 -rw-r--r-- 1 dftortosa denard  2599 Sep 28 19:21 dummy_example.vcf
--rw-r--r-- 1 dftortosa denard   861 Sep 29 12:59 dummy_example.vcf.gz
--rw-r--r-- 1 dftortosa denard  2150 Sep 29 13:05 dummy_example_vep.vcf.gz
--rw-r--r-- 1 dftortosa denard 10759 Sep 29 13:05 dummy_example_vep.vcf.gz_summary.html
--rw-r--r-- 1 dftortosa denard 15484 Sep 29 13:06 dummy_example_vep_2.vcf
--rw-r--r-- 1 dftortosa denard  2192 Sep 29 13:06 dummy_example_vep_2.vcf.gz
--rw-r--r-- 1 dftortosa denard  4972 Sep 29 05:37 dummy_example_vep_2_anc_up.vcf
+-rw-r--r-- 1 dftortosa denard   861 Oct 16 21:29 dummy_example.vcf.gz
+-rw-r--r-- 1 dftortosa denard  2147 Oct 16 21:36 dummy_example_vep.vcf.gz
+-rw-r--r-- 1 dftortosa denard 10759 Oct 16 21:36 dummy_example_vep.vcf.gz_summary.html
+-rw-r--r-- 1 dftortosa denard 15484 Oct 16 21:36 dummy_example_vep_2.vcf
+-rw-r--r-- 1 dftortosa denard  2191 Oct 16 21:36 dummy_example_vep_2.vcf.gz
+-rw-r--r-- 1 dftortosa denard  4972 Oct 14 04:18 dummy_example_vep_2_anc_up.vcf
 
 
 # take the indexed and tab-delimited file with the ancestral alleles in upper case and the position to create a new field with upper ancestral alleles, save the new VCF file #
@@ -2225,14 +2225,14 @@ total 88
 ##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">
 ##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">
 ##FORMAT=<ID=HQ,Number=2,Type=Integer,Description="Haplotype Quality">
-##VEP="v110" time="2023-09-29 13:05:59" cache="./data/vep_cache/cache_110/homo_sapiens/110_GRCh38" ensembl-io=110.b1a0d57 ensembl-funcgen=110.24e6da6 ensembl-variation=110.d34d25e ensembl=110.584a8f3 1000genomes="phase3" COSMIC="97" ClinVar="202301" HGMD-PUBLIC="20204" assembly="GRCh38.p14" dbSNP="154" gencode="GENCODE 44" genebuild="2014-07" gnomADe="r2.1.1" gnomADg="v3.1.2" polyphen="2.2.3" regbuild="1.0" sift="6.2.1"
+##VEP="v110" time="2023-10-16 21:36:04" cache="./data/vep_cache/cache_110/homo_sapiens/110_GRCh38" ensembl-variation=110.d34d25e ensembl-io=110.b1a0d57 ensembl=110.584a8f3 ensembl-funcgen=110.24e6da6 1000genomes="phase3" COSMIC="97" ClinVar="202301" HGMD-PUBLIC="20204" assembly="GRCh38.p14" dbSNP="154" gencode="GENCODE 44" genebuild="2014-07" gnomADe="r2.1.1" gnomADg="v3.1.2" polyphen="2.2.3" regbuild="1.0" sift="6.2.1"
 ##AA=Ancestral allele from ./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38_final.fa.gz
 ##VEP-command-line='vep --assembly GRCh38 --cache --compress_output gzip --database 0 --dir_cache [PATH]/cache_110 --dir_plugins [PATH]/vep_plugins --fields Uploaded_variation,Location,Allele,Gene,Feature,Feature_type,Consequence,STRAND,AA --force_overwrite --format vcf --input_file [PATH]/dummy_example.vcf.gz --offline --output_file [PATH]/dummy_example_vep.vcf.gz --plugin [PATH]/homo_sapiens_ancestor_GRCh38_final.fa.gz --vcf --verbose'
 ##bcftools_split-vepVersion=1.17+htslib-1.17
-##bcftools_split-vepCommand=split-vep --annotation CSQ --columns AA:String ./dummy_example_vep_2.vcf.gz; Date=Fri Sep 29 13:06:00 2023
+##bcftools_split-vepCommand=split-vep --annotation CSQ --columns AA:String ./dummy_example_vep_2.vcf.gz; Date=Mon Oct 16 21:36:04 2023
 ##INFO=<ID=AA_upcase,Number=.,Type=String,Description="The AA field from INFO/CSQ after converting alleles to uppercase">
 ##bcftools_annotateVersion=1.17+htslib-1.17
-##bcftools_annotateCommand=annotate --remove INFO/CSQ --annotations ./anc_alleles_uppercase.tsv.gz --columns CHROM,POS,.AA_upcase --header-line '##INFO=<ID=AA_upcase,Number=.,Type=String,Description="The AA field from INFO/CSQ after converting alleles to uppercase">'; Date=Fri Sep 29 13:06:00 2023
+##bcftools_annotateCommand=annotate --remove INFO/CSQ --annotations ./anc_alleles_uppercase.tsv.gz --columns CHROM,POS,.AA_upcase --header-line '##INFO=<ID=AA_upcase,Number=.,Type=String,Description="The AA field from INFO/CSQ after converting alleles to uppercase">'; Date=Mon Oct 16 21:36:04 2023
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA00001	NA00002	NA00003
 chr20	14280	rs6054247	T	A	29	PASS	NS=3;DP=14;AN=5;AC=0;AF=0.2;DB;H2;AA=.;AA_upcase=.	GT	0|0	0|0	1|1
 chr20	14290	rs6054248	C	A	29	PASS	NS=3;DP=14;AN=5;AC=0;AF=0.2;DB;H2;AA=.;AA_upcase=.	GT	0|0	0|0	1|.
@@ -2326,16 +2326,16 @@ Warning: comma is interpreted as a separator and OR logic is used in string comp
 ##INFO=<ID=H2,Number=0,Type=Flag,Description="HapMap2 membership">
 ##FILTER=<ID=q10,Description="Quality below 10">
 ##FILTER=<ID=s50,Description="Less than 50% of samples have data">
-##VEP="v110" time="2023-09-29 13:05:59" cache="./data/vep_cache/cache_110/homo_sapiens/110_GRCh38" ensembl-io=110.b1a0d57 ensembl-funcgen=110.24e6da6 ensembl-variation=110.d34d25e ensembl=110.584a8f3 1000genomes="phase3" COSMIC="97" ClinVar="202301" HGMD-PUBLIC="20204" assembly="GRCh38.p14" dbSNP="154" gencode="GENCODE 44" genebuild="2014-07" gnomADe="r2.1.1" gnomADg="v3.1.2" polyphen="2.2.3" regbuild="1.0" sift="6.2.1"
+##VEP="v110" time="2023-10-16 21:36:04" cache="./data/vep_cache/cache_110/homo_sapiens/110_GRCh38" ensembl-variation=110.d34d25e ensembl-io=110.b1a0d57 ensembl=110.584a8f3 ensembl-funcgen=110.24e6da6 1000genomes="phase3" COSMIC="97" ClinVar="202301" HGMD-PUBLIC="20204" assembly="GRCh38.p14" dbSNP="154" gencode="GENCODE 44" genebuild="2014-07" gnomADe="r2.1.1" gnomADg="v3.1.2" polyphen="2.2.3" regbuild="1.0" sift="6.2.1"
 ##AA=Ancestral allele from ./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38_final.fa.gz
 ##VEP-command-line='vep --assembly GRCh38 --cache --compress_output gzip --database 0 --dir_cache [PATH]/cache_110 --dir_plugins [PATH]/vep_plugins --fields Uploaded_variation,Location,Allele,Gene,Feature,Feature_type,Consequence,STRAND,AA --force_overwrite --format vcf --input_file [PATH]/dummy_example.vcf.gz --offline --output_file [PATH]/dummy_example_vep.vcf.gz --plugin [PATH]/homo_sapiens_ancestor_GRCh38_final.fa.gz --vcf --verbose'
 ##bcftools_split-vepVersion=1.17+htslib-1.17
-##bcftools_split-vepCommand=split-vep --annotation CSQ --columns AA:String ./dummy_example_vep_2.vcf.gz; Date=Fri Sep 29 13:06:00 2023
+##bcftools_split-vepCommand=split-vep --annotation CSQ --columns AA:String ./dummy_example_vep_2.vcf.gz; Date=Mon Oct 16 21:36:04 2023
 ##INFO=<ID=AA_upcase,Number=.,Type=String,Description="The AA field from INFO/CSQ after converting alleles to uppercase">
 ##bcftools_annotateVersion=1.17+htslib-1.17
-##bcftools_annotateCommand=annotate --remove INFO/CSQ --annotations ./anc_alleles_uppercase.tsv.gz --columns CHROM,POS,.AA_upcase --header-line '##INFO=<ID=AA_upcase,Number=.,Type=String,Description="The AA field from INFO/CSQ after converting alleles to uppercase">'; Date=Fri Sep 29 13:06:00 2023
+##bcftools_annotateCommand=annotate --remove INFO/CSQ --annotations ./anc_alleles_uppercase.tsv.gz --columns CHROM,POS,.AA_upcase --header-line '##INFO=<ID=AA_upcase,Number=.,Type=String,Description="The AA field from INFO/CSQ after converting alleles to uppercase">'; Date=Mon Oct 16 21:36:04 2023
 ##bcftools_viewVersion=1.17+htslib-1.17
-##bcftools_viewCommand=view --drop-genotypes ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf; Date=Fri Sep 29 13:06:00 2023
+##bcftools_viewCommand=view --drop-genotypes ./data/dummy_vcf_files/00_dummy_vcf_files_vep/dummy_example_vep_2_anc_up.vcf; Date=Mon Oct 16 21:36:04 2023
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
 chr20	14280	rs6054247	T	A	29	PASS	NS=3;DP=14;AN=5;AC=0;AF=0.2;DB;H2;AA=.;AA_upcase=.
 chr20	14290	rs6054248	C	A	29	PASS	NS=3;DP=14;AN=5;AC=0;AF=0.2;DB;H2;AA=.;AA_upcase=.

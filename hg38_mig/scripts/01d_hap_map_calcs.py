@@ -2536,8 +2536,6 @@ def master_processor(chr_pop_combination, debugging=False):
             -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AF AA:%AA AA_upcase:%AA_upcase GTs:[ %GT]\n'")
 
 
-##por aqui
-
     print_text("Before the next step, check that REF and ALT are always ACGT, because our awk script relies on the fact that we discard those rows for which the unique ancestral allele in upper case is NOT equal to REF or ALT, removing in that way variants with ancestral allele equal to '.', 'N', '-', etc.... Also check that REF and ALT are NOT the same", header=3)
     problematic_cases_ref_alt = run_bash(" \
         bcftools view \
@@ -2554,12 +2552,10 @@ def master_processor(chr_pop_combination, debugging=False):
                     count++ \
                 } \
             }END{print count}'", return_value=True).strip()
-    if(problematic_cases_ref_alt == "4"):
+    if(problematic_cases_ref_alt == ""):
         print("YES! GOOD TO GO!")
     else:
         raise ValueError("ERROR! FALSE! WE HAVE A PROBLEM, REF OR ALT ARE NOT ALWAYS ACGT OR REF IS EQUAL TO ALT!!")
-        #on the fly, modify the VCF file adding new dummy SNPs for which REF or ALT are not ACGT
-        #then split multiallelics and remove the header
         #awk
             #begin with tabs as delimiter and create variables with the index of REF and ALT columns
             #if REF or ALT does NOT include ACGT, count
@@ -2569,424 +2565,8 @@ def master_processor(chr_pop_combination, debugging=False):
             #print count
         #check that the count is exactly 3, because we have added 3 more dummy SNPs for which REF or ALT does not include ACGT
 
-print_text("create a awk script that switch REF/ALT in those rows where AA==ALT, while not doing anything to rows where REF==AA and discarding those rows where REF nor ALT are equal to AA. First apply it to all variants without filter to check behaviour", header=4)
-selected_chrom_dummy="chr20"
-run_bash(" \
-    last_header_row=$( \
-        bcftools norm \
-            --multiallelic -snps \
-            ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_vep_2_anc_up_2.vcf | \
-        awk \
-            '{ \
-                if($0 ~ /^#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT/){print NR} \
-            }'); \
-    if [[ $last_header_row == '' ]]; then \
-        exit 1; \
-    fi; \
-    bcftools norm \
-        --multiallelic -snps \
-        ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_vep_2_anc_up_2.vcf | \
-    awk \
-        -v last_header_row=\"$last_header_row\" \
-        -v date=\"$(date '+%a %b %d %H:%M:%S %Y')\" \
-        'BEGIN{ \
-            FS=\"\t\"; \
-            OFS=\"\t\"; \
-            index_ref=" + index_ref + "; \
-            index_alt=" + index_alt + "; \
-            index_info=" + index_info + "; \
-            selected_chrom_dummy=\"" + selected_chrom_dummy + "\"; \
-        }{ \
-            if(NR > last_header_row){ \
-                if(NR==(last_header_row+1)){ \
-                    if($1 != selected_chrom_dummy){exit 1} \
-                } \
-                for(i=1;i<=length($index_info);i++){ \
-                    if(substr($index_info,i,3)==\"AA=\"){ \
-                        k=i; \
-                        while(substr($index_info, k, 1)!=\";\"){ \
-                            end_aa=k; \
-                            k=k+1; \
-                        }; \
-                        if(i+3 != end_aa){ \
-                            full_aa = substr($index_info, i+3, end_aa-(i+3)+1) \
-                        } else { \
-                            full_aa = substr($index_info, i+3, 1) \
-                        }; \
-                        if(index(full_aa, \",\")!=0 && full_aa!=\",\"){ \
-                            full_aa_no_comma = full_aa; \
-                            gsub(/,/, \"\", full_aa_no_comma); \
-                            count=0; \
-                            for(k=1;k<=length(full_aa_no_comma);k++){ \
-                                char=substr(full_aa_no_comma, k, 1); \
-                                if(!array_alleles[char]++){count++}; \
-                            }; \
-                            if(count==1){ \
-                                check_n_csq=\"false\"; \
-                                for(k in array_alleles){ \
-                                    if(array_alleles[k]==length(full_aa_no_comma)){ \
-                                        check_n_csq=\"true\" \
-                                    } \
-                                }; \
-                                if(check_n_csq==\"true\"){ \
-                                    k=1; \
-                                    while(substr(full_aa, k, 1)!=\",\"){ \
-                                       before_comma=k; \
-                                       k=k+1\
-                                    }; \
-                                    unique_aa = substr(full_aa, 1, before_comma); \
-                                } else { \
-                                    exit 1 \
-                                }; \
-                            } else { \
-                                exit 1 \
-                            }; \
-                            delete array_alleles; \
-                        } else { \
-                            unique_aa=full_aa \
-                        }; \
-                        unique_aa = toupper(unique_aa); \
-                    } else { \
-                        if(substr($index_info,i,3)==\"AA;\"){exit 1} \
-                    } \
-                }; \
-                if($index_ref==unique_aa || $index_alt==unique_aa){ \
-                    if($index_ref!=unique_aa && $index_alt==unique_aa){ \
-                        tmp_ref=$index_ref; \
-                        $index_ref=$index_alt; \
-                        $index_alt=tmp_ref; \
-                        print $0 \
-                    } else { \
-                        print $0 \
-                    }; \
-                    if($index_ref!=unique_aa && $index_alt==unique_aa){exit 1} \
-                }; \
-            } else { \
-                if(NR==last_header_row){ \
-                    printf \"##awk_script: Switched REF/ALT columns for variants where REF!=AA but ALT==AA. Variants where REF!=AA and ALT!=AA where discarded; Date=%s\\n\", date; \
-                    print $0; \
-                }else{print $0} \
-            } \
-        }'; \
-    check_status=$(echo $?); \
-    if [[ $check_status -ne 0 ]]; then \
-        echo 'ERROR! FALSE! WHEN SWITCHING REF/ALT COLUMNS'; \
-    fi")
-    #load the VCF file with only the header into awk, then extract the number of the row (whole row; $0) starting with "CHROM REF...."
-        #https://unix.stackexchange.com/a/72763
-    #check that the number of rows of the header is NOT empty, meaning that we have correctly detected the header. If it is empty, exit with non-zero exit status.
-    #awk
-        #load variables 
-            #the number of rows of the header as a variable
-            #the date following the format used by bcftools
-                #The command is "+FORMAT", where FORMAT controls the output. For example: "%H" gives hours.
-                #In order to have spaces between the units, you need to use '' around FORMAT.
-                #https://unix.stackexchange.com/a/224976
-                #https://stackoverflow.com/a/27337807/12772630
-                #https://man7.org/linux/man-pages/man1/date.1.html
-        #begin awk
-            #loading the data into awk using \t for input and output. In this way, we are going to work with the main columns of the VCF file, REF, ALT, INFO, FORMAT, GT...
-            #This means that the whole INFO field is going to be a string for each row, i.e., "AA=g;AA_upcase=G...." because we are not using ";" nor "=" as delimiters.
-            #we do this to get as output the original INFO field with the ";",  "=", because if you use these as delimiters, they disappear from the data.
-            #create variables with the position of the columns of interest that we will use later
-        #if the row is after the header
-            #if the row is the first just after the header
-                #check if the first column (CHROM) is not "chr20", if that is the case, exit with non-zero exit status
-                #https://stackoverflow.com/a/3701095/12772630
-            #for each character of the INFO field
-                #use substring to extract specific characters from the INFO string. 
-                    #substr(string, start [, length ])
-                    #Return a length-character-long substring of string, starting at character number start. The first character of a string is character number one. For example, substr("washington", 5, 3) returns "ing".
-                        #https://www.gnu.org/software/gawk/manual/html_node/String-Functions.html
-                #if a substring starting at i up to two positions after (i.e., length=3) is equals to "AA=" (this avoids "AA_upcase=")
-                    #while loop: iterate from the starting position of "AA=", i.e., "A". You save the position of the character "end_aa", overwritting the position of the previous character until we reach ";", which is NOT saved. 
-                        #this will give the position of the last character before ";", i.e., before the next INFO field.
-                        #https://opensource.com/article/19/11/loops-awk
-                    #Use this position to select only the ancestral allele data wihthout "AA=" and ";". If the last character before ";" is the position just after "AA=", i.e., "AA" is equal to a single character (e.g., AA=T or AA=-). In other words, three positions after "AA=" starts (i+3) is equals to the last position before ";" (end_aa)
-                        #select just the character in that position
-                    #else, means that the we have several characters within "AA="
-                        #select a substring starting after "AA=" and ending just before ";"
-                        #we obtain that position by substracting the start of "AA=" from "end_aa"
-                        #For example: In "AA=G,G,G;", "AA=" starts at 1 (i=1), while the first base is in 1+3=4 (i+3=4), and the last character before ";" is at position 8 (end_aa=8). The length of the substring is 8-4+1=5 (end_aa-(i+3)+1). Therefore, if from the position of the last base (end_aa=8), we subtract the position of the first base just after "AA=" (i+3=4), we get the distance between the two characters without including one of them, so you have to add 1 to include botch extremes of this interval: 8-(1+3)+1=5. We want a substring of length 5 to include all alleles.
-                            #Note that, in substr, the start is included so you have to start at 4, including 4, and then add 5 positions starting from 4 to reach the final base. First G is at 4, last G is at 8, so 8-4+1=5. This is 5,6,7 plus the extremes, 4 and 8.
-                    #if "full_aa" does not include "," or it is exactly "," but it has no other character, this means that "AA" is just a base or a missing including "," (",", "N", "-", ".").
-                        #then you can just save "full_aa" in "unique_aa" because there is only 1 character, so it is already unique.
-                        #Note that we use bcftools to extract AA from the CSQ field, and I checked that this makes cases with empty "AA" (AA="") as "AA=.". So we will always have a character after AA, and no space.
-                            #We have added other "if" to check we have no empty AA field just in case
-                    #if it includes "," but it is not exactly ",", this means that we have several alleles for this SNP, e.g., "A,A,A,A", so we need to get just one. 
-                        #first check again (we did before) that we only have one ancestral allele per variant
-                            #copy "full_aa" into "full_aa_no_comma"
-                            #using gsub, change every "," by empty (""), so now we should have only AA data and no commas, the same allele repeated many times
-                                #https://unix.stackexchange.com/a/492502
-                            #set a "count" variable as zero
-                            #for each character in full_aa_no_comma
-                                #extract that character
-                                #save it in array "a", 
-                                    #if it is previously present then add 1 more to its count. 
-                                    #if is not present before, add it as a new entry with value 1.
-                                        #Negate the expression so this case is true and then we can add 1 to our "count" variable.
-                                        #In other words, count the number of unique characters in full_aa_no_comma
-                        #We do operations if count==1, if it is higher than 1 and hence we have more than 1 distinct characters, STOP (non-zero exit status). 
-                            #this check will fail for microsatellites with different bases like TAT, but this should be ok because we should have only SNPs. If we have different bases in a variant, I want an error.
-                            #we do operations if another check works, if non, stop with non-zero exit status. Take the number of counts we have in array "a", which stores the unique characters seens in "full_aa_no_comma" with its count. This number should be the same than the total length of "full_aa_no_comma", i.e., the number of characters without comma should be the same than the count for the single character we got. Remember that the previous if check if 'count'==1, so we already know we have only 1 different character.
-                            #If true:
-                                #iterate across characters of "full_aa"
-                                    #while the character is NOT ",", save the position of the character in "before_comma" and move to the next position
-                                    #if "," it reached, then "before_comma" is not updated more, and hence we have the last position just before ","
-                                #now extract a substring from "full_aa" from the start to the position just before the first comma. For example, in TT,TT,TT: would be from to 2, because the first comma is in position 3.
-                        #delete "a", so we have it clean for the next iteration of the larger loop (iterated over i)
-                    #else, means that we only have 1 character after "AA=" and before ";", therefore just take that character.
-                    #convert the resulting unique ancestral allele (unique_aa) into uppercase to consdier both low and high-confidence alleles.
-                #else means that we do not have "AA=". This is ok because we can have other INFO fields, BUT
-                    #if the INFO field is "AA;" STOP, because we should have always at least "." in case AA is missing.
-            #if the REF or the ALT fields are equal to the unique ancestral allele
-                #if the REF is NOT the AA, but the ALT it is, we need to switch them
-                    #save the REF in a temp variable
-                    #overwrite the original REF with the ALT
-                    #save as new ALT the REF value stored in the temp variable
-                #else just print the row without changes
-            #else, we do not have ancestral allele for this variant in the panel, so we can discard the SNP, so no print. Without ancestral allele there is anything we can do with that allele.
-        #else means the row belongs to the header
-            #if we are in the last row of the header
-                #before printing that row, add a comment with a explanation of the awk script and the time, ending with new line (\n)
-            #else, meaning we are in the previous header lines, just print these lines
-    #save the exist status after awk and check it. If is it not zero, we have a problem.
 
-print_text("save the subset of filtered variants and then apply on it the awk script", header=4)
-run_bash(" \
-    bcftools norm \
-        --multiallelic -snps \
-        ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_vep_2_anc_up_2.vcf | \
-    bcftools view \
-        --samples NA00001,NA00002 | \
-    bcftools view \
-        --types snps | \
-    bcftools +fill-tags \
-        -- --tags AN,AC | \
-    bcftools view \
-        --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
-    bcftools view \
-        --include 'COUNT(GT=\"mis\")/N_SAMPLES < 0.05' | \
-    bcftools norm \
-        --rm-dup exact | \
-    bcftools norm \
-        --multiallelic +snps | \
-    bcftools view \
-        --max-alleles 2 \
-        --min-alleles 2 | \
-    bcftools view \
-        --phased | \
-    bcftools view \
-        --targets-file ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_pilot_mask.bed.gz | \
-    bcftools annotate \
-        --remove ^INFO/AA,INFO/AA_upcase,^FORMAT/GT | \
-    bcftools +fill-tags \
-        -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS > ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_vep_2_anc_up_2_cleaned.vcf")
-
-print_text("apply the awk script to the cleaned VCF", header=4)
-run_bash(" \
-    last_header_row=$( \
-        bcftools view \
-            ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_vep_2_anc_up_2_cleaned.vcf | \
-        awk \
-            '{ \
-                if($0 ~ /^#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT/){print NR} \
-            }'); \
-    if [[ $last_header_row == '' ]]; then \
-        exit 1; \
-    fi; \
-    bcftools view \
-        ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_vep_2_anc_up_2_cleaned.vcf | \
-    awk \
-        -v last_header_row=\"$last_header_row\" \
-        -v date=\"$(date '+%a %b %d %H:%M:%S %Y')\" \
-        'BEGIN{ \
-            FS=\"\t\"; \
-            OFS=\"\t\"; \
-            index_ref=" + index_ref + "; \
-            index_alt=" + index_alt + "; \
-            index_info=" + index_info + "; \
-            selected_chrom_dummy=\"" + selected_chrom_dummy + "\"; \
-        }{ \
-            if(NR > last_header_row){ \
-                if(NR==(last_header_row+1)){ \
-                    if($1 != selected_chrom_dummy){exit 1} \
-                } \
-                for(i=1;i<=length($index_info);i++){ \
-                    if(substr($index_info,i,3)==\"AA=\"){ \
-                        k=i; \
-                        while(substr($index_info, k, 1)!=\";\"){ \
-                            end_aa=k; \
-                            k=k+1; \
-                        }; \
-                        if(i+3 != end_aa){ \
-                            full_aa = substr($index_info, i+3, end_aa-(i+3)+1) \
-                        } else { \
-                            full_aa = substr($index_info, i+3, 1) \
-                        }; \
-                        if(index(full_aa, \",\")!=0 && full_aa!=\",\"){ \
-                            full_aa_no_comma = full_aa; \
-                            gsub(/,/, \"\", full_aa_no_comma); \
-                            count=0; \
-                            for(k=1;k<=length(full_aa_no_comma);k++){ \
-                                char=substr(full_aa_no_comma, k, 1); \
-                                if(!array_alleles[char]++){count++}; \
-                            }; \
-                            if(count==1){ \
-                                check_n_csq=\"false\"; \
-                                for(k in array_alleles){ \
-                                    if(array_alleles[k]==length(full_aa_no_comma)){ \
-                                        check_n_csq=\"true\" \
-                                    } \
-                                }; \
-                                if(check_n_csq==\"true\"){ \
-                                    k=1; \
-                                    while(substr(full_aa, k, 1)!=\",\"){ \
-                                       before_comma=k; \
-                                       k=k+1\
-                                    }; \
-                                    unique_aa = substr(full_aa, 1, before_comma); \
-                                } else { \
-                                    exit 1 \
-                                }; \
-                            } else { \
-                                exit 1 \
-                            }; \
-                            delete array_alleles; \
-                        } else { \
-                            unique_aa=full_aa \
-                        }; \
-                        unique_aa = toupper(unique_aa); \
-                    } else { \
-                        if(substr($index_info,i,3)==\"AA;\"){exit 1} \
-                    } \
-                }; \
-                if($index_ref==unique_aa || $index_alt==unique_aa){ \
-                    if($index_ref!=unique_aa && $index_alt==unique_aa){ \
-                        tmp_ref=$index_ref; \
-                        $index_ref=$index_alt; \
-                        $index_alt=tmp_ref; \
-                        print $0 \
-                    } else { \
-                        print $0 \
-                    }; \
-                    if($index_ref!=unique_aa && $index_alt==unique_aa){exit 1} \
-                }; \
-            } else { \
-                if(NR==last_header_row){ \
-                    printf \"##awk_script: Switched REF/ALT columns for variants where REF!=AA but ALT==AA. Variants where REF!=AA and ALT!=AA where discarded; Date=%s\\n\", date; \
-                    print $0; \
-                }else{print $0} \
-            } \
-        }' > ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_vep_2_anc_up_2_cleaned_ref_alt_switched.vcf")
-
-print_text("After switching, REF is always equals to AA_upcase while ALT is not?", header=4)
-count_problem_ref_aa = run_bash(" \
-    awk \
-        'BEGIN{ \
-            FS=\"\t|;|=\"; \
-            OFS=\"\t\"; \
-            index_ref=" + index_ref + "; \
-            index_alt=" + index_alt + " \
-        }{ \
-            for(i=1;i<=NF;i++){ \
-                if($i==\"AA_upcase\"){ \
-                    full_aa=$(i+1); \
-                    if(index(full_aa, \",\")!=0 && full_aa!=\",\"){ \
-                        k=1; \
-                        while(substr(full_aa, k, 1) != \",\"){ \
-                            before_comma=k; \
-                            k=k+1; \
-                        }; \
-                        unique_aa=substr(full_aa, 1, before_comma); \
-                    } else { \
-                        unique_aa=full_aa \
-                    }; \
-                    if(unique_aa!=$index_ref || unique_aa==$index_alt){ \
-                        count++ \
-                    } \
-                } \
-            } \
-        }END{print count}' \
-        ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_vep_2_anc_up_2_cleaned_ref_alt_switched.vcf", return_value=True).strip()
-if(count_problem_ref_aa == ""):
-    print("YES! GOOD TO GO!")
-else:
-    raise ValueError("ERROR! FALSE! WE HAVE A PROBLEM: AFTER SWITCHING, REF IS NOT ALWAYS AA_upcase OR ALT IS EQUAL TO AA_upcase")
-    #this is a very good check because we have previously done the switch without using AA_upcase, and now we check  if REF is always equals to AA_upcase, which was obtained using other approach.
-
-print_text("We get the same rows if we take the original VCF and select only rows where AA is REF or ALT and removing REF/ALT columns (which where the ones switched)?", header=4)
-run_bash(" \
-    bcftools view \
-        --no-header \
-        ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_vep_2_anc_up_2_cleaned.vcf | \
-    awk \
-        'BEGIN{ \
-            FS=\"\t|;|=\"; \
-            OFS=\"\t\"; \
-            index_ref=" + index_ref + "; \
-            index_alt=" + index_alt + " \
-        }{ \
-            for(i=1;i<=NF;i++){ \
-                if($i==\"AA\"){ \
-                    full_aa=$(i+1); \
-                    if(index(full_aa, \",\")!=0 && full_aa!=\",\"){ \
-                        k=1; \
-                        while(substr(full_aa, k, 1) != \",\"){ \
-                            before_comma=k; \
-                            k=k+1; \
-                        }; \
-                        unique_aa=substr(full_aa, 1, before_comma); \
-                    } else { \
-                        unique_aa=full_aa \
-                    }; \
-                    unique_aa = toupper(unique_aa);\
-                    if(unique_aa==$index_ref || unique_aa==$index_alt){ \
-                        print $0 \
-                    } \
-                } \
-            } \
-        }' | \
-    cut \
-        --delimiter '\t' \
-        --fields 1-3,6- > ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/test_file_1.vcf; \
-    bcftools view \
-        --no-header \
-        ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_vep_2_anc_up_2_cleaned_ref_alt_switched.vcf | \
-    cut \
-        --delimiter '\t' \
-        --fields 1-3,6- > ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/test_file_2.vcf; \
-    check_status=$( \
-        cmp \
-            --silent \
-            ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/test_file_1.vcf \
-            ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/test_file_2.vcf; \
-        echo $?); \
-    if [[ $check_status -eq 0 ]]; then \
-        echo 'TRUE'; \
-    else \
-        echo 'FALSE'; \
-    fi; \
-    rm ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/test_file_1.vcf; \
-    rm ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/test_file_2.vcf")
-    #create a file with the VCF file before switching but selecting only those rows for which REF or ALT are AA.
-        #you can check previous AWK script for information
-        #just note you are assuming here that the position of REF and ALT columns is that of "index_ref" and "index_alt".
-            #this is ok because despite using several delimiters besides tabs, because these columns are before the INFO field, where we have ";", "=" and hence more columns are created than just considering tabs.
-            #in addition, if this is problematic, it will very likely lead to a different file generating false at the final comparison
-        #after awk, select all columns except the 4 and 5 with cut
-            #again, we are assuming REF and ALT are 4 and 5, if this is not the case, we will get a different test_1 file respect to test_2 file, and hence false in the final check
-            #https://stackoverflow.com/a/13446273/12772630
-    #get the switched VCF file but removing REF and ALT columns
-    #check byte by byte that both files are the same with cmp, is equal, the exit status should be zero.
-
-
-
-
-
-
-
-    print_text("chr " + selected_chromosome + " - " + selected_pop + ": see header after applying fill-tags", header=4)
+    print_text("save the subset of filtered variants and then apply on it the awk script", header=3)
     run_bash(" \
         bcftools view \
             " + input_vcf_file + " | \
@@ -3007,45 +2587,337 @@ run_bash(" \
             --remove ^INFO/AA,INFO/AA_upcase,^FORMAT/GT | \
         bcftools +fill-tags \
             -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
-        bcftools head")
+        bcftools view \
+            --output ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.vcf.gz \
+            --output-type z \
+            --compression-level 1")
+
+
+    print_text("apply the awk script to the cleaned VCF", header=3)
+    run_bash(" \
+        gunzip \
+            --stdout \
+            ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.vcf.gz | \
+        awk \
+            -v date=\"$(date '+%a %b %d %H:%M:%S %Y')\" \
+            'BEGIN{ \
+                FS=\"\t\"; \
+                OFS=\"\t\"; \
+                index_ref=" + index_ref + "; \
+                index_alt=" + index_alt + "; \
+                index_info=" + index_info + "; \
+                selected_chrom=\"chr" + selected_chromosome + "\"; \
+                header=\"yes\"; \
+            }{ \
+                if(header==\"yes\"){ \
+                    if($0 !~ /^#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT/){ \
+                        print $0; \
+                    } else { \
+                        printf \"##awk_script: Switched REF/ALT columns for variants where REF!=AA but ALT==AA. Variants where REF!=AA and ALT!=AA where discarded; Date=%s\\n\", date; \
+                        print $0; \
+                        header=\"no\"; \
+                    } \
+                } else if(header==\"no\" && $1==selected_chrom){ \
+                    for(i=1;i<=length($index_info);i++){ \
+                        if(substr($index_info,i,3)==\"AA=\"){ \
+                            k=i; \
+                            while(substr($index_info, k, 1)!=\";\"){ \
+                                end_aa=k; \
+                                k=k+1; \
+                            }; \
+                            if(i+3 != end_aa){ \
+                                full_aa = substr($index_info, i+3, end_aa-(i+3)+1) \
+                            } else { \
+                                full_aa = substr($index_info, i+3, 1) \
+                            }; \
+                            if(index(full_aa, \",\")!=0 && full_aa!=\",\"){ \
+                                full_aa_no_comma = full_aa; \
+                                gsub(/,/, \"\", full_aa_no_comma); \
+                                count=0; \
+                                for(k=1;k<=length(full_aa_no_comma);k++){ \
+                                    char=substr(full_aa_no_comma, k, 1); \
+                                    if(!array_alleles[char]++){count++}; \
+                                }; \
+                                if(count==1){ \
+                                    check_n_csq=\"false\"; \
+                                    for(k in array_alleles){ \
+                                        if(array_alleles[k]==length(full_aa_no_comma)){ \
+                                            check_n_csq=\"true\" \
+                                        } \
+                                    }; \
+                                    if(check_n_csq==\"true\"){ \
+                                        k=1; \
+                                        while(substr(full_aa, k, 1)!=\",\"){ \
+                                           before_comma=k; \
+                                           k=k+1\
+                                        }; \
+                                        unique_aa = substr(full_aa, 1, before_comma); \
+                                    } else { \
+                                        exit 1 \
+                                    }; \
+                                } else { \
+                                    exit 1 \
+                                }; \
+                                delete array_alleles; \
+                            } else { \
+                                unique_aa=full_aa \
+                            }; \
+                            unique_aa = toupper(unique_aa); \
+                        } else { \
+                            if(substr($index_info,i,3)==\"AA;\"){exit 1} \
+                        } \
+                    }; \
+                    if($index_ref==unique_aa || $index_alt==unique_aa){ \
+                        if($index_ref!=unique_aa && $index_alt==unique_aa){ \
+                            tmp_ref=$index_ref; \
+                            $index_ref=$index_alt; \
+                            $index_alt=tmp_ref; \
+                            print $0 \
+                        } else { \
+                            print $0 \
+                        }; \
+                        if($index_ref!=unique_aa && $index_alt==unique_aa){exit 1} \
+                    }; \
+                } else { \
+                    exit 1 \
+                }; \
+            }' | \
+            gzip > ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.vcf.gz")
+        #awk
+            #load variables 
+                #the date following the format used by bcftools
+                    #The command is "+FORMAT", where FORMAT controls the output. For example: "%H" gives hours.
+                    #In order to have spaces between the units, you need to use '' around FORMAT.
+                    #https://unix.stackexchange.com/a/224976
+                    #https://stackoverflow.com/a/27337807/12772630
+                    #https://man7.org/linux/man-pages/man1/date.1.html
+            #begin awk
+                #loading the data into awk using \t for input and output. In this way, we are going to work with the main columns of the VCF file, REF, ALT, INFO, FORMAT, GT...
+                #This means that the whole INFO field is going to be a string for each row, i.e., "AA=g;AA_upcase=G...." because we are not using ";" nor "=" as delimiters.
+                #we do this to get as output the original INFO field with the ";",  "=", because if you use these as delimiters, they disappear from the data.
+                #create variables with the position of the columns of interest that we will use later
+                #also set a variable indicating "header=yes", because the file starts with header lines. This variable will change to "no" when the end of the header is reached.
+            #if the row belongs to header, i.e., header==yes
+                #if the row does NOT starts with CHROM, POS...
+                    #just print the whole row
+                    #https://unix.stackexchange.com/a/72763
+                    #https://stackoverflow.com/a/3701095/12772630
+                #else means we are in the last row of the header
+                    #before printing that row, add a comment with a explanation of the awk script and the time, ending with new line (\n)
+                    #print the whole row
+                    #change "header" to "no", so the next line will NOT be considered as header
+            #else, if header==no (row is after the header) and the first column is the selected chromosome
+                    #https://stackoverflow.com/a/3701095/12772630
+                #for each character of the INFO field
+                    #use substring to extract specific characters from the INFO string. 
+                        #substr(string, start [, length ])
+                        #Return a length-character-long substring of string, starting at character number start. The first character of a string is character number one. For example, substr("washington", 5, 3) returns "ing".
+                            #https://www.gnu.org/software/gawk/manual/html_node/String-Functions.html
+                    #if a substring starting at i up to two positions after (i.e., length=3) is equals to "AA=" (this avoids "AA_upcase=")
+                        #while loop: iterate from the starting position of "AA=", i.e., "A". You save the position of the character "end_aa", overwritting the position of the previous character until we reach ";", which is NOT saved. 
+                            #this will give the position of the last character before ";", i.e., before the next INFO field.
+                            #https://opensource.com/article/19/11/loops-awk
+                        #Use this position to select only the ancestral allele data wihthout "AA=" and ";". 
+                        #If the last character before ";" is the position just after "AA=", i.e., "AA" is equal to a single character (e.g., AA=T or AA=-). In other words, three positions after "AA=" starts (i+3) is equals to the last position before ";" (end_aa)
+                            #select just the character in that position
+                        #else, means that the we have several characters within "AA="
+                            #select a substring starting after "AA=" and ending just before ";"
+                            #we obtain that position by substracting the start of "AA=" from "end_aa"
+                            #For example: In "AA=G,G,G;", "AA=" starts at 1 (i=1), while the first base is in 1+3=4 (i+3=4), and the last character before ";" is at position 8 (end_aa=8). The length of the substring is 8-4+1=5 (end_aa-(i+3)+1). Therefore, if from the position of the last base (end_aa=8), we subtract the position of the first base just after "AA=" (i+3=4), we get the distance between the two characters without including one of them, so you have to add 1 to include botch extremes of this interval: 8-(1+3)+1=5. We want a substring of length 5 to include all alleles.
+                                #Note that, in substr, the start is included so you have to start at 4, including 4, and then add 5 positions starting from 4 to reach the final base. First G is at 4, last G is at 8, so 8-4+1=5. This is 5,6,7 plus the extremes, 4 and 8.
+                        #if "full_aa" does not include "," or it is exactly "," but it has no other character, this means that "AA" is just a base or a missing including "," (",", "N", "-", ".").
+                            #then you can just save "full_aa" in "unique_aa" because there is only 1 character, so it is already unique.
+                            #Note that we use bcftools to extract AA from the CSQ field, and I checked that this makes cases with empty "AA" (AA="") as "AA=.". So we will always have a character after AA, and no space.
+                                #We have added other "if" to check we have no empty AA field just in case
+                        #if it includes "," but it is not exactly ",", this means that we have several alleles for this SNP, e.g., "A,A,A,A", so we need to get just one. 
+                            #first check again (we did before) that we only have one ancestral allele per variant
+                                #copy "full_aa" into "full_aa_no_comma"
+                                #using gsub, change every "," by empty (""), so now we should have only AA data and no commas, the same allele repeated many times
+                                    #https://unix.stackexchange.com/a/492502
+                                #set a "count" variable as zero
+                                #for each character in full_aa_no_comma
+                                    #extract that character
+                                    #save it in array "array_alleles", 
+                                        #if it is previously present then add 1 more to its count. 
+                                        #if is not present before, add it as a new entry with value 1.
+                                            #Negate the expression so this case is true and then we can add 1 to our "count" variable.
+                                            #In other words, count the number of unique characters in full_aa_no_comma
+                            #We do operations if count==1, if it is higher than 1 and hence we have more than 1 distinct characters, STOP (non-zero exit status). 
+                                #this check will fail for microsatellites with different bases like TAT, but this should be ok because we should have only SNPs. If we have different bases in a variant, I want an error.
+                                #we do operations if another check works, if not, stop with non-zero exit status. Take the number of counts we have in array "array_alleles", which stores the unique characters seen in "full_aa_no_comma" with its count. This number should be the same than the total length of "full_aa_no_comma", i.e., the number of characters without comma should be the same than the count for the single character we got. Remember that the previous if check if 'count'==1, so we already know we have only 1 different character.
+                                #If true:
+                                    #iterate across characters of "full_aa"
+                                        #while the character is NOT ",", save the position of the character in "before_comma" and move to the next position
+                                        #if "," it reached, then "before_comma" is not updated more, and hence we have the last position just before ","
+                                    #now extract a substring from "full_aa" from the start to the position just before the first comma. For example, in TT,TT,TT: would be from 1 to 2, because the first comma is in position 3. Remember that the range of awk substring includes both extremes!
+                            #delete "array_alleles", so we have it clean for the next iteration of the larger loop (iterated over i)
+                        #else, means that we only have 1 character after "AA=" and before ";", therefore just take that character.
+                        #convert the resulting unique ancestral allele (unique_aa) into uppercase to consdier both low and high-confidence alleles.
+                    #else means that we do not have "AA=". This is ok because we can have other INFO fields, BUT
+                        #if the INFO field is "AA;" STOP, because we should have always at least "." in case AA is missing.
+                #if the REF or the ALT fields are equal to the unique ancestral allele
+                    #if the REF is NOT the AA, but the ALT it is, we need to switch them
+                        #save the REF in a temp variable
+                        #overwrite the original REF with the ALT
+                        #save as new ALT the REF value stored in the temp variable
+                    #else just print the row without changes
+                #else, we do not have ancestral allele for this variant in the panel, so we can discard the SNP, so no print. Without ancestral allele there is anything we can do with that allele.
+            #else means we have an error because rows after the header should all have the selected chromosome in the first column: stop with non-zero exist status        
+
+
+    print_text("check again that AA_upcase is just AA in uppercase, because we are going to use AA_upcase as a check in the next lines", header=3)
+    problematic_aa_aa_upcase = run_bash(" \
+        bcftools view \
+            --no-header \
+            --drop-genotypes \
+            ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.vcf.gz | \
+        awk \
+            'BEGIN{FS=\"\t|;|=\"}{ \
+                for(i=1;i<=NF;i++){ \
+                    if($i == \"AA\"){ \
+                        if(toupper($(i+1)) != $(i+3)){ \
+                            count++ \
+                        } \
+                    } \
+                } \
+            }END{print count}' \
+        ", return_value=True).strip()
+    if(problematic_aa_aa_upcase == ""):
+        print("YES! GOOD TO GO!")
+    else:
+        raise ValueError("ERROR! FALSE! WE HAVE A PROBLEM: AA_upcase is not just AA in uppercase")
+
+
+    print_text("After switching, REF is always equals to AA_upcase while ALT is not?", header=3)
+    count_problem_ref_aa = run_bash(" \
+        gunzip \
+            --stdout \
+            ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.vcf.gz | \
+        awk \
+            'BEGIN{ \
+                FS=\"\t|;|=\"; \
+                OFS=\"\t\"; \
+                index_ref=" + index_ref + "; \
+                index_alt=" + index_alt + " \
+            }{ \
+                for(i=1;i<=NF;i++){ \
+                    if($i==\"AA_upcase\"){ \
+                        full_aa=$(i+1); \
+                        if(index(full_aa, \",\")!=0 && full_aa!=\",\"){ \
+                            k=1; \
+                            while(substr(full_aa, k, 1) != \",\"){ \
+                                before_comma=k; \
+                                k=k+1; \
+                            }; \
+                            unique_aa=substr(full_aa, 1, before_comma); \
+                        } else { \
+                            unique_aa=full_aa \
+                        }; \
+                        if(unique_aa!=$index_ref || unique_aa==$index_alt){ \
+                            count++ \
+                        } \
+                    } \
+                } \
+            }END{print count}'", return_value=True).strip()
+    if(count_problem_ref_aa == ""):
+        print("YES! GOOD TO GO!")
+    else:
+        raise ValueError("ERROR! FALSE! WE HAVE A PROBLEM: AFTER SWITCHING, REF IS NOT ALWAYS AA_upcase OR ALT IS EQUAL TO AA_upcase")
+        #this is a very good check because we have previously done the switch without using AA_upcase, and now we check  if REF is always equals to AA_upcase, which was obtained using other approach.
+
+
+    print_text("We get the same rows if we take the original VCF and select only rows where AA is REF or ALT and removing REF/ALT columns (which where the ones switched)?", header=3)
+    run_bash(" \
+        bcftools view \
+            --no-header \
+            ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.vcf.gz | \
+        awk \
+            'BEGIN{ \
+                FS=\"\t|;|=\"; \
+                OFS=\"\t\"; \
+                index_ref=" + index_ref + "; \
+                index_alt=" + index_alt + " \
+            }{ \
+                for(i=1;i<=NF;i++){ \
+                    if($i==\"AA\"){ \
+                        full_aa=$(i+1); \
+                        if(index(full_aa, \",\")!=0 && full_aa!=\",\"){ \
+                            k=1; \
+                            while(substr(full_aa, k, 1) != \",\"){ \
+                                before_comma=k; \
+                                k=k+1; \
+                            }; \
+                            unique_aa=substr(full_aa, 1, before_comma); \
+                        } else { \
+                            unique_aa=full_aa \
+                        }; \
+                        unique_aa = toupper(unique_aa);\
+                        if(unique_aa==$index_ref || unique_aa==$index_alt){ \
+                            print $0 \
+                        } \
+                    } \
+                } \
+            }' | \
+        cut \
+            --delimiter '\t' \
+            --fields 1-3,6- > ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/test_file_1.vcf; \
+        bcftools view \
+            --no-header \
+            ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.vcf.gz | \
+        cut \
+            --delimiter '\t' \
+            --fields 1-3,6- > ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/test_file_2.vcf; \
+        check_status=$( \
+            cmp \
+                --silent \
+                ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/test_file_1.vcf \
+                ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/test_file_2.vcf; \
+            echo $?); \
+        if [[ $check_status -eq 0 ]]; then \
+            echo 'TRUE'; \
+        else \
+            echo 'FALSE'; \
+        fi; \
+        rm ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/test_file_1.vcf; \
+        rm ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/test_file_2.vcf")
+        #create a file with the VCF file before switching but selecting only those rows for which REF or ALT are AA.
+            #you can check previous AWK script for information
+            #just note you are assuming here that the position of REF and ALT columns is that of "index_ref" and "index_alt".
+                #this is ok because despite using several delimiters besides tabs, because these columns are before the INFO field, where we have ";", "=" and hence more columns are created than just considering tabs.
+                #in addition, if this is problematic, it will very likely lead to a different file generating false at the final comparison
+            #after awk, select all columns except the 4 and 5 with cut
+                #again, we are assuming REF and ALT are 4 and 5, if this is not the case, we will get a different test_1 file respect to test_2 file, and hence false in the final check
+                #https://stackoverflow.com/a/13446273/12772630
+        #get the switched VCF file but removing REF and ALT columns
+        #check byte by byte that both files are the same with cmp, is equal, the exit status should be zero.
+    
+
+    print_text("chr " + selected_chromosome + " - " + selected_pop + ": see header after applying fill-tags", header=3)
+    run_bash(" \
+        bcftools head \
+            ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.vcf.gz")
             #you can see that after the list of contigs, the only field shown before the list of my commands is just GT (phased genotypes) because I have removed all INFO and FORMAT fields with the exception of FORMAT/GT.
             #then we have all the commands I have run in order to subset individuals and filter SNPs.
             #see dummy example for further details.
 
-    #
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": save the cleaned vcf as a compressed file so we have an historial of the changes made in the vcf file")
-    print("#######################################\n#######################################")
+
+    print_text("chr " + selected_chromosome + " - " + selected_pop + ": see the genotypes of a few individuals from the recently created vcf file", header=3)
     run_bash(" \
         bcftools view \
-            --samples " + ",".join(selected_samples) + " \
-            " + input_vcfs_path + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
-        bcftools view \
-            --types snps | \
-        bcftools +fill-tags \
-            -- --tags AN,AC | \
-        bcftools view \
-            --exclude 'INFO/AC=INFO/AN || INFO/AC=0' | \
-        bcftools norm \
-            --rm-dup exact | \
-        bcftools norm \
-            --multiallelic +snps | \
-        bcftools view \
-            --max-alleles 2  \
-            --min-alleles 2 | \
-        bcftools view \
-            --phased | \
-        bcftools view \
-            --targets-file ./data/masks/20160622.chr" + selected_chromosome + "_" + selected_pop + ".pilot_mask.bed.gz | \
-        bcftools annotate \
-            --remove INFO,^FORMAT/GT | \
-        bcftools +fill-tags \
-            -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
-        bcftools view \
-            --output ./results/01_cleaned_vep_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz \
-            --output-type z \
-            --compression-level 1")
-                #after subseting and filtering, save as a compressed VCF file, selecting the option for best speed (see dummy example for further details)
+            --no-header \
+            ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.vcf.gz | \
+        head -5")
+            #As expected, we have 
+                #CHROM
+                #POS
+                #ID
+                #REF
+                #ALT
+                #QUAL (empty)
+                #FILTER (empty)
+                #INFO (with the fields I specifically created)
+                #FORMAT (only GT)
+
 
     #summary of the filters applied with vcftools in vcf files from slim simulations
         #--max-alleles 2 --min-alleles 2 --max-missing 1 --phased
@@ -3057,7 +2929,7 @@ run_bash(" \
             #Excludes all sites that contain unphased genotypes
         #--max-missing 1
             #Exclude sites on the basis of the proportion of missing data (defined to be between 0 and 1, where 0 allows sites that are completely missing and 1 indicates no missing data allowed).
-            #we used 1 because we were working with simulations, we have for sure data for all samples and snps. Ask David what to do in this case.
+            #we used 1 because we were working with simulations, we have for sure data for all samples and snps.
 
     #my questions to David about SNP filters
         #Inbreeding in 1KGP
@@ -3089,7 +2961,7 @@ run_bash(" \
         #Biallelic SNPs per specific population are ok.
             #so I can discard SNPs with less than 2 alleles and more than 2 alleles within each specific population.
             #I understand this includes remove monomorphic. For what reason do you want a SNP that is fixed within your population?
-            #Also I guess I can remove SNPs that all their genotypes are phased within the selected population.
+            #Also I guess I can remove SNPs with unphased genotypes within the selected population.
         #Masks based on low coverage are ok, you should use the less stringent masks.
             #The less stringent is the pilot.
         #You can use the 2,504 individuals and remove the four related individuals yes.
@@ -3113,40 +2985,13 @@ run_bash(" \
             #is this ok?
                 #ok
 
-    #
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": see the header of the recently created vcf file")
-    print("#######################################\n#######################################")
-    run_bash(" \
-        bcftools head \
-            ./results/01_cleaned_vep_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz")
-
-    #
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": see the genotypes of a few individuals from the recently created vcf file")
-    print("#######################################\n#######################################")
-    run_bash(" \
-        bcftools view \
-            ./results/01_cleaned_vep_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz \
-            --no-header | \
-        head -5")
-            #As expected, we have 
-                #CHROM
-                #POS
-                #ID
-                #REF
-                #ALT
-                #QUAL (empty)
-                #FILTER (empty)
-                #INFO (with the fields I specifically created)
-                #FORMAT (only GT)
 
 
 
     ##########################################
     # calculate map file within selected pop #
     ##########################################
-
+    print_text("calculate map file within selected pop", header=1)
 
 
     #error with "list_snps_with_gen_pos.txt"
@@ -3988,9 +3833,10 @@ run_bash(" \
     print(sample_list_from_hap_clean["ID_2"].equals(selected_samples))
 
 
-    print_text("remove the file that was used as input for VEP and also the original output of VEP", header=3)
+    print_text("remove files not needed anymore", header=3)
     run_bash(" \
-        rm " + input_vcf_file)
+        rm " + input_vcf_file + "; \
+        rm ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.vcf.gz")
 
 
     print_text("FINISH", header=3)

@@ -27,8 +27,7 @@ do
 	#then count the number of times we have files with specific names
 	count_1=$(ls "./chr"$chrom | grep --count "1kGP_high_coverage_Illumina.chr"$chrom".filtered.SNV_phased_panel.vep.anc_up.vcf.gz")
 	count_2=$(ls "./chr"$chrom | grep --count "1kGP_high_coverage_Illumina.chr"$chrom".filtered.SNV_phased_panel.vep.vcf.gz")
-		#we should have two files matching this pattern
-			#the VCF file
+		#we should have one file matching this pattern
 			#the html file
 	count_3=$(ls "./chr"$chrom | grep --count "anc_alleles_uppercase_chr"$chrom".tsv.gz")
 		#we should have two files matching this pattern
@@ -36,7 +35,7 @@ do
 			#the tbi file
 	
 	#check we have the correct number of files with the corresponding names
-	if [[ $count_1 -eq 1 && $count_2 -eq 2 && $count_3 -eq 2 ]]; then
+	if [[ $count_1 -eq 1 && $count_2 -eq 1 && $count_3 -eq 2 ]]; then
 		echo "TRUE";
 	else
 		echo "FALSE";
