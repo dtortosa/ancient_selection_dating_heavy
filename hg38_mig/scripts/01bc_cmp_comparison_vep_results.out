@@ -1,0 +1,298 @@
+
+#######################################
+#######################################
+checking function to print nicely: header 1
+#######################################
+#######################################
+
+###### checking function to print nicely: header 2 ######
+
+## checking function to print nicely: header 3 ##
+
+# checking function to print nicely: header 4 #
+
+#######################################
+#######################################
+see working directory
+#######################################
+#######################################
+/home/dftortosa/singularity/dating_climate_adaptation/hg38_mig/scripts
+
+
+#######################################
+#######################################
+list files/folders there
+#######################################
+#######################################
+00a_download_hg38_data.out
+00a_download_hg38_data.sh
+00_ancestral_calcs_outputs
+00b_download_vep_cache.out
+00b_download_vep_cache.sh
+00c_download_fasta_ancestral.out
+00c_download_fasta_ancestral.sh
+01a_selecting_pedegree.out
+01a_selecting_pedegree.py
+01bb_some_processing_after_ancestral_calc.out
+01bb_some_processing_after_ancestral_calc.sh
+01bc_cmp_comparison_vep_results.out
+01bc_cmp_comparison_vep_results.py
+01b_vep_ancestral.out
+01b_vep_ancestral.py
+01c_check_masks_overlap.R
+01c_check_masks_overlap.Rout
+01d_hap_map_calcs.out
+01d_hap_map_calcs.py
+01_hap_map_calcs_outputs
+recipes
+scripts_jesus
+
+
+#######################################
+#######################################
+do the comparisons
+#######################################
+#######################################
+
+###### run function across chromosomes ######
+
+## define function ##
+
+## create list with all chromosomes ##
+get chromosome names
+we are going to analyze 22 chromosomes?
+True
+See them
+['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22']
+
+## run it in parallel ##
+
+# open the pool #
+
+# Starting chromosome 1 #
+
+# use cmp to compare byte by byte both files and then obtain the exit status #
+0
+
+
+# convert to boolean #
+True
+save the result
+
+# Starting chromosome 11 #
+
+# use cmp to compare byte by byte both files and then obtain the exit status #
+0
+
+
+# convert to boolean #
+True
+save the result
+
+# Starting chromosome 17 #
+
+# use cmp to compare byte by byte both files and then obtain the exit status #
+0
+
+
+# convert to boolean #
+True
+save the result
+
+# Starting chromosome 2 #
+
+# use cmp to compare byte by byte both files and then obtain the exit status #
+0
+
+
+# convert to boolean #
+True
+save the result
+
+# Starting chromosome 12 #
+
+# use cmp to compare byte by byte both files and then obtain the exit status #
+0
+
+
+# convert to boolean #
+True
+save the result
+
+# Starting chromosome 18 #
+
+# use cmp to compare byte by byte both files and then obtain the exit status #
+0
+
+
+# convert to boolean #
+True
+save the result
+
+# Starting chromosome 6 #
+
+# use cmp to compare byte by byte both files and then obtain the exit status #
+0
+
+
+# convert to boolean #
+True
+save the result
+
+# Starting chromosome 7 #
+
+# use cmp to compare byte by byte both files and then obtain the exit status #
+0
+
+
+# convert to boolean #
+True
+save the result
+
+# Starting chromosome 14 #
+
+# use cmp to compare byte by byte both files and then obtain the exit status #
+0
+
+
+# convert to boolean #
+True
+save the result
+
+# Starting chromosome 21 #
+
+# use cmp to compare byte by byte both files and then obtain the exit status #
+0
+
+
+# convert to boolean #
+True
+save the result
+
+# Starting chromosome 3 #
+
+# use cmp to compare byte by byte both files and then obtain the exit status #
+0
+
+
+# convert to boolean #
+True
+save the result
+
+# Starting chromosome 10 #
+
+# use cmp to compare byte by byte both files and then obtain the exit status #
+0
+
+
+# convert to boolean #
+True
+save the result
+
+# Starting chromosome 16 #
+
+# use cmp to compare byte by byte both files and then obtain the exit status #
+0
+
+
+# convert to boolean #
+True
+save the result
+
+# Starting chromosome 22 #
+
+# use cmp to compare byte by byte both files and then obtain the exit status #
+0
+
+
+# convert to boolean #
+True
+save the result
+
+# Starting chromosome 5 #
+
+# use cmp to compare byte by byte both files and then obtain the exit status #
+0
+
+
+# convert to boolean #
+True
+save the result
+
+# Starting chromosome 8 #
+
+# use cmp to compare byte by byte both files and then obtain the exit status #
+0
+
+
+# convert to boolean #
+True
+save the result
+
+# Starting chromosome 15 #
+
+# use cmp to compare byte by byte both files and then obtain the exit status #
+0
+
+
+# convert to boolean #
+True
+save the result
+
+# Starting chromosome 19 #
+
+# use cmp to compare byte by byte both files and then obtain the exit status #
+0
+
+
+# convert to boolean #
+True
+save the result
+
+# Starting chromosome 4 #
+
+# use cmp to compare byte by byte both files and then obtain the exit status #
+0
+
+
+# convert to boolean #
+True
+save the result
+
+# Starting chromosome 9 #
+
+# use cmp to compare byte by byte both files and then obtain the exit status #
+0
+
+
+# convert to boolean #
+True
+save the result
+
+# Starting chromosome 13 #
+
+# use cmp to compare byte by byte both files and then obtain the exit status #
+0
+
+
+# convert to boolean #
+True
+save the result
+
+# Starting chromosome 20 #
+
+# use cmp to compare byte by byte both files and then obtain the exit status #
+0
+
+
+# convert to boolean #
+True
+save the result
+
+# run function across pandas rows #
+
+# close the pool #
+
+## now check that we have true for all chromosomes ##
+We have all TRUE, so we can just remove the previous VCF files because they are identical to the new ones
+
