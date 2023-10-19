@@ -2536,7 +2536,7 @@ def master_processor(chr_pop_combination, debugging=False):
             -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AF AA:%AA AA_upcase:%AA_upcase GTs:[ %GT]\n'")
 
 
-    print_text("Before the next step, check that REF and ALT are always ACGT, because our awk script relies on the fact that we discard those rows for which the unique ancestral allele in upper case is NOT equal to REF or ALT, removing in that way variants with ancestral allele equal to '.', 'N', '-', etc.... Also check that REF and ALT are NOT the same", header=3)
+    print_text("Before the next step, check that REF and ALT are always ACGT, because our awk script relies on the fact that we discard those rows for which the unique ancestral allele in upper case is NOT equal to REF or ALT, removing in that way variants with ancestral allele equal to '.', 'N', '-', etc.... I have checked that regex here is case sensitive, so looking for ACGT does not look for acgt in REF/ALT, meaning we are also checking that REF/ALT are in upper case. Also check that REF and ALT are NOT the same", header=3)
     problematic_cases_ref_alt = run_bash(" \
         bcftools view \
             --no-header \

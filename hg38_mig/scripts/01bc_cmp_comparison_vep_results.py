@@ -219,7 +219,7 @@ print(chromosomes)
 print_text("run it in parallel", header=3)
 print_text("open the pool", header=4)
 import multiprocessing as mp
-pool = mp.Pool(8)
+pool = mp.Pool(6)
 
 print_text("run function across pandas rows", header=4)
 bool_results = pool.map(check_per_chrom, chromosomes)
