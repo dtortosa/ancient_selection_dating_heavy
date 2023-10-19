@@ -2892,7 +2892,113 @@ def master_processor(chr_pop_combination, debugging=False):
         #check byte by byte that both files are the same with cmp, is equal, the exit status should be zero.
     
 
-    print_text("chr " + selected_chromosome + " - " + selected_pop + ": see header after applying fill-tags", header=3)
+    print_text("check that the SNPs discarded when switching REF/ALT are indeed SNPs without ancestral data", header=3)
+    problematic_ref_alt_aa_count = run_bash(" \
+        awk \
+            'BEGIN{ \
+                FS=OFS=\"\t\"; \
+                index_id=" + index_id + "; \
+                index_ref=" + index_ref + "; \
+                index_alt=" + index_alt + "; \
+                index_info=" + index_info + " \
+            }{ \
+                if(FNR==NR){ \
+                    a[$index_id]; \
+                    next \
+                }; \
+                if(!($index_id in a)){ \
+                    for(i=1;i<=length($index_info);i++){ \
+                        if(substr($index_info, i, 3)==\"AA=\"){ \
+                            k=i+3; \
+                            while(substr($index_info, k, 1)!=\",\" && substr($index_info, k, 1)!=\";\"){ \
+                                last_base=k; \
+                                k=k+1; \
+                            } \
+                            unique_aa=toupper(substr($index_info, i+3, last_base-(i+3)+1)); \
+                        } \
+                    }; \
+                    if($index_ref == unique_aa || $index_alt == unique_aa){ \
+                        count++ \
+                    } \
+                } \
+            }END{print count}' \
+            <( \
+                bcftools view \
+                    --no-header \
+                    --drop-genotypes \
+                    ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.vcf.gz \
+            ) \
+            <( \
+                bcftools view \
+                    --no-header \
+                    --drop-genotypes \
+                    ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.vcf.gz \
+            )", return_value=True).strip()
+    if problematic_ref_alt_aa_count=="":
+        print("YES! GOOD TO GO!")
+    else:
+        raise ValueError("FALSE! ERROR! WE HAVE A PROBLEM: Some SNPs that have been discarded have indeed ancestral allele equal to REF or ALT, they should be included!!")
+    #we are going to select those SNPs from the cleaned VCF that were excluded in the next step as their REF/ALT is not equal to the ancestral allele.
+    #we are using awk with two files as input, the first one is the VCF file where SNPs without ancestral allele have been removed. We will use this file to make an array of IDs, and then, in the original VCF (second file), select those SNPs whose ID is NOT included in that array, i.e., they are not in the new VCF file.
+        #I am processing the files with bcftools in order to remove the header and then directly using them as input for awk with by process substitution
+            #Piping the stdout of a command into the stdin of another is a powerful technique. But, what if you need to pipe the stdout of multiple commands? This is where process substitution comes in.
+            #https://tldp.org/LDP/abs/html/process-sub.html
+    #script based on
+        #https://stackoverflow.com/a/14062579/12772630
+    #BEGIN
+        #using "\t" as separator. In this way, we will work with the main columns, i.e., CHROM, POS, ID, REF, ALT....
+        #create variables with the index of some of these columns. The order should be same than in the original file, because we are not changing the columns...
+            #we are checking this anyways at the end of this part of the script (see below)
+    #if the row belongs to the first file
+        #create an array with the SNP ID as index
+        #go to the next row, i.e., do not run anything else from the script
+            #we use next because we do not want to run more for the first file, so next force to stop running more code and go to the next row. I usually do not want this as I want to run all the script, but I want it in this case.
+            #https://www.gnu.org/software/gawk/manual/html_node/Next-Statement.html
+        #we know if a row belongs to the first file using if(FNR=NR).
+            #NR starts at 1 with the first row of the first file and ends at the last row of the last file.
+                #if you have 2 files with 2 rows each one, NR will end at 4, because we have 2 files x 2 rows/file=4 rows
+            #FNR, in contrast, is re-started in every new file.
+                #in our previous example, the first row of every file will have FNR=1
+            #Therefore, only for the first file FNR will be the same than NR.
+            #awk '{print NR, FNR}' <(echo -e "hola\tmundo\nhola\tmundos") <(echo -e "hola\tmundo\nhola\tmundos")
+        #see dummy example
+            #!awk '{if(FNR==NR && NR>1){a[$1];next}; if(($1 in a) && FNR>1){print $0}}' <(echo -e "id\tname\n2\tManu") <(echo -e "id\tname\n1\tJuan\n2\tManu\n3\tPepe")
+    #leave for the second file
+        #if the SNP ID of the SNP is NOT included as an index the array, this means this row was discarded and should not have ancestral data
+            #use (!()) to negate condition in "if" conditional
+                #https://stackoverflow.com/a/55940407/12772630
+            #for each character in the info field
+                #if the selected character plus the next 2 are "AA="
+                    #iterate over the characters after "AA=" and save its position until "," or ";" are found, so we get the position just before the "," or ";", i.e., the first copy of the allele. 
+                        #we can have AA=T,T,T; or AA=T; or AA=TT;
+                        #in all cases we get the first copy
+                    #select the strings between the position just after "AA=" and the position just before "," or ";"
+                        #substr($index_info, i+3, last_base-(i+3)+1)
+                        #Example:
+                            #NS=107;AA=TT,TT,TT;
+                            #AA starts at 8, thus the "i" we use is 8
+                            #i+3=11, thus the alleles start at 11
+                            #last_base=12, i.e., last base before "," or ";" is 12
+                            #we want everything between 12 and 11, including both extremes, thus 12-11+1=2, i.e., last_base-(i+3)+1.
+                            #We start at 11, and get 11 and 12 (two positions), i.e., TT
+                    #convert to upper case
+            #REF nor ALT should be NOT equal to the ancestral allele, because if one of them is, then we would be able to do the switch between columns and then, this SNP should not be lost
+                #if one of them is, add 1 to count
+    #After reading all files (END), print the count
+
+
+
+
+    #por aquii
+
+    #you can re-use the previous script to select for each SNP in the new VCF, the corresponding ID in the old VCF, and then switch REF/ALT if needed, and the result should be IDENTICAL respect to the new file
+        #this could be a check that we are not messing things with the separators...
+
+
+
+
+
+    print_text("chr " + selected_chromosome + " - " + selected_pop + ": see the header of the final VCF file", header=3)
     run_bash(" \
         bcftools head \
             ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.vcf.gz")
@@ -2901,7 +3007,7 @@ def master_processor(chr_pop_combination, debugging=False):
             #see dummy example for further details.
 
 
-    print_text("chr " + selected_chromosome + " - " + selected_pop + ": see the genotypes of a few individuals from the recently created vcf file", header=3)
+    print_text("chr " + selected_chromosome + " - " + selected_pop + ": see the genotypes of a few individuals from the final VCF file", header=3)
     run_bash(" \
         bcftools view \
             --no-header \
@@ -2917,6 +3023,36 @@ def master_processor(chr_pop_combination, debugging=False):
                 #FILTER (empty)
                 #INFO (with the fields I specifically created)
                 #FORMAT (only GT)
+
+
+    print_text("check we still have the correct column names in order. Both the fixed fields (CHROM, POS...) and the genotype columns", header=3)
+    problematic_vcf_columns_header = run_bash(" \
+        bcftools view \
+            --header \
+            ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.vcf.gz | \
+        awk \
+            'BEGIN{ \
+                FS=OFS=\"\t\" \
+            }END{ \
+                if($0 ~ /#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t" + "\t".join(selected_samples) + "/){ \
+                    print \"TRUE\" \
+                } else { \
+                    print \"FALSE\" \
+                }; \
+            }'", return_value=True).strip()
+    if problematic_vcf_columns_header=="TRUE":
+        print("YES! GOOD TO GO!")
+    else:
+        raise ValueError("FALSE! ERROR! WE HAVE A PROBLEM: The header of the final VCF file does not have the correct columns. The problem can be the FIXED fields like CHROM, POS... or the columns for the sample genotypes")
+        #get the header of the last VCF file
+        #open in awk
+            #using "\t" as delimiter
+            #in the last row, which is the column names
+                #if the row has exactly the columns names we expect, i.e., the 8 fixed fields and the FORMAT genotype columns
+                    #print "TRUE"
+                #else
+                    #print "FALSE"
+        #stop the script if we do NOT have TRUE
 
 
     #summary of the filters applied with vcftools in vcf files from slim simulations
