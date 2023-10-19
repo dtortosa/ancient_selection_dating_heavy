@@ -164,12 +164,12 @@ def check_per_chrom(chrom):
             <( \
                 bcftools view \
                     --no-header \
-                    ./results/00_vep_vcf_files/chr" + chrom_str + "/1kGP_high_coverage_Illumina.chr" + chrom_str + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz \
+                    ../results/00_vep_vcf_files/chr" + chrom_str + "/1kGP_high_coverage_Illumina.chr" + chrom_str + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz \
             ) \
             <( \
                 bcftools view \
                     --no-header \
-                    ./results/00_vep_vcf_files_old/chr" + chrom_str + "/1kGP_high_coverage_Illumina.chr" + chrom_str + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz \
+                    ../results/00_vep_vcf_files_old/chr" + chrom_str + "/1kGP_high_coverage_Illumina.chr" + chrom_str + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz \
             ); \
         echo $?", return_value=True).strip()
     #we are using bash substitution
@@ -235,6 +235,6 @@ if (len(bool_results)==22) & (sum(bool_results) == len(bool_results)):
         rm \
             --recursive \
             --force \
-            ./results/00_vep_vcf_files_old")
+            ../results/00_vep_vcf_files_old")
 else:
     raise ValueError("ERROR! FALSE! We have at least one chromosome for which the old and the new VCF files (after adding the download of fasta ('f' option in INSTALL.pl for VEP) are not the same")

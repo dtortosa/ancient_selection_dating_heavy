@@ -2993,6 +2993,7 @@ def master_processor(chr_pop_combination, debugging=False):
     ##########################################
     print_text("calculate map file within selected pop", header=1)
 
+    #this should be here or in a different script? probably easier here to select SNPs?
 
     #error with "list_snps_with_gen_pos.txt"
         #this should have the chromosome and pop name to avoid interefernece
@@ -3920,12 +3921,9 @@ pool.close()
     #https://mail.google.com/mail/u/0/?tab=rm&ogbl#drafts/QgrcJHsHpDRJdfjndBxlCjQHdCNBwJJqNSl
     
     #after the run
-        #run 01bb_some_processing_after_ancestral_calc.sh to do checks about the FALSEs
-        #then calculate hashes
-            #01bc_shasum_vep_results.py
-            #CHECK THE SCRIPT BEFORE, JUST QUICK
-    #compare files VEP results between versions, if the same and cosndierng smartmatch reaosns, I think we are good, ask jesus
-
+        #compare results between versions
+        #write jesus
+        #map file in this script?
 
 
 
