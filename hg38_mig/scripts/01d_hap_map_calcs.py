@@ -2593,6 +2593,44 @@ def master_processor(chr_pop_combination, debugging=False):
             --compression-level 1")
 
 
+    print_text("check AA is never ';' nor ',' because of cases with 'AA=;' or 'AA=,,,;'. bcftools should always put '.' for empty ", header=3)
+    problem_comma_semicolon = run_bash(" \
+        bcftools view \
+            --no-header \
+            ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.vcf.gz | \
+        awk \
+            'BEGIN{ \
+                FS=OFS=\"\t\"; \
+                index_info=" + index_info + " \
+            }{ \
+                for(i=1;i<=length($index_info);i++){ \
+                    if(substr($index_info, i, 3)==\"AA=\"){ \
+                        k=i+3; \
+                        while(substr($index_info, k, 1)!=\",\" && substr($index_info, k, 1)!=\";\"){ \
+                            last_base=k; \
+                            k=k+1 \
+                        }; \
+                        unique_aa=toupper(substr($index_info, i+3, last_base-(i+3)+1)) \
+                    } \
+                }; \
+                if(unique_aa==\",\" || unique_aa==\";\"){ \
+                    exit 1 \
+                } \
+            }'; \
+        echo $?", return_value=True).strip()
+    if problem_comma_semicolon=="0":
+        print("YES! GOOD TO GO!")
+    else:
+        raise ValueError("FALSE! ERROR! WE HAVE A PROBLEM: Some SNPs have as unique AA comma or semi-colon and this should not be the case. At least, they should have '.', as this is the string used for empty in bcftools")
+    #load the VCF file before switching and without header
+    #in awk
+        #extract the unique AA like in previous steps
+        #if the allele is "," and ";"
+            #stop with non-zero exit status
+    #print the exit status
+    #if that status is not "0", stop the script
+
+
     print_text("apply the awk script to the cleaned VCF", header=3)
     run_bash(" \
         gunzip \
@@ -2826,72 +2864,6 @@ def master_processor(chr_pop_combination, debugging=False):
         #this is a very good check because we have previously done the switch without using AA_upcase, and now we check  if REF is always equals to AA_upcase, which was obtained using other approach.
 
 
-    print_text("We get the same rows if we take the original VCF and select only rows where AA is REF or ALT and removing REF/ALT columns (which where the ones switched)?", header=3)
-    run_bash(" \
-        bcftools view \
-            --no-header \
-            ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.vcf.gz | \
-        awk \
-            'BEGIN{ \
-                FS=\"\t|;|=\"; \
-                OFS=\"\t\"; \
-                index_ref=" + index_ref + "; \
-                index_alt=" + index_alt + " \
-            }{ \
-                for(i=1;i<=NF;i++){ \
-                    if($i==\"AA\"){ \
-                        full_aa=$(i+1); \
-                        if(index(full_aa, \",\")!=0 && full_aa!=\",\"){ \
-                            k=1; \
-                            while(substr(full_aa, k, 1) != \",\"){ \
-                                before_comma=k; \
-                                k=k+1; \
-                            }; \
-                            unique_aa=substr(full_aa, 1, before_comma); \
-                        } else { \
-                            unique_aa=full_aa \
-                        }; \
-                        unique_aa = toupper(unique_aa);\
-                        if(unique_aa==$index_ref || unique_aa==$index_alt){ \
-                            print $0 \
-                        } \
-                    } \
-                } \
-            }' | \
-        cut \
-            --delimiter '\t' \
-            --fields 1-3,6- > ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/test_file_1.vcf; \
-        bcftools view \
-            --no-header \
-            ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.vcf.gz | \
-        cut \
-            --delimiter '\t' \
-            --fields 1-3,6- > ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/test_file_2.vcf; \
-        check_status=$( \
-            cmp \
-                --silent \
-                ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/test_file_1.vcf \
-                ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/test_file_2.vcf; \
-            echo $?); \
-        if [[ $check_status -eq 0 ]]; then \
-            echo 'TRUE'; \
-        else \
-            echo 'FALSE'; \
-        fi; \
-        rm ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/test_file_1.vcf; \
-        rm ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/test_file_2.vcf")
-        #create a file with the VCF file before switching but selecting only those rows for which REF or ALT are AA.
-            #you can check previous AWK script for information
-            #just note you are assuming here that the position of REF and ALT columns is that of "index_ref" and "index_alt".
-                #this is ok because despite using several delimiters besides tabs, because these columns are before the INFO field, where we have ";", "=" and hence more columns are created than just considering tabs.
-                #in addition, if this is problematic, it will very likely lead to a different file generating false at the final comparison
-            #after awk, select all columns except the 4 and 5 with cut
-                #again, we are assuming REF and ALT are 4 and 5, if this is not the case, we will get a different test_1 file respect to test_2 file, and hence false in the final check
-                #https://stackoverflow.com/a/13446273/12772630
-        #get the switched VCF file but removing REF and ALT columns
-        #check byte by byte that both files are the same with cmp, is equal, the exit status should be zero.
-    
-
     print_text("check that the SNPs discarded when switching REF/ALT are indeed SNPs without ancestral data", header=3)
     problematic_ref_alt_aa_count = run_bash(" \
         awk \
@@ -2912,9 +2884,9 @@ def master_processor(chr_pop_combination, debugging=False):
                             k=i+3; \
                             while(substr($index_info, k, 1)!=\",\" && substr($index_info, k, 1)!=\";\"){ \
                                 last_base=k; \
-                                k=k+1; \
-                            } \
-                            unique_aa=toupper(substr($index_info, i+3, last_base-(i+3)+1)); \
+                                k=k+1 \
+                            }; \
+                            unique_aa=toupper(substr($index_info, i+3, last_base-(i+3)+1)) \
                         } \
                     }; \
                     if($index_ref == unique_aa || $index_alt == unique_aa){ \
@@ -2987,15 +2959,57 @@ def master_processor(chr_pop_combination, debugging=False):
     #After reading all files (END), print the count
 
 
-
-
-    #por aquii
-
-    #you can re-use the previous script to select for each SNP in the new VCF, the corresponding ID in the old VCF, and then switch REF/ALT if needed, and the result should be IDENTICAL respect to the new file
-        #this could be a check that we are not messing things with the separators...
-
-
-
+    print_text("Check we get the same rows if we take the original VCF and select only rows where AA is REF or ALT, switching only when ALT==AA", header=3)
+    run_bash(" \
+        bcftools view \
+            --no-header \
+            ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.vcf.gz | \
+        awk \
+            'BEGIN{ \
+                FS=OFS=\"\t\"; \
+                index_ref=" + index_ref + "; \
+                index_alt=" + index_alt + "; \
+                index_info=" + index_info + " \
+            }{ \
+                for(i=1;i<=length($index_info);i++){ \
+                    if(substr($index_info, i, 3)==\"AA=\"){ \
+                        k=i+3; \
+                        while(substr($index_info, k, 1)!=\",\" && substr($index_info, k, 1)!=\";\"){ \
+                            last_base=k; \
+                            k=k+1 \
+                        }; \
+                        unique_aa=toupper(substr($index_info, i+3, last_base-(i+3)+1)) \
+                    } \
+                }; \
+                if(unique_aa==$index_ref || unique_aa==$index_alt){ \
+                    if(unique_aa!=$index_ref && unique_aa==$index_alt){ \
+                        tmp_ref=$index_ref; \
+                        $index_ref=$index_alt; \
+                        $index_alt=tmp_ref; \
+                    }; \
+                    print $0 \
+                } \
+            }' > ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/test_file_1.vcf; \
+        bcftools view \
+            --no-header \
+            ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.vcf.gz > ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/test_file_2.vcf; \
+        check_status=$( \
+            cmp \
+                --silent \
+                ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/test_file_1.vcf \
+                ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/test_file_2.vcf; \
+            echo $?); \
+        if [[ $check_status -eq 0 ]]; then \
+            echo 'TRUE'; \
+        else \
+            echo 'FALSE'; \
+        fi; \
+        rm ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/test_file_1.vcf; \
+        rm ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/test_file_2.vcf")
+        #create a file with the VCF file before switching but selecting only those rows for which REF or ALT are AA and then switch REF/ALT if ALT==AA
+            #you can check previous AWK script for information
+        #get the switched VCF file
+        #check byte by byte that both files are the same with cmp, is equal, the exit status should be zero.
 
 
     print_text("chr " + selected_chromosome + " - " + selected_pop + ": see the header of the final VCF file", header=3)
@@ -3984,16 +3998,6 @@ def master_processor(chr_pop_combination, debugging=False):
         sys.stdout = original_stdout
             #https://www.blog.pythonlibrary.org/2016/06/16/python-101-redirecting-stdout/
 
-
-    #restore sys.stdout using the previously saved reference to it
-    #This is useful if you intend to use stdout for other things
-    sys.stdout = original_stdout
-        #https://www.blog.pythonlibrary.org/2016/06/16/python-101-redirecting-stdout/
-
-    #por aquiii
-        #run the script 
-        #check the redirection of stdout
-        #check the whole script in the meantime
 
 
 
