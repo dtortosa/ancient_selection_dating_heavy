@@ -1858,8 +1858,8 @@ run_bash(" \
 #### function to clean vcf files and create hap - map files ####
 ################################################################
 print_text("function to clean vcf files and create hap - map files", header=1)
-#chr_pop_combination="IBS_1"; debugging=True
-def master_processor(chr_pop_combination, debugging=False):
+#chr_pop_combination="IBS_1"; debugging=True; debug_file_size=10000
+def master_processor(chr_pop_combination, debugging=False, debug_file_size=None):
 
     #extract selected population and chromosome
     selected_pop = chr_pop_combination.split("_")[0]
@@ -2099,7 +2099,7 @@ def master_processor(chr_pop_combination, debugging=False):
             bcftools view \
                 --samples " + ",".join(selected_samples) + " \
                 " + input_vcfs_path + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
-            head -n 10000 > ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/01_debug_subset_chr" + selected_chromosome + "_" + selected_pop + ".vcf; \
+            head -n " + str(debug_file_size) + " > ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/01_debug_subset_chr" + selected_chromosome + "_" + selected_pop + ".vcf; \
             ls -l")
         input_vcf_file="./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/01_debug_subset_chr" + selected_chromosome + "_" + selected_pop + ".vcf"
     else:
@@ -2720,7 +2720,7 @@ def master_processor(chr_pop_combination, debugging=False):
                     exit 1 \
                 }; \
             }' | \
-            gzip > ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.vcf.gz")
+            gzip --force > ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.vcf.gz")
         #awk
             #load variables 
                 #the date following the format used by bcftools
@@ -3142,51 +3142,54 @@ def master_processor(chr_pop_combination, debugging=False):
     # calculate map file within selected pop #
     ##########################################
     print_text("calculate map file within selected pop", header=1)
-
-    #this should be here or in a different script? probably easier here to select SNPs?
-
-    #error with "list_snps_with_gen_pos.txt"
-        #this should have the chromosome and pop name to avoid interefernece
-        #check that all files are correctly named
-
-
-
-
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": STARTING MAP FILE CALCULATION")
-    print("#######################################\n#######################################")
-        #we are going to calculate the map of each population directly using the SNPs in its vcf file FILTERED WITHIN population. Then, when we know for which of the SNPs we have genetic position, we can further filter the VCF file and convert to hap.
+        #we are going to calculate the map of each population directly using the SNPs in its vcf file FILTERED WITHIN population. Then, when we know for which of the SNPs we have genetic position, we can further filter the VCF file and convert to hap.")
         #an alternative would be just take all the SNPs in the raw VCF file and calculate their genetic position.
             #it should be ok regarding the ID of the SNPs because REF/ALT are split when using multiallelics, and these fields are NOT switched based on the frequency of the SNPs in specific subsets.
-        #I am going for the first option just to be completely sure I am using the SNPs (and positions) of the selected population.
+        #I am going for the first option just to be completely sure I am using the SNPs (and positions) of the selected population and because I have the script almost ready.
             #If it is too slow this option, think about the other one.
 
     #Instructions david
-        #I understand that SNPs with genetic position are NO useful for any summary statistic, right? So I can safely remove these SNPs from the VCF and hap files right?
+        #I understand that SNPs without genetic position are NO useful for any summary statistic, right? So I can safely remove these SNPs from the VCF and hap files right?
             #ok
         #format of ID
             #in the map file can I use the format "CHROM:POS_REF_ALT" for the ID? 
             #I think remember that the map files I originally got from you in the previous project (before decode2019 conversion) used as ID just the physical position. Not sure if there is any specific reason for doing that.
             #not asked, by irrelevant question
         #data format decode map
-            #in the decode map, they say clearly that the data is aligned to hg38. Also they do not specify if the coordinates are 1 or 0-based so I assume they are 1-based, base 1 in the map is base 1 in the genome, to me this should be the default. 
+            #in the decode map, they say clearly that the data is aligned to hg38.
+            #they do not specify if the coordinates are 1 or 0-based, but I understand these are 1-based from what they say: "Begin (start point position of interval in GRCh38 coordinates) and End (end point position of interval in GRCh38 coordinates)"
+                #I am waiting an answer from the corresponding author of the paper
             #1KGP data is also aligned to hg38 and is 1-based.
             #Therefore I can just use the position of the SNPs in 1KGP to calculate their genetic position in the decode map, right?
                 #David said that there is not problem if the map and hap files are in the same format. 
                 #that is the case because the map file is calculated with decode map, and hap file with 1KGP VCF file, and as I said, I have no reason to think that the decode map is not 1-based.
 
 
-    ##extract the SNP positions
-    #extract snps from the cleaned VCF file
+
+    print_text("create the raw genetic map", header=2)
+    print_text("extract snps from the cleaned VCF file", header=3)
     run_bash(" \
         bcftools view \
-            ./results/01_cleaned_vep_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz | \
-        bcftools query \
-            --format '%CHROM %ID %POS %REF %ALT\n' | \
-        gzip \
-            --force \
-        > ./results/02_hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_raw.map.gz")
-            #from the cleaned VCF file, extract the chromosome, position, REF/ALT to compare with the positions in the raw hap file (see below), compress and save as a file
+            --no-header \
+            ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.vcf.gz | \
+        awk \
+            'BEGIN{ \
+                FS=\"\t\"; \
+                OFS=\" \"; \
+                index_chrom=" + index_chrom + "; \
+                index_pos=" + index_pos + "; \
+                index_id=" + index_id + "; \
+                index_ref=" + index_ref + "; \
+                index_alt=" + index_alt + " \
+            }{ \
+                print $index_chrom, $index_id, $index_pos, $index_ref, $index_alt \
+            }' | \
+        gzip --force > ./results/02_hap_map_files_raw/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_raw.map.gz")
+        #load the VCF file without header
+        #select the columns of interest with AWK
+            #we want chromosome, position, REF/ALT to compare with the positions in the raw hap file (see below)
+            #output "space" separated to meet salescan requirements
+        #compress
 
     #Note about the format of the positions
     #pos in VCF files v4.2 is 1-based according to the specification file (this is the format of 1KGP data). Therefore, we have here 1-based coordinates.
@@ -3204,66 +3207,64 @@ def master_processor(chr_pop_combination, debugging=False):
             #remove the allele names
 
 
-    ##load the raw_map file
+    print_text("load the raw_map file", header=3)
     snp_map_raw = pd.read_csv(\
-        "./results/02_hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_raw.map.gz", \
+        "./results/02_hap_map_files_raw/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_raw.map.gz", \
         sep=" ", \
-        header=None)
-    print("See raw map file loaded in python")
+        header=None, \
+        low_memory=False)
+    
+    print_text("See raw map file loaded in python", header=4)
     print(snp_map_raw)
 
-    #
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": check we have the correct number of SNPs in the map file loaded in python")
-    print("#######################################\n#######################################")
+
+    print_text("chr " + selected_chromosome + " - " + selected_pop + ": check we have the correct number of SNPs in the map file loaded in python", header=4)
     run_bash(" \
         n_snps=$(\
             bcftools view \
                 --no-header \
-                ./results/01_cleaned_vep_vcf_files/chr" + selected_chromosome + "_" + selected_pop + ".vcf.gz | \
+                ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.vcf.gz | \
             wc -l); \
         if [[ $n_snps -eq " + str(snp_map_raw.shape[0]) + " ]]; then \
             echo 'TRUE'; \
         else \
             echo 'FALSE'; \
         fi")
-            #count the number of lines in the cleaned VCF file without the header, and check that number is equal to the number of SNPs we have in the map file loaded in python 
+        #count the number of lines in the cleaned VCF file without the header, and check that number is equal to the number of SNPs we have in the map file loaded in python 
 
-    #rename the columns
-    snp_map_raw = snp_map_raw.rename(\
+
+    print_text("rename the columns", header=3)
+    snp_map_raw = snp_map_raw.rename( \
         {0: "chr", 1: "id_old", 2: "pos", 3: "ref", 4: "alt"}, \
         axis=1)
-            #we name ID as old because this is the ID coming from the VCF file, which we need for selecting those variants in the VCF file with genetic position. The final ID will be in plink format, see below.
-            #use a dict with old and new column names. indicated we are renaming columns (axis=1)
+        #we name ID as old because this is the ID coming from the VCF file, which we need for selecting those variants in the VCF file with genetic position. The final ID will be in plink format, see below.
+        #use a dict with old and new column names. indicated we are renaming columns (axis=1)
     print("see map file with renamed columns")
     print(snp_map_raw)
 
-    #
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": create a new ID variable following plink 2.0 format and check it was correctly created")
-    print("#######################################\n#######################################")
-    #the original ID column is in the format "CHR:POS:REF:ALT" but the problem is that some SNPs have their position indicated in the ID is shifted. 1KGP authors separated multiallelic SNPs in different lines with bcftools norm and then shifted their position so they could be phased, combing back to the original position afterwards (see next line). I guess during that process, they updated the IDs using chrom and the shifted position was used in the ID. Therefore, even POS comes back to the original position, the ID remains with the shifted position. I have checked several multiallelic SNPs, and they have all the same issue with the position in the ID.
+
+    print_text("chr " + selected_chromosome + " - " + selected_pop + ": create a new ID variable following plink 2.0 format and check it was correctly created", header=3)
+    #the original ID column is in the format "CHR:POS:REF:ALT" but the problem is that some SNPs have their position indicated in the ID is shifted. 1KGP authors separated multiallelic SNPs in different lines with bcftools norm and then shifted their position so they could be phased, combing back to the original position afterwards (see next line). I guess during that process, they updated the IDs using chrom and the shifted position was used in the ID. Therefore, even if POS comes back to the original position, the ID remains with the shifted position. I have checked several multiallelic SNPs, and they have all the same issue with the position in the ID.
         #From README ("http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/README_1kGP_phased_panel_110722.pdf"): "SHAPEIT2 does not handle multiallelic variant phasing. To phase both biallelic and multiallelic variants we first split the multiallelics into separate rows while left-aligning and normalizing INDELs using bcftools norm tool (Li, 2011). Next, we shifted the position of multiallelic variants (2nd, 3rd, etc ALT alleles) by 1 or more bp (depending on how many ALT alleles there are at a given position) to ensure a unique start position for all variants, which is required for SHAPEIT2. We shifted the positions back to the original ones after phasing".
-    #This is not very convenient because when later we create the hap files, SNPs will have the plink format for ID to avoid avoid strand flips (CHR:POS_REF_ALT), so we are going to have different IDs between hap and map files, making more difficult to do checks.
+    #This is not very convenient because when later we create the hap files, SNPs will have the plink format for ID to avoid strand flips (CHROM:POS_REF_ALT), so we are going to have different IDs between hap and map files, making more difficult to do checks.
     #Therefore, we are going to update the ID of each SNP using plink format, and ensuring in this way SNPs will be names the same in hap and map files.
+    #bcftools convert to hap format will use "CHROM:POS_REF_ALT" for the IDs, so we need to follow that format.
     snp_map_raw["id"] = snp_map_raw["chr"] + ":" + snp_map_raw["pos"].astype("str") + "_" + snp_map_raw["ref"] + "_" + snp_map_raw["alt"]
-    #check
+    
+    print_text("check", header=4)
     check_id = snp_map_raw["chr"] + ":" + snp_map_raw["pos"].astype("str") + "_" + snp_map_raw["ref"] + "_" + snp_map_raw["alt"]
         #make a series combining chromosome, pos, ref and alt, and using the corresponding separators
     print(check_id.equals(snp_map_raw["id"]))
         #check it is identical to id
     print(snp_map_raw)
 
-    #
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": remove the ref/alt columns as we have this information already included in the ID")
-    print("#######################################\n#######################################")
+    print_text("chr " + selected_chromosome + " - " + selected_pop + ": remove the ref/alt columns as we have this information already included in the ID", header=4)
     snp_map_raw = snp_map_raw.drop(["ref", "alt"], axis=1)
     print(snp_map_raw)
 
 
-    ##load and explore the decode2019 map
 
+    print_text("load and explore the decode2019 map", header=2)
     #I know that the original 2019 decode map is alligned to hg38. Also, I assume that the decode2019 map is 1-based because they do not specify is 0-based. I assume that if you say anything, base 1 in your coordinates is base 1 in the genome. I assume this is the default.
         #Data S3.genetic.map.final.sexavg.gor.gz:
             #average genetic map computed from the paternal and maternal genetic maps, which were in turn computed from the paternal and maternal crossover, respectively. The data columns are as follows: Chr (chromosome), Begin (start point position of interval in GRCh38 coordinates), End (end point position of interval in GRCh38 coordinates), cMperMb (recombination rate in interval), cM (centiMorgan location of END POINT of interval)
@@ -3273,55 +3274,54 @@ def master_processor(chr_pop_combination, debugging=False):
 
     #therefore, we have the same position format in both datasets, so we can just use the decode 2019 map to calculate the genetic position of each SNP.
 
-    ##IMPORTANT
-    #check if the data is 1 or 0 based
-        #DAVID: according to DAvid, you can check that with the assembly file, if the base the map is saying is in position X is indeed at position X, you are good.
-
-
-
-    # 
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": see first lines of the Data S3 of decode paper, which is the sex average map (see above). The file has header")
-    print("#######################################\n#######################################")
+ 
+    print_text("chr " + selected_chromosome + " - " + selected_pop + ": see first lines of the Data S3 of decode paper, which is the sex average map (see above). The file has header", header=3)
     run_bash("\
         gunzip \
             --stdout \
             ./data/decode_2019/aau1043_datas3.gz | \
         head -20")
 
-    #
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": remove the header and save")
-    print("#######################################\n#######################################")
+
+    print_text("chr " + selected_chromosome + " - " + selected_pop + ": remove the header and save", header=3)
     run_bash("\
         gunzip \
             --stdout \
             ./data/decode_2019/aau1043_datas3.gz | \
         awk \
-            'NR>7' | \
+            'BEGIN{ \
+                FS=OFS=\"\t\"; \
+                header=\"yes\"; \
+            }{ \
+                if($0 ~ /Chr\tBegin\tEnd\tcMperMb\tcM/){header=\"no\"}; \
+                if(header == \"no\"){print $0} \
+            }' | \
         gzip \
-            --force > \
-        ./data/decode_2019/aau1043_datas3_no_header.gz; \
+            --force > ./data/decode_2019/aau1043_datas3_no_header.gz; \
         gunzip \
             --stdout \
             ./data/decode_2019/aau1043_datas3_no_header.gz | \
         head -5")
-            #decompress, send to stdout
-            #then select any row whose number is larger than 7, i.e., from 8th row and forward.
-                #https://www.baeldung.com/linux/remove-first-line-text-file 
-            #compress and save
-            #decompress and see first lines
+        #decompress the map
+        #load into awk
+            #begin
+                #using tabs as delimiter for inputs and outputs
+                #also set the variable header as yes
+            #if the row is not the column names, header remains as "yes"
+                #use regex so we can use "\t" as a pattern not look for
+            #only print if header="no", thus the first row printer will be the column names and then the rest of rows
+    
 
-    #
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": load decode 2019 map into python")
-    print("#######################################\n#######################################") 
+    print_text("chr " + selected_chromosome + " - " + selected_pop + ": load decode 2019 map into python", header=3)
     decode2019_map = pd.read_csv(\
         "./data/decode_2019/aau1043_datas3_no_header.gz", \
         sep="\t", \
         header=0, \
         low_memory=False)
-    #rename columns in lower case
+    
+    ##por aquii
+
+    print_text("rename columns in lower case", header=4)
     decode2019_map=decode2019_map.rename({"Chr":"chr", "Begin":"begin", "End":"end", "cMperMb":"cM_Mb", "cM":"cM"}, axis=1)
     print(decode2019_map)
         #Average genetic map computed from the paternal and maternal genetic maps.
@@ -3633,6 +3633,12 @@ def master_processor(chr_pop_combination, debugging=False):
     print("see the number of SNPs removed due to the lack of genetic position")
     print(final_genetic_pos_map_file.shape[0] - len(snps_id_with_gen_pos))
 
+    ###PROBLEM HERE
+        #error with "list_snps_with_gen_pos.txt"
+        #this should have the chromosome and pop name to avoid interefernece
+        #check that all files are correctly named
+
+
     #save the names in a txt file
     with open(r"./results/01_cleaned_vep_vcf_files/list_snps_with_gen_pos.txt", "w") as fp:
         fp.write("\n".join(snps_id_with_gen_pos))
@@ -3659,6 +3665,9 @@ def master_processor(chr_pop_combination, debugging=False):
             --compression-level 1")
             #include those SNPs for which ID is included in the list of SNPs with genetic position and save the resulting VCF file
                 #https://www.biostars.org/p/373852/
+
+
+    ##also you ahve to select SNPs of the map that are now remaining in the VCF files so you have the same SNPs in both files!!
 
     #
     print("see header of the fully filtered VCF file and some genotypes")
