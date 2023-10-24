@@ -3793,7 +3793,7 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
                 #In addition, hap files in yoruba folder of flexsweep are just our hap files for iHS, i.e., ONLY THE HAPLOTYPE COLUMNS.
                     #/xdisk/denard/lauterbur/yoruba/hapmap_YRI_hg19_decode2019/
 
-    print_text("as the IDs are created during the hap file creation (see docs above), we should have the same IDs in hap and map files", header=4)
+    print_text("as the IDs are created during the hap file creation (see docs above), we should have the same IDs in hap and map files. Also chromosome and position should be the same between both files", header=4)
     run_bash(" \
         STATUS=$( \
             cmp \
@@ -3806,7 +3806,7 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
                         'BEGIN{ \
                             FS=\" \"; \
                             OFS=\"\t\"} \
-                        { print $2 }' \
+                        { print $1, $2, $3 }' \
                 ) \
                 <( \
                     gunzip \
@@ -3816,7 +3816,7 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
                         'BEGIN{ \
                             FS=\" \"; \
                             OFS=\"\t\"} \
-                        { print $2 }' \
+                        { print $1, $2, $4 }' \
                 ); \
             echo $?); \
         if [[ $STATUS -eq 0 ]]; then \
@@ -3876,141 +3876,124 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
                 #-f option : Sometimes a file cannot be compressed. Perhaps you are trying to compress a file called “myfile1” but there is already a file called “myfile1.gz”. In this instance, the “gzip” command won’t ordinarily work. To force the “gzip” command to do its stuff simply use -f option
                 #https://www.geeksforgeeks.org/gzip-command-linux/
 
-
-    ##por aquiiii
-
-    #check
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": the clean hap file is just the raw hap file but without the first 5 columns?")
-    print("#######################################\n#######################################")
-    #create a long string with the index of each column of hap_raw file (without 5 first columns)
-    #these indexes will be used by awk to select the corresponding columns so we are creating the cleaned hap file again using another approach
-    fields_selected_samples = "".join(
-        ["$" + str(i) + "," if i != selected_samples.shape[0]*2+5 else "$" + str(i) for i in range(6, selected_samples.shape[0]*2+5+1, 1)])
-        #from index 6 (avoiding non-genotype columns) to the index of the last column, i.e., 2 columns times the number of samples plus 5 (because of the non-genotype columns) and 1 (because index 1 in python is 0, so if you do range from 0 to 10, you get until 9, not 10, you need to add 1 (i.e., 11) to get the last one)
-        #if the index is NOT the last one
-            #add $ to the index and then comma
-        #else
-            #it is the last one so we do not need add comma
-        #join all strings
-    #do comparison
+    print_text("chr " + selected_chromosome + " - " + selected_pop + ": the clean hap file is just the raw hap file but without the first 5 columns?", header=4)
     run_bash(" \
-        gunzip \
-            -c results/02_hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
-        awk -F ' ' '{print " + fields_selected_samples + "}' > \
-        results/02_hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw_clean_check.hap; \
-        gunzip \
-            -kf results/03_hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap.gz; \
-        file1='results/03_hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap'; \
-        file2='results/02_hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw_clean_check.hap'; \
-        STATUS=$(cmp --silent $file1 $file2; echo $?); \
+        STATUS=$( \
+            cmp \
+                --silent \
+                <( \
+                    gunzip \
+                        --stdout \
+                        ./results/02_hap_map_files_raw/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
+                    awk \
+                        'BEGIN{FS=OFS=\" \"}{ \
+                            $1=$2=$3=$4=$5=\"\"; \
+                            sub(\"     \", \"\"); \
+                            print $0 \
+                        }' \
+                ) \
+                <( \
+                    gunzip \
+                        --stdout \
+                        ./results/03_hap_map_files/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap.gz \
+                ); \
+            echo $?); \
         if [[ $STATUS -eq 0 ]]; then \
             echo 'TRUE'; \
         else \
             echo 'FALSE'; \
-        fi; \
-        rm $file1; \
-        rm $file2")
-        #create again the hap file cleaned
-            #decompress the raw hap file and send it to stdout
-            #select only the genotype columns using awk, which needs to know the delimiter is ' '
-            #save it as a file
-        #decompress the previously cleaned hap file, keeping the compressed file and forcing the decompression in case the decompressed file already exist (-kf)
-            #https://linux.die.net/man/1/gunzip
-        #create two variables with the names of these new files        
-        #check byte by byte whether the two files are the same
-            #cmp takes two files and compare them until 1 byte is different
-            #we make it silent and get the final status
-            #remember that "$?" gives the return value of the last run command.
-                #For example, 
-                    #ls somefile
-                    #echo $?
-                    #If somefile exists (regardless whether it is a file or directory), you will get the return value thrown by the ls command, which should be 0 (default "success" return value). If it doesn't exist, you should get a number other then 0. The exact number depends on the program.
-                #https://stackoverflow.com/a/6834572/12772630
-            #the return value of cmp will be 0 if the two files are identical, if not, then we have differences between the files
-                #https://stackoverflow.com/a/53529649/12772630
-        #remove the new files
+        fi")
+        #check two files are identical using cmp, we are directly processing them as inputs on the fly with process substitution
+            #file 1
+                #decompress the raw hap file
+                #awk
+                    #use space as delimiter for input and outputs (this is the delimiter used by hap files)
+                    #in each row
+                        #set as "" the first 5 columns, which are the ones removed when cleaning the hap file
+                        #this creates five empty spaces at the beginning of the row, so we substitute these spaces by nothing "". This is the equivalent of what we did when cleaning the hap file with cut, because we directly removed fields (columns), not just their content.
+                        #print the resulting row
+                        #https://stackoverflow.com/a/13446273/12772630
+            #file 2
+                #just decompress the cleaned hap file
 
-    #
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": check we have the same number of rows (variants) in the cleaned vcf, hap and map files")
-    print("#######################################\n#######################################")
+    print_text("chr " + selected_chromosome + " - " + selected_pop + ": check we have the same number of rows (variants) in the cleaned vcf, hap and map files", header=4)
     run_bash(" \
         n_snps_vcf=$( \
             bcftools view \
-                ./results/01_cleaned_vep_vcf_files/chr" + selected_chromosome + "_" + selected_pop + "_only_snps_gen_pos.vcf.gz \
-                --no-header | \
-            wc -l); \
+                --no-header \
+                ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.only_snps_gen_pos.vcf.gz | \
+            awk 'END{print NR}'); \
         n_snps_map=$( \
             gunzip \
-                -c ./results/03_hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz | \
-            wc -l); \
+                --stdout \
+                ./results/03_hap_map_files/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz | \
+            awk 'END{print NR}'); \
         n_snps_hap=$( \
             gunzip \
-                -c results/03_hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap.gz | \
-            wc -l); \
+                --stdout \
+                ./results/03_hap_map_files/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap.gz | \
+            awk 'END{print NR}'); \
         if [[ $n_snps_vcf -eq $n_snps_hap && $n_snps_vcf -eq $n_snps_map ]];then \
             echo 'TRUE'; \
         else \
             echo 'FALSE'; \
         fi")
             #load the cleaned vcf file with bcftools and show only the snps, with no header, then count the number of lines and save the result
-            #decompress the hap file and count the number of line
-            #check both numbers are the same
+            #decompress the hap and map files and count the number of line
+            #check the counts are the same
 
-    #
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": do we have the correct number of samples in the hap file?")
-    print("#######################################\n#######################################")
+    
+    print_text("chr " + selected_chromosome + " - " + selected_pop + ": do we have the correct number of samples in the hap file?", header=4)
     run_bash(" \
-        nfields_hap=$( \
+        n_fields_hap=$( \
             gunzip \
-                -c results/03_hap_map_files/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap.gz | \
-            awk -F ' ' '{print NF}' | \
-            sort | \
-            uniq); \
-        nfields_hap_nlines=$( \
-            echo -n $nfields_hap | \
-            grep -c '^'); \
-        if [[ $nfields_hap_nlines -eq 1 ]]; then \
-            nsamples_hap=$(($nfields_hap/2)); \
-            nsamples_bcftools=$( \
-                cat results/02_hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_samples_to_bcftools.txt | \
-                grep -c '^'); \
-            if [[ $nsamples_hap -eq $nsamples_bcftools ]]; then \
-                echo 'TRUE'; \
-            else \
-                echo 'FALSE'; \
-            fi\
+                --stdout \
+                ./results/03_hap_map_files/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap.gz | \
+            awk \
+                'BEGIN{ \
+                    FS=\" \"; \
+                    n_snps=" + str(final_genetic_pos_map_file_pruned.shape[0]) + "} \
+                { \
+                    n_fields[NF]++ \
+                }END{ \
+                    if(length(n_fields)==1){ \
+                        for(i in n_fields){ \
+                            if(n_fields[i] == n_snps){ \
+                                print i \
+                            } \
+                        } \
+                    } \
+                }' \
+            ); \
+        n_samples_hap=$(echo 'scale=0;' $n_fields_hap '/2'| bc); \
+        n_samples_original=$( \
+            awk \
+                'END{print NR}' \
+                ./results/02_hap_map_files_raw/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_samples_to_bcftools.txt \
+            ); \
+        if [[ $n_samples_hap -eq $n_samples_original ]]; then \
+            echo 'TRUE'; \
+        else \
+            echo 'FALSE'; \
         fi")
-        #calculate the number of fields/columns in the hap file
-            #decompress the hap file and send the output to stdout (flag c of gunzip)
-            #use the interpreter of awk language (awk), indicating the delimiter of the columns (-F) and asking to print the number of fields. You could also ask for column 1 typing $1... NF will give the number of columns or fields.
-                #https://www.unix.com/shell-programming-and-scripting/110272-no-columns-csv-file.html
-                #https://askubuntu.com/questions/342842/what-does-this-command-mean-awk-f-print-4
-            #you get the number of fields per row, so you have to sort the output and obtain the uniq cases.
-            #save into nfields_hap
-        #calculate how many number of unique number of columns we have. 
-            #We should have the same number of columns in all rows. Therefore, just 1 line.
-            #echo the nfields_hap with -n flag, so you do not output the trailing newline, i.e., there is no last empty line at the end. I guess people use this to avoid counting that last line. If you do echo '' | grep -c '^', without -n, you still get 1, when it should be zero.
-                #https://unix.stackexchange.com/questions/579651/what-does-n-flags-stands-for-after-echo
-            #get the number of lines that start with any character ("^") using grep -c "^". Remember that ^eso would look for any line starting with "eso"
-                #https://stackoverflow.com/questions/6314679/in-bash-how-do-i-count-the-number-of-lines-in-a-variable
-                #https://stackoverflow.com/questions/13054227/what-does-grep-mean-in-unix
-        #if the number of unique number of columns is 1, we are fine so continue
-            #take nfields_hap, divide by 2. Remember that we remove the initial 5 columns, so we only have haplo columns. In these columns, we have 2 genotype columns per sample, so the number of columns/2 is the number of samples.
-                #https://phoenixnap.com/kb/bash-math
-            #calculate the number of samples from the .txt file with the IDs of all samples.
-                #load the file with cat and count the number of lines that start with any character
-            #check that the number of samples according to the hap file and the txt are the same.
+        #compare the number of samples between the final hap file and the txt file saved with the sample IDs
+            #hap file
+                #decompress the hap file
+                #awk
+                    #begin with " " as delimiter and create a variable with the number of SNPs we have in the final map
+                    #create an array ("n_fields") and save there the number of columns adding a new entry for each new number of fields and summing 1 to the current count
+                    #at the end
+                        #the array should be 1-character long because we should only have 1 distinct number of fields, i.e., all rows have the same number of columns
+                        #now we know we have only 1 entry in the array, 1 distinct number of fields, extract it, but only if the number of times it appears is exactly the same than the number of SNPs we have in the final map file
+                            #remember that i is the index, i.e., the number of fields n_fields[i] is the count, i.e., the number of times that particular number of fields appeared across rows.
+                #the number of fields in the hap file, divided by 2 is the number of samples we have, as we have 2 columns per sample. We use "bc" so we can specify the number of decimals.
+            #the txt file saved with the sample IDs 
+                #just calculate the number of rows, i.e., samples, using awk
 
-    #
-    print("\n#######################################\n#######################################")
-    print("chr " + selected_chromosome + " - " + selected_pop + ": check that sample file generated with hap has the correct sample IDs?")
-    print("#######################################\n#######################################")
+    print_text("chr " + selected_chromosome + " - " + selected_pop + ": check that sample file generated with hap has the correct sample IDs?", header=4)
     #read the sample file
     sample_list_from_hap = pd.read_csv(
-        "./results/02_hap_map_files_raw/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.samples",
+        "./results/02_hap_map_files_raw/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.samples",
         header=0, 
         sep=" ", 
         low_memory=False)
@@ -4023,14 +4006,13 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
     print(sample_list_from_hap_clean["ID_2"].equals(selected_samples))
 
 
+
+    print_text("finishing the script", header=2)
     print_text("remove files not needed anymore", header=3)
     run_bash(" \
         rm " + input_vcf_file + "; \
-        rm ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.vcf.gz")
-
-
-
-
+        rm ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.vcf.gz; \
+        rm ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.vcf.gz")
 
 
     print_text("FINISH", header=3)
@@ -4044,9 +4026,14 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
 
 
 
+
 #####################
 #### paralellize ####
 #####################
+print_text("parallelize", header=1)
+
+##check falses/errors in the output
+
 
 ##
 print("\n#######################################\n#######################################")
@@ -4122,3 +4109,4 @@ pool.close()
 
 
 ##according to david, you can check whether the REF/ALT alleles match between the old and new hap files, but taking into account we have different coordinated, hg19 vs hg38
+    ##i guess you could take the old map files, convert to hg38 coordinates and then see if the REF/ALT columns are the same than in the new map files
