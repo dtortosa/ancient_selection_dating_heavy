@@ -3159,7 +3159,12 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
         #data format decode map
             #in the decode map, they say clearly that the data is aligned to hg38.
             #they do not specify if the coordinates are 1 or 0-based, but I understand these are 1-based from what they say: "Begin (start point position of interval in GRCh38 coordinates) and End (end point position of interval in GRCh38 coordinates)"
-                #I am waiting an answer from the corresponding author of the paper
+                #I asked to Bjarni Vilhjálmur Halldórsson
+                    #I would like to confirm that the three genetic maps published as supplementary files (Data S1-S3, i.e., maternal, paternal and average maps) have 1-based coordinates. From the description, I understand this is the case, but I want to double check that with you to ensure these are not 0-based.
+                #He answered
+                    #This shouldn't be the case, but let us know if you think there is a problem.
+                #I asked David to interpret what Halldórsson said, and he told me:
+                    #About the deCode map, he is saying that the coordinates are 1-based, we can proceed.
             #1KGP data is also aligned to hg38 and is 1-based.
             #Therefore I can just use the position of the SNPs in 1KGP to calculate their genetic position in the decode map, right?
                 #David said that there is not problem if the map and hap files are in the same format. 
@@ -4096,7 +4101,7 @@ print(\
 print_text("run parallel analyses", header=2)
 print_text("open the pool", header=3)
 import multiprocessing as mp
-pool = mp.Pool(len(full_combinations_pop_chroms)/2)
+pool = mp.Pool(60)
 
 print_text("run function across pandas rows", header=3)
 pool.map(master_processor, full_combinations_pop_chroms)
@@ -4211,5 +4216,6 @@ for i in [0.1,0.25,0.4,0.5,0.6,0.75,0.9]:
 ####################
 print_text("Next steps", header=1)
 #run the script in container in HPC and do check of the script in the meantime
+#if genetic distance is slow, you could do it in a previous step for each chromosome, and the new maps used as input here within each pop to remove snps without genetic distance from the VCF file and then hap file. Also remove snps from the map file not present in the VCF file, so we have the specific map for each population.
 #according to david, you can check whether the REF/ALT alleles match between the old and new hap files, but taking into account we have different coordinated, hg19 vs hg38
     ##i guess you could take the old map files, convert to hg38 coordinates and then see if the REF/ALT columns are the same than in the new map files
