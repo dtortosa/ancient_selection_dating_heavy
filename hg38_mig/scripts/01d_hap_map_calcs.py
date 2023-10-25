@@ -1982,7 +1982,7 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
         bcftools query \
             --format '%TYPE %ID %CHROM %POS %REF %ALT %AA %AA_upcase %INFO/AF\n' \
             " + input_vcfs_path + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
-            head -5")
+            head -1")
         #select the format of the query indicating the columns you want to show per SNP.
             #you can include data from INFO
             #end with \n to have different lines per SNPs
@@ -2024,12 +2024,15 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
                     if($i == \"FILTER\"){ \
                         filter_index=i \
                     }; \
+                    if($i == \"INFO\"){ \
+                        info_index=i \
+                    }; \
                     if($i ~/^HG/ || $i ~/^NA/){ \
-                        n_samples++\
+                        n_samples++ \
                     } \
                 }; \
                 n_fields=NF; \
-                printf \"n_fields=%s,n_samples=%s,chrom=%s,pos=%s,id=%s,ref=%s,alt=%s,filter=%s\", n_fields, n_samples, chrom_index, pos_index, id_index, ref_index, alt_index, filter_index \
+                printf \"n_fields=%s,n_samples=%s,chrom=%s,pos=%s,id=%s,ref=%s,alt=%s,filter=%s,info=%s\", n_fields, n_samples, chrom_index, pos_index, id_index, ref_index, alt_index, filter_index, info_index \
             }'", return_value=True).strip()
         #get the header of the VCF file after extracting AA from CSQ, removing CSQ and select SNPs, just like we are going to do when we replace lower for upper case in the next line
         #open the header with AWK
@@ -2057,6 +2060,7 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
     index_ref = indexes_chrom_pos.split(",")[5].replace("ref=", "")
     index_alt = indexes_chrom_pos.split(",")[6].replace("alt=", "")
     index_filter = indexes_chrom_pos.split(",")[7].replace("filter=", "")
+    index_info = indexes_chrom_pos.split(",")[8].replace("info=", "")
     print("total number of fields: " + n_fields)
     print("number of samples: " + n_samples)
     print("index of column CHROM: " + index_chrom)
@@ -2065,8 +2069,9 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
     print("index of column REF: " + index_ref)
     print("index of column ALT: " + index_alt)
     print("index of column FILTER: " + index_filter)
+    print("index of column INFO: " + index_info)
     print("the total number of fields minus the number of samples should be 9. The number of fixed fields in VCF v4.2 is 8 and then FORMAT, which in our case only has GT, thus we should have 9 fields. Also, the index of CHROM, POS, REF, ALT and FILTER should be 1, 2, 4, 5 and 7, respectively")
-    if (int(n_fields)-int(n_samples) == 9) & (index_chrom=="1") & (index_pos=="2") & (index_id=="3") & (index_ref=="4") & (index_alt=="5") & (index_filter=="7"):
+    if (int(n_fields)-int(n_samples) == 9) & (index_chrom=="1") & (index_pos=="2") & (index_id=="3") & (index_ref=="4") & (index_alt=="5") & (index_filter=="7") & (index_info=="8"):
         print("YES! GOOD TO GO!")
     else:
         raise ValueError("FALSE! ERROR! WE HAVE A PROBLEM WITH THE FIELDS OF THE VCF FILE BEFORE CONVERTING TO UPPER CASE ANCESTRAL ALLELES")
@@ -2201,7 +2206,7 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
             --format '%TYPE %ID %CHROM %POS %REF %ALT %AA %AA_upcase %INFO/AN %INFO/AC %INFO/AF GTs:[ %GT]\n' \
             " + input_vcf_file + " \
             | \
-        head -40")
+        head -5")
         #IMPORTANT:
             #It seems that multiallelic variants separated in different lines have already updated the AC field. Therefore, each line does not have two allele counts, but one.
             #For example, 1:10453:A:C and 1:10452:A:C are both in the same position (10452) and have the same reference allele. They seem to be multiallelic, but each one has only one allele count, which is 1. 
