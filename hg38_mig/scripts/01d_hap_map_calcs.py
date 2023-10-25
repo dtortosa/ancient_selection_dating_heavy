@@ -1168,7 +1168,7 @@ else:
 
 
 print_text("switch REF/ALT columns for which REF is not AA", header=3)
-print_text("see first cases where REF nor ALT are AA. You can see how we get a case with REF=G and AA_upcase=C. These could be cases where a multiallelic SNP has lost one of the ALT alleles in the subset population and that ALT allele is the ancestral. Therefore, there is no more ancestral in the population. Note, however, that I have found 200K cases like this across all chromosomes without subsetting when running 01b_vep_ancestral.py. Therefore, these could be also errors and should not be a high number", header=4)
+print_text("see first cases where REF nor ALT are AA. You can see how we get a case with REF=G and AA_upcase=C. These could be cases where a multiallelic SNP has lost one of the ALT alleles in the subset population and that ALT allele is the ancestral. Therefore, there is no more ancestral in the population. Note, however, that I have found 200K cases like this across all chromosomes without subsetting when running 01b_vep_ancestral.py. Therefore, these could be caused by problems between SNPs according to VEP and out VCF files, so it should not be a high number", header=4)
 run_bash(" \
     bcftools norm \
         --multiallelic -snps \
@@ -2414,7 +2414,7 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
 
 
     print_text("switch REF/ALT columns for which REF is not AA", header=3)
-    print_text("see first cases where REF nor ALT are AA. These could be cases where a multiallelic SNP has lost one of the ALT alleles in the subset population and that ALT allele is the ancestral. Therefore, there is no more ancestral in the population. Note, however, that I have found 200K cases like this across all chromosomes without subsetting when running 01b_vep_ancestral.py. Therefore, these could be also errors and should not be a high number", header=3)
+    print_text("see first cases where REF nor ALT are AA. These could be cases where a multiallelic SNP has lost one of the ALT alleles in the subset population and that ALT allele is the ancestral. Therefore, there is no more ancestral in the population. Note, however, that I have found 200K cases like this across all chromosomes without subsetting when running 01b_vep_ancestral.py. Therefore, these could be caused by problems between SNPs according to VEP and out VCF files, so it should not be a high number", header=3)
     run_bash(" \
         bcftools view \
             " + input_vcf_file + " | \
@@ -3579,7 +3579,7 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
     new_genetic_distance = ((gen_distance_decode_intervals * phy_distance_left_decode) / phys_distance_decode_intervals) + final_genetic_pos_df_check_dist_calc["left_cM"]
         #see figure 31 and the calculation of genetic distance in "recomb_calc" function for the full explanation using the words of David and also my interpretation.
 
-    print("chr " + selected_chromosome + " - " + selected_pop + ": compare the new genetic distance and the distance previously calculated. It is ok to have False here if the next check is ok")
+    print("chr " + selected_chromosome + " - " + selected_pop + ": compare the new genetic distance and the distance previously calculated. It is ok not having True here if the next check is ok")
     raw_check_gen_dis = new_genetic_distance == final_genetic_pos_df_check_dist_calc["genetic_distance"]
     if (raw_check_gen_dis.shape[0] != raw_check_gen_dis.sum()):
         raise ValueError("FALSE! ERROR! WE HAVE A PROBLEM: There is an error in the calculation of the genetic distance of each SNP")
@@ -4008,11 +4008,32 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
 
 
     print_text("finishing the script", header=2)
+    print_text("calculate the number of SNS removed due to the filters, i.e., the difference in the number of SNPs between the VCF file used as initial input in this script and the final VCF generated from where the hap file was created", header=3)
+    run_bash(" \
+        n_snps_before=$( \
+            bcftools view \
+                --no-header \
+                " + input_vcf_file + " | \
+            awk \
+                'END{print NR}' \
+        ); \
+        n_snps_after=$( \
+            bcftools view \
+                --no-header \
+                ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.only_snps_gen_pos.vcf.gz | \
+            awk \
+                'END{print NR}' \
+        ); \
+        n_lost_snps=$(echo $n_snps_before '-' $n_snps_after | bc); \
+        echo 'During filtering, we have lost' $n_lost_snps 'out of' $n_snps_before 'SNPs'")
+        #calculate the number of rows without header in the input VCF file and in the last VCF file generated in this script. Then calculate the difference and print, this is the number of SNPs lost.
+
+
     print_text("remove files not needed anymore", header=3)
     run_bash(" \
-        rm " + input_vcf_file + "; \
-        rm ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.vcf.gz; \
-        rm ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.vcf.gz")
+        rm --force " + input_vcf_file + "; \
+        rm --force ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.vcf.gz; \
+        rm --force ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.vcf.gz")
 
 
     print_text("FINISH", header=3)
@@ -4031,16 +4052,9 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
 #### paralellize ####
 #####################
 print_text("parallelize", header=1)
-
-##check falses/errors in the output
-
-
-##
-print("\n#######################################\n#######################################")
-print("create array with all combinations of pops and chromosomes")
-print("#######################################\n#######################################")
-#get pop and chromosome names
-pop_names
+print_text("create array with all combinations of pops and chromosomes", header=2)
+print_text("get pop and chromosome names", header=3)
+pop_names=unrelated_samples["pop"].unique()
 chromosomes = [i for i in range(1, 23, 1)]
 print("we are going to analyze 26 pops and 22 chromosomes?")
 print((len(pop_names) == 26) & (len(chromosomes) == 22))
@@ -4048,10 +4062,11 @@ print("See them")
 print(pop_names)
 print(chromosomes)
 
-#get all the combinations but first make a dummy example
+
+print_text("get all the combinations but first make a dummy example", header=3)
 import itertools
-#create two dummy lists, one with strings and other with integers
-print("dummy example to get all possible combinations of two lists")
+
+print_text("dummy example to get all possible combinations of two lists", header=4)
 dummy_x = ["marbella", "cuzco", "granada"]
 dummy_y = [1, 2, 3]
 #product get all possible combinations between the two lists
@@ -4061,10 +4076,13 @@ print(dumm_combinations)
     #y has to be converted to string with it is integer
 print("Do we have all dummy combinations?")
 print(len(dumm_combinations) == len(dummy_x)*len(dummy_y))
-#get all combinations from the actual pops and chromosomes
+
+print_text("get all combinations from the actual pops and chromosomes", header=4)
 full_combinations_pop_chroms = [pop+"_"+str(chrom) for pop in pop_names for chrom in chromosomes]
+
 print("Do we have all combinations of chromosomes and populations?")
 print(len(full_combinations_pop_chroms) == len(pop_names) * len(chromosomes))
+
 print("is this equivalent to itertools.product?")
 print(\
     full_combinations_pop_chroms == \
@@ -4074,39 +4092,124 @@ print(\
         #https://docs.python.org/3/library/itertools.html#itertools.product
 
 
-##run parallel analyses
-#open the pool
+
+print_text("run parallel analyses", header=2)
+print_text("open the pool", header=3)
 import multiprocessing as mp
 pool = mp.Pool(len(full_combinations_pop_chroms)/2)
 
-#run function across pandas rows
+print_text("run function across pandas rows", header=3)
 pool.map(master_processor, full_combinations_pop_chroms)
 
-#close the pool
+print_text("close the pool", header=3)
 pool.close()
 
 
 
-###do summary operations
-#how many snps we have before and after filtering?
-#error-false in the outputs?
+
+########################################################
+#### Do some checks after analyzing all chromosomes ####
+########################################################
+print_text("Do some checks after analyzing all chromosomes", header=1)
+print_text("check we do NOT have any errors in the output files of all chromosomes*pops combinations, also calculate the percentage of SNPs lost", header=2)
+print_text("run loop across chromosomes*pops combinations", header=3)
+snps_lost_percentage = []
+#combination=full_combinations_pop_chroms[0]
+for combination in full_combinations_pop_chroms:
+    print_text("Doing combination " + combination, header=4)
+
+    print_text("split the combination name", header=4)
+    comb_pop = combination.split("_")[0]
+    comb_chrom = combination.split("_")[1]
+
+    print_text("count number of cases with 'error' or 'false' in the output file", header=4)
+    count_error_false = run_bash(" \
+        grep \
+            'error|false' \
+            --extended-regexp \
+            --ignore-case \
+            --count \
+            ./scripts/01_hap_map_calcs_outputs/" + comb_pop + "/chr" + comb_chrom + "_" + comb_pop + ".out || \
+        [[ $? == 1 ]]", return_value=True).strip()
+        #using grep, look for 
+            #"error" OR "false" using "|". In order to avoid escaping the symbol, i.e., "\|", we need to use the flag "--extended-regexp"
+                #"error" include any string combing after like "errorS", "errores", etc... If the string "error" is present alone or in combination with other strings, you will get a hit
+            #ignore the case, so "Error" and "ERROR" are also included
+            #get the count, not the rows matching
+        #if the exit code of grep indicates error run the code after "||". This is the function of "||", run the code at the right only if the code at the left failed
+            #check if the exit code ("$?") is 1, if so, this will give 0 as exist status (i.e., no error and True) and give the count, which is zero, as stdout. As explained below, if the count is zero (stdout=0), the exit code is 1 in grep:
+                #0: no error and one or more lines were selected
+                #1: no error but no lines were selected
+                #>1: an error occurred
+            #This is different from other programs where exit code equals to 1 is error, and we coded that accordingly in run_bash.
+            #Because of this, in this particular case, we add an additional line in case grep gives non-zero exist status, and avoid error if the exit status is 1.
+                #If grep gives "1" as exit status because the string is not present in the file, we run [[ $? == 1 ]]. This will give "0" as exist status if the previous exit status was "1", while maintaining the previous stdout, i.e., the "count=0" because grep did not find the string in the file.
+                #If the exit status is >1 and thus, there is an error, this will give "1" as exist status and run_bash will fail, so we are not hiding errors. 
+                #If the exist status is 0, "||" avoids running the conditional (I have checked looking for "ancestral"), so we are good.
+            #https://unix.stackexchange.com/a/427598
+            #https://pubs.opengroup.org/onlinepubs/9699919799/utilities/grep.html#tag_20_55_14
+        #https://linuxize.com/post/grep-multiple-patterns/
+
+    print_text("check the count of problematic cases is zero", header=4)
+    if count_error_false == "0":
+        print("YES! GOOD TO GO!")
+    else:
+        raise ValueError("ERROR! FALSE! WE HAVE ERROR/FALSE IN THE OUTPUT FILE OF COMBINATION " + combination)
+
+    print_text("check we have the row of FINISH", header=4)
+    check_finish = run_bash(" \
+        grep \
+            '## FINISH ##' \
+            --count \
+            ./scripts/01_hap_map_calcs_outputs/" + comb_pop + "/chr" + comb_chrom + "_" + comb_pop + ".out || \
+        [[ $? == 1 ]]", return_value=True).strip()
+        #check we have the output indicating finish with a specific way, in uppercase and separated by "#", so we avoid the flag "--ignore-case". Ask for the count.
+        #as in the previous case, we add a line to avoid errors if the count is zero. We will deal with the lack of FINISH in the next line indicating also the chromosome name for which we found an error
+    if check_finish == "1":
+        print("YES! GOOD TO GO!")
+    else:
+        raise ValueError("ERROR! FALSE! THE SCRIPT HAS NOT FINISHED FOR COMBINATION " + combination)
+
+    print_text("check we have do NOT have the warning that should be only present in the dummy example", header=4)
+    check_warning_to_avoid = run_bash(" \
+        grep \
+            'THIS WARNING SHOULD BE ONLY IN DUMMY DATA NOT IN 1KGP DATA as AC field should have only 1 value per line in the data' \
+            --count \
+            ./scripts/01_hap_map_calcs_outputs/" + comb_pop + "/chr" + comb_chrom + "_" + comb_pop + ".out || \
+        [[ $? == 1 ]]", return_value=True).strip()
+        #check we have the output indicating finish with a specific way, in uppercase and separated by "#", so we avoid the flag "--ignore-case". Ask for the count.
+        #as in the previous case, we add a line to avoid errors if the count is zero. We will deal with the lack of FINISH in the next line indicating also the chromosome name for which we found an error
+    if check_warning_to_avoid == "0":
+        print("YES! GOOD TO GO!")
+    else:
+        raise ValueError("ERROR! FALSE! THE SCRIPT FOR COMBINATION " + combination + "HAS A WARNING THAT SHOULD NOT APPEAR HERE")
+
+    print_text("extract the number of SNPs lost due to the filtering", header=4)
+    row_results = run_bash(" \
+        grep \
+            'During filtering, we have lost' \
+            ./scripts/01_hap_map_calcs_outputs/" + comb_pop + "/chr" + comb_chrom + "_" + comb_pop + ".out", return_value=True).strip()
+        #look for the row including these results
+
+    print_text("split the row, extract the numbers and calculate the percentage", header=4)
+    row_results_split = row_results.split(" ")
+    snps_lost_percentage.append(int(row_results_split[5])/int(row_results_split[8])*100)
+
+print_text("see the percentiles of percentage of SNPs lost across all chromoeoms and populations", header=3)
+print("Do we have calculated all combinations")
+print(len(snps_lost_percentage)==len(full_combinations_pop_chroms))
+
+print("calculate the percentiles across combinations")
+for i in [0.1,0.25,0.4,0.5,0.6,0.75,0.9]:
+    print("Percentile " + str(i) + "%: " + str(np.quantile(snps_lost_percentage, i)))
 
 
-##por aqui
-
-##mail de jesus
-    #https://mail.google.com/mail/u/0/?tab=rm&ogbl#drafts/QgrcJHsHpDRJdfjndBxlCjQHdCNBwJJqNSl
-    
-    #after the run
-        #compare results between versions
-        #write jesus
-        #map file in this script?
 
 
-
-##when checking false/error also check you do not have the following warning in ANY pop-chrom:
-    #THIS WARNING SHOULD BE ONLY IN DUMMY DATA NOT IN 1KGP DATA as AC field should have only 1 value per line in the data.
-
-
-##according to david, you can check whether the REF/ALT alleles match between the old and new hap files, but taking into account we have different coordinated, hg19 vs hg38
+####################
+#### Next steps ####
+####################
+print_text("Next steps", header=1)
+#run the script in container in HPC and do check of the script in the meantime
+#according to david, you can check whether the REF/ALT alleles match between the old and new hap files, but taking into account we have different coordinated, hg19 vs hg38
     ##i guess you could take the old map files, convert to hg38 coordinates and then see if the REF/ALT columns are the same than in the new map files

@@ -1,4 +1,1122 @@
-  File "/home/dftortosa/singularity/dating_climate_adaptation/hg38_mig/./scripts/01_hap_map_calcs.py", line 58
-    from cyvcf2 import VCF
-    ^
-IndentationError: expected an indented block
+
+#######################################
+#######################################
+checking function to print nicely: header 1
+#######################################
+#######################################
+
+###### checking function to print nicely: header 2 ######
+
+## checking function to print nicely: header 3 ##
+
+# checking function to print nicely: header 4 #
+
+#######################################
+#######################################
+see working directory
+#######################################
+#######################################
+/home/dftortosa/singularity/dating_climate_adaptation/hg38_mig
+
+
+#######################################
+#######################################
+list files/folders there
+#######################################
+#######################################
+00_ubuntu_20_04_hg38_mig_vep_ancestral.sif
+01_ubuntu_20_04_hg38_mig_hap_map.sif
+data
+results
+scripts
+to_do_hg38_mig.md
+
+
+
+#######################################
+#######################################
+Preparate pedigree data
+#######################################
+#######################################
+
+#######################################
+#######################################
+Prepare bcftool
+#######################################
+#######################################
+
+#######################################
+#######################################
+see bcftools version
+#######################################
+#######################################
+bcftools 1.17
+Using htslib 1.17
+Copyright (C) 2023 Genome Research Ltd.
+License Expat: The MIT/Expat license
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+
+
+#######################################
+#######################################
+Check bcftools's behaviour with a dummy vcf file including ancestral alleles calculated with VEP
+#######################################
+#######################################
+
+###### explore the dummy VCF file and do some operations ######
+
+## see the dummy variants ##
+SNP rs6054247 chr20 14280 T A 5 0 0.2 AA: . AA_upcase: . GTs: 0|0 0|0 1|1
+SNP rs6054248 chr20 14290 C A 5 0 0.2 AA: . AA_upcase: . GTs: 0|0 0|0 1|.
+SNP rs6054249 chr20 14300 C A 5 1 0.2 AA: . AA_upcase: . GTs: 0|0 0|0 1|.
+SNP rs6054250 chr20 14310 C A 3 0 0 AA: N AA_upcase: N GTs: 1|0 .|. .|.
+SNP rs6054251 chr20 14320 C A 6 2 0.333 AA: - AA_upcase: - GTs: 0|0 0|0 1|1
+SNP rs6054252 chr20 14350 C A 4 2 0.5 AA: c AA_upcase: C GTs: 1|0 1|0 .|.
+SNP rs6054257 chr20 14370 G A 6 3 0.5 AA: c AA_upcase: C GTs: 1|0 1|1 0|0
+SNP rs6054255 chr20 14371 G C 6 3 0.667 AA: . AA_upcase: . GTs: 0|1 1|1 1|0
+SNP rs6040351 chr20 17330 T A 6 2 0.333 AA: . AA_upcase: . GTs: 0|0 1|0 1|0
+SNP rs6040355 chr20 1110696 A G,T 6 2,2 0.333,0.333 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 1|1 2|2 0|0
+SNP rs6040356 chr20 1110697 A C,T 6 2,1 0.333,0 AA: C,C,C,C,C,C,C,C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C,C,C,C,C,C,C,C GTs: 1|1 0|0 0|0
+SNP rs6040357 chr20 1110698 A G,T 6 3,3 0.5,0.5 AA: A,A,A,A,A,A,A,A,A,A,A,A,A,A AA_upcase: A,A,A,A,A,A,A,A,A,A,A,A,A,A GTs: 1|1 2|2 1|2
+SNP rs6040358 chr20 1110699 G A,T 6 2,0 0.333,0 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 1|1 0|0 .|.
+SNP rs6040359 chr20 1110700 A G,T 4 0,3 0,0.6 AA: T,T,T,T,T,T,T,T,T,T,T,T,T,T AA_upcase: T,T,T,T,T,T,T,T,T,T,T,T,T,T GTs: 2|2 2|2 2|.
+SNP rs6040360 chr20 1110701 A G 6 3 0.5 AA: G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G GTs: 1|1 0|0 0|1
+SNP rs6040360_copy chr20 1110701 A G 6 3 0.5 AA: G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G GTs: 1|1 1|0 0|1
+SNP rs6040361 chr20 1110702 A G 6 3 0.5 AA: C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C GTs: 1|1 0/0 0|1
+INDEL microsat1 chr20 1110703 GTC G,GTCT . . . AA: TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT AA_upcase: TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT GTs: 0/1 0/2 1/1
+
+
+## split multiallelic SNPs  ##
+SNP rs6054247 chr20 14280 T A 5 0 0.2 AA: . AA_upcase: . GTs: 0|0 0|0 1|1
+SNP rs6054248 chr20 14290 C A 5 0 0.2 AA: . AA_upcase: . GTs: 0|0 0|0 1|.
+SNP rs6054249 chr20 14300 C A 5 1 0.2 AA: . AA_upcase: . GTs: 0|0 0|0 1|.
+SNP rs6054250 chr20 14310 C A 3 0 0 AA: N AA_upcase: N GTs: 1|0 .|. .|.
+SNP rs6054251 chr20 14320 C A 6 2 0.333 AA: - AA_upcase: - GTs: 0|0 0|0 1|1
+SNP rs6054252 chr20 14350 C A 4 2 0.5 AA: c AA_upcase: C GTs: 1|0 1|0 .|.
+SNP rs6054257 chr20 14370 G A 6 3 0.5 AA: c AA_upcase: C GTs: 1|0 1|1 0|0
+SNP rs6054255 chr20 14371 G C 6 3 0.667 AA: . AA_upcase: . GTs: 0|1 1|1 1|0
+SNP rs6040351 chr20 17330 T A 6 2 0.333 AA: . AA_upcase: . GTs: 0|0 1|0 1|0
+SNP rs6040355 chr20 1110696 A G 6 2,2 0.333 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 1|1 0|0 0|0
+SNP rs6040355 chr20 1110696 A T 6 2,2 0.333 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 0|0 1|1 0|0
+SNP rs6040356 chr20 1110697 A C 6 2,1 0.333 AA: C,C,C,C,C,C,C,C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C,C,C,C,C,C,C,C GTs: 1|1 0|0 0|0
+SNP rs6040356 chr20 1110697 A T 6 2,1 0 AA: C,C,C,C,C,C,C,C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C,C,C,C,C,C,C,C GTs: 0|0 0|0 0|0
+SNP rs6040357 chr20 1110698 A G 6 3,3 0.5 AA: A,A,A,A,A,A,A,A,A,A,A,A,A,A AA_upcase: A,A,A,A,A,A,A,A,A,A,A,A,A,A GTs: 1|1 0|0 1|0
+SNP rs6040357 chr20 1110698 A T 6 3,3 0.5 AA: A,A,A,A,A,A,A,A,A,A,A,A,A,A AA_upcase: A,A,A,A,A,A,A,A,A,A,A,A,A,A GTs: 0|0 1|1 0|1
+SNP rs6040358 chr20 1110699 G A 6 2,0 0.333 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 1|1 0|0 .|.
+SNP rs6040358 chr20 1110699 G T 6 2,0 0 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 0|0 0|0 .|.
+SNP rs6040359 chr20 1110700 A G 4 0,3 0 AA: T,T,T,T,T,T,T,T,T,T,T,T,T,T AA_upcase: T,T,T,T,T,T,T,T,T,T,T,T,T,T GTs: 0|0 0|0 0|.
+SNP rs6040359 chr20 1110700 A T 4 0,3 0.6 AA: T,T,T,T,T,T,T,T,T,T,T,T,T,T AA_upcase: T,T,T,T,T,T,T,T,T,T,T,T,T,T GTs: 1|1 1|1 1|.
+SNP rs6040360 chr20 1110701 A G 6 3 0.5 AA: G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G GTs: 1|1 0|0 0|1
+SNP rs6040360_copy chr20 1110701 A G 6 3 0.5 AA: G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G GTs: 1|1 1|0 0|1
+SNP rs6040361 chr20 1110702 A G 6 3 0.5 AA: C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C GTs: 1|1 0/0 0|1
+INDEL microsat1 chr20 1110703 GTC G,GTCT . . . AA: TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT AA_upcase: TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT GTs: 0/1 0/2 1/1
+
+Lines   total/split/realigned/skipped:	18/5/0/0
+
+
+## select only two samples to check whether AC, AN and AF changes ##
+SNP rs6054247 chr20 14280 T A 4 0 0.2 AA: . AA_upcase: . GTs: 0|0 0|0
+SNP rs6054248 chr20 14290 C A 4 0 0.2 AA: . AA_upcase: . GTs: 0|0 0|0
+SNP rs6054249 chr20 14300 C A 4 0 0.2 AA: . AA_upcase: . GTs: 0|0 0|0
+SNP rs6054250 chr20 14310 C A 2 1 0 AA: N AA_upcase: N GTs: 1|0 .|.
+SNP rs6054251 chr20 14320 C A 4 0 0.333 AA: - AA_upcase: - GTs: 0|0 0|0
+SNP rs6054252 chr20 14350 C A 4 2 0.5 AA: c AA_upcase: C GTs: 1|0 1|0
+SNP rs6054257 chr20 14370 G A 4 3 0.5 AA: c AA_upcase: C GTs: 1|0 1|1
+SNP rs6054255 chr20 14371 G C 4 3 0.667 AA: . AA_upcase: . GTs: 0|1 1|1
+SNP rs6040351 chr20 17330 T A 4 1 0.333 AA: . AA_upcase: . GTs: 0|0 1|0
+SNP rs6040355 chr20 1110696 A G 4 2,2 0.333 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 1|1 0|0
+SNP rs6040355 chr20 1110696 A T 4 2,2 0.333 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 0|0 1|1
+SNP rs6040356 chr20 1110697 A C 4 2,0 0.333 AA: C,C,C,C,C,C,C,C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C,C,C,C,C,C,C,C GTs: 1|1 0|0
+SNP rs6040356 chr20 1110697 A T 4 2,0 0 AA: C,C,C,C,C,C,C,C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C,C,C,C,C,C,C,C GTs: 0|0 0|0
+SNP rs6040357 chr20 1110698 A G 4 2,2 0.5 AA: A,A,A,A,A,A,A,A,A,A,A,A,A,A AA_upcase: A,A,A,A,A,A,A,A,A,A,A,A,A,A GTs: 1|1 0|0
+SNP rs6040357 chr20 1110698 A T 4 2,2 0.5 AA: A,A,A,A,A,A,A,A,A,A,A,A,A,A AA_upcase: A,A,A,A,A,A,A,A,A,A,A,A,A,A GTs: 0|0 1|1
+SNP rs6040358 chr20 1110699 G A 4 2,0 0.333 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 1|1 0|0
+SNP rs6040358 chr20 1110699 G T 4 2,0 0 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 0|0 0|0
+SNP rs6040359 chr20 1110700 A G 4 0,4 0 AA: T,T,T,T,T,T,T,T,T,T,T,T,T,T AA_upcase: T,T,T,T,T,T,T,T,T,T,T,T,T,T GTs: 0|0 0|0
+SNP rs6040359 chr20 1110700 A T 4 0,4 0.6 AA: T,T,T,T,T,T,T,T,T,T,T,T,T,T AA_upcase: T,T,T,T,T,T,T,T,T,T,T,T,T,T GTs: 1|1 1|1
+SNP rs6040360 chr20 1110701 A G 4 2 0.5 AA: G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G GTs: 1|1 0|0
+SNP rs6040360_copy chr20 1110701 A G 4 3 0.5 AA: G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G GTs: 1|1 1|0
+SNP rs6040361 chr20 1110702 A G 4 2 0.5 AA: C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C GTs: 1|1 0/0
+INDEL microsat1 chr20 1110703 GTC G,GTCT 4 1,1 . AA: TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT AA_upcase: TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT GTs: 0/1 0/2
+
+Lines   total/split/realigned/skipped:	18/5/0/0
+
+
+## select SNPs ##
+SNP rs6054247 chr20 14280 T A 5 0 0.2 AA: . AA_upcase: . GTs: 0|0 0|0 1|1
+SNP rs6054248 chr20 14290 C A 5 0 0.2 AA: . AA_upcase: . GTs: 0|0 0|0 1|.
+SNP rs6054249 chr20 14300 C A 5 1 0.2 AA: . AA_upcase: . GTs: 0|0 0|0 1|.
+SNP rs6054250 chr20 14310 C A 3 0 0 AA: N AA_upcase: N GTs: 1|0 .|. .|.
+SNP rs6054251 chr20 14320 C A 6 2 0.333 AA: - AA_upcase: - GTs: 0|0 0|0 1|1
+SNP rs6054252 chr20 14350 C A 4 2 0.5 AA: c AA_upcase: C GTs: 1|0 1|0 .|.
+SNP rs6054257 chr20 14370 G A 6 3 0.5 AA: c AA_upcase: C GTs: 1|0 1|1 0|0
+SNP rs6054255 chr20 14371 G C 6 3 0.667 AA: . AA_upcase: . GTs: 0|1 1|1 1|0
+SNP rs6040351 chr20 17330 T A 6 2 0.333 AA: . AA_upcase: . GTs: 0|0 1|0 1|0
+SNP rs6040355 chr20 1110696 A G 6 2,2 0.333 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 1|1 0|0 0|0
+SNP rs6040355 chr20 1110696 A T 6 2,2 0.333 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 0|0 1|1 0|0
+SNP rs6040356 chr20 1110697 A C 6 2,1 0.333 AA: C,C,C,C,C,C,C,C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C,C,C,C,C,C,C,C GTs: 1|1 0|0 0|0
+SNP rs6040356 chr20 1110697 A T 6 2,1 0 AA: C,C,C,C,C,C,C,C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C,C,C,C,C,C,C,C GTs: 0|0 0|0 0|0
+SNP rs6040357 chr20 1110698 A G 6 3,3 0.5 AA: A,A,A,A,A,A,A,A,A,A,A,A,A,A AA_upcase: A,A,A,A,A,A,A,A,A,A,A,A,A,A GTs: 1|1 0|0 1|0
+SNP rs6040357 chr20 1110698 A T 6 3,3 0.5 AA: A,A,A,A,A,A,A,A,A,A,A,A,A,A AA_upcase: A,A,A,A,A,A,A,A,A,A,A,A,A,A GTs: 0|0 1|1 0|1
+SNP rs6040358 chr20 1110699 G A 6 2,0 0.333 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 1|1 0|0 .|.
+SNP rs6040358 chr20 1110699 G T 6 2,0 0 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 0|0 0|0 .|.
+SNP rs6040359 chr20 1110700 A G 4 0,3 0 AA: T,T,T,T,T,T,T,T,T,T,T,T,T,T AA_upcase: T,T,T,T,T,T,T,T,T,T,T,T,T,T GTs: 0|0 0|0 0|.
+SNP rs6040359 chr20 1110700 A T 4 0,3 0.6 AA: T,T,T,T,T,T,T,T,T,T,T,T,T,T AA_upcase: T,T,T,T,T,T,T,T,T,T,T,T,T,T GTs: 1|1 1|1 1|.
+SNP rs6040360 chr20 1110701 A G 6 3 0.5 AA: G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G GTs: 1|1 0|0 0|1
+SNP rs6040360_copy chr20 1110701 A G 6 3 0.5 AA: G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G GTs: 1|1 1|0 0|1
+SNP rs6040361 chr20 1110702 A G 6 3 0.5 AA: C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C GTs: 1|1 0/0 0|1
+
+Lines   total/split/realigned/skipped:	18/5/0/0
+
+
+## see monomorphic snps: rs6054249 (0|0 0|0 1|.) is not considered as monomorphic which is right, given that the last genotype not only has missing but also an ALT allele. rs6054248 (0|0 0|0 1|.) is not included even having AC erronously set as zero, thanks we update AC field with +fill-tags. The cases considered as monomorphic are those with all REF (e.g., rs6040358) or all ALT (e.g., rs6040359) irrespectively if they have missing. For example, rs6040359 has '1|1 1|1 1|.' as GT and it is considered monomorphic despite having a missing allele in the last genotype ##
+SNP rs6040356 chr20 1110697 A T 6 0 0 AA: C,C,C,C,C,C,C,C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C,C,C,C,C,C,C,C GTs: 0|0 0|0 0|0
+SNP rs6040358 chr20 1110699 G T 4 0 0 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 0|0 0|0 .|.
+SNP rs6040359 chr20 1110700 A G 5 0 0 AA: T,T,T,T,T,T,T,T,T,T,T,T,T,T AA_upcase: T,T,T,T,T,T,T,T,T,T,T,T,T,T GTs: 0|0 0|0 0|.
+SNP rs6040359 chr20 1110700 A T 5 5 0.6 AA: T,T,T,T,T,T,T,T,T,T,T,T,T,T AA_upcase: T,T,T,T,T,T,T,T,T,T,T,T,T,T GTs: 1|1 1|1 1|.
+
+Lines   total/split/realigned/skipped:	18/5/0/0
+
+
+## see monomorphic snps after subseting two first samples: rs6054249 is now considered monomorphic because it has 0|0 0|0 1|., being 1|. removed after filtering out the third sample. We get a warning after subsetting because --sampls updated AC, but for splitted multiallelic snps, we have several allele counts in each line, so the first time it sees this (rs6040355), print warning and no more. But AC is correctly updated anyway, leaving just one count, thus breaking the connection between the allele counts of the lines of a given multiallelic snp ##
+#######################################
+#######################################
+SNP rs6054247 chr20 14280 T A 4 0 0.2 AA: . AA_upcase: . GTs: 0|0 0|0
+SNP rs6054248 chr20 14290 C A 4 0 0.2 AA: . AA_upcase: . GTs: 0|0 0|0
+SNP rs6054249 chr20 14300 C A 4 0 0.2 AA: . AA_upcase: . GTs: 0|0 0|0
+SNP rs6054251 chr20 14320 C A 4 0 0.333 AA: - AA_upcase: - GTs: 0|0 0|0
+SNP rs6040356 chr20 1110697 A T 4 0 0 AA: C,C,C,C,C,C,C,C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C,C,C,C,C,C,C,C GTs: 0|0 0|0
+SNP rs6040358 chr20 1110699 G T 4 0 0 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 0|0 0|0
+SNP rs6040359 chr20 1110700 A G 4 0 0 AA: T,T,T,T,T,T,T,T,T,T,T,T,T,T AA_upcase: T,T,T,T,T,T,T,T,T,T,T,T,T,T GTs: 0|0 0|0
+SNP rs6040359 chr20 1110700 A T 4 4 0.6 AA: T,T,T,T,T,T,T,T,T,T,T,T,T,T AA_upcase: T,T,T,T,T,T,T,T,T,T,T,T,T,T GTs: 1|1 1|1
+
+THIS WARNING SHOULD BE ONLY IN DUMMY DATA NOT IN 1KGP DATA as AC field should have only 1 value per line in the data. Lines   total/split/realigned/skipped:	18/5/0/0
+[W::bcf_calc_ac] Incorrect number of AC fields at chr20:1110696. (This message is printed only once.)
+
+
+
+## exlcude monomorphic snps ##
+SNP rs6054247 chr20 14280 T A 6 2 0.2 AA: . AA_upcase: . GTs: 0|0 0|0 1|1
+SNP rs6054248 chr20 14290 C A 5 1 0.2 AA: . AA_upcase: . GTs: 0|0 0|0 1|.
+SNP rs6054249 chr20 14300 C A 5 1 0.2 AA: . AA_upcase: . GTs: 0|0 0|0 1|.
+SNP rs6054250 chr20 14310 C A 2 1 0 AA: N AA_upcase: N GTs: 1|0 .|. .|.
+SNP rs6054251 chr20 14320 C A 6 2 0.333 AA: - AA_upcase: - GTs: 0|0 0|0 1|1
+SNP rs6054252 chr20 14350 C A 4 2 0.5 AA: c AA_upcase: C GTs: 1|0 1|0 .|.
+SNP rs6054257 chr20 14370 G A 6 3 0.5 AA: c AA_upcase: C GTs: 1|0 1|1 0|0
+SNP rs6054255 chr20 14371 G C 6 4 0.667 AA: . AA_upcase: . GTs: 0|1 1|1 1|0
+SNP rs6040351 chr20 17330 T A 6 2 0.333 AA: . AA_upcase: . GTs: 0|0 1|0 1|0
+SNP rs6040355 chr20 1110696 A G 6 2 0.333 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 1|1 0|0 0|0
+SNP rs6040355 chr20 1110696 A T 6 2 0.333 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 0|0 1|1 0|0
+SNP rs6040356 chr20 1110697 A C 6 2 0.333 AA: C,C,C,C,C,C,C,C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C,C,C,C,C,C,C,C GTs: 1|1 0|0 0|0
+SNP rs6040357 chr20 1110698 A G 6 3 0.5 AA: A,A,A,A,A,A,A,A,A,A,A,A,A,A AA_upcase: A,A,A,A,A,A,A,A,A,A,A,A,A,A GTs: 1|1 0|0 1|0
+SNP rs6040357 chr20 1110698 A T 6 3 0.5 AA: A,A,A,A,A,A,A,A,A,A,A,A,A,A AA_upcase: A,A,A,A,A,A,A,A,A,A,A,A,A,A GTs: 0|0 1|1 0|1
+SNP rs6040358 chr20 1110699 G A 4 2 0.333 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 1|1 0|0 .|.
+SNP rs6040360 chr20 1110701 A G 6 3 0.5 AA: G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G GTs: 1|1 0|0 0|1
+SNP rs6040360_copy chr20 1110701 A G 6 4 0.5 AA: G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G GTs: 1|1 1|0 0|1
+SNP rs6040361 chr20 1110702 A G 6 3 0.5 AA: C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C GTs: 1|1 0/0 0|1
+
+Lines   total/split/realigned/skipped:	18/5/0/0
+
+
+## check that subseting and the updating AN, AC, AF fields does not change REF/AF: I select only the third sample. For rs6054247, the genotype is 0|0 0|0 1|1, being the third sample the only one with ALT. Thus, after subseting, the genotype is 1|1. AN and AC are both 2 now, while AF is 1. In other words, the ALT is the most frequent, but this alleles remains as the ALT. REF and ALT are not switched ##
+SNP rs6054247 chr20 14280 T A 2 2 1 AA: . AA_upcase: . GTs: 1|1
+SNP rs6054248 chr20 14290 C A 1 1 1 AA: . AA_upcase: . GTs: 1|.
+SNP rs6054249 chr20 14300 C A 1 1 1 AA: . AA_upcase: . GTs: 1|.
+SNP rs6054250 chr20 14310 C A 0 0 . AA: N AA_upcase: N GTs: .|.
+SNP rs6054251 chr20 14320 C A 2 2 1 AA: - AA_upcase: - GTs: 1|1
+SNP rs6054252 chr20 14350 C A 0 0 . AA: c AA_upcase: C GTs: .|.
+SNP rs6054257 chr20 14370 G A 2 0 0 AA: c AA_upcase: C GTs: 0|0
+SNP rs6054255 chr20 14371 G C 2 1 0.5 AA: . AA_upcase: . GTs: 1|0
+SNP rs6040351 chr20 17330 T A 2 1 0.5 AA: . AA_upcase: . GTs: 1|0
+SNP rs6040355 chr20 1110696 A G 2 0 0 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 0|0
+SNP rs6040355 chr20 1110696 A T 2 0 0 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 0|0
+SNP rs6040356 chr20 1110697 A C 2 0 0 AA: C,C,C,C,C,C,C,C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C,C,C,C,C,C,C,C GTs: 0|0
+SNP rs6040356 chr20 1110697 A T 2 0 0 AA: C,C,C,C,C,C,C,C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C,C,C,C,C,C,C,C GTs: 0|0
+SNP rs6040357 chr20 1110698 A G 2 1 0.5 AA: A,A,A,A,A,A,A,A,A,A,A,A,A,A AA_upcase: A,A,A,A,A,A,A,A,A,A,A,A,A,A GTs: 1|0
+SNP rs6040357 chr20 1110698 A T 2 1 0.5 AA: A,A,A,A,A,A,A,A,A,A,A,A,A,A AA_upcase: A,A,A,A,A,A,A,A,A,A,A,A,A,A GTs: 0|1
+SNP rs6040358 chr20 1110699 G A 0 0 . AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: .|.
+SNP rs6040358 chr20 1110699 G T 0 0 . AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: .|.
+SNP rs6040359 chr20 1110700 A G 1 0 0 AA: T,T,T,T,T,T,T,T,T,T,T,T,T,T AA_upcase: T,T,T,T,T,T,T,T,T,T,T,T,T,T GTs: 0|.
+SNP rs6040359 chr20 1110700 A T 1 1 1 AA: T,T,T,T,T,T,T,T,T,T,T,T,T,T AA_upcase: T,T,T,T,T,T,T,T,T,T,T,T,T,T GTs: 1|.
+SNP rs6040360 chr20 1110701 A G 2 1 0.5 AA: G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G GTs: 0|1
+SNP rs6040360_copy chr20 1110701 A G 2 1 0.5 AA: G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G GTs: 0|1
+SNP rs6040361 chr20 1110702 A G 2 1 0.5 AA: C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C GTs: 0|1
+
+THIS WARNING SHOULD BE ONLY IN DUMMY DATA NOT IN 1KGP DATA as AC field should have only 1 value per line in the data. Lines   total/split/realigned/skipped:	18/5/0/0
+[W::bcf_calc_ac] Incorrect number of AC fields at chr20:1110696. (This message is printed only once.)
+
+
+
+## see what missing definition uses bcftools in stats: Stats considers as missing both '.|.' and '0|.', resulting in 5 missing for the third sample (3 cases with .|. and 2 cases with 1|.). This makes sense because we are looking for the proportion of genotypes with missing data, '0|.' has missing data besides the allele '0'. Therefore, it should be counted as missing. We can consider this using GT='mis' (see below). Note that we are not going to filter by missingness anyways because the 1KGP data is already filtered for 5% missingness and David said that we should stick to that ##
+# This file was produced by bcftools stats (1.17+htslib-1.17) and can be plotted using plot-vcfstats.
+# The command line was:	bcftools stats  --samples -
+#
+# Definition of sets:
+# ID	[2]id	[3]tab-separated file names
+ID	0	<STDIN>
+# SN, Summary numbers:
+#   number of records   .. number of data rows in the VCF
+#   number of no-ALTs   .. reference-only sites, ALT is either "." or identical to REF
+#   number of SNPs      .. number of rows with a SNP
+#   number of MNPs      .. number of rows with a MNP, such as CC>TT
+#   number of indels    .. number of rows with an indel
+#   number of others    .. number of rows with other type, for example a symbolic allele or
+#                          a complex substitution, such as ACT>TCGA
+#   number of multiallelic sites     .. number of rows with multiple alternate alleles
+#   number of multiallelic SNP sites .. number of rows with multiple alternate alleles, all SNPs
+# 
+#   Note that rows containing multiple types will be counted multiple times, in each
+#   counter. For example, a row with a SNP and an indel increments both the SNP and
+#   the indel counter.
+# 
+# SN	[2]id	[3]key	[4]value
+SN	0	number of samples:	3
+SN	0	number of records:	18
+SN	0	number of no-ALTs:	0
+SN	0	number of SNPs:	18
+SN	0	number of MNPs:	0
+SN	0	number of indels:	0
+SN	0	number of others:	0
+SN	0	number of multiallelic sites:	0
+SN	0	number of multiallelic SNP sites:	0
+# TSTV, transitions/transversions:
+# TSTV	[2]id	[3]ts	[4]tv	[5]ts/tv	[6]ts (1st ALT)	[7]tv (1st ALT)	[8]ts/tv (1st ALT)
+TSTV	0	7	11	0.64	7	11	0.64
+# SiS, Singleton stats:
+# SiS	[2]id	[3]allele count	[4]number of SNPs	[5]number of transitions	[6]number of transversions	[7]number of indels	[8]repeat-consistent	[9]repeat-inconsistent	[10]not applicable
+SiS	0	1	3	0	3	0	0	0	0
+# AF, Stats by non-reference allele frequency:
+# AF	[2]id	[3]allele frequency	[4]number of SNPs	[5]number of transitions	[6]number of transversions	[7]number of indels	[8]repeat-consistent	[9]repeat-inconsistent	[10]not applicable
+AF	0	0.000000	3	0	3	0	0	0	0
+AF	0	0.330000	6	1	5	0	0	0	0
+AF	0	0.490000	7	5	2	0	0	0	0
+AF	0	0.660000	2	1	1	0	0	0	0
+# QUAL, Stats by quality
+# QUAL	[2]id	[3]Quality	[4]number of SNPs	[5]number of transitions (1st ALT)	[6]number of transversions (1st ALT)	[7]number of indels
+QUAL	0	3.0	1	0	1	0
+QUAL	0	29.0	8	1	7	0
+QUAL	0	67.0	9	6	3	0
+# IDD, InDel distribution:
+# IDD	[2]id	[3]length (deletions negative)	[4]number of sites	[5]number of genotypes	[6]mean VAF
+# ST, Substitution types:
+# ST	[2]id	[3]type	[4]count
+ST	0	A>C	1
+ST	0	A>G	5
+ST	0	A>T	2
+ST	0	C>A	5
+ST	0	C>G	0
+ST	0	C>T	0
+ST	0	G>A	2
+ST	0	G>C	1
+ST	0	G>T	0
+ST	0	T>A	2
+ST	0	T>C	0
+ST	0	T>G	0
+# DP, Depth distribution
+# DP	[2]id	[3]bin	[4]number of genotypes	[5]fraction of genotypes (%)	[6]number of sites	[7]fraction of sites (%)
+DP	0	10	0	0.000000	9	50.000000
+DP	0	11	0	0.000000	1	5.555556
+DP	0	14	0	0.000000	8	44.444444
+# PSC, Per-sample counts. Note that the ref/het/hom counts include only SNPs, for indels see PSI. The rest include both SNPs and indels.
+# PSC	[2]id	[3]sample	[4]nRefHom	[5]nNonRefHom	[6]nHets	[7]nTransitions	[8]nTransversions	[9]nIndels	[10]average depth	[11]nSingletons	[12]nHapRef	[13]nHapAlt	[14]nMissing
+PSC	0	NA00001	7	7	4	7	4	0	0.0	4	0	0	0
+PSC	0	NA00002	10	4	3	2	5	0	0.0	1	0	0	1
+PSC	0	NA00003	4	2	7	4	5	0	0.0	2	0	0	5
+# PSI, Per-Sample Indels. Note that alt-het genotypes with both ins and del allele are counted twice, in both nInsHets and nDelHets.
+# PSI	[2]id	[3]sample	[4]in-frame	[5]out-frame	[6]not applicable	[7]out/(in+out) ratio	[8]nInsHets	[9]nDelHets	[10]nInsAltHoms	[11]nDelAltHoms
+PSI	0	NA00001	0	0	0	0.00	0	0	0	0
+PSI	0	NA00002	0	0	0	0.00	0	0	0	0
+PSI	0	NA00003	0	0	0	0.00	0	0	0	0
+# HWE
+# HWE	[2]id	[3]1st ALT allele frequency	[4]Number of observations	[5]25th percentile	[6]median	[7]75th percentile
+HWE	0	0.000000	3	0.000000	0.000000	0.990000
+HWE	0	0.330000	6	0.000000	0.000000	0.000000
+HWE	0	0.490000	7	0.330000	0.330000	0.330000
+HWE	0	0.660000	2	0.660000	0.660000	0.660000
+
+Lines   total/split/realigned/skipped:	18/5/0/0
+
+
+## filter by frequency of missing. This approach counts the number of missing genotypes with GT='mis' ('.|.', '.', '0|.') and divided by the number of samples, so you get the proportion of samples with missing genotypes. The strength of this approach over calculating the tag F_MISSING (+fill-tags) is that you are counting anything with '.', so even '1|.' would be considered missing. To me this is more correct because we are filtering by genotype missingness, i.e., the proportion of genotypes with missing. Therefore, '1|.' has missing even though it has one allele. It is different in previous filters when we want to check if a SNP is monomorphic. In that situation, having 0|0 1|. is not monomorphic if we count the last allele in the genotype with missing. At the same time the genotype has missing (it should be count for missingness) and has an ALT allele (it is not monomorphic), we should consider both aspects. Note that we are not going to filter by missingness anyways because the 1KGP data is already filtered for 5% missingness and David said that we should stick to that ##
+#### SNPs with 1/3 or more of missing: we have snps with 1 out of 3 missing genotypes (e.g., rs6040358) and variants with 2 out of 3 missing (rs6054250) ####
+SNP rs6054248 chr20 14290 C A 5 1 0.2 AA: . AA_upcase: . GTs: 0|0 0|0 1|.
+SNP rs6054249 chr20 14300 C A 5 1 0.2 AA: . AA_upcase: . GTs: 0|0 0|0 1|.
+SNP rs6054250 chr20 14310 C A 2 1 0 AA: N AA_upcase: N GTs: 1|0 .|. .|.
+SNP rs6054252 chr20 14350 C A 4 2 0.5 AA: c AA_upcase: C GTs: 1|0 1|0 .|.
+SNP rs6040358 chr20 1110699 G A 4 2 0.333 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 1|1 0|0 .|.
+
+Lines   total/split/realigned/skipped:	18/5/0/0
+
+#### SNPs with 2/3 of missing: We get a variant with 2 out of 3 missing (rs6054250) ####
+SNP rs6054250 chr20 14310 C A 2 1 0 AA: N AA_upcase: N GTs: 1|0 .|. .|.
+
+Lines   total/split/realigned/skipped:	18/5/0/0
+
+#### select variants with less than 1/3 of missing: We have lost all variants with missing because we only have variants 2/3 and 1/3 of missing ####
+SNP rs6054247 chr20 14280 T A 6 2 0.2 AA: . AA_upcase: . GTs: 0|0 0|0 1|1
+SNP rs6054251 chr20 14320 C A 6 2 0.333 AA: - AA_upcase: - GTs: 0|0 0|0 1|1
+SNP rs6054257 chr20 14370 G A 6 3 0.5 AA: c AA_upcase: C GTs: 1|0 1|1 0|0
+SNP rs6054255 chr20 14371 G C 6 4 0.667 AA: . AA_upcase: . GTs: 0|1 1|1 1|0
+SNP rs6040351 chr20 17330 T A 6 2 0.333 AA: . AA_upcase: . GTs: 0|0 1|0 1|0
+SNP rs6040355 chr20 1110696 A G 6 2 0.333 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 1|1 0|0 0|0
+SNP rs6040355 chr20 1110696 A T 6 2 0.333 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 0|0 1|1 0|0
+SNP rs6040356 chr20 1110697 A C 6 2 0.333 AA: C,C,C,C,C,C,C,C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C,C,C,C,C,C,C,C GTs: 1|1 0|0 0|0
+SNP rs6040357 chr20 1110698 A G 6 3 0.5 AA: A,A,A,A,A,A,A,A,A,A,A,A,A,A AA_upcase: A,A,A,A,A,A,A,A,A,A,A,A,A,A GTs: 1|1 0|0 1|0
+SNP rs6040357 chr20 1110698 A T 6 3 0.5 AA: A,A,A,A,A,A,A,A,A,A,A,A,A,A AA_upcase: A,A,A,A,A,A,A,A,A,A,A,A,A,A GTs: 0|0 1|1 0|1
+SNP rs6040360 chr20 1110701 A G 6 3 0.5 AA: G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G GTs: 1|1 0|0 0|1
+SNP rs6040360_copy chr20 1110701 A G 6 4 0.5 AA: G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G GTs: 1|1 1|0 0|1
+SNP rs6040361 chr20 1110702 A G 6 3 0.5 AA: C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C GTs: 1|1 0/0 0|1
+
+Lines   total/split/realigned/skipped:	18/5/0/0
+
+#### select variants with less than 0.05 of missing: We have lost all variants with missing because we only have variants 2/3 and 1/3 of missing ####
+SNP rs6054247 chr20 14280 T A 6 2 0.2 AA: . AA_upcase: . GTs: 0|0 0|0 1|1
+SNP rs6054251 chr20 14320 C A 6 2 0.333 AA: - AA_upcase: - GTs: 0|0 0|0 1|1
+SNP rs6054257 chr20 14370 G A 6 3 0.5 AA: c AA_upcase: C GTs: 1|0 1|1 0|0
+SNP rs6054255 chr20 14371 G C 6 4 0.667 AA: . AA_upcase: . GTs: 0|1 1|1 1|0
+SNP rs6040351 chr20 17330 T A 6 2 0.333 AA: . AA_upcase: . GTs: 0|0 1|0 1|0
+SNP rs6040355 chr20 1110696 A G 6 2 0.333 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 1|1 0|0 0|0
+SNP rs6040355 chr20 1110696 A T 6 2 0.333 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 0|0 1|1 0|0
+SNP rs6040356 chr20 1110697 A C 6 2 0.333 AA: C,C,C,C,C,C,C,C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C,C,C,C,C,C,C,C GTs: 1|1 0|0 0|0
+SNP rs6040357 chr20 1110698 A G 6 3 0.5 AA: A,A,A,A,A,A,A,A,A,A,A,A,A,A AA_upcase: A,A,A,A,A,A,A,A,A,A,A,A,A,A GTs: 1|1 0|0 1|0
+SNP rs6040357 chr20 1110698 A T 6 3 0.5 AA: A,A,A,A,A,A,A,A,A,A,A,A,A,A AA_upcase: A,A,A,A,A,A,A,A,A,A,A,A,A,A GTs: 0|0 1|1 0|1
+SNP rs6040360 chr20 1110701 A G 6 3 0.5 AA: G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G GTs: 1|1 0|0 0|1
+SNP rs6040360_copy chr20 1110701 A G 6 4 0.5 AA: G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G GTs: 1|1 1|0 0|1
+SNP rs6040361 chr20 1110702 A G 6 3 0.5 AA: C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C GTs: 1|1 0/0 0|1
+
+Lines   total/split/realigned/skipped:	18/5/0/0
+
+
+## remove now the exact duplicates: it does not matter if we remove duplicates before or after subsetting samples. Subseting does not update chrom, pos and REF/ALT, which are the fields used by '--rm-dup exact' to remove exact duplicates. In an hypothetically scenario where we have two duplicated SNPs and one of them is monomorphic, we would remove first the monomorphic due to the previous filters and then retain the second. If you use --rm-dup before, you would select the SNP that appears first, that could be the monomorphic or the other one. Removing mono first force to select always the second, while removing duplicates before makes possible to select one or the other. I do not think this is relevant ##
+SNP rs6054247 chr20 14280 T A 6 2 0.2 AA: . AA_upcase: . GTs: 0|0 0|0 1|1
+SNP rs6054251 chr20 14320 C A 6 2 0.333 AA: - AA_upcase: - GTs: 0|0 0|0 1|1
+SNP rs6054257 chr20 14370 G A 6 3 0.5 AA: c AA_upcase: C GTs: 1|0 1|1 0|0
+SNP rs6054255 chr20 14371 G C 6 4 0.667 AA: . AA_upcase: . GTs: 0|1 1|1 1|0
+SNP rs6040351 chr20 17330 T A 6 2 0.333 AA: . AA_upcase: . GTs: 0|0 1|0 1|0
+SNP rs6040355 chr20 1110696 A G 6 2 0.333 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 1|1 0|0 0|0
+SNP rs6040355 chr20 1110696 A T 6 2 0.333 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 0|0 1|1 0|0
+SNP rs6040356 chr20 1110697 A C 6 2 0.333 AA: C,C,C,C,C,C,C,C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C,C,C,C,C,C,C,C GTs: 1|1 0|0 0|0
+SNP rs6040357 chr20 1110698 A G 6 3 0.5 AA: A,A,A,A,A,A,A,A,A,A,A,A,A,A AA_upcase: A,A,A,A,A,A,A,A,A,A,A,A,A,A GTs: 1|1 0|0 1|0
+SNP rs6040357 chr20 1110698 A T 6 3 0.5 AA: A,A,A,A,A,A,A,A,A,A,A,A,A,A AA_upcase: A,A,A,A,A,A,A,A,A,A,A,A,A,A GTs: 0|0 1|1 0|1
+SNP rs6040360 chr20 1110701 A G 6 3 0.5 AA: G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G GTs: 1|1 0|0 0|1
+SNP rs6040361 chr20 1110702 A G 6 3 0.5 AA: C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C GTs: 1|1 0/0 0|1
+
+Lines   total/split/realigned/skipped:	18/5/0/0
+Lines   total/split/realigned/skipped:	13/0/0/0
+
+
+## combine lines of multialleic snps in just one line ##
+SNP rs6054247 chr20 14280 T A 6 2 0.2 AA: . AA_upcase: . GTs: 0|0 0|0 1|1
+SNP rs6054251 chr20 14320 C A 6 2 0.333 AA: - AA_upcase: - GTs: 0|0 0|0 1|1
+SNP rs6054257 chr20 14370 G A 6 3 0.5 AA: c AA_upcase: C GTs: 1|0 1|1 0|0
+SNP rs6054255 chr20 14371 G C 6 4 0.667 AA: . AA_upcase: . GTs: 0|1 1|1 1|0
+SNP rs6040351 chr20 17330 T A 6 2 0.333 AA: . AA_upcase: . GTs: 0|0 1|0 1|0
+SNP rs6040355 chr20 1110696 A G,T 6 2 0.333,0.333 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 1|1 2/2 0|0
+SNP rs6040356 chr20 1110697 A C 6 2 0.333 AA: C,C,C,C,C,C,C,C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C,C,C,C,C,C,C,C GTs: 1|1 0|0 0|0
+SNP rs6040357 chr20 1110698 A G,T 6 3 0.5,0.5 AA: A,A,A,A,A,A,A,A,A,A,A,A,A,A AA_upcase: A,A,A,A,A,A,A,A,A,A,A,A,A,A GTs: 1|1 2/2 1/2
+SNP rs6040360 chr20 1110701 A G 6 3 0.5 AA: G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G GTs: 1|1 0|0 0|1
+SNP rs6040361 chr20 1110702 A G 6 3 0.5 AA: C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C GTs: 1|1 0/0 0|1
+
+Lines   total/split/realigned/skipped:	18/5/0/0
+Lines   total/split/realigned/skipped:	13/0/0/0
+Lines   total/split/realigned/skipped:	12/0/0/0
+
+
+## check what happens if we remove the third sample and then rs6040355 have no REF anymore, only two ALTs: Despite losing the REF, both lines of rs6040355 are merged into a multiallelic SNP, thus it can be removed with --max-alleles 2. This makes sense because --multiallelics +snps looks for snps with the same position and same REF or ALT columns ##
+SNP rs6054252 chr20 14350 C A 4 2 0.5 AA: c AA_upcase: C GTs: 1|0 1|0
+SNP rs6054257 chr20 14370 G A 4 3 0.5 AA: c AA_upcase: C GTs: 1|0 1|1
+SNP rs6054255 chr20 14371 G C 4 3 0.667 AA: . AA_upcase: . GTs: 0|1 1|1
+SNP rs6040351 chr20 17330 T A 4 1 0.333 AA: . AA_upcase: . GTs: 0|0 1|0
+SNP rs6040355 chr20 1110696 A G,T 4 2 0.333,0.333 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 1|1 2/2
+SNP rs6040356 chr20 1110697 A C 4 2 0.333 AA: C,C,C,C,C,C,C,C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C,C,C,C,C,C,C,C GTs: 1|1 0|0
+SNP rs6040357 chr20 1110698 A G,T 4 2 0.5,0.5 AA: A,A,A,A,A,A,A,A,A,A,A,A,A,A AA_upcase: A,A,A,A,A,A,A,A,A,A,A,A,A,A GTs: 1|1 2/2
+SNP rs6040358 chr20 1110699 G A 4 2 0.333 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 1|1 0|0
+SNP rs6040360 chr20 1110701 A G 4 2 0.5 AA: G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G GTs: 1|1 0|0
+SNP rs6040361 chr20 1110702 A G 4 2 0.5 AA: C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C GTs: 1|1 0/0
+
+THIS WARNING SHOULD BE ONLY IN DUMMY DATA NOT IN 1KGP DATA as AC field should have only 1 value per line in the data. Lines   total/split/realigned/skipped:	18/5/0/0
+[W::bcf_calc_ac] Incorrect number of AC fields at chr20:1110696. (This message is printed only once.)
+
+Lines   total/split/realigned/skipped:	13/0/0/0
+Lines   total/split/realigned/skipped:	12/0/0/0
+
+
+## now we can remove those SNPs with more than 1 allele in ALT. rs6040358 is now included because the second ALT is not present, only REF and ALT, having no missing (it has missing for the last sample that is filtered out) ##
+SNP rs6054252 chr20 14350 C A 4 2 0.5 AA: c AA_upcase: C GTs: 1|0 1|0
+SNP rs6054257 chr20 14370 G A 4 3 0.5 AA: c AA_upcase: C GTs: 1|0 1|1
+SNP rs6054255 chr20 14371 G C 4 3 0.667 AA: . AA_upcase: . GTs: 0|1 1|1
+SNP rs6040351 chr20 17330 T A 4 1 0.333 AA: . AA_upcase: . GTs: 0|0 1|0
+SNP rs6040356 chr20 1110697 A C 4 2 0.333 AA: C,C,C,C,C,C,C,C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C,C,C,C,C,C,C,C GTs: 1|1 0|0
+SNP rs6040358 chr20 1110699 G A 4 2 0.333 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 1|1 0|0
+SNP rs6040360 chr20 1110701 A G 4 2 0.5 AA: G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G GTs: 1|1 0|0
+SNP rs6040361 chr20 1110702 A G 4 2 0.5 AA: C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C GTs: 1|1 0/0
+
+THIS WARNING SHOULD BE ONLY IN DUMMY DATA NOT IN 1KGP DATA as AC field should have only 1 value per line in the data. Lines   total/split/realigned/skipped:	18/5/0/0
+[W::bcf_calc_ac] Incorrect number of AC fields at chr20:1110696. (This message is printed only once.)
+
+Lines   total/split/realigned/skipped:	13/0/0/0
+Lines   total/split/realigned/skipped:	12/0/0/0
+
+
+## select only phased data ##
+SNP rs6054252 chr20 14350 C A 4 2 0.5 AA: c AA_upcase: C GTs: 1|0 1|0
+SNP rs6054257 chr20 14370 G A 4 3 0.5 AA: c AA_upcase: C GTs: 1|0 1|1
+SNP rs6054255 chr20 14371 G C 4 3 0.667 AA: . AA_upcase: . GTs: 0|1 1|1
+SNP rs6040351 chr20 17330 T A 4 1 0.333 AA: . AA_upcase: . GTs: 0|0 1|0
+SNP rs6040356 chr20 1110697 A C 4 2 0.333 AA: C,C,C,C,C,C,C,C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C,C,C,C,C,C,C,C GTs: 1|1 0|0
+SNP rs6040358 chr20 1110699 G A 4 2 0.333 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 1|1 0|0
+SNP rs6040360 chr20 1110701 A G 4 2 0.5 AA: G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G GTs: 1|1 0|0
+
+THIS WARNING SHOULD BE ONLY IN DUMMY DATA NOT IN 1KGP DATA as AC field should have only 1 value per line in the data. Lines   total/split/realigned/skipped:	18/5/0/0
+[W::bcf_calc_ac] Incorrect number of AC fields at chr20:1110696. (This message is printed only once.)
+
+Lines   total/split/realigned/skipped:	13/0/0/0
+Lines   total/split/realigned/skipped:	12/0/0/0
+
+
+## select only SNPs in regions with high accessibility ##
+
+# create a dummy mask #
+chr20	14369	14370	pilot
+chr20	1110695	1110700	pilot
+chr20	1110690	1110696	pilot
+chr1	14369	17330	pilot
+
+
+# compress the dummy (mask) bed file to match what we will do with the real data. bcftools --targets-file can take a .bed.gz file as input (see below) #
+
+
+# apply the dummy mask #
+SNP rs6054257 chr20 14370 G A 4 3 0.5 AA: c AA_upcase: C GTs: 1|0 1|1
+SNP rs6040356 chr20 1110697 A C 4 2 0.333 AA: C,C,C,C,C,C,C,C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C,C,C,C,C,C,C,C GTs: 1|1 0|0
+SNP rs6040358 chr20 1110699 G A 4 2 0.333 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 1|1 0|0
+
+THIS WARNING SHOULD BE ONLY IN DUMMY DATA NOT IN 1KGP DATA as AC field should have only 1 value per line in the data. Lines   total/split/realigned/skipped:	18/5/0/0
+[W::bcf_calc_ac] Incorrect number of AC fields at chr20:1110696. (This message is printed only once.)
+
+Lines   total/split/realigned/skipped:	13/0/0/0
+Lines   total/split/realigned/skipped:	12/0/0/0
+
+
+# check you can filter the BED file by chromosome using awk #
+chr20	14369	14370	pilot
+chr20	1110695	1110700	pilot
+chr20	1110690	1110696	pilot
+
+
+# check the cleaning of the BED file with awk #
+TRUE
+
+
+## use +fill-tags to update INFO fields ##
+
+# before using +fill-tags to update INFO fields, see the sample 1 and 2 to check AF is not updated #
+SNP rs6054247 chr20 14280 T A 4 0 0.2 AA: . AA_upcase: . GTs: 0|0 0|0
+SNP rs6054248 chr20 14290 C A 4 0 0.2 AA: . AA_upcase: . GTs: 0|0 0|0
+SNP rs6054249 chr20 14300 C A 4 0 0.2 AA: . AA_upcase: . GTs: 0|0 0|0
+SNP rs6054250 chr20 14310 C A 2 1 0 AA: N AA_upcase: N GTs: 1|0 .|.
+SNP rs6054251 chr20 14320 C A 4 0 0.333 AA: - AA_upcase: - GTs: 0|0 0|0
+SNP rs6054252 chr20 14350 C A 4 2 0.5 AA: c AA_upcase: C GTs: 1|0 1|0
+SNP rs6054257 chr20 14370 G A 4 3 0.5 AA: c AA_upcase: C GTs: 1|0 1|1
+SNP rs6054255 chr20 14371 G C 4 3 0.667 AA: . AA_upcase: . GTs: 0|1 1|1
+SNP rs6040351 chr20 17330 T A 4 1 0.333 AA: . AA_upcase: . GTs: 0|0 1|0
+SNP rs6040355 chr20 1110696 A G,T 4 2,2 0.333,0.333 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 1|1 2|2
+SNP rs6040356 chr20 1110697 A C,T 4 2,0 0.333,0 AA: C,C,C,C,C,C,C,C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C,C,C,C,C,C,C,C GTs: 1|1 0|0
+SNP rs6040357 chr20 1110698 A G,T 4 2,2 0.5,0.5 AA: A,A,A,A,A,A,A,A,A,A,A,A,A,A AA_upcase: A,A,A,A,A,A,A,A,A,A,A,A,A,A GTs: 1|1 2|2
+SNP rs6040358 chr20 1110699 G A,T 4 2,0 0.333,0 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 1|1 0|0
+SNP rs6040359 chr20 1110700 A G,T 4 0,4 0,0.6 AA: T,T,T,T,T,T,T,T,T,T,T,T,T,T AA_upcase: T,T,T,T,T,T,T,T,T,T,T,T,T,T GTs: 2|2 2|2
+SNP rs6040360 chr20 1110701 A G 4 2 0.5 AA: G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G GTs: 1|1 0|0
+SNP rs6040360_copy chr20 1110701 A G 4 3 0.5 AA: G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G GTs: 1|1 1|0
+SNP rs6040361 chr20 1110702 A G 4 2 0.5 AA: C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C GTs: 1|1 0/0
+INDEL microsat1 chr20 1110703 GTC G,GTCT 4 1,1 . AA: TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT AA_upcase: TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT GTs: 0/1 0/2
+
+
+# update AF with fill-tags #
+SNP rs6054247 chr20 14280 T A 4 0 0 AA: . AA_upcase: . GTs: 0|0 0|0
+SNP rs6054248 chr20 14290 C A 4 0 0 AA: . AA_upcase: . GTs: 0|0 0|0
+SNP rs6054249 chr20 14300 C A 4 0 0 AA: . AA_upcase: . GTs: 0|0 0|0
+SNP rs6054250 chr20 14310 C A 2 1 0.5 AA: N AA_upcase: N GTs: 1|0 .|.
+SNP rs6054251 chr20 14320 C A 4 0 0 AA: - AA_upcase: - GTs: 0|0 0|0
+SNP rs6054252 chr20 14350 C A 4 2 0.5 AA: c AA_upcase: C GTs: 1|0 1|0
+SNP rs6054257 chr20 14370 G A 4 3 0.75 AA: c AA_upcase: C GTs: 1|0 1|1
+SNP rs6054255 chr20 14371 G C 4 3 0.75 AA: . AA_upcase: . GTs: 0|1 1|1
+SNP rs6040351 chr20 17330 T A 4 1 0.25 AA: . AA_upcase: . GTs: 0|0 1|0
+SNP rs6040355 chr20 1110696 A G,T 4 2,2 0.5,0.5 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 1|1 2|2
+SNP rs6040356 chr20 1110697 A C,T 4 2,0 0.5,0 AA: C,C,C,C,C,C,C,C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C,C,C,C,C,C,C,C GTs: 1|1 0|0
+SNP rs6040357 chr20 1110698 A G,T 4 2,2 0.5,0.5 AA: A,A,A,A,A,A,A,A,A,A,A,A,A,A AA_upcase: A,A,A,A,A,A,A,A,A,A,A,A,A,A GTs: 1|1 2|2
+SNP rs6040358 chr20 1110699 G A,T 4 2,0 0.5,0 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 1|1 0|0
+SNP rs6040359 chr20 1110700 A G,T 4 0,4 0,1 AA: T,T,T,T,T,T,T,T,T,T,T,T,T,T AA_upcase: T,T,T,T,T,T,T,T,T,T,T,T,T,T GTs: 2|2 2|2
+SNP rs6040360 chr20 1110701 A G 4 2 0.5 AA: G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G GTs: 1|1 0|0
+SNP rs6040360_copy chr20 1110701 A G 4 3 0.75 AA: G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G GTs: 1|1 1|0
+SNP rs6040361 chr20 1110702 A G 4 2 0.5 AA: C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C GTs: 1|1 0/0
+INDEL microsat1 chr20 1110703 GTC G,GTCT 4 1,1 0.25,0.25 AA: TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT AA_upcase: TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT GTs: 0/1 0/2
+
+
+# update and create more fields with fill-tags #
+SNP rs6054247 chr20 14280 T A 4 0 0 0 0 0 1 1 2 AA: . AA_upcase: . GTs: 0|0 0|0
+SNP rs6054248 chr20 14290 C A 4 0 0 0 0 0 1 1 2 AA: . AA_upcase: . GTs: 0|0 0|0
+SNP rs6054249 chr20 14300 C A 4 0 0 0 0 0 1 1 2 AA: . AA_upcase: . GTs: 0|0 0|0
+SNP rs6054250 chr20 14310 C A 2 1 0 1 0.5 0.5 1 1 1 AA: N AA_upcase: N GTs: 1|0 .|.
+SNP rs6054251 chr20 14320 C A 4 0 0 0 0 0 1 1 2 AA: - AA_upcase: - GTs: 0|0 0|0
+SNP rs6054252 chr20 14350 C A 4 2 0 2 0.5 0.5 0.666667 1 2 AA: c AA_upcase: C GTs: 1|0 1|0
+SNP rs6054257 chr20 14370 G A 4 3 2 1 0.75 0.25 1 1 2 AA: c AA_upcase: C GTs: 1|0 1|1
+SNP rs6054255 chr20 14371 G C 4 3 2 1 0.75 0.25 1 1 2 AA: . AA_upcase: . GTs: 0|1 1|1
+SNP rs6040351 chr20 17330 T A 4 1 0 1 0.25 0.25 1 1 2 AA: . AA_upcase: . GTs: 0|0 1|0
+SNP rs6040355 chr20 1110696 A G,T 4 2,2 2,2 0,0 0.5,0.5 0.5 1,1 1,1 2 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 1|1 2|2
+SNP rs6040356 chr20 1110697 A C,T 4 2,0 2,0 0,0 0.5,0 0.5 1,1 0.333333,1 2 AA: C,C,C,C,C,C,C,C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C,C,C,C,C,C,C,C GTs: 1|1 0|0
+SNP rs6040357 chr20 1110698 A G,T 4 2,2 2,2 0,0 0.5,0.5 0.5 1,1 1,1 2 AA: A,A,A,A,A,A,A,A,A,A,A,A,A,A AA_upcase: A,A,A,A,A,A,A,A,A,A,A,A,A,A GTs: 1|1 2|2
+SNP rs6040358 chr20 1110699 G A,T 4 2,0 2,0 0,0 0.5,0 0.5 1,1 0.333333,1 2 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 1|1 0|0
+SNP rs6040359 chr20 1110700 A G,T 4 0,4 0,4 0,0 0,1 0 1,1 1,1 2 AA: T,T,T,T,T,T,T,T,T,T,T,T,T,T AA_upcase: T,T,T,T,T,T,T,T,T,T,T,T,T,T GTs: 2|2 2|2
+SNP rs6040360 chr20 1110701 A G 4 2 2 0 0.5 0.5 1 0.333333 2 AA: G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G GTs: 1|1 0|0
+SNP rs6040360_copy chr20 1110701 A G 4 3 2 1 0.75 0.25 1 1 2 AA: G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G GTs: 1|1 1|0
+SNP rs6040361 chr20 1110702 A G 4 2 2 0 0.5 0.5 1 0.333333 2 AA: C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C GTs: 1|1 0/0
+INDEL microsat1 chr20 1110703 GTC G,GTCT 4 1,1 0,0 1,1 0.25,0.25 0.25 1,1 1,1 2 AA: TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT AA_upcase: TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT GTs: 0/1 0/2
+
+
+# remove all previous INFO and FORMAT fields except GT and create the fields you are interested in by using fill-tags but after applying all the filters #
+SNP rs6054257 chr20 14370 G A 4 3 2 1 0.75 0.25 1 1 2 AA: c AA_upcase: C GTs: 1|0 1|1
+SNP rs6040356 chr20 1110697 A C 4 2 2 0 0.5 0.5 1 0.333333 2 AA: C,C,C,C,C,C,C,C,C,C,C,C,C,C AA_upcase: C,C,C,C,C,C,C,C,C,C,C,C,C,C GTs: 1|1 0|0
+SNP rs6040358 chr20 1110699 G A 4 2 2 0 0.5 0.5 1 0.333333 2 AA: G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase: G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 1|1 0|0
+
+THIS WARNING SHOULD BE ONLY IN DUMMY DATA NOT IN 1KGP DATA as AC field should have only 1 value per line in the data. Lines   total/split/realigned/skipped:	18/5/0/0
+[W::bcf_calc_ac] Incorrect number of AC fields at chr20:1110696. (This message is printed only once.)
+
+Lines   total/split/realigned/skipped:	13/0/0/0
+Lines   total/split/realigned/skipped:	12/0/0/0
+
+
+# compare GT between applying or not the +fill-tags commands and the removal of fields #
+chr20	14370	rs6054257	G	A	29	PASS	AA=c;AA_upcase=C;NS=2;AN=4;AF=0.75;MAF=0.25;AC=3;AC_Het=1;AC_Hom=2;HWE=1;ExcHet=1	GT	1|0	1|1
+chr20	1110697	rs6040356	A	C	67	PASS	AA=C,C,C,C,C,C,C,C,C,C,C,C,C,C;AA_upcase=C,C,C,C,C,C,C,C,C,C,C,C,C,C;NS=2;AN=4;AF=0.5;MAF=0.5;AC=2;AC_Het=0;AC_Hom=2;HWE=0.333333;ExcHet=1	GT	1|1	0|0
+chr20	1110699	rs6040358	G	A	67	PASS	AA=G,G,G,G,G,G,G,G,G,G,G,G,G,G;AA_upcase=G,G,G,G,G,G,G,G,G,G,G,G,G,G;NS=2;AN=4;AF=0.5;MAF=0.5;AC=2;AC_Het=0;AC_Hom=2;HWE=0.333333;ExcHet=1	GT	1|1	0|0
+
+THIS WARNING SHOULD BE ONLY IN DUMMY DATA NOT IN 1KGP DATA as AC field should have only 1 value per line in the data. Lines   total/split/realigned/skipped:	18/5/0/0
+[W::bcf_calc_ac] Incorrect number of AC fields at chr20:1110696. (This message is printed only once.)
+
+Lines   total/split/realigned/skipped:	13/0/0/0
+Lines   total/split/realigned/skipped:	12/0/0/0
+
+chr20	14370	rs6054257	G	A	29	PASS	NS=3;DP=14;AN=4;AC=3;AF=0.5;DB;H2;AA=c;AA_upcase=C	GT	1|0	1|1
+chr20	1110697	rs6040356	A	C	67	PASS	NS=2;DP=10;AN=4;AC=2;AF=0.333;DB;AA=C,C,C,C,C,C,C,C,C,C,C,C,C,C;AA_upcase=C,C,C,C,C,C,C,C,C,C,C,C,C,C	GT	1|1	0|0
+chr20	1110699	rs6040358	G	A	67	PASS	NS=2;DP=10;AN=4;AC=2;AF=0.333;DB;AA=G,G,G,G,G,G,G,G,G,G,G,G,G,G;AA_upcase=G,G,G,G,G,G,G,G,G,G,G,G,G,G	GT	1|1	0|0
+
+THIS WARNING SHOULD BE ONLY IN DUMMY DATA NOT IN 1KGP DATA as AC field should have only 1 value per line in the data. Lines   total/split/realigned/skipped:	18/5/0/0
+[W::bcf_calc_ac] Incorrect number of AC fields at chr20:1110696. (This message is printed only once.)
+
+Lines   total/split/realigned/skipped:	13/0/0/0
+Lines   total/split/realigned/skipped:	12/0/0/0
+
+
+## extract the position (index) of several columns in the VCF file, so we can be sure we are selecting these columns in later steps ##
+
+# obtain the position of these columns using awk #
+n_fields=11,n_samples=2,chrom=1,pos=2,id=3,ref=4,alt=5,filter=7,info=8
+THIS WARNING SHOULD BE ONLY IN DUMMY DATA NOT IN 1KGP DATA as AC field should have only 1 value per line in the data. Lines   total/split/realigned/skipped:	18/5/0/0
+[W::bcf_calc_ac] Incorrect number of AC fields at chr20:1110696. (This message is printed only once.)
+
+Lines   total/split/realigned/skipped:	13/0/0/0
+Lines   total/split/realigned/skipped:	12/0/0/0
+
+extract the numbers
+total number of fields: 11
+number of samples: 2
+index of column CHROM: 1
+index of column POS: 2
+index of column ID: 3
+index of column REF: 4
+index of column ALT: 5
+index of column FILTER: 7
+index of column INFO: 8
+the total number of fields minus the number of samples should be 9. The number of fixed fields in VCF v4.2 is 8 and then FORMAT, which in our case only has GT, thus we should have 9 fields. Also, the index of CHROM, POS, REF, ALT and FILTER should be 1, 2, 4, 5 and 7, respectively
+YES! GOOD TO GO!
+
+# the chromosome name is correct? We do this check here because in the previous line we obtained the number of the column of CHROM #
+calculate the number of times each chromosome appears
+chr20	18
+
+convert the output of awk into a pandas DF
+check that we only have 1 chromosome and that is the selected chromosome
+YES! GOOD TO GO!
+
+# check that no SNP has filter different from 'PASS' or 'q10', which are the cases we have in our dummy example. In the case of the real data, FILTER should be '.' #
+calculate the number of SNPs for which FILTER is not 'PASS' or 'q10'
+
+
+check that the number of SNPs with FILTER different from 'PASS' or 'q10' is 0
+YES! GOOD TO GO!
+
+## switch REF/ALT columns for which REF is not AA ##
+
+# see first cases where REF nor ALT are AA. You can see how we get a case with REF=G and AA_upcase=C. These could be cases where a multiallelic SNP has lost one of the ALT alleles in the subset population and that ALT allele is the ancestral. Therefore, there is no more ancestral in the population. Note, however, that I have found 200K cases like this across all chromosomes without subsetting when running 01b_vep_ancestral.py. Therefore, these could be caused by problems between SNPs according to VEP and out VCF files, so it should not be a high number #
+SNP rs6054257 chr20 14370 G A 4 3 0.75 AA:c AA_upcase:C GTs: 1|0 1|1
+
+THIS WARNING SHOULD BE ONLY IN DUMMY DATA NOT IN 1KGP DATA as AC field should have only 1 value per line in the data. Lines   total/split/realigned/skipped:	18/5/0/0
+[W::bcf_calc_ac] Incorrect number of AC fields at chr20:1110696. (This message is printed only once.)
+
+Lines   total/split/realigned/skipped:	13/0/0/0
+Lines   total/split/realigned/skipped:	12/0/0/0
+
+
+# check now what happens if we add a dummy SNP with AA=g and REF=G. As you can see, this SNP is considered to have AA different from REF and ALT because bcftools in case sensitive. Therefore, we need to use AA_upcase if we want to consider both high and low-confidence SNPs #
+SNP rs6054257 chr20 14370 G A 4 3 0.75 AA:c AA_upcase:C GTs: 1|0 1|1
+SNP rsdummy chr20 1110691 G A 4 3 0.75 AA:g AA_upcase:G GTs: 1|0 1|1
+
+THIS WARNING SHOULD BE ONLY IN DUMMY DATA NOT IN 1KGP DATA as AC field should have only 1 value per line in the data. Lines   total/split/realigned/skipped:	19/5/0/0
+[W::bcf_calc_ac] Incorrect number of AC fields at chr20:1110696. (This message is printed only once.)
+
+Lines   total/split/realigned/skipped:	14/0/0/0
+Lines   total/split/realigned/skipped:	13/0/0/0
+
+
+# count these cases but in the original dummy vcf file without filtering and just using AWK, so it is faster #
+rs6054257, REF=G, ALT=A, AA=c
+rs6040359, REF=A, ALT=G, AA=T
+rs6040361, REF=A, ALT=G, AA=C
+The number of these cases is 3
+
+# exclude now cases where REF nor ALT are AA_upcase. This filter in cases where AA_upcase is the REF (rs6040358) or the ALT (rs6040356). #
+Remember that one of the reasons for these cases to exist is that a multiallelic SNP lose one ALT when subsetting, and that very ALT is the ancestral. Therefore, we have to do the multiallelic-monomorphic filter before. Indeed, we are doing all filters before. As this filter acts only on REF, ALT and AA_upcase, not considering genotypes or samples, other filters should not affect. If one SNP is not phased or biallelic, then it will be removed before, because we do not want to do the switch for it
+SNP rs6040356 chr20 1110697 A C 4 2 0.5 AA:C,C,C,C,C,C,C,C,C,C,C,C,C,C AA_upcase:C,C,C,C,C,C,C,C,C,C,C,C,C,C GTs: 1|1 0|0
+SNP rs6040358 chr20 1110699 G A 4 2 0.5 AA:G,G,G,G,G,G,G,G,G,G,G,G,G,G AA_upcase:G,G,G,G,G,G,G,G,G,G,G,G,G,G GTs: 1|1 0|0
+
+THIS WARNING SHOULD BE ONLY IN DUMMY DATA NOT IN 1KGP DATA as AC field should have only 1 value per line in the data. Lines   total/split/realigned/skipped:	18/5/0/0
+[W::bcf_calc_ac] Incorrect number of AC fields at chr20:1110696. (This message is printed only once.)
+
+Lines   total/split/realigned/skipped:	13/0/0/0
+Lines   total/split/realigned/skipped:	12/0/0/0
+
+
+# create a new vcf file with a new case with AA=a and ALT=A, to check behavior with lower-case. Also add two cases with AA equals to ',' and '' to check behaviour #
+chr20	14280	rs6054247	T	A	29	PASS	NS=3;DP=14;AN=5;AC=0;AF=0.2;DB;H2;AA=.;AA_upcase=.	GT	0|0	0|0	1|1
+chr20	14290	rs6054248	C	A	29	PASS	NS=3;DP=14;AN=5;AC=0;AF=0.2;DB;H2;AA=.;AA_upcase=.	GT	0|0	0|0	1|.
+chr20	14300	rs6054249	C	A	29	PASS	NS=3;DP=14;AN=5;AC=1;AF=0.2;DB;H2;AA=.;AA_upcase=.	GT	0|0	0|0	1|.
+chr20	14310	rs6054250	C	A	29	PASS	NS=3;DP=14;AN=3;AC=0;AF=0;DB;H2;AA=N;AA_upcase=N	GT	1|0	.|.	.|.
+chr20	14320	rs6054251	C	A	29	PASS	NS=3;DP=14;AN=6;AC=2;AF=0.333;DB;H2;AA=-;AA_upcase=-	GT	0|0	0|0	1|1
+chr20	14350	rs6054252	C	A	29	PASS	NS=3;DP=14;AN=4;AC=2;AF=0.5;DB;H2;AA=c;AA_upcase=C	GT	1|0	1|0	.|.
+chr20	14370	rs6054257	G	A	29	PASS	NS=3;DP=14;AN=6;AC=3;AF=0.5;DB;H2;AA=c;AA_upcase=C	GT	1|0	1|1	0|0
+chr20	14371	rs6054255	G	C	29	PASS	NS=3;DP=14;AN=6;AC=3;AF=0.667;DB;H2;AA=.;AA_upcase=.	GT	0|1	1|1	1|0
+chr20	17330	rs6040351	T	A	3	q10	NS=3;DP=11;AN=6;AC=2;AF=0.333;AA=.;AA_upcase=.	GT	0|0	1|0	1|0
+chr20	1110696	rs6040355	A	G,T	67	PASS	NS=2;DP=10;AN=6;AC=2,2;AF=0.333,0.333;DB;AA=G,G,G,G,G,G,G,G,G,G,G,G,G,G;AA_upcase=G,G,G,G,G,G,G,G,G,G,G,G,G,G	GT	1|1	2|2	0|0
+chr20	1110697	rs6040356	A	C,T	67	PASS	NS=2;DP=10;AN=6;AC=2,1;AF=0.333,0;DB;AA=C,C,C,C,C,C,C,C,C,C,C,C,C,C;AA_upcase=C,C,C,C,C,C,C,C,C,C,C,C,C,C	GT	1|1	0|0	0|0
+chr20	1110698	rs6040357	A	G,T	67	PASS	NS=2;DP=10;AN=6;AC=3,3;AF=0.5,0.5;DB;AA=A,A,A,A,A,A,A,A,A,A,A,A,A,A;AA_upcase=A,A,A,A,A,A,A,A,A,A,A,A,A,A	GT	1|1	2|2	1|2
+chr20	1110699	rs6040358	G	A,T	67	PASS	NS=2;DP=10;AN=6;AC=2,0;AF=0.333,0;DB;AA=G,G,G,G,G,G,G,G,G,G,G,G,G,G;AA_upcase=G,G,G,G,G,G,G,G,G,G,G,G,G,G	GT	1|1	0|0	.|.
+chr20	1110700	rs6040359	A	G,T	67	PASS	NS=2;DP=10;AN=4;AC=0,3;AF=0,0.6;DB;AA=T,T,T,T,T,T,T,T,T,T,T,T,T,T;AA_upcase=T,T,T,T,T,T,T,T,T,T,T,T,T,T	GT	2|2	2|2	2|.
+chr20	1110701	rs6040360	A	G	67	PASS	NS=2;DP=10;AN=6;AC=3;AF=0.5;DB;AA=G,G,G,G,G,G,G;AA_upcase=G,G,G,G,G,G,G	GT	1|1	0|0	0|1
+chr20	1110701	rs6040360_copy	A	G	67	PASS	NS=2;DP=10;AN=6;AC=3;AF=0.5;DB;AA=G,G,G,G,G,G,G;AA_upcase=G,G,G,G,G,G,G	GT	1|1	1|0	0|1
+chr20	1110702	rs6040361	A	G	67	PASS	NS=2;DP=10;AN=6;AC=3;AF=0.5;DB;AA=C,C,C,C,C,C,C;AA_upcase=C,C,C,C,C,C,C	GT	1|1	0/0	0|1
+chr20	1110703	microsat1	GTC	G,GTCT	50	PASS	NS=3;DP=9;AA=TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT;AA_upcase=TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT,TT	GT	0/1	0/2	1/1
+chr20	1110691	rsdummy	G	A	29	PASS	NS=3;DP=14;AN=6;AC=3;AF=0.5;DB;H2;AA=a;AA_upcase=A	GT	1|0	1|1	0|0
+chr20	1110692	rsdummy2	G	A	29	PASS	NS=3;DP=14;AN=6;AC=3;AF=0.5;DB;H2;AA=,;AA_upcase=,	GT	1|0	1|1	0|0
+
+
+# Before the next step, check that REF and ALT are always ACGT, because our awk script relies on the fact that we discard those rows for which the unique ancestral allele in upper case is NOT equal to REF or ALT, removing in that way variants with ancestral allele equal to '.', 'N', '-', etc.... Also check that REF and ALT are NOT the same #
+4
+
+Lines   total/split/realigned/skipped:	24/5/0/0
+
+YES! GOOD TO GO!
+
+# create a awk script that switch REF/ALT in those rows where AA==ALT, while not doing anything to rows where REF==AA and discarding those rows where REF nor ALT are equal to AA. First apply it to all variants without filter to check behaviour #
+##fileformat=VCFv4.2
+##FILTER=<ID=PASS,Description="All filters passed">
+##contig=<ID=chr20,length=62435964>
+##INFO=<ID=AF,Number=A,Type=Float,Description="Allele Frequency">
+##INFO=<ID=AN,Number=1,Type=Integer,Description="Total number of alleles in called genotypes">
+##INFO=<ID=AC,Number=1,Type=Integer,Description="Allele count">
+##INFO=<ID=NS,Number=1,Type=Integer,Description="Number of Samples With Data">
+##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
+##INFO=<ID=AA,Number=1,Type=String,Description="Ancestral Allele">
+##INFO=<ID=DB,Number=0,Type=Flag,Description="dbSNP membership, build 129">
+##INFO=<ID=H2,Number=0,Type=Flag,Description="HapMap2 membership">
+##FILTER=<ID=q10,Description="Quality below 10">
+##FILTER=<ID=s50,Description="Less than 50% of samples have data">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">
+##FORMAT=<ID=HQ,Number=2,Type=Integer,Description="Haplotype Quality">
+##VEP="v110" time="2023-09-29 13:05:59" cache="./data/vep_cache/cache_110/homo_sapiens/110_GRCh38" ensembl-io=110.b1a0d57 ensembl-funcgen=110.24e6da6 ensembl-variation=110.d34d25e ensembl=110.584a8f3 1000genomes="phase3" COSMIC="97" ClinVar="202301" HGMD-PUBLIC="20204" assembly="GRCh38.p14" dbSNP="154" gencode="GENCODE 44" genebuild="2014-07" gnomADe="r2.1.1" gnomADg="v3.1.2" polyphen="2.2.3" regbuild="1.0" sift="6.2.1"
+##AA=Ancestral allele from ./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38_final.fa.gz
+##VEP-command-line='vep --assembly GRCh38 --cache --compress_output gzip --database 0 --dir_cache [PATH]/cache_110 --dir_plugins [PATH]/vep_plugins --fields Uploaded_variation,Location,Allele,Gene,Feature,Feature_type,Consequence,STRAND,AA --force_overwrite --format vcf --input_file [PATH]/dummy_example.vcf.gz --offline --output_file [PATH]/dummy_example_vep.vcf.gz --plugin [PATH]/homo_sapiens_ancestor_GRCh38_final.fa.gz --vcf --verbose'
+##bcftools_split-vepVersion=1.17+htslib-1.17
+##bcftools_split-vepCommand=split-vep --annotation CSQ --columns AA:String ./dummy_example_vep_2.vcf.gz; Date=Fri Sep 29 13:06:00 2023
+##INFO=<ID=AA_upcase,Number=.,Type=String,Description="The AA field from INFO/CSQ after converting alleles to uppercase">
+##bcftools_annotateVersion=1.17+htslib-1.17
+##bcftools_annotateCommand=annotate --remove INFO/CSQ --annotations ./anc_alleles_uppercase.tsv.gz --columns CHROM,POS,.AA_upcase --header-line '##INFO=<ID=AA_upcase,Number=.,Type=String,Description="The AA field from INFO/CSQ after converting alleles to uppercase">'; Date=Fri Sep 29 13:06:00 2023
+##bcftools_normVersion=1.17+htslib-1.17
+##bcftools_normCommand=norm --multiallelic -snps ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_vep_2_anc_up_2.vcf; Date=Tue Oct 24 19:59:56 2023
+##awk_script: Switched REF/ALT columns for variants where REF!=AA but ALT==AA. Variants where REF!=AA and ALT!=AA where discarded; Date=Tue Oct 24 19:59:56 2023
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA00001	NA00002	NA00003
+chr20	14350	rs6054252	C	A	29	PASS	NS=3;DP=14;AN=4;AC=2;AF=0.5;DB;H2;AA=c;AA_upcase=C	GT	1|0	1|0	.|.
+chr20	1110691	rsdummy	A	G	29	PASS	NS=3;DP=14;AN=6;AC=3;AF=0.5;DB;H2;AA=a;AA_upcase=A	GT	1|0	1|1	0|0
+chr20	1110696	rs6040355	G	A	67	PASS	NS=2;DP=10;AN=6;AC=2,2;AF=0.333;DB;AA=G,G,G,G,G,G,G,G,G,G,G,G,G,G;AA_upcase=G,G,G,G,G,G,G,G,G,G,G,G,G,G	GT	1|1	0|0	0|0
+chr20	1110697	rs6040356	C	A	67	PASS	NS=2;DP=10;AN=6;AC=2,1;AF=0.333;DB;AA=C,C,C,C,C,C,C,C,C,C,C,C,C,C;AA_upcase=C,C,C,C,C,C,C,C,C,C,C,C,C,C	GT	1|1	0|0	0|0
+chr20	1110698	rs6040357	A	G	67	PASS	NS=2;DP=10;AN=6;AC=3,3;AF=0.5;DB;AA=A,A,A,A,A,A,A,A,A,A,A,A,A,A;AA_upcase=A,A,A,A,A,A,A,A,A,A,A,A,A,A	GT	1|1	0|0	1|0
+chr20	1110698	rs6040357	A	T	67	PASS	NS=2;DP=10;AN=6;AC=3,3;AF=0.5;DB;AA=A,A,A,A,A,A,A,A,A,A,A,A,A,A;AA_upcase=A,A,A,A,A,A,A,A,A,A,A,A,A,A	GT	0|0	1|1	0|1
+chr20	1110699	rs6040358	G	A	67	PASS	NS=2;DP=10;AN=6;AC=2,0;AF=0.333;DB;AA=G,G,G,G,G,G,G,G,G,G,G,G,G,G;AA_upcase=G,G,G,G,G,G,G,G,G,G,G,G,G,G	GT	1|1	0|0	.|.
+chr20	1110699	rs6040358	G	T	67	PASS	NS=2;DP=10;AN=6;AC=2,0;AF=0;DB;AA=G,G,G,G,G,G,G,G,G,G,G,G,G,G;AA_upcase=G,G,G,G,G,G,G,G,G,G,G,G,G,G	GT	0|0	0|0	.|.
+chr20	1110700	rs6040359	T	A	67	PASS	NS=2;DP=10;AN=4;AC=0,3;AF=0.6;DB;AA=T,T,T,T,T,T,T,T,T,T,T,T,T,T;AA_upcase=T,T,T,T,T,T,T,T,T,T,T,T,T,T	GT	1|1	1|1	1|.
+chr20	1110701	rs6040360	G	A	67	PASS	NS=2;DP=10;AN=6;AC=3;AF=0.5;DB;AA=G,G,G,G,G,G,G;AA_upcase=G,G,G,G,G,G,G	GT	1|1	0|0	0|1
+chr20	1110701	rs6040360_copy	G	A	67	PASS	NS=2;DP=10;AN=6;AC=3;AF=0.5;DB;AA=G,G,G,G,G,G,G;AA_upcase=G,G,G,G,G,G,G	GT	1|1	1|0	0|1
+
+Lines   total/split/realigned/skipped:	20/5/0/0
+Lines   total/split/realigned/skipped:	20/5/0/0
+
+
+# save the subset of filtered variants and then apply on it the awk script #
+
+THIS WARNING SHOULD BE ONLY IN DUMMY DATA NOT IN 1KGP DATA as AC field should have only 1 value per line in the data. Lines   total/split/realigned/skipped:	20/5/0/0
+[W::bcf_calc_ac] Incorrect number of AC fields at chr20:1110696. (This message is printed only once.)
+
+Lines   total/split/realigned/skipped:	15/0/0/0
+Lines   total/split/realigned/skipped:	14/0/0/0
+
+
+# apply the awk script to the cleaned VCF #
+
+
+# After switching, REF is always equals to AA_upcase while ALT is not? #
+
+
+YES! GOOD TO GO!
+
+# We get the same rows if we take the original VCF and select only rows where AA is REF or ALT and removing REF/ALT columns (which where the ones switched)? #
+TRUE
+
+
+## see the new header ##
+##fileformat=VCFv4.2
+##FILTER=<ID=PASS,Description="All filters passed">
+##contig=<ID=chr20,length=62435964>
+##INFO=<ID=AA,Number=1,Type=String,Description="Ancestral Allele">
+##FILTER=<ID=q10,Description="Quality below 10">
+##FILTER=<ID=s50,Description="Less than 50% of samples have data">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##VEP="v110" time="2023-09-29 13:05:59" cache="./data/vep_cache/cache_110/homo_sapiens/110_GRCh38" ensembl-io=110.b1a0d57 ensembl-funcgen=110.24e6da6 ensembl-variation=110.d34d25e ensembl=110.584a8f3 1000genomes="phase3" COSMIC="97" ClinVar="202301" HGMD-PUBLIC="20204" assembly="GRCh38.p14" dbSNP="154" gencode="GENCODE 44" genebuild="2014-07" gnomADe="r2.1.1" gnomADg="v3.1.2" polyphen="2.2.3" regbuild="1.0" sift="6.2.1"
+##AA=Ancestral allele from ./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38_final.fa.gz
+##VEP-command-line='vep --assembly GRCh38 --cache --compress_output gzip --database 0 --dir_cache [PATH]/cache_110 --dir_plugins [PATH]/vep_plugins --fields Uploaded_variation,Location,Allele,Gene,Feature,Feature_type,Consequence,STRAND,AA --force_overwrite --format vcf --input_file [PATH]/dummy_example.vcf.gz --offline --output_file [PATH]/dummy_example_vep.vcf.gz --plugin [PATH]/homo_sapiens_ancestor_GRCh38_final.fa.gz --vcf --verbose'
+##bcftools_split-vepVersion=1.17+htslib-1.17
+##bcftools_split-vepCommand=split-vep --annotation CSQ --columns AA:String ./dummy_example_vep_2.vcf.gz; Date=Fri Sep 29 13:06:00 2023
+##INFO=<ID=AA_upcase,Number=.,Type=String,Description="The AA field from INFO/CSQ after converting alleles to uppercase">
+##bcftools_annotateVersion=1.17+htslib-1.17
+##bcftools_annotateCommand=annotate --remove INFO/CSQ --annotations ./anc_alleles_uppercase.tsv.gz --columns CHROM,POS,.AA_upcase --header-line '##INFO=<ID=AA_upcase,Number=.,Type=String,Description="The AA field from INFO/CSQ after converting alleles to uppercase">'; Date=Fri Sep 29 13:06:00 2023
+##bcftools_normVersion=1.17+htslib-1.17
+##bcftools_normCommand=norm --multiallelic -snps ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_vep_2_anc_up_2.vcf; Date=Tue Oct 24 19:59:56 2023
+##bcftools_viewVersion=1.17+htslib-1.17
+##bcftools_viewCommand=view --samples NA00001,NA00002; Date=Tue Oct 24 19:59:56 2023
+##bcftools_viewCommand=view --types snps; Date=Tue Oct 24 19:59:56 2023
+##bcftools_pluginVersion=1.17+htslib-1.17
+##bcftools_pluginCommand=plugin fill-tags -- --tags AN,AC; Date=Tue Oct 24 19:59:56 2023
+##bcftools_viewCommand=view --exclude 'INFO/AC=INFO/AN || INFO/AC=0'; Date=Tue Oct 24 19:59:56 2023
+##bcftools_viewCommand=view --include 'COUNT(GT="mis")/N_SAMPLES < 0.05'; Date=Tue Oct 24 19:59:56 2023
+##bcftools_normCommand=norm --rm-dup exact; Date=Tue Oct 24 19:59:56 2023
+##bcftools_normCommand=norm --multiallelic +snps; Date=Tue Oct 24 19:59:56 2023
+##bcftools_viewCommand=view --max-alleles 2 --min-alleles 2; Date=Tue Oct 24 19:59:56 2023
+##bcftools_viewCommand=view --phased; Date=Tue Oct 24 19:59:56 2023
+##bcftools_viewCommand=view --targets-file ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_pilot_mask.bed.gz; Date=Tue Oct 24 19:59:56 2023
+##bcftools_annotateCommand=annotate --remove ^INFO/AA,INFO/AA_upcase,^FORMAT/GT; Date=Tue Oct 24 19:59:56 2023
+##INFO=<ID=AN,Number=1,Type=Integer,Description="Total number of alleles in called genotypes">
+##INFO=<ID=AC,Number=A,Type=Integer,Description="Allele count in genotypes">
+##INFO=<ID=NS,Number=1,Type=Integer,Description="Number of samples with data">
+##INFO=<ID=AC_Hom,Number=A,Type=Integer,Description="Allele counts in homozygous genotypes">
+##INFO=<ID=AC_Het,Number=A,Type=Integer,Description="Allele counts in heterozygous genotypes">
+##INFO=<ID=AF,Number=A,Type=Float,Description="Allele frequency">
+##INFO=<ID=MAF,Number=1,Type=Float,Description="Frequency of the second most common allele">
+##INFO=<ID=HWE,Number=A,Type=Float,Description="HWE test (PMID:15789306); 1=good, 0=bad">
+##INFO=<ID=ExcHet,Number=A,Type=Float,Description="Test excess heterozygosity; 1=good, 0=bad">
+##bcftools_pluginCommand=plugin fill-tags -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS; Date=Tue Oct 24 19:59:56 2023
+##bcftools_viewCommand=view ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_vep_2_anc_up_2_cleaned.vcf; Date=Tue Oct 24 19:59:56 2023
+##awk_script: Switched REF/ALT columns for variants where REF!=AA but ALT==AA. Variants where REF!=AA and ALT!=AA where discarded; Date=Tue Oct 24 19:59:56 2023
+##bcftools_viewCommand=view --header ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_vep_2_anc_up_2_cleaned_ref_alt_switched.vcf; Date=Tue Oct 24 19:59:56 2023
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA00001	NA00002
+
+
+## see the variants ##
+chr20	1110691	rsdummy	A	G	29	PASS	AA=a;AA_upcase=A;NS=2;AN=4;AF=0.75;MAF=0.25;AC=3;AC_Het=1;AC_Hom=2;HWE=1;ExcHet=1	GT	1|0	1|1
+chr20	1110697	rs6040356	C	A	67	PASS	AA=C,C,C,C,C,C,C,C,C,C,C,C,C,C;AA_upcase=C,C,C,C,C,C,C,C,C,C,C,C,C,C;NS=2;AN=4;AF=0.5;MAF=0.5;AC=2;AC_Het=0;AC_Hom=2;HWE=0.333333;ExcHet=1	GT	1|1	0|0
+chr20	1110699	rs6040358	G	A	67	PASS	AA=G,G,G,G,G,G,G,G,G,G,G,G,G,G;AA_upcase=G,G,G,G,G,G,G,G,G,G,G,G,G,G;NS=2;AN=4;AF=0.5;MAF=0.5;AC=2;AC_Het=0;AC_Hom=2;HWE=0.333333;ExcHet=1	GT	1|1	0|0
+
+
+## calculate stats of the VCF file, show them here and then use them to make summary plots ##
+# This file was produced by bcftools stats (1.17+htslib-1.17) and can be plotted using plot-vcfstats.
+# The command line was:	bcftools stats  --samples - ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_vep_2_anc_up_2_cleaned_ref_alt_switched.vcf
+#
+# Definition of sets:
+# ID	[2]id	[3]tab-separated file names
+ID	0	./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_vep_2_anc_up_2_cleaned_ref_alt_switched.vcf
+# SN, Summary numbers:
+#   number of records   .. number of data rows in the VCF
+#   number of no-ALTs   .. reference-only sites, ALT is either "." or identical to REF
+#   number of SNPs      .. number of rows with a SNP
+#   number of MNPs      .. number of rows with a MNP, such as CC>TT
+#   number of indels    .. number of rows with an indel
+#   number of others    .. number of rows with other type, for example a symbolic allele or
+#                          a complex substitution, such as ACT>TCGA
+#   number of multiallelic sites     .. number of rows with multiple alternate alleles
+#   number of multiallelic SNP sites .. number of rows with multiple alternate alleles, all SNPs
+# 
+#   Note that rows containing multiple types will be counted multiple times, in each
+#   counter. For example, a row with a SNP and an indel increments both the SNP and
+#   the indel counter.
+# 
+# SN	[2]id	[3]key	[4]value
+SN	0	number of samples:	2
+SN	0	number of records:	3
+SN	0	number of no-ALTs:	0
+SN	0	number of SNPs:	3
+SN	0	number of MNPs:	0
+SN	0	number of indels:	0
+SN	0	number of others:	0
+SN	0	number of multiallelic sites:	0
+SN	0	number of multiallelic SNP sites:	0
+# TSTV, transitions/transversions:
+# TSTV	[2]id	[3]ts	[4]tv	[5]ts/tv	[6]ts (1st ALT)	[7]tv (1st ALT)	[8]ts/tv (1st ALT)
+TSTV	0	2	1	2.00	2	1	2.00
+# SiS, Singleton stats:
+# SiS	[2]id	[3]allele count	[4]number of SNPs	[5]number of transitions	[6]number of transversions	[7]number of indels	[8]repeat-consistent	[9]repeat-inconsistent	[10]not applicable
+SiS	0	1	0	0	0	0	0	0	0
+# AF, Stats by non-reference allele frequency:
+# AF	[2]id	[3]allele frequency	[4]number of SNPs	[5]number of transitions	[6]number of transversions	[7]number of indels	[8]repeat-consistent	[9]repeat-inconsistent	[10]not applicable
+AF	0	0.490000	2	1	1	0	0	0	0
+AF	0	0.740000	1	1	0	0	0	0	0
+# QUAL, Stats by quality
+# QUAL	[2]id	[3]Quality	[4]number of SNPs	[5]number of transitions (1st ALT)	[6]number of transversions (1st ALT)	[7]number of indels
+QUAL	0	29.0	1	1	0	0
+QUAL	0	67.0	2	1	1	0
+# IDD, InDel distribution:
+# IDD	[2]id	[3]length (deletions negative)	[4]number of sites	[5]number of genotypes	[6]mean VAF
+# ST, Substitution types:
+# ST	[2]id	[3]type	[4]count
+ST	0	A>C	0
+ST	0	A>G	1
+ST	0	A>T	0
+ST	0	C>A	1
+ST	0	C>G	0
+ST	0	C>T	0
+ST	0	G>A	1
+ST	0	G>C	0
+ST	0	G>T	0
+ST	0	T>A	0
+ST	0	T>C	0
+ST	0	T>G	0
+# DP, Depth distribution
+# DP	[2]id	[3]bin	[4]number of genotypes	[5]fraction of genotypes (%)	[6]number of sites	[7]fraction of sites (%)
+# PSC, Per-sample counts. Note that the ref/het/hom counts include only SNPs, for indels see PSI. The rest include both SNPs and indels.
+# PSC	[2]id	[3]sample	[4]nRefHom	[5]nNonRefHom	[6]nHets	[7]nTransitions	[8]nTransversions	[9]nIndels	[10]average depth	[11]nSingletons	[12]nHapRef	[13]nHapAlt	[14]nMissing
+PSC	0	NA00001	0	2	1	2	1	0	0.0	2	0	0	0
+PSC	0	NA00002	2	1	0	1	0	0	0.0	0	0	0	0
+# PSI, Per-Sample Indels. Note that alt-het genotypes with both ins and del allele are counted twice, in both nInsHets and nDelHets.
+# PSI	[2]id	[3]sample	[4]in-frame	[5]out-frame	[6]not applicable	[7]out/(in+out) ratio	[8]nInsHets	[9]nDelHets	[10]nInsAltHoms	[11]nDelAltHoms
+PSI	0	NA00001	0	0	0	0.00	0	0	0	0
+PSI	0	NA00002	0	0	0	0.00	0	0	0	0
+# HWE
+# HWE	[2]id	[3]1st ALT allele frequency	[4]Number of observations	[5]25th percentile	[6]median	[7]75th percentile
+HWE	0	0.490000	2	0.000000	0.000000	0.000000
+HWE	0	0.740000	1	0.490000	0.490000	0.490000
+
+
+## convert VCF file to hap file ##
+First convert the raw dummy VCF file but adding a filter for SNPs in the same line, i.e. removing the microsatellite. The output shows 0/5/1 no-ALT/non-biallelic/filtered indicating that we lose 5 variants that are not biallelic and 1 due to the filter we applied, i.e., removal of non-snps, the microsatellite. Also, the number of records written is 6, which is the result of subtracting 5+1 from 12, the total number of variants. We have included missing alleles, which are shown as '?', while non-phased alleles are shown as '*'
+chr20 chr20:14280_T_A 14280 T A 0 0 0 0 1 1
+chr20 chr20:14290_C_A 14290 C A 0 0 0 0 ? ?
+chr20 chr20:14300_C_A 14300 C A 0 0 0 0 ? ?
+chr20 chr20:14310_C_A 14310 C A 1 0 ? ? ? ?
+chr20 chr20:14320_C_A 14320 C A 0 0 0 0 1 1
+chr20 chr20:14350_C_A 14350 C A 1 0 1 0 ? ?
+chr20 chr20:14370_G_A 14370 G A 1 0 1 1 0 0
+chr20 chr20:14371_G_C 14371 G C 0 1 1 1 1 0
+chr20 chr20:17330_T_A 17330 T A 0 0 1 0 1 0
+chr20 chr20:1110701_A_G 1110701 A G 1 1 0 0 0 1
+chr20 chr20:1110701_A_G 1110701 A G 1 1 1 0 0 1
+chr20 chr20:1110702_A_G 1110702 A G 1 1 0* 0* 0 1
+chr20 chr20:1110691_G_A 1110691 G A 1 0 1 1 0 0
+chr20 chr20:1110692_G_A 1110692 G A 1 0 1 1 0 0
+
+Hap file: ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_IMPUTE2_raw.hap.gz
+Sample file: ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_IMPUTE2_raw.samples
+Warning: non-biallelic records are skipped. Consider splitting multi-allelic records into biallelic records using 'bcftools norm -m-'.
+14 records written, 6 skipped: 0/5/1 no-ALT/non-biallelic/filtered
+
+Then convert the cleaned dummy VCF file. The output shows 0/0/0 because no variant has been removed, they were filtered in previous lines. The number of written records is 3. The input had 3 and no filter was applied, nor variant lose due to lack of alt or non-biallelic, thus we save a hap file with 3 variants
+chr20 chr20:1110691_A_G 1110691 A G 1 0 1 1
+chr20 chr20:1110697_C_A 1110697 C A 1 1 0 0
+chr20 chr20:1110699_G_A 1110699 G A 1 1 0 0
+
+Hap file: ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_IMPUTE2.hap.gz
+Sample file: ./data/dummy_vcf_files/01_cleaned_dummy_vcf_files_vep/dummy_example_IMPUTE2.samples
+3 records written, 0 skipped: 0/0/0 no-ALT/non-biallelic/filtered
+
+
+#######################################
+#######################################
+function to clean vcf files and create hap - map files
+#######################################
+#######################################
+
+#######################################
+#######################################
+parallelize
+#######################################
+#######################################
+
+###### create array with all combinations of pops and chromosomes ######
+
+## get pop and chromosome names ##
+we are going to analyze 26 pops and 22 chromosomes?
+True
+See them
+['GBR' 'FIN' 'CHS' 'PUR' 'CDX' 'CLM' 'IBS' 'PEL' 'PJL' 'KHV' 'ACB' 'GWD'
+ 'ESN' 'BEB' 'MSL' 'STU' 'ITU' 'CEU' 'YRI' 'CHB' 'JPT' 'LWK' 'ASW' 'MXL'
+ 'TSI' 'GIH']
+[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+
+## get all the combinations but first make a dummy example ##
+
+# dummy example to get all possible combinations of two lists #
+['marbella_1', 'marbella_2', 'marbella_3', 'cuzco_1', 'cuzco_2', 'cuzco_3', 'granada_1', 'granada_2', 'granada_3']
+Do we have all dummy combinations?
+True
+
+# get all combinations from the actual pops and chromosomes #
+Do we have all combinations of chromosomes and populations?
+True
+is this equivalent to itertools.product?
+True
+
+###### run parallel analyses ######
+
+## open the pool ##
+
+###### Initial operations ######
+
+## create folder for the selected chrom and pop ##
+
+
+## redirect standard output ##
+
+###### Initial operations ######
+
+## create folder for the selected chrom and pop ##
+
+
+## redirect standard output ##
+
+###### Initial operations ######
+
+## create folder for the selected chrom and pop ##
+
+
+## redirect standard output ##
+
+## run function across pandas rows ##
+
+## close the pool ##
+
+#######################################
+#######################################
+Do some checks after analyzing all chromosomes
+#######################################
+#######################################
+
+###### check we do NOT have any errors in the output files of all chromosomes*pops combinations, also calculate the percentage of SNPs lost ######
+
+## run loop across chromosomes*pops combinations ##
+
+# Doing combination GBR_1 #
+
+# split the combination name #
+
+# count number of cases with 'error' or 'false' in the output file #
+0
+
+
+# check the count of problematic cases is zero #
+YES! GOOD TO GO!
+
+# check we have the row of FINISH #
+1
+
+YES! GOOD TO GO!
+
+# check we have do NOT have the warning that should be only present in the dummy example #
+0
+
+YES! GOOD TO GO!
+
+# extract the number of SNPs lost due to the filtering #
+During filtering, we have lost 47303 out of 49875 SNPs
+
+
+# split the row, extract the numbers and calculate the percentage #
+
+# Doing combination GBR_2 #
+
+# split the combination name #
+
+# count number of cases with 'error' or 'false' in the output file #
+0
+
+
+# check the count of problematic cases is zero #
+YES! GOOD TO GO!
+
+# check we have the row of FINISH #
+1
+
+YES! GOOD TO GO!
+
+# check we have do NOT have the warning that should be only present in the dummy example #
+0
+
+YES! GOOD TO GO!
+
+# extract the number of SNPs lost due to the filtering #
+During filtering, we have lost 42171 out of 49875 SNPs
+
+
+# split the row, extract the numbers and calculate the percentage #
+
+# Doing combination GBR_3 #
+
+# split the combination name #
+
+# count number of cases with 'error' or 'false' in the output file #
+0
+
+
+# check the count of problematic cases is zero #
+YES! GOOD TO GO!
+
+# check we have the row of FINISH #
+1
+
+YES! GOOD TO GO!
+
+# check we have do NOT have the warning that should be only present in the dummy example #
+0
+
+YES! GOOD TO GO!
+
+# extract the number of SNPs lost due to the filtering #
+During filtering, we have lost 42730 out of 49875 SNPs
+
+
+# split the row, extract the numbers and calculate the percentage #
+
+## see the percentiles of percentage of SNPs lost across all chromoeoms and populations ##
+Do we have calculated all combinations
+True
+calculate the percentiles across combinations
+Percentile 0.1%: 84.77754385964911
+Percentile 0.25%: 85.11378446115287
+Percentile 0.4%: 85.45002506265664
+Percentile 0.5%: 85.67418546365914
+Percentile 0.6%: 87.50796992481203
+Percentile 0.75%: 90.25864661654136
+Percentile 0.9%: 93.00932330827068
+
+#######################################
+#######################################
+Next steps
+#######################################
+#######################################
