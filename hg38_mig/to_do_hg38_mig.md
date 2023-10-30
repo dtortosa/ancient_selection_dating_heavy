@@ -49,6 +49,22 @@
 		- Máscara:
 			- Ok, tiene sentido! La fase 3 tenía un coverage promedio de 7X, pero ahora tenemos 30X. De hecho, la máscara clasifica regiones según si la cobertura está por debajo o por encima de esa media de 7X. Se lo comentaré a David para asegurar que estamos todos de acuerdo, pero en principio no voy a usar la máscara.
 
+	- mail 4
+		- disculpa la tardanza, he estado revisando y haciendo un par de scripts. Ayer además tuve un poco de fiebre.
+		- Respecto al Smartmatch no me preocuparía más. Es un warning de una dependencia de VEP. Como indicas lo corregirán en la próxima versión.
+		- Te envío un script de bash que instala todas las dependencias VEP desde singularity y anota los ancestrales. No obstante, he estado revisando los VCF durante el proceso y he visto que los multialélicos están en diferentes líneas. En mi caso, esto implica que al filtrar bialélicos las posiciones no se excluyen. Por ejemplo la posición 10522570 del cromosoma 22 la encontramos así:
+		- chr22    10522570    22:10522570:C:A    C    A
+		- chr22    10522570    22:10522571:C:T    C    T
+		- Yo normalmente utilizo el siguiente comando para filtrar bialélicos.
+		- bcftools view -m2 -M2 -v snps
+		- Este comando no funciona por que el programa detecta que cada línea como una única mutación, no como un multialélico.
+		- En el script verás una combinación de bcftools que une los multialélicos en una sola entrada y después filtra bialélicos. Todo esto te lo comento para que tengas muy en cuenta este tipo de posiciones.
+		- Una vez filtrado y anotados puedes proceder a polarizar las posiciones. Yo normalmente también he incluido la annotación de baja calidad.
+		- Te envío un script the python y unos comandos de plink que harían esta función. Verás que plink necesita un fichero concreto para con las posiciones y los ID para recodificar las posiciones. En mi caso verás que es un comando de awk que revisa que  el ancestral sea REF o ALT. Este comando no actualiza ningún campo del VCF, eso tendrías que hacerlo con vcftools. Desde plink puedes exportar directamente a .hap. El script de python lo hice un poco rápido para enviartelo y tampoco actualiza la INFO del VCF, revísalo bien si lo vas a usar. La única vez que yo hice esto lo hice con plink.
+	- mail 4
+		- Muchísimas gracias por mandarme los script. Al revisarlos he descubierto que la iba a cagar sobremanera... Yo estaba simplemente cambiando los alelos en las columnas REF y ALT, pero no en GT!! He modificado mi awk script para cambiar 1 por 0 y 0 por 1 en los genotipos de SNPs no polarizados. Además, he comprobado que obtengo los mismos resultados usando tu approach en plink2. Con esto y con la actualización de INFO usando +fill-tags parece que ya estaría solventado el problema.
+		- Por cierto, aquí he detectado que aunque tu le des a plink2 una lista filtrada solo con los REF de los SNPs que tienen ancestral, luego el VCF resultante tienen todos los SNP, i.e., no filtra. También he visto que plink cambia "chr1" por "1". Yo he tenido que procesar el VCF después de plink, filtrando SNPs y añadiendo "chr" en CHROM. Te lo comento por si lo vuelves a usar y te sirve.
+		- Respecto a los multialélicos, efectivamente, están separados, eso al menos no se me escapó jeje Yo estoy haciendo como dices, combinar y luego filtrar con -M y -m. También he añadido un paso anterior (probablemente poco relevante) que es eliminar SNPs monomórficos en cada población, de esa manera, si una de las filas de un SNP multialélico solo tiene REF, esa fila se perdería y el SNP pasaría a ser bialélico, por lo que se retendría al filtrar.
 
 
 

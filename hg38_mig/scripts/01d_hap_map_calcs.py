@@ -2883,6 +2883,7 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
                 #the column from where the ID of the SNP will be taken
         #--recode
             #the output file will be a gzipped VCF file
+        #https://www.cog-genomics.org/plink/2.0/data#ref_allele
 
     print_text("compare the switch with plink2 and with my approach", header=4)
     plink_comparison = run_bash(" \
@@ -2949,12 +2950,6 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
             --output-type z \
             --compression-level 1 \
             --output ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.vcf.gz")
-
-
-
-
-    #compare with plink2
-
 
 
     print_text("check again that AA_upcase is just AA in uppercase, because we are going to use AA_upcase as a check in the next lines", header=3)
@@ -3666,7 +3661,7 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
     
     print_text("run the function", header=3)
     print_text("chr " + selected_chromosome + " - " + selected_pop + ": Run the function on just one snp", header=4)
-    print(gen_pos(snp_map_raw.iloc[5000]["id"]))
+    print(gen_pos(snp_map_raw.iloc[10]["id"]))
 
     print_text("chr " + selected_chromosome + " - " + selected_pop + ": run function across SNPs", header=4)
     #we do not use pool.map because we will only want to use 1 core. The parallelization will be done in the parent function across chromosome*pop combinations
@@ -4192,6 +4187,7 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
         rm --force " + input_vcf_file + "; \
         rm --force ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.vcf.gz; \
         rm --force ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched_raw.vcf.gz; \
+        rm --force ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched_plink_raw.vcf.gz; \
         rm --force ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.vcf.gz")
 
 
@@ -4354,7 +4350,7 @@ for combination in full_combinations_pop_chroms:
     row_results_split = row_results.split(" ")
     snps_lost_percentage.append(int(row_results_split[5])/int(row_results_split[8])*100)
 
-print_text("see the percentiles of percentage of SNPs lost across all chromoeoms and populations", header=3)
+print_text("see the percentiles of percentage of SNPs lost across all chromosomes and populations", header=3)
 print("Do we have calculated all combinations")
 print(len(snps_lost_percentage)==len(full_combinations_pop_chroms))
 
@@ -4369,7 +4365,8 @@ for i in [0.1,0.25,0.4,0.5,0.6,0.75,0.9]:
 #### Next steps ####
 ####################
 print_text("Next steps", header=1)
-#run the script in container in HPC and do check of the script in the meantime
 #if genetic distance is slow, you could do it in a previous step for each chromosome, and the new maps used as input here within each pop to remove snps without genetic distance from the VCF file and then hap file. Also remove snps from the map file not present in the VCF file, so we have the specific map for each population.
-#according to david, you can check whether the REF/ALT alleles match between the old and new hap files, but taking into account we have different coordinated, hg19 vs hg38
+#run again  script in container in HPC and do check of the script in the meantime
+#check number of snps lost
+#once you are finished here, according to david, you can check whether the REF/ALT alleles match between the old and new hap files, but taking into account we have different coordinated, hg19 vs hg38
     ##i guess you could take the old map files, convert to hg38 coordinates and then see if the REF/ALT columns are the same than in the new map files
