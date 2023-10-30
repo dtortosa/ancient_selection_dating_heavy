@@ -652,7 +652,8 @@ run_bash("\
         #--force_overwrite
             #By default, VEP will fail with an error if the output file already exists. You can force the overwrite of the existing file by using this flag.
         #--fields
-            #Configure the output format using a comma separated list of fields. Can only be used with tab (--tab) or VCF format (--vcf) output. For the tab format output, the selected fields may be those present in the default output columns, or any of those that appear in the Extra column (including those added by plugins or custom annotations) if the appropriate output is available (e.g. use --show_ref_allele to access 'REF_ALLELE'). Output remains tab-delimited. For the VCF format output, the selected fields are those present within the "CSQ" INFO field.
+            #Configure the output format using a comma separated list of fields. Can only be used with tab (--tab) or VCF format (--vcf) output. For the tab format output, the selected fields may be those present in the default output columns, or any of those that appear in the Extra column (including those added by plugins or custom annotations) if the appropriate output is available (e.g. use --show_ref_allele to access 'REF_ALLELE'). Output remains tab-delimited. For the VCF format output, the selected fields are those present within the "CSQ" INFO field (see below).
+            #You can ask for many fields like SYMBOL, GENE or BIOTYPE.
                 #https://useast.ensembl.org/info/docs/tools/vep/script/vep_options.html
         #cache
             #Enables use of the cache. Add --refseq or --merged to use the refseq or merged cache, (if installed).
@@ -679,8 +680,26 @@ run_bash("\
             #Special cases:
                 #"-" represents an insertion
                 #"?" indicates the chromosome could not be looked up in the FASTA
-#we get different transcripts for each SNP
-    #VEP me da para cada SNP información de la strand, alelo ancestral, e impacto para diferentes transcritos de un mismo gen en los que "cae" dicho SNP. Así, algunas filas pone protein coding, nonsense... y tienen diferentes strands (1/-1). Para los casos que he mirado, todas las filas del mismo SNP tienen el mismo alelo Ancestral, así que entiendo que podría coger cualquier
+        #arguments not used
+            #--buffer_size
+                #You can use it to increase speed but using more memory! We already had dumping core using the default and had to increase memory in HPC... see slrum file
+                #Sets the internal buffer size, corresponding to the number of variants that are read in to memory simultaneously. Set this lower to use less memory at the expense of longer run time, and higher to use more memory with a faster run time. Default = 5000
+            #--biotype
+                #A biotype is, for example, "protein_coding".
+                #We did not explicit use this flag, BUT it is implicitly used when using the "--vcf" flag.
+                    #https://github.com/Ensembl/ensembl-vep/issues/968
+                #there is not difference in the output unless you ask for "BIOTYPE" in "--fields". Then, you get "protein_coding" separated by || within the CSQ field.
+                    #https://useast.ensembl.org/info/docs/tools/vep/vep_formats.html#vcfout
+
+#Note about the CSQ field generated in the VCF file when using --vcf:
+    #Consequences are added in the INFO field of the VCF file, using the key "CSQ" (you can change it using --vcf_info_field).
+    #Data fields are encoded separated by the character "|" (pipe). The order of fields is written in the VCF header. Unpopulated fields are represented by an empty string.
+    #Output fields in the "CSQ" INFO field can be configured by using --fields.
+    #Each prediction, for a given variant, is separated by the character "," in the CSQ INFO field (e.g. when a variant overlaps more than 1 transcript)
+        #In other words, we can have several consequences for the same SNP if the SNP overlaps with different transcripts.
+        #In some cases, for the same SNP we can have different strands, maybe because the different transcripts are in a different strand.
+        #This and next steps check whether the ancestral allele strings of the same SNP are exactly the same always, so do not worry about it.
+    #https://useast.ensembl.org/info/docs/tools/vep/vep_formats.html#vcfout
 
 print_text("see first lines of the generated VCF file", header=4)
 run_bash(" \
@@ -1433,10 +1452,7 @@ def master_processor(selected_chromosome, debugging=False):
             --plugin AncestralAllele,./data/fasta_ancestral/homo_sapiens_ancestor_GRCh38_final.fa.gz \
             --dir_plugins /opt/ensembl-vep/vep_plugins")
         #see dummy example for details about the arguments
-        #argument not used
-            #--buffer_size
-                #You can use it to increase speed but using more memory! We already had dumping core using the default and had to increase memory in HPC... see slrum file
-                #Sets the internal buffer size, corresponding to the number of variants that are read in to memory simultaneously. Set this lower to use less memory at the expense of longer run time, and higher to use more memory with a faster run time. Default = 5000
+
 
     print_text("explore the generated VCF file and do checks", header=3)
     print_text("view the file", header=4)

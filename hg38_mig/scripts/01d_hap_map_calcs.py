@@ -1053,12 +1053,15 @@ indexes_chrom_pos = run_bash(" \
                 if($i == \"INFO\"){ \
                     info_index=i \
                 }; \
+                if($i == \"FORMAT\"){ \
+                    format_index=i \
+                }; \
                 if($i ~/^HG/ || $i ~/^NA/){ \
                     n_samples++ \
                 } \
             }; \
             n_fields=NF; \
-            printf \"n_fields=%s,n_samples=%s,chrom=%s,pos=%s,id=%s,ref=%s,alt=%s,filter=%s,info=%s\", n_fields, n_samples, chrom_index, pos_index, id_index, ref_index, alt_index, filter_index, info_index \
+            printf \"n_fields=%s,n_samples=%s,chrom=%s,pos=%s,id=%s,ref=%s,alt=%s,filter=%s,info=%s,format=%s\", n_fields, n_samples, chrom_index, pos_index, id_index, ref_index, alt_index, filter_index, info_index, format_index \
         }'", return_value=True).strip()
     #get the header of the VCF file after extracting AA from CSQ, removing CSQ and select SNPs, just like we are going to do when we replace lower for upper case in the next line
     #open the header with AWK
@@ -1087,6 +1090,7 @@ index_ref = indexes_chrom_pos.split(",")[5].replace("ref=", "")
 index_alt = indexes_chrom_pos.split(",")[6].replace("alt=", "")
 index_filter = indexes_chrom_pos.split(",")[7].replace("filter=", "")
 index_info = indexes_chrom_pos.split(",")[8].replace("info=", "")
+index_format = indexes_chrom_pos.split(",")[9].replace("format=", "")
 print("total number of fields: " + n_fields)
 print("number of samples: " + n_samples)
 print("index of column CHROM: " + index_chrom)
@@ -1096,8 +1100,9 @@ print("index of column REF: " + index_ref)
 print("index of column ALT: " + index_alt)
 print("index of column FILTER: " + index_filter)
 print("index of column INFO: " + index_info)
+print("index of column FORMAT: " + index_format)
 print("the total number of fields minus the number of samples should be 9. The number of fixed fields in VCF v4.2 is 8 and then FORMAT, which in our case only has GT, thus we should have 9 fields. Also, the index of CHROM, POS, REF, ALT and FILTER should be 1, 2, 4, 5 and 7, respectively")
-if (int(n_fields)-int(n_samples) == 9) & (index_chrom=="1") & (index_pos=="2") & (index_id=="3") & (index_ref=="4") & (index_alt=="5") & (index_filter=="7") & (index_info=="8"):
+if (int(n_fields)-int(n_samples) == 9) & (index_chrom=="1") & (index_pos=="2") & (index_id=="3") & (index_ref=="4") & (index_alt=="5") & (index_filter=="7") & (index_info=="8") & (index_format=="9"):
     print("YES! GOOD TO GO!")
 else:
     raise ValueError("FALSE! ERROR! WE HAVE A PROBLEM WITH THE FIELDS OF THE VCF FILE BEFORE CONVERTING TO UPPER CASE ANCESTRAL ALLELES")
@@ -2027,12 +2032,15 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
                     if($i == \"INFO\"){ \
                         info_index=i \
                     }; \
+                    if($i == \"FORMAT\"){ \
+                        format_index=i \
+                    }; \
                     if($i ~/^HG/ || $i ~/^NA/){ \
                         n_samples++ \
                     } \
                 }; \
                 n_fields=NF; \
-                printf \"n_fields=%s,n_samples=%s,chrom=%s,pos=%s,id=%s,ref=%s,alt=%s,filter=%s,info=%s\", n_fields, n_samples, chrom_index, pos_index, id_index, ref_index, alt_index, filter_index, info_index \
+                printf \"n_fields=%s,n_samples=%s,chrom=%s,pos=%s,id=%s,ref=%s,alt=%s,filter=%s,info=%s,format=%s\", n_fields, n_samples, chrom_index, pos_index, id_index, ref_index, alt_index, filter_index, info_index, format_index \
             }'", return_value=True).strip()
         #get the header of the VCF file after extracting AA from CSQ, removing CSQ and select SNPs, just like we are going to do when we replace lower for upper case in the next line
         #open the header with AWK
@@ -2061,6 +2069,7 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
     index_alt = indexes_chrom_pos.split(",")[6].replace("alt=", "")
     index_filter = indexes_chrom_pos.split(",")[7].replace("filter=", "")
     index_info = indexes_chrom_pos.split(",")[8].replace("info=", "")
+    index_format = indexes_chrom_pos.split(",")[9].replace("format=", "")
     print("total number of fields: " + n_fields)
     print("number of samples: " + n_samples)
     print("index of column CHROM: " + index_chrom)
@@ -2070,8 +2079,9 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
     print("index of column ALT: " + index_alt)
     print("index of column FILTER: " + index_filter)
     print("index of column INFO: " + index_info)
+    print("index of column FORMAT: " + index_format)
     print("the total number of fields minus the number of samples should be 9. The number of fixed fields in VCF v4.2 is 8 and then FORMAT, which in our case only has GT, thus we should have 9 fields. Also, the index of CHROM, POS, REF, ALT and FILTER should be 1, 2, 4, 5 and 7, respectively")
-    if (int(n_fields)-int(n_samples) == 9) & (index_chrom=="1") & (index_pos=="2") & (index_id=="3") & (index_ref=="4") & (index_alt=="5") & (index_filter=="7") & (index_info=="8"):
+    if (int(n_fields)-int(n_samples) == 9) & (index_chrom=="1") & (index_pos=="2") & (index_id=="3") & (index_ref=="4") & (index_alt=="5") & (index_filter=="7") & (index_info=="8") & (index_format=="9"):
         print("YES! GOOD TO GO!")
     else:
         raise ValueError("FALSE! ERROR! WE HAVE A PROBLEM WITH THE FIELDS OF THE VCF FILE BEFORE CONVERTING TO UPPER CASE ANCESTRAL ALLELES")
@@ -2650,6 +2660,7 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
                 index_ref=" + index_ref + "; \
                 index_alt=" + index_alt + "; \
                 index_info=" + index_info + "; \
+                index_format=" + index_format + "; \
                 selected_chrom=\"chr" + selected_chromosome + "\"; \
                 header=\"yes\"; \
             }{ \
@@ -2657,7 +2668,7 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
                     if($0 !~ /^#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT/){ \
                         print $0; \
                     } else { \
-                        printf \"##awk_script: Switched REF/ALT columns for variants where REF!=AA but ALT==AA. Variants where REF!=AA and ALT!=AA where discarded; Date=%s\\n\", date; \
+                        printf \"##awk_script: Switched REF/ALT columns for variants where REF!=AA but ALT==AA. Genotypes have been also switched (0 becomes 1 and vice versa). Variants where REF!=AA and ALT!=AA where discarded; Date=%s\\n\", date; \
                         print $0; \
                         header=\"no\"; \
                     } \
@@ -2716,7 +2727,12 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
                             tmp_ref=$index_ref; \
                             $index_ref=$index_alt; \
                             $index_alt=tmp_ref; \
-                            print $0 \
+                            for(i=(index_format+1);i<=NF;i++){ \
+                                if(index($i, \"X\")!=0){exit 1}; \
+                                gsub(/0/, \"X\", $i); \
+                                gsub(/1/, \"0\", $i); \
+                                gsub(/X/, \"1\", $i) \
+                            }; print $0 \
                         } else { \
                             print $0 \
                         }; \
@@ -2726,7 +2742,7 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
                     exit 1 \
                 }; \
             }' | \
-            gzip --force > ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.vcf.gz")
+        bgzip --force > ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched_raw.vcf.gz")
         #awk
             #load variables 
                 #the date following the format used by bcftools
@@ -2804,9 +2820,141 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
                         #save the REF in a temp variable
                         #overwrite the original REF with the ALT
                         #save as new ALT the REF value stored in the temp variable
+                        #for each column starting after the first FORMAT column, i.e., after GT, thus targeting each genotype
+                            #if X is included in the genotype, then stop with non-zero status, because we need not have any "X" character. We will use that character as a temporal step to exchange 0 for 1 and viceversa.
+                            #substitute "0" by "X" in the genotype
+                            #substitute "1" by "0" in the genotype
+                            #substitute "X" by "1" in the genotype
+                        #print the whole row
                     #else just print the row without changes
                 #else, we do not have ancestral allele for this variant in the panel, so we can discard the SNP, so no print. Without ancestral allele there is anything we can do with that allele.
             #else means we have an error because rows after the header should all have the selected chromosome in the first column: stop with non-zero exist status        
+
+
+    print_text("check that the switch of REF/ALT is the same than if we use plink 2", header=3)
+    print_text("make the switch between REF and ALT using plink2", header=4)
+    run_bash(" \
+        plink2 \
+            --vcf ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.vcf.gz \
+            --ref-allele \
+                force \
+                <( \
+                    bcftools view \
+                        --no-header \
+                        ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.vcf.gz | \
+                    awk \
+                        'BEGIN{ \
+                            FS=OFS=\"\t\"; \
+                            index_id=" + index_id + "; \
+                            index_ref=" + index_ref + "; \
+                            index_alt=" + index_alt + "; \
+                            index_info=" + index_info + " \
+                        }{ \
+                            for(i=1;i<=length($index_info);i++){ \
+                                if(substr($index_info, i, 3)==\"AA=\"){ \
+                                    k=i+3; \
+                                    while(substr($index_info, k, 1)!=\",\" && substr($index_info, k, 1)!=\";\"){ \
+                                        last_base=k; \
+                                        k=k+1 \
+                                    }; \
+                                    unique_aa=toupper(substr($index_info, i+3, last_base-(i+3)+1)) \
+                                } \
+                            }; \
+                            if(unique_aa == $index_ref || unique_aa == $index_alt){ \
+                                print unique_aa, $index_id \
+                            } \
+                        }' \
+                ) \
+                1 \
+                2 \
+            --recode vcf bgz \
+            --threads 1 \
+            --out ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched_plink_raw")
+        #--ref-allele sets all alleles specified in the file to REF, while --alt1-allele does the same for the first ALT allele. Column and skip parameters work the same way as with --update-chr and friends.
+            #--force
+                #By default, these error out when asked to change a 'known' reference allele. Add the 'force' modifier to permit that (when e.g. switching to a new reference genome).
+                    #we want to change the REF even it is known, because we know the SNPs are not polarized
+            #filename
+                #using process substitution, we select those SNPs for which the AA is REF or ALT. Then extract the AA and the ID of the SNP.
+                #this is the file used for plink to polarize, as the allele indicate in that file will be used as REF
+            #REF col. number
+                #the column from where the REF allele will be taken
+            #variant ID col. number
+                #the column from where the ID of the SNP will be taken
+        #--recode
+            #the output file will be a gzipped VCF file
+
+    print_text("compare the switch with plink2 and with my approach", header=4)
+    plink_comparison = run_bash(" \
+        cmp \
+            --silent \
+            <( \
+                bcftools view \
+                    --no-header \
+                    ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched_plink_raw.vcf.gz | \
+                awk \
+                    'BEGIN{ \
+                        FS=OFS=\"\t\"; \
+                        index_chrom=" + index_chrom + "; \
+                        index_ref=" + index_ref + "; \
+                        index_alt=" + index_alt + "; \
+                        index_info=" + index_info + " \
+                    }{ \
+                        for(i=1;i<=length($index_info);i++){ \
+                            if(substr($index_info, i, 3)==\"AA=\"){ \
+                                k=i+3; \
+                                while(substr($index_info, k, 1)!=\",\" && substr($index_info, k, 1)!=\";\"){ \
+                                    last_base=k; \
+                                    k=k+1 \
+                                }; \
+                                unique_aa=toupper(substr($index_info, i+3, last_base-(i+3)+1)) \
+                            } \
+                        }; \
+                        if(unique_aa == $index_ref){ \
+                            $index_chrom = \"chr\"$index_chrom; \
+                            print $0 \
+                        } \
+                    }' \
+            ) \
+            <( \
+                bcftools view \
+                    --no-header \
+                    ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched_raw.vcf.gz \
+            ); echo $?", return_value=True).strip()
+    if(plink_comparison == "0"):
+        print("YES! GOOD TO GO!")
+    else:
+        raise ValueError("ERROR! FALSE! WE HAVE A PROBLEM: Making the switch of REF/ALT with plink 2 does not give the same results")
+        #using cmp, compare byte by byte two files with silent output
+            #file 1
+                #the alleles switched with plink 2, but also
+                #select only those rows for which the AA is REF, because plink does not filter out those cases where the AA is not REF nor ALT
+                #also add "chr" to the chromosome name because plink tend to remove "chr" from that field
+            #file 2
+                #the alleles switched with my approach
+        #print the exit status
+
+
+    print_text("Also update the INFO fields like AF, AC... because these are calculated considering the old REF/ALTs, but now the AC should be the count of the old REF not the old ALT", header=3)
+    #before this step, Jesús created a tabix index from the VCF file (tabix --preset vcf VCF_FILE). I have checked that the creation of a tabix index does NOT change the VCF file. From what I have read, having a tabix index is useful to make fast queries over a large file without having to read the whole file, but I am not sure if this is useful for our case, as we have to do the update of the INFO fields in each row, i.e., in all rows.
+        #https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3042176/
+        #https://www.htslib.org/doc/tabix.html#:~:text=Firstly%2C%20tabix%20directly%20works%20with,most%20SQL%20databases%20do%20not.
+    run_bash(" \
+        bcftools annotate \
+            --remove ^INFO/AA,INFO/AA_upcase,^FORMAT/GT \
+            ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched_raw.vcf.gz | \
+        bcftools +fill-tags \
+            -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
+        bcftools view \
+            --output-type z \
+            --compression-level 1 \
+            --output ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.vcf.gz")
+
+
+
+
+    #compare with plink2
+
 
 
     print_text("check again that AA_upcase is just AA in uppercase, because we are going to use AA_upcase as a check in the next lines", header=3)
@@ -4043,6 +4191,7 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
     run_bash(" \
         rm --force " + input_vcf_file + "; \
         rm --force ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.vcf.gz; \
+        rm --force ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched_raw.vcf.gz; \
         rm --force ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.vcf.gz")
 
 
