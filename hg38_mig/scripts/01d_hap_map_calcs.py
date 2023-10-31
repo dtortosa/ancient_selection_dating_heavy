@@ -4365,6 +4365,8 @@ for i in [0.1,0.25,0.4,0.5,0.6,0.75,0.9]:
 #### Next steps ####
 ####################
 print_text("Next steps", header=1)
+#FALSE in
+    #Check we get the same rows if we take the original VCF and select only rows where AA is REF or ALT, switching only when ALT==AA 
 #if genetic distance is slow, you could do it in a previous step for each chromosome, and the new maps used as input here within each pop to remove snps without genetic distance from the VCF file and then hap file. Also remove snps from the map file not present in the VCF file, so we have the specific map for each population.
 #run again  script in container in HPC and do check of the script in the meantime
 #check number of snps lost
