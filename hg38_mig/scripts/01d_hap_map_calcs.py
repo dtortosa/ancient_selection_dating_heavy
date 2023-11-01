@@ -2549,7 +2549,8 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
         bcftools view \
             --exclude 'REF!=AA_upcase && ALT!=AA_upcase' | \
         bcftools query \
-            -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AF AA:%AA AA_upcase:%AA_upcase GTs:[ %GT]\n'")
+            -f '%TYPE %ID %CHROM %POS %REF %ALT %AN %AC %AF AA:%AA AA_upcase:%AA_upcase GTs:[ %GT]\n' | \
+        head -n 5")
 
 
     print_text("Before the next step, check that REF and ALT are always ACGT, because our awk script relies on the fact that we discard those rows for which the unique ancestral allele in upper case is NOT equal to REF or ALT, removing in that way variants with ancestral allele equal to '.', 'N', '-', etc.... I have checked that regex here is case sensitive, so looking for ACGT does not look for acgt in REF/ALT, meaning we are also checking that REF/ALT are in upper case. Also check that REF and ALT are NOT the same", header=3)
