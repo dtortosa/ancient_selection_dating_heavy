@@ -3119,7 +3119,8 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
                 FS=OFS=\"\t\"; \
                 index_ref=" + index_ref + "; \
                 index_alt=" + index_alt + "; \
-                index_info=" + index_info + " \
+                index_info=" + index_info + "; \
+                index_format=" + index_format + "; \
             }{ \
                 for(i=1;i<=length($index_info);i++){ \
                     if(substr($index_info, i, 3)==\"AA=\"){ \
@@ -3136,13 +3137,24 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
                         tmp_ref=$index_ref; \
                         $index_ref=$index_alt; \
                         $index_alt=tmp_ref; \
-                    }; \
-                    print $0 \
+                        for(i=(index_format+1);i<=NF;i++){ \
+                            if(index($i, \"X\")!=0){exit 1}; \
+                            gsub(/0/, \"X\", $i); \
+                            gsub(/1/, \"0\", $i); \
+                            gsub(/X/, \"1\", $i) \
+                        }; \
+                    }; print $0 \
                 } \
-            }' > ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/test_file_1.vcf; \
+            }' | \
+        cut \
+            --delimiter '\t' \
+            --fields 1-7,9- > ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/test_file_1.vcf; \
         bcftools view \
             --no-header \
-            ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.vcf.gz > ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/test_file_2.vcf; \
+            ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.vcf.gz | \
+        cut \
+            --delimiter '\t' \
+            --fields 1-7,9- > ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/test_file_2.vcf; \
         check_status=$( \
             cmp \
                 --silent \
@@ -3156,9 +3168,10 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
         fi; \
         rm ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/test_file_1.vcf; \
         rm ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/test_file_2.vcf")
-        #create a file with the VCF file before switching but selecting only those rows for which REF or ALT are AA and then switch REF/ALT if ALT==AA
+        #create a file with the VCF file before switching but selecting only those rows for which REF or ALT are AA and then switch REF/ALT if ALT==AA. Also substitute 1 by 0 and viceversa in these cases for the genotypes to have as 0 the new REF. We do this from the first column after GT (field 8, FORMAT), because that is where genotypes start. We also check that "X" is not present in the genotype because we set the "0" genotypes as "X" in order to change "1" to "0" and then "X" to "1", avoiding converting all genotypes to "0" in the first step. Select all fields except the INFO field (8), which is not updated by awk. Therefore, this fields is not going to be the same in the new cleaned file where INFO has been updated using bcftools.
             #you can check previous AWK script for information
-        #get the switched VCF file
+        #get the switched VCF file and select all fields except the INFO fields (8)
+        #NOTE that, in cut, we are assuming that the position of the INFO field is 8, so we are selecting all fields except this one. If INFO is not 8, the script will fail at the beginning anyways, so it should be ok.
         #check byte by byte that both files are the same with cmp, is equal, the exit status should be zero.
 
 
