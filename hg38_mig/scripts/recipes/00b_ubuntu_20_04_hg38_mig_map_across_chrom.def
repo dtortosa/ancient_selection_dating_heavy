@@ -42,7 +42,7 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 	/home/dftortosa/diego_docs/science/other_projects/australian_army_bishop/heavy_analyses/australian_army_bishop/plink_versions/plink2_linux_x86_64_20230531/plink2 /bin/plink2
 
 	#copy scripts
-    /home/dftortosa/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating_heavy_analyses/dating_climate_adaptation/hg38_mig/scripts/01d_hap_map_calcs.py /opt/scripts/01d_hap_map_calcs.py
+    /home/dftortosa/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating_heavy_analyses/dating_climate_adaptation/hg38_mig/scripts/01cd_map_across_chrom.py /opt/scripts/01cd_map_across_chrom.py
 
     #From the original folder in the host, we copy a R script to a new folder in the container called scripts. NEVER PUT ANYTHING ELSE IN THE LINE WITH SOURCE AND DESTINATION, GIVES ERROR.
     #https://groups.google.com/a/lbl.gov/forum/#!topic/singularity/4NFDsohnxgg
@@ -208,7 +208,7 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 
 
 	##give rights to run script
-	chmod +x /opt/scripts/01d_hap_map_calcs.py
+	chmod +x /opt/scripts/01cd_map_across_chrom.py
 
 
 
@@ -262,7 +262,7 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 %runscript
 
 	#run scripts. NOT USE "&", each script have to be run after the previous one have been run
-	/opt/scripts/01d_hap_map_calcs.py > ./scripts/01d_hap_map_calcs.out 2>&1
+	/opt/scripts/01cd_map_across_chrom.py > ./scripts/01cd_map_across_chrom.out 2>&1
 		#to get output and errors in the same file
 		#see bash script for details
 
@@ -275,14 +275,14 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 
 #Command to build, enter interactively or run
 	#now apply the definition file final_test_def for creating a container
-		#sudo singularity build /home/dftortosa/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating_heavy_analyses/dating_climate_adaptation/hg38_mig/01_ubuntu_20_04_hg38_mig_hap_map.sif /home/dftortosa/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating_heavy_analyses/dating_climate_adaptation/hg38_mig/scripts/recipes/01_ubuntu_20_04_hg38_mig_hap_map.def
+		#sudo singularity build /home/dftortosa/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating_heavy_analyses/dating_climate_adaptation/hg38_mig/00b_ubuntu_20_04_hg38_mig_map_across_chrom.sif /home/dftortosa/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating_heavy_analyses/dating_climate_adaptation/hg38_mig/scripts/recipes/00b_ubuntu_20_04_hg38_mig_map_across_chrom.def
 			#In the definition file is indicate that we will take an Ubuntu 20.04 container from the Singularity library. We do not need anything else. We do not need a previous image in the host system! The definition file has the instructions to get the required container from the library.
 	#you can run this image interactively with shell. For that you have to be in a specific folder in order to have the scripts workingnter in the container
 		#cd /home/dftortosa/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating_heavy_analyses/dating_climate_adaptation/hg38_mig
-		#sudo singularity shell /home/dftortosa/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating_heavy_analyses/dating_climate_adaptation/hg38_mig/01_ubuntu_20_04_hg38_mig_hap_map.sif
+		#sudo singularity shell /home/dftortosa/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating_heavy_analyses/dating_climate_adaptation/hg38_mig/00b_ubuntu_20_04_hg38_mig_map_across_chrom.sif
 	#to run the container. For that you have to be in a specific folder in order to have the scripts workingnter in the container
 		#cd /home/dftortosa/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating_heavy_analyses/dating_climate_adaptation/hg38_mig
-		#sudo singularity run /home/dftortosa/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating_heavy_analyses/dating_climate_adaptation/hg38_mig/01_ubuntu_20_04_hg38_mig_hap_map.sif
+		#sudo singularity run /home/dftortosa/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating_heavy_analyses/dating_climate_adaptation/hg38_mig/00b_ubuntu_20_04_hg38_mig_map_across_chrom.sif
 
 %labels
     Author dftortosa
