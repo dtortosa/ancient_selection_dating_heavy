@@ -18,7 +18,7 @@
 
 #We are going to migrate to hg38 as the new release of 1KGP matches this genome reference version (https://www.internationalgenome.org/data-portal/data-collection/30x-grch38). This script is going to take the VCF files for SNPs in the hg38 high coverage data from 1000GP and obtain hap and map files that will be used as input by flex sweep.
 
-#We will use as input the VCF files that include the ancestral allele as a new field, which was obtained with VEP.
+#To calculate hap files per pop, we will use as input the VCF files that include the ancestral allele as a new field, which was obtained with VEP. We will use the map files calculates across chromosomes to calculate map files per pop.
 
 #For more information about the download of the pedigrees and the VCF files with the original 1KGP data, see 01a_selecting_pedegree.py and 01b_vep_ancestral.py, respectively.
 
