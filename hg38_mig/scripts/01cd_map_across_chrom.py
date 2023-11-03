@@ -396,6 +396,92 @@ def master_processor(selected_chromosome, debugging=False):
         raise ValueError("FALSE! ERROR! WE STILL HAVE NON-SNPS AFTER FILTERING OUT INDELS, ETC...")
 
 
+    print_text("extract the position (index) of several columns in the VCF file, so we can be sure we are selecting these columns in later steps", header=3)
+    print_text("obtain the position of these columns using awk", header=4)
+    indexes_chrom_pos = run_bash(" \
+        bcftools view \
+            --header \
+            " + input_vcf_file_map_calc + " | \
+        awk \
+            'BEGIN{FS=\"\t\"}; \
+            END{ \
+                for(i=1;i<=NF;i++){ \
+                    if($i == \"#CHROM\"){ \
+                        chrom_index=i \
+                    }; \
+                    if($i == \"POS\"){ \
+                        pos_index=i \
+                    }; \
+                    if($i == \"ID\"){ \
+                        id_index=i \
+                    }; \
+                    if($i == \"REF\"){ \
+                        ref_index=i \
+                    }; \
+                    if($i == \"ALT\"){ \
+                        alt_index=i \
+                    }; \
+                    if($i == \"FILTER\"){ \
+                        filter_index=i \
+                    }; \
+                    if($i == \"INFO\"){ \
+                        info_index=i \
+                    }; \
+                    if($i == \"FORMAT\"){ \
+                        format_index=i \
+                    }; \
+                    if($i ~/^HG/ || $i ~/^NA/){ \
+                        n_samples++ \
+                    } \
+                }; \
+                n_fields=NF; \
+                printf \"n_fields=%s,n_samples=%s,chrom=%s,pos=%s,id=%s,ref=%s,alt=%s,filter=%s,info=%s,format=%s\", n_fields, n_samples, chrom_index, pos_index, id_index, ref_index, alt_index, filter_index, info_index, format_index \
+            }'", return_value=True).strip()
+        #get the header of the VCF file after extracting AA from CSQ, removing CSQ and select SNPs, just like we are going to do when we replace lower for upper case in the next line
+        #open the header with AWK
+            #when you reach the last line, which includes the headers
+                #run loop across fields, i.e., headers
+                    #if the header is CHROM or POS then save the index of the field as a new variable, chrom_index and pos_index, respectively.
+                        #"i" is the index, like 1, 2, 3... because of this, when you do $i is like you are doing $1.
+                        #if we save "i", we are saving the index, the number
+                        #https://unix.stackexchange.com/a/616495
+                    #also look for REF, ALT, FILTER because we will use these columns later
+                    #if the header starts with HG or NA, add 1 to the count of n_samples, because this is a GT column for a given sample
+                        #"~" let you use regular expression
+                        #"/.../" is a regular expression to match text that meet condition
+                        #"^" text that starts with...
+                        #https://unix.stackexchange.com/a/72763
+                #save the number of fields
+            #then print the number of fields, the number of sample and the index of both CHROM and POS
+                #https://www.gnu.org/software/gawk/manual/html_node/Printf-Examples.html
+    print("extract the numbers")
+    n_fields = indexes_chrom_pos.split(",")[0].replace("n_fields=", "")
+    n_samples = indexes_chrom_pos.split(",")[1].replace("n_samples=", "")
+    index_chrom = indexes_chrom_pos.split(",")[2].replace("chrom=", "")
+    index_pos = indexes_chrom_pos.split(",")[3].replace("pos=", "")
+    index_id = indexes_chrom_pos.split(",")[4].replace("id=", "")
+    index_ref = indexes_chrom_pos.split(",")[5].replace("ref=", "")
+    index_alt = indexes_chrom_pos.split(",")[6].replace("alt=", "")
+    index_filter = indexes_chrom_pos.split(",")[7].replace("filter=", "")
+    index_info = indexes_chrom_pos.split(",")[8].replace("info=", "")
+    index_format = indexes_chrom_pos.split(",")[9].replace("format=", "")
+    print("total number of fields: " + n_fields)
+    print("number of samples: " + n_samples)
+    print("index of column CHROM: " + index_chrom)
+    print("index of column POS: " + index_pos)
+    print("index of column ID: " + index_id)
+    print("index of column REF: " + index_ref)
+    print("index of column ALT: " + index_alt)
+    print("index of column FILTER: " + index_filter)
+    print("index of column INFO: " + index_info)
+    print("index of column FORMAT: " + index_format)
+    print("the total number of fields minus the number of samples should be 9. The number of fixed fields in VCF v4.2 is 8 and then FORMAT, which in our case only has GT, thus we should have 9 fields. Also, the index of CHROM, POS, REF, ALT and FILTER should be 1, 2, 4, 5 and 7, respectively")
+    if (int(n_fields)-int(n_samples) == 9) & (index_chrom=="1") & (index_pos=="2") & (index_id=="3") & (index_ref=="4") & (index_alt=="5") & (index_filter=="7") & (index_info=="8") & (index_format=="9"):
+        print("YES! GOOD TO GO!")
+    else:
+        raise ValueError("FALSE! ERROR! WE HAVE A PROBLEM WITH THE FIELDS OF THE VCF FILE BEFORE CONVERTING TO UPPER CASE ANCESTRAL ALLELES")
+
+
 
     ##########################################
     # calculate map file within selected pop #
@@ -435,7 +521,7 @@ def master_processor(selected_chromosome, debugging=False):
     run_bash(" \
         bcftools view \
             --no-header \
-            ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.vcf.gz | \
+            ./" + input_vcf_file_map_calc + " | \
         awk \
             'BEGIN{ \
                 FS=\"\t\"; \
@@ -448,7 +534,7 @@ def master_processor(selected_chromosome, debugging=False):
             }{ \
                 print $index_chrom, $index_id, $index_pos, $index_ref, $index_alt \
             }' | \
-        gzip --force > ./results/02_hap_map_files_raw/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_raw.map.gz")
+        gzip --force > ./results/00b_map_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_raw.map.gz")
         #load the VCF file without header
         #select the columns of interest with AWK
             #we want chromosome, position, REF/ALT to compare with the positions in the raw hap file (see below)
@@ -473,7 +559,7 @@ def master_processor(selected_chromosome, debugging=False):
 
     print_text("load the raw_map file", header=4)
     snp_map_raw = pd.read_csv(\
-        "./results/02_hap_map_files_raw/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_raw.map.gz", \
+        "./results/00b_map_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_raw.map.gz", \
         sep=" ", \
         header=None, \
         low_memory=False)
@@ -485,7 +571,7 @@ def master_processor(selected_chromosome, debugging=False):
         n_snps=$(\
             bcftools view \
                 --no-header \
-                ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.vcf.gz | \
+                ./" + input_vcf_file_map_calc + " | \
             wc -l); \
         if [[ $n_snps -eq " + str(snp_map_raw.shape[0]) + " ]]; then \
             echo 'TRUE'; \
@@ -549,32 +635,51 @@ def master_processor(selected_chromosome, debugging=False):
         awk \
             'BEGIN{ \
                 FS=OFS=\"\t\"; \
+                selected_chromosome=\"chr" + selected_chromosome + "\"; \
                 header=\"yes\"; \
             }{ \
-                if($0 ~ /Chr\tBegin\tEnd\tcMperMb\tcM/){header=\"no\"}; \
-                if(header == \"no\"){print $0} \
+                if($0 ~ /Chr\tBegin\tEnd\tcMperMb\tcM/){print $0; header=\"no\"}; \
+                if(header == \"no\" && $1==selected_chromosome){print $0} \
             }' | \
         gzip \
-            --force > ./data/decode_2019/aau1043_datas3_no_header.gz; \
+            --force > ./results/00b_map_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_decode_map.tsv.gz; \
         gunzip \
             --stdout \
-            ./data/decode_2019/aau1043_datas3_no_header.gz | \
+            ./results/00b_map_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_decode_map.tsv.gz | \
         head -5")
         #decompress the map
         #load into awk
             #begin
                 #using tabs as delimiter for inputs and outputs
                 #also set the variable header as yes
+                #add the chromosome name as a variable
             #if the row is not the column names, header remains as "yes"
                 #use regex so we can use "\t" as a pattern not look for
-            #only print if header="no", thus the first row printer will be the column names and then the rest of rows
+            #but if we reach the column names, print them and then set header as "no", so the next lines with positions will be printed
+            #only print if header="no" and the interval belongs to the selected chromosome.
     
     print_text("chr " + selected_chromosome + " - " + selected_pop + ": load decode 2019 map into python", header=4)
     decode2019_map = pd.read_csv(\
-        "./data/decode_2019/aau1043_datas3_no_header.gz", \
+        "./results/00b_map_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_decode_map.tsv.gz", \
         sep="\t", \
         header=0, \
         low_memory=False)
+
+    print_text("chr " + selected_chromosome + " - " + selected_pop + ": load the whole decode map to check we have selected the correct SNPs", header=4)
+    decode2019_map_check = pd.read_csv(\
+        "./data/decode_2019/aau1043_datas3.gz", \
+        sep="\t", \
+        header=0, \
+        low_memory=False, \
+        skiprows=[i for i in range(0,7,1)])
+        #skip the first rows with the header
+    print("select the rows of the selected chromosome, reset the index and then check the resulting DF is identical to the decode map generated with awk")
+    print(decode2019_map_check \
+        .loc[decode2019_map_check["Chr"] == "chr"+selected_chromosome, :] \
+        .reset_index(drop=True) \
+        .equals(decode2019_map))
+    print("remove the whole decode map")
+    del(decode2019_map_check)
 
     print_text("rename columns in lower case", header=4)
     decode2019_map=decode2019_map.rename({"Chr":"chr", "Begin":"begin", "End":"end", "cMperMb":"cM_Mb", "cM":"cM"}, axis=1)
@@ -800,7 +905,7 @@ def master_processor(selected_chromosome, debugging=False):
         n_snps=$(\
             bcftools view \
                 --no-header \
-                ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.vcf.gz | \
+                ./" + input_vcf_file_map_calc + " | \
             awk 'END{print NR}'); \
         if [[ $n_snps -eq " + str(final_genetic_pos_df.shape[0]) + " ]]; then \
             echo 'TRUE'; \
@@ -921,7 +1026,7 @@ def master_processor(selected_chromosome, debugging=False):
             --output ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.only_snps_gen_pos.vcf.gz \
             --output-type z \
             --compression-level 1 \
-            ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.vcf.gz")
+            ./" + input_vcf_file_map_calc + "")
             #include those SNPs for which ID is included in the list of SNPs with genetic position and save the resulting VCF file
                 #https://www.biostars.org/p/373852/
 
