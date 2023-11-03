@@ -2936,6 +2936,7 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
                 #the alleles switched with my approach
         #print the exit status
 
+    ##checking code from here
 
     print_text("Also update the INFO fields like AF, AC... because these are calculated considering the old REF/ALTs, but now the AC should be the count of the old REF not the old ALT", header=3)
     #before this step, Jesús created a tabix index from the VCF file (tabix --preset vcf VCF_FILE). I have checked that the creation of a tabix index does NOT change the VCF file. From what I have read, having a tabix index is useful to make fast queries over a large file without having to read the whole file, but I am not sure if this is useful for our case, as we have to do the update of the INFO fields in each row, i.e., in all rows.
@@ -4379,11 +4380,6 @@ for i in [0.1,0.25,0.4,0.5,0.6,0.75,0.9]:
 #### Next steps ####
 ####################
 print_text("Next steps", header=1)
-#check the script works independently of the location in the new laptop
-    #it should because the container runs in the HPC
-#build container with the new singularity
-#FALSE in
-    #Check we get the same rows if we take the original VCF and select only rows where AA is REF or ALT, switching only when ALT==AA 
 #if genetic distance is slow, you could do it in a previous step for each chromosome, and the new maps used as input here within each pop to remove snps without genetic distance from the VCF file and then hap file. Also remove snps from the map file not present in the VCF file, so we have the specific map for each population.
 #run again  script in container in HPC and do check of the script in the meantime
 #check number of snps lost
