@@ -136,7 +136,7 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 	#python3.9 -m pip install optuna
 	python3.9 -m pip install numpy
 	#python3.9 -m pip install scipy
-	#python3.9 -m pip install matplotlib
+	python3.9 -m pip install matplotlib
 	python3.9 -m pip install pandas
 	python3.9 -m pip install ipython
 	#python3.9 -m pip install bpython #this intepreter gives me problems with the indents. iPython works better

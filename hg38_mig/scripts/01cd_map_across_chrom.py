@@ -234,8 +234,8 @@ run_bash("bcftools -v")
 #### function to calculate map files for ALL SNPs ####
 ######################################################
 print_text("function to calculate map files for ALL SNPs", header=1)
-#selected_chromosome="1"; debugging=True
-def master_processor(selected_chromosome, debugging=False):
+#selected_chromosome="1"; debugging=True; debug_file_size=50000
+def master_processor(selected_chromosome, debugging=False, debug_file_size=None):
 
     #redirect standard output ONLY when running for production
     if debugging == False:
@@ -360,7 +360,7 @@ def master_processor(selected_chromosome, debugging=False):
         run_bash(" \
             bcftools view \
                 " + input_vcfs_path + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up.vcf.gz | \
-            head -n 5000 > ./results/00b_map_files/chr" + selected_chromosome + "/00b_map_calc_debug_subset_chr" + selected_chromosome + ".vcf; \
+            head -n " + str(debug_file_size) + " > ./results/00b_map_files/chr" + selected_chromosome + "/00b_map_calc_debug_subset_chr" + selected_chromosome + ".vcf; \
             ls -l")
         input_vcf_file_map_calc="./results/00b_map_files/chr" + selected_chromosome + "/00b_map_calc_debug_subset_chr" + selected_chromosome + ".vcf"
     else:
@@ -566,7 +566,7 @@ def master_processor(selected_chromosome, debugging=False):
     print(snp_map_raw)
 
 
-    print_text("chr " + selected_chromosome + " - " + selected_pop + ": check we have the correct number of SNPs in the map file loaded in python", header=4)
+    print_text("chr " + selected_chromosome + " : check we have the correct number of SNPs in the map file loaded in python", header=4)
     run_bash(" \
         n_snps=$(\
             bcftools view \
@@ -591,7 +591,7 @@ def master_processor(selected_chromosome, debugging=False):
     print(snp_map_raw)
 
 
-    print_text("chr " + selected_chromosome + " - " + selected_pop + ": create a new ID variable following plink 2.0 format and check it was correctly created", header=4)
+    print_text("chr " + selected_chromosome + ": create a new ID variable following plink 2.0 format and check it was correctly created", header=4)
     #the original ID column is in the format "CHR:POS:REF:ALT" but the problem is that some SNPs have their position indicated in the ID is shifted. 1KGP authors separated multiallelic SNPs in different lines with bcftools norm and then shifted their position so they could be phased, combing back to the original position afterwards (see next line). I guess during that process, they updated the IDs using chrom and the shifted position was used in the ID. Therefore, even if POS comes back to the original position, the ID remains with the shifted position. I have checked several multiallelic SNPs, and they have all the same issue with the position in the ID.
         #From README ("http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/README_1kGP_phased_panel_110722.pdf"): "SHAPEIT2 does not handle multiallelic variant phasing. To phase both biallelic and multiallelic variants we first split the multiallelics into separate rows while left-aligning and normalizing INDELs using bcftools norm tool (Li, 2011). Next, we shifted the position of multiallelic variants (2nd, 3rd, etc ALT alleles) by 1 or more bp (depending on how many ALT alleles there are at a given position) to ensure a unique start position for all variants, which is required for SHAPEIT2. We shifted the positions back to the original ones after phasing".
     #This is not very convenient because when later we create the hap files, SNPs will have the plink format for ID to avoid strand flips (CHROM:POS_REF_ALT), so we are going to have different IDs between hap and map files, making more difficult to do checks.
@@ -604,7 +604,7 @@ def master_processor(selected_chromosome, debugging=False):
     print(check_id.equals(snp_map_raw["id"]))
         #check it is identical to id
     print(snp_map_raw)
-    print("chr " + selected_chromosome + " - " + selected_pop + ": remove the ref/alt columns as we have this information already included in the ID")
+    print("chr " + selected_chromosome + ": remove the ref/alt columns as we have this information already included in the ID")
     snp_map_raw = snp_map_raw.drop(["ref", "alt"], axis=1)
     print(snp_map_raw)
 
@@ -620,14 +620,14 @@ def master_processor(selected_chromosome, debugging=False):
     #therefore, we have the same position format in both datasets, so we can just use the decode 2019 map to calculate the genetic position of each SNP.
 
  
-    print_text("chr " + selected_chromosome + " - " + selected_pop + ": see first lines of the Data S3 of decode paper, which is the sex average map (see above). The file has header", header=4)
+    print_text("chr " + selected_chromosome + ": see first lines of the Data S3 of decode paper, which is the sex average map (see above). The file has header", header=4)
     run_bash("\
         gunzip \
             --stdout \
             ./data/decode_2019/aau1043_datas3.gz | \
         head -20")
 
-    print_text("chr " + selected_chromosome + " - " + selected_pop + ": remove the header and save", header=4)
+    print_text("chr " + selected_chromosome + ": remove the header and save", header=4)
     run_bash("\
         gunzip \
             --stdout \
@@ -658,14 +658,14 @@ def master_processor(selected_chromosome, debugging=False):
             #but if we reach the column names, print them and then set header as "no", so the next lines with positions will be printed
             #only print if header="no" and the interval belongs to the selected chromosome.
     
-    print_text("chr " + selected_chromosome + " - " + selected_pop + ": load decode 2019 map into python", header=4)
+    print_text("chr " + selected_chromosome + ": load decode 2019 map into python", header=4)
     decode2019_map = pd.read_csv(\
         "./results/00b_map_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_decode_map.tsv.gz", \
         sep="\t", \
         header=0, \
         low_memory=False)
 
-    print_text("chr " + selected_chromosome + " - " + selected_pop + ": load the whole decode map to check we have selected the correct SNPs", header=4)
+    print_text("chr " + selected_chromosome + ": load the whole decode map to check we have selected the correct SNPs", header=4)
     decode2019_map_check = pd.read_csv(\
         "./data/decode_2019/aau1043_datas3.gz", \
         sep="\t", \
@@ -680,6 +680,8 @@ def master_processor(selected_chromosome, debugging=False):
         .equals(decode2019_map))
     print("remove the whole decode map")
     del(decode2019_map_check)
+    import gc
+    gc.collect()
 
     print_text("rename columns in lower case", header=4)
     decode2019_map=decode2019_map.rename({"Chr":"chr", "Begin":"begin", "End":"end", "cMperMb":"cM_Mb", "cM":"cM"}, axis=1)
@@ -694,27 +696,28 @@ def master_processor(selected_chromosome, debugging=False):
 
         #I did a lot of checks on this map regarding overlapping of the intervals etc, check recomb_v3.R in method_deep paper for further details.
 
-    print_text("chr " + selected_chromosome + " - " + selected_pop + ": subset decode map for the selected chromosome", header=4)
+    print_text("chr " + selected_chromosome + ": subset decode map for the selected chromosome. We already did that with awk, but are doing it again just in case", header=4)
     decode2019_map_subset = decode2019_map.loc[decode2019_map["chr"] == "chr"+str(selected_chromosome),:]
     print(decode2019_map_subset)
     print("Do we selected the correct chromosome?")
     unique_chrom_decode_subset = decode2019_map_subset["chr"].unique()
-    if (len(unique_chrom_decode_subset)==1) & (unique_chrom_decode_subset=="chr"+str(selected_chromosome)):
+    if (len(unique_chrom_decode_subset)==1) & (unique_chrom_decode_subset=="chr"+str(selected_chromosome)) & (decode2019_map_subset.equals(decode2019_map)):
         print("YES! GOOD TO GO!")
     else:
         raise ValueError("ERROR! FALSE! WE HAVE A PROBLEM: The subset of deCODE map does not have the correct chromosome")
 
-    print_text("remove the full decode map", header=4)
+    print_text("remove the full decode map from python", header=4)
     del(decode2019_map)
     import gc
     gc.collect()
 
 
     print_text("perform the calculation of the genetic position of each SNP", header=3)
-    print_text("chr " + selected_chromosome + " - " + selected_pop + ": define function to calculate genetic position per SNP", header=4)
-    #selected_snp_id=snp_map_raw.iloc[4655]["id"] #snp with cM value just in its position for IBS_1
-    #selected_snp_id=snp_map_raw.iloc[6996]["id"] #snp with cM values at both sides for IBS_1
-    #selected_snp_id=snp_map_raw.iloc[0]["id"] #snp without cM values around for IBS_1
+    print_text("chr " + selected_chromosome + ": define function to calculate genetic position per SNP", header=4)
+    #selected_snp_id=snp_map_raw.iloc[31967]["id"] #snp with cM value just in its position for chromosome 1
+    #selected_snp_id=snp_map_raw.iloc[33877]["id"] #snp with cM values at both sides for chromosome 1
+    #selected_snp_id=snp_map_raw.iloc[0]["id"] #snp without cM values around for chromosome 1
+    import numpy as np
     def gen_pos(selected_snp_id):
 
         #extract the row in the raw map for the selected SNP
@@ -875,10 +878,10 @@ def master_processor(selected_chromosome, debugging=False):
 
     
     print_text("run the function", header=3)
-    print_text("chr " + selected_chromosome + " - " + selected_pop + ": Run the function on just one snp", header=4)
+    print_text("chr " + selected_chromosome + ": Run the function on just one snp", header=4)
     print(gen_pos(snp_map_raw.iloc[10]["id"]))
 
-    print_text("chr " + selected_chromosome + " - " + selected_pop + ": run function across SNPs", header=4)
+    print_text("chr " + selected_chromosome + ": run function across SNPs", header=4)
     #we do not use pool.map because we will only want to use 1 core. The parallelization will be done in the parent function across chromosome*pop combinations
     #map seems to be faster than loop even using just 1 core, although there is not a big difference
         #https://www.linkedin.com/pulse/loops-maps-who-faster-time-space-complexity-we-coming-george-michelon/
@@ -891,7 +894,7 @@ def master_processor(selected_chromosome, debugging=False):
     print(final_genetic_pos_df)
 
 
-    print_text("chr " + selected_chromosome + " - " + selected_pop + ": all checks of genetic position calculation are True?", header=4)
+    print_text("chr " + selected_chromosome + ": all checks of genetic position calculation are True?", header=4)
     checks_across_snps_pos = final_genetic_pos_df[["check_0", "check_1", "check_2", "check_3", "check_4a", "check_4b", "check_5a", "check_5b", "check_6"]].all(axis=0, skipna=True)
     print(checks_across_snps_pos)
         #important:
@@ -900,7 +903,7 @@ def master_processor(selected_chromosome, debugging=False):
     if (checks_across_snps_pos.shape[0] != checks_across_snps_pos.sum()):
         raise ValueError("ERROR: FALSE! WE HAVE A PROBLEM: There is an error in one of the checks for the calculation of the genetic position of SNPs")
 
-    print_text("chr " + selected_chromosome + " - " + selected_pop + ": check we have the correct number of SNPs in the calculation of genetic position", header=4)
+    print_text("chr " + selected_chromosome + ": check we have the correct number of SNPs in the calculation of genetic position", header=4)
     run_bash(" \
         n_snps=$(\
             bcftools view \
@@ -914,7 +917,7 @@ def master_processor(selected_chromosome, debugging=False):
         fi")
             #count the number of lines in the cleaned VCF file without the header, and check that number is equal to the number of SNPs we have in the map file loaded in python 
 
-    print_text("chr " + selected_chromosome + " - " + selected_pop + ": check that we have the exact same snps than in the raw map", header=4)
+    print_text("chr " + selected_chromosome + ": check that we have the exact same snps than in the raw map", header=4)
     print(np.array_equal(
         snp_map_raw["chr"].to_numpy(),
         ("chr" + final_genetic_pos_df["selected_chromosome"]).to_numpy()))
@@ -947,12 +950,12 @@ def master_processor(selected_chromosome, debugging=False):
     new_genetic_distance = ((gen_distance_decode_intervals * phy_distance_left_decode) / phys_distance_decode_intervals) + final_genetic_pos_df_check_dist_calc["left_cM"]
         #see figure 31 and the calculation of genetic distance in "recomb_calc" function for the full explanation using the words of David and also my interpretation.
 
-    print("chr " + selected_chromosome + " - " + selected_pop + ": compare the new genetic distance and the distance previously calculated. It is ok not having True here if the next check is ok")
+    print("chr " + selected_chromosome + ": compare the new genetic distance and the distance previously calculated. It is ok not having True here if the next check is ok")
     raw_check_gen_dis = new_genetic_distance == final_genetic_pos_df_check_dist_calc["genetic_distance"]
     if (raw_check_gen_dis.shape[0] != raw_check_gen_dis.sum()):
         raise ValueError("FALSE! ERROR! WE HAVE A PROBLEM: There is an error in the calculation of the genetic distance of each SNP")
 
-    print("chr " + selected_chromosome + " - " + selected_pop + ": check that the cases with NA for last checks but with genetic distance are the cases of SNPs in a position exactly with deCODe data")
+    print("chr " + selected_chromosome + ": check that the cases with NA for last checks but with genetic distance are the cases of SNPs in a position exactly with deCODe data")
     cases_gen_pos_no_last_checks = final_genetic_pos_df.loc[\
         (final_genetic_pos_df["check_4a"].isna()) & \
         (~final_genetic_pos_df["genetic_distance"].isna()), "selected_snp_id"]
@@ -963,22 +966,18 @@ def master_processor(selected_chromosome, debugging=False):
     print(cases_gen_pos_no_last_checks.equals(snps_with_decode_data))
 
 
-    print_text("chr " + selected_chromosome + " - " + selected_pop + ": prepare final map file", header=3)
-    #subset only the columns for map files
+    print_text("chr " + selected_chromosome + ": prepare final map file", header=3)
+    print_text("subset only the columns for map files", header=4)
     final_genetic_pos_map_file = final_genetic_pos_df[["selected_chromosome", "selected_snp_id", "selected_snp_old_id", "genetic_distance", "selected_snp_physical_pos"]]        
     #add chrom
     chrom_column = final_genetic_pos_map_file.pop("selected_chromosome")
     final_genetic_pos_map_file.insert(0, "selected_chromosome", "chr"+chrom_column)
+    del(chrom_column)
         #pop the chromosome column
         #then insert it as the first column (indicating the corresponding name) but adding "chr"
     print(final_genetic_pos_map_file)
         #save the chromosome, ID, genetic position and physical position. This is the format expected by hapbin
             #https://github.com/evotools/hapbin
-
-
-
-    print_text("Create the final HAP and MAP files by selecting only SNPs with genetic position for both files", header=2)
-    print_text("chr " + selected_chromosome + " - " + selected_pop + ": remove the SNPs without genetic position from the VCF file", header=3)
 
     print_text("select those rows of the map for which the SNP have genetic position", header=4)
     final_genetic_pos_map_file_pruned = final_genetic_pos_map_file.loc[~final_genetic_pos_map_file["genetic_distance"].isna(), :]
@@ -994,7 +993,7 @@ def master_processor(selected_chromosome, debugging=False):
 
 
     print_text("save the names in a txt file", header=4)
-    with open(r"./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/list_snps_with_gen_pos_" + selected_chromosome + "_" + selected_pop + ".tsv", "w") as fp:
+    with open(r"./results/00b_map_files/chr" + selected_chromosome + "/list_snps_with_gen_pos_" + selected_chromosome + ".tsv", "w") as fp:
         fp.write("\n".join(snps_id_with_gen_pos))
             #each name in a different line so we have to add "\n" to the name
             #https://pynative.com/python-write-list-to-file/
@@ -1005,89 +1004,43 @@ def master_processor(selected_chromosome, debugging=False):
     run_bash(" \
         gzip \
             --force \
-            ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/list_snps_with_gen_pos_" + selected_chromosome + "_" + selected_pop + ".tsv")
+            ./results/00b_map_files/chr" + selected_chromosome + "/list_snps_with_gen_pos_" + selected_chromosome + ".tsv")
 
     print("take a look to the file")
     run_bash(" \
         gunzip \
             --stdout \
-            ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/list_snps_with_gen_pos_" + selected_chromosome + "_" + selected_pop + ".tsv.gz | \
+            ./results/00b_map_files/chr" + selected_chromosome + "/list_snps_with_gen_pos_" + selected_chromosome + ".tsv.gz | \
         awk \
             '{if(NR<20){print $0}}'")
 
-    print_text("chr " + selected_chromosome + " - " + selected_pop + ": filter the already cleaned VCF with bcftools", header=4)
-    #this file is cleaned regarding biallelic snps, duplicates... but need to retain only SNPs with genetic position
-    #We could do this by just creating before the hap file, extract snp positions from there, calculate genetic position and then remove from the hap those rows of SNPs without genetic position. The problem is that we would do that by row index instead of SNP ID, at least if we use the final hap file, so we are going for this option better. In addition, we would have snps that cannot be used in the VCF file because they do not have genetic position. With the other approach we would have a VCF with all SNPs filtered and another one with only snps with genetic position.
-    
-    print("filter")
-    run_bash("\
-        bcftools view \
-            --include ID==@./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/list_snps_with_gen_pos_" + selected_chromosome + "_" + selected_pop + ".tsv.gz \
-            --output ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.only_snps_gen_pos.vcf.gz \
-            --output-type z \
-            --compression-level 1 \
-            ./" + input_vcf_file_map_calc + "")
-            #include those SNPs for which ID is included in the list of SNPs with genetic position and save the resulting VCF file
-                #https://www.biostars.org/p/373852/
+    print_text("plot the genetic vs physical distance vs recombination rate to check whether there is a correlation", header=4)
+    import matplotlib.pyplot as plt
+    fig, (ax1, ax2) = plt.subplots(2, 1)
+    #make more vertical space between subplots
+    fig.subplots_adjust(hspace=0.6)
+            #https://stackoverflow.com/a/5159405/12772630
+    fig.suptitle("Chromosome " + selected_chromosome)
+    ax1.set_title("Genetic vs physical distance of SNPs")
+    ax1.scatter(x=final_genetic_pos_map_file_pruned["selected_snp_physical_pos"], y=final_genetic_pos_map_file_pruned["genetic_distance"], s=0.1)
+    ax1.set_xlabel("Pair-base position")
+    ax1.set_ylabel("Genetic distance")
+    ax2.set_title("Recombination rate vs physical position of deCODE intervals")
+    decode2019_map_subset_plot = decode2019_map_subset.loc[ \
+        (decode2019_map_subset["end"]>=np.min(final_genetic_pos_map_file_pruned["selected_snp_physical_pos"])) & \
+        (decode2019_map_subset["end"]<=np.max(final_genetic_pos_map_file_pruned["selected_snp_physical_pos"])),:]
+        #get only intervals overlapped with the SNPs
+    ax2.scatter(x=decode2019_map_subset_plot["end"], y=decode2019_map_subset_plot["cM_Mb"], s=0.5)
+    ax2.set_xlabel("Pair-base end position")
+    ax2.set_ylabel("Recombination rate (cM/Mb)")
+    plt.savefig( \
+        fname="./results/00b_map_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_plot_genetic_vs_phyiscal_distance.png")
+    plt.close()
 
-    print("see header of the fully filtered VCF file and some genotypes")
-    run_bash(" \
-        bcftools head \
-            ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.only_snps_gen_pos.vcf.gz")
-    run_bash(" \
-        bcftools view \
-            --no-header \
-            ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.only_snps_gen_pos.vcf.gz | \
-        head -5")
-
-    print_text("check that IDs in the filtered VCF file are the same than the ones in the list of IDs used as input to filter", header=4)
-    run_bash(" \
-        STATUS=$( \
-            cmp \
-                --silent \
-                <( \
-                    bcftools view \
-                        --no-header \
-                        ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.only_snps_gen_pos.vcf.gz | \
-                    awk \
-                        'BEGIN{ \
-                            FS=OFS=\"\t\"; \
-                            index_id=" + index_id + "} \
-                        { \
-                            print $index_id \
-                        }' \
-                ) \
-                <( \
-                    gunzip \
-                        --stdout \
-                        ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/list_snps_with_gen_pos_" + selected_chromosome + "_" + selected_pop + ".tsv.gz \
-                ); \
-            echo $?); \
-        if [[ $STATUS -eq 0 ]]; then \
-            echo 'TRUE'; \
-        else \
-            echo 'FALSE'; \
-        fi")
-        #compare two files with cmp in silent mode, as we will use the exit code to make the check
-            #both files are directly processed and used as input with process substitution
-                #Piping the stdout of a command into the stdin of another is a powerful technique. But, what if you need to pipe the stdout of multiple commands? This is where process substitution comes in.
-                #https://tldp.org/LDP/abs/html/process-sub.html
-            #file 1
-                #load the VCF file with only the SNPs having genetic position using bcftools, remove the header
-                #awk: for each row, print the ID
-            #file 2:
-                #just ungzip the file with the list of SNPs having genetic position
-        #if the exist status is 0, we are good. Both files are identical, byte by byte.
-            #An exit status of 0 means no differences were found, 1 means some differences were found, and 2 means trouble.
-            #https://www.gnu.org/software/diffutils/manual/diffutils.html#Invoking-cmp
-
-
-    print_text("finish the map", header=3)
+    print_text("see final map and save", header=4)
     print_text("remove old ID as we have already filtered the VCF file and check", header=4)
     final_genetic_pos_map_file_pruned = final_genetic_pos_map_file_pruned.drop(["selected_snp_old_id"], axis=1)
     print(final_genetic_pos_map_file_pruned.columns == ["selected_chromosome", "selected_snp_id", "genetic_distance", "selected_snp_physical_pos"])
-
-    print_text("see final map and save", header=4)
     print(final_genetic_pos_map_file_pruned)
         #required format according to hapbin
             #The map files (--map) should be in the same format as used by Selscan with one row per variant and four space-separated columns specifiying 
@@ -1096,7 +1049,7 @@ def master_processor(selected_chromosome, debugging=False):
                 #genetic position
                 #physical position.
     final_genetic_pos_map_file_pruned.to_csv(\
-        "./results/03_hap_map_files/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz", \
+        "./results/00b_map_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_selscan.map.gz", \
         sep=" ", \
         header=False, \
         index=False)
@@ -1106,14 +1059,14 @@ def master_processor(selected_chromosome, debugging=False):
         n_rows=$( \
             gunzip \
                 --stdout \
-                ./results/03_hap_map_files/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz | \
+                ./results/00b_map_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_selscan.map.gz | \
             awk \
                 -F ' ' \
                 'END {print NR}'); \
         n_cols=$( \
             gunzip \
                 --stdout \
-                ./results/03_hap_map_files/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz | \
+                ./results/00b_map_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_selscan.map.gz | \
             awk \
                 -F ' ' \
                 'END {print NF}'); \
@@ -1130,6 +1083,7 @@ def master_processor(selected_chromosome, debugging=False):
     print_text("remove files not required anymore", header=3)
     run_bash(" \
         rm " + input_vcf_file_map_calc + "; \
+        rm ./results/00b_map_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_decode_map.tsv.gz; \
         ls -l ./results/00b_map_files/chr" + selected_chromosome)
 
 
@@ -1177,12 +1131,21 @@ pool.close()
 ########################################################
 #### Do some checks after analyzing all chromosomes ####
 ########################################################
+
+
+
+##calculate number of SNPs lost due to lack of genetic position
+#see the number of SNPs removed due to the lack of genetic position
+
+##calculate in the script the total number of SNPs to calculate percentage!!!
+
+
+
 print_text("Do some checks after analyzing all chromosomes", header=1)
-print_text("Number of SNPs with low- and high-confidence ancestral alleles across chromosomes", header=2)
-print_text("empty lists to save the counts of high and low confidence ancestral alleles across chromosomes", header=3)
-count_snps_acgt_list = []
-count_snps_acgt_upper_anc_list = []
-count_snps_acgt_lower_anc_list = []
+print_text("Number of SNPs lost due to the lack of genetic position", header=2)
+print_text("empty lists to save the counts", header=3)
+count_snps_lost = []
+
 
 print_text("run loop across chromosomes", header=3)
 #chrom=1
@@ -1192,26 +1155,27 @@ for chrom in chromosomes:
     print("from the output file of the selected chromosome, extract the row with the counts of high and low confidence ancestral alleles")
     row_results = run_bash(" \
         grep \
-            'count_snps_acgt' \
+            --after-context=1 \
+            'see the number of SNPs removed due to the lack of genetic position' \
             ./scripts/00b_map_calcs_outputs/chr" + str(chrom) + ".out", return_value=True).strip()
 
     print("see the row")
     print(row_results)
 
     print("split the row")
-    row_results_split = row_results.split(",")
+    row_results_split = row_results.split("\n")
     print(row_results_split)
 
     print("check that we only have one row, and it can be split in three parts with comma")
-    if ("\n" not in row_results) & (len(row_results_split)==3):
+    if ("\n" not in row_results_split) & (len(row_results_split)==2):
         print("YES! GOOD TO GO!")
     else: 
-        raise ValueError("FALSE! ERROR! We have a problem calculating the number of SNPs with low and high confidence ancestral alleles")
+        raise ValueError("FALSE! ERROR! We have a problem calculating the number of SNPs lost due to lack of genetic position")
 
     print("append to each list the corresponding count")
-    count_snps_acgt_list.append(row_results_split[0].replace("count_snps_acgt=", ""))
-    count_snps_acgt_upper_anc_list.append(row_results_split[1].replace("count_snps_acgt_upper_anc=", ""))
-    count_snps_acgt_lower_anc_list.append(row_results_split[2].replace("count_snps_acgt_lower_anc=", ""))
+    count_snps_lost.append(row_results_split[1])
+
+    ##add a lsit with the total of SNPSss
 
 
 print_text("process the results", header=3)
@@ -1312,24 +1276,5 @@ for chrom in chromosomes:
 #### Next steps ####
 ####################
 print_text("Next steps", header=1)
-#for 01d_hap_map_calcs.py
-    #You will do the polarization within each populatin. We need only biallelic snps (to easily exchange ref by alt if needed), and we need to do this within pop, porque an allele can be biallelic for one pop but not for other.
-    #list of SNPs to for which we have to switch REF/ALT
-        #WE HAVE TO EXCLUDE CASES WHERE REF NOR ALT ARE THE ANCESTRAL ALLELE
-            #these can be multiallelic SNPs for which one of the ALTs is not present in the selected population and that very ALT is the ancestral. We need these SNPs OUT, if no ancestral, we cannot estimate selection.
-            #you hav eto do it after removing truly multiallelci snps in the population
-            #COUNT THESE CASES TO SEE THE IMPACT
-            #see line 812 of 01b_vep_ancestral.py
-        #then create the list of SNPs for which REF is not AA
-        #alternatively, you can directly export chrom, pos, REF, ALT, for all SNPs, then select rows with different REF than Ancestral using awk and generate a BED file, which is also accpeted by annotate
-            #http://www.htslib.org/doc/bcftools.html#annotate
-    #make the switch
-        #then you can go to -fixref and use it to switch these snps in the original VCF file
-            #bcftools +fixref file.bcf -Ob -o out.bcf -- -i List_of_1.vcf.gz 
-                #https://www.biostars.org/p/411202/
-                #https://samtools.github.io/bcftools/howtos/plugin.fixref.html
-            #fixref ES PELIGROSO!!
-        #I think you could also use --derived to set the ancestral as reference in bcftools. If you need to change the name of AA_upcase, I think you can use something like "bcftools annotate -c INFO/1kg_v2a_AF:=INFO/AF"
-            #https://www.biostars.org/p/304979/
-            #https://github.com/samtools/bcftools/issues/1695
-    #check and then go to the real data
+#check how many SNPs we lose due to the lack of genetic position
+#check the plots of physical vs genetic distance. We should see higher increases in genetic distance in the SNPs when recombination increases in the deCODE intervals

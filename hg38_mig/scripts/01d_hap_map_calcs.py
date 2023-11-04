@@ -3306,8 +3306,80 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
     #FILTER HAP 
     #FILTER THEN MAP ALSO!!
 
+    #the input VCF file has was changed in the script, check it and put back the cleaned_ref_alt_switeched VCF
+
+    print_text("Create the final HAP and MAP files by selecting only SNPs with genetic position for both files", header=2)
+    print_text("chr " + selected_chromosome + ": filter the already cleaned VCF with bcftools", header=3)
+    #this file is cleaned regarding biallelic snps, duplicates... but need to retain only SNPs with genetic position
+    #We could do this by just creating before the hap file, extract snp positions from there, calculate genetic position and then remove from the hap those rows of SNPs without genetic position. The problem is that we would do that by row index instead of SNP ID, at least if we use the final hap file, so we are going for this option better. In addition, we would have snps that cannot be used in the VCF file because they do not have genetic position. With the other approach we would have a VCF with all SNPs filtered and another one with only snps with genetic position.
+    
+    print("filter")
+    run_bash("\
+        bcftools view \
+            --include ID==@./results/00b_map_files/chr" + selected_chromosome + "/list_snps_with_gen_pos_" + selected_chromosome + ".tsv.gz \
+            --output ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.only_snps_gen_pos.vcf.gz \
+            --output-type z \
+            --compression-level 1 \
+            ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.vcf.gz")
+            #include those SNPs for which ID is included in the list of SNPs with genetic position and save the resulting VCF file
+                #https://www.biostars.org/p/373852/
+
+    print("see header of the fully filtered VCF file and some genotypes")
+    run_bash(" \
+        bcftools head \
+            ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.only_snps_gen_pos.vcf.gz")
+    run_bash(" \
+        bcftools view \
+            --no-header \
+            ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.only_snps_gen_pos.vcf.gz | \
+        head -5")
+
+    print_text("check that IDs in the filtered VCF file are the same than the ones in the list of IDs used as input to filter", header=4)
+    run_bash(" \
+        STATUS=$( \
+            cmp \
+                --silent \
+                <( \
+                    bcftools view \
+                        --no-header \
+                        ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.only_snps_gen_pos.vcf.gz | \
+                    awk \
+                        'BEGIN{ \
+                            FS=OFS=\"\t\"; \
+                            index_id=" + index_id + "} \
+                        { \
+                            print $index_id \
+                        }' \
+                ) \
+                <( \
+                    gunzip \
+                        --stdout \
+                        ./results/00b_map_files/chr" + selected_chromosome + "/list_snps_with_gen_pos_" + selected_chromosome + ".tsv.gz \
+                ); \
+            echo $?); \
+        if [[ $STATUS -eq 0 ]]; then \
+            echo 'TRUE'; \
+        else \
+            echo 'FALSE'; \
+        fi")
+        #compare two files with cmp in silent mode, as we will use the exit code to make the check
+            #both files are directly processed and used as input with process substitution
+                #Piping the stdout of a command into the stdin of another is a powerful technique. But, what if you need to pipe the stdout of multiple commands? This is where process substitution comes in.
+                #https://tldp.org/LDP/abs/html/process-sub.html
+            #file 1
+                #load the VCF file with only the SNPs having genetic position using bcftools, remove the header
+                #awk: for each row, print the ID
+            #file 2:
+                #just ungzip the file with the list of SNPs having genetic position
+        #if the exist status is 0, we are good. Both files are identical, byte by byte.
+            #An exit status of 0 means no differences were found, 1 means some differences were found, and 2 means trouble.
+            #https://www.gnu.org/software/diffutils/manual/diffutils.html#Invoking-cmp
 
 
+    ##load here the map file of the selected chromosome and select only snps included in the VCF
+    ##FILTER THE MAP!!
+    ##I guess we no longer need a raw map file...
+    #remove the old id from the map, use only the new one!!!
 
     print_text("create the hap file", header=3)
     print("chr " + selected_chromosome + " - " + selected_pop + ": convert to hap file")
@@ -3554,6 +3626,7 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
     #check that these IDs are identical to those of selected_samples
     print(sample_list_from_hap_clean["ID_1"].equals(selected_samples))
     print(sample_list_from_hap_clean["ID_2"].equals(selected_samples))
+
 
 
 
