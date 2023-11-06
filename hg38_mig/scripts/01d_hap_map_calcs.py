@@ -1895,8 +1895,12 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
         import sys
         original_stdout = sys.stdout
             #save off a reference to sys.stdout so we can restore it at the end of the function with "sys.stdout = original_stdout"
-        sys.stdout = open("./scripts/01_hap_map_calcs_outputs/" + selected_pop + "/chr" + selected_chromosome + "_" + selected_pop + ".out", "w")
+        file_output = open("./scripts/01_hap_map_calcs_outputs/" + selected_pop + "/chr" + selected_chromosome + "_" + selected_pop + ".out", "w")
+            #open a file where stdout will be saved
+        sys.stdout = file_output
+            #redirect stdout to that file
             #https://www.blog.pythonlibrary.org/2016/06/16/python-101-redirecting-stdout/
+            #https://stackoverflow.com/a/23838153
 
 
     print_text("chr " + selected_chromosome + " - " + selected_pop + ": see VCF file version", header=3)
@@ -3667,7 +3671,10 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
     print_text("restore sys.stdout using the previously saved reference to it. This is useful if you intend to use stdout for other things only required if we are in production, as we changed stdout only in that case", header=3)
     if debugging==False:
         sys.stdout = original_stdout
+        file_output.close()
+            #redirect stdout to the original stsdout and close the file where the output has been saved
             #https://www.blog.pythonlibrary.org/2016/06/16/python-101-redirecting-stdout/
+            #https://stackoverflow.com/a/23838153
 
 
 

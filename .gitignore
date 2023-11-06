@@ -11,6 +11,7 @@ ihs_eur_ranks*
 ihs_eas_ranks*
 ihs_all_ranks*
 
+hg38_mig/scripts/00b_map_calcs_outputs
 hg38_mig/scripts/01_hap_map_calcs_outputs
 hg38_mig/dummy_pilot_mask.bed
 IDEA_FOR_HEALTH_PART.TXT

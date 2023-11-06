@@ -242,8 +242,12 @@ def master_processor(selected_chromosome, debugging=False, debug_file_size=None)
         import sys
         original_stdout = sys.stdout
             #save off a reference to sys.stdout so we can restore it at the end of the function with "sys.stdout = original_stdout"
-        sys.stdout = open("./scripts/00b_map_calcs_outputs/chr" + selected_chromosome + ".out", "w")
+        file_output = open("./scripts/00b_map_calcs_outputs/chr" + selected_chromosome + ".out", "w")
+            #open a file where stdout will be saved
+        sys.stdout = file_output
+            #redirect stdout to that file
             #https://www.blog.pythonlibrary.org/2016/06/16/python-101-redirecting-stdout/
+            #https://stackoverflow.com/a/23838153
 
 
 
@@ -982,7 +986,8 @@ def master_processor(selected_chromosome, debugging=False, debug_file_size=None)
     print_text("select those rows of the map for which the SNP have genetic position", header=4)
     final_genetic_pos_map_file_pruned = final_genetic_pos_map_file.loc[~final_genetic_pos_map_file["genetic_distance"].isna(), :]
 
-    print("see the number of SNPs removed due to the lack of genetic position")
+    print("see the total number of SNPs and the number of SNPs removed due to the lack of genetic position")
+    print(final_genetic_pos_map_file.shape[0])
     print(final_genetic_pos_map_file.shape[0] - final_genetic_pos_map_file_pruned.shape[0])
 
     print_text("select old_id from the map that have genetic position. this ID is the original retained from the VCF file, so we can use it to subset the VCF file", header=4)
@@ -1093,7 +1098,10 @@ def master_processor(selected_chromosome, debugging=False, debug_file_size=None)
     print_text("restore sys.stdout using the previously saved reference to it. This is useful if you intend to use stdout for other things only required if we are in production, as we changed stdout only in that case", header=3)
     if debugging==False:
         sys.stdout = original_stdout
+        file_output.close()
+            #redirect stdout to the original stsdout and close the file where the output has been saved
             #https://www.blog.pythonlibrary.org/2016/06/16/python-101-redirecting-stdout/
+            #https://stackoverflow.com/a/23838153
 
 
 
@@ -1119,7 +1127,7 @@ import multiprocessing as mp
 pool = mp.Pool(len(chromosomes))
 
 
-print_text("run function across pandas rows", header=3)
+print_text("run function across chromosomes", header=3)
 pool.map(master_processor, chromosomes)
 
 print_text("close the pool", header=3)
@@ -1131,19 +1139,10 @@ pool.close()
 ########################################################
 #### Do some checks after analyzing all chromosomes ####
 ########################################################
-
-
-
-##calculate number of SNPs lost due to lack of genetic position
-#see the number of SNPs removed due to the lack of genetic position
-
-##calculate in the script the total number of SNPs to calculate percentage!!!
-
-
-
 print_text("Do some checks after analyzing all chromosomes", header=1)
 print_text("Number of SNPs lost due to the lack of genetic position", header=2)
 print_text("empty lists to save the counts", header=3)
+count_snps=[]
 count_snps_lost = []
 
 
@@ -1155,9 +1154,11 @@ for chrom in chromosomes:
     print("from the output file of the selected chromosome, extract the row with the counts of high and low confidence ancestral alleles")
     row_results = run_bash(" \
         grep \
-            --after-context=1 \
-            'see the number of SNPs removed due to the lack of genetic position' \
+            --after-context=2 \
+            'see the total number of SNPs and the number of SNPs removed due to the lack of genetic position' \
             ./scripts/00b_map_calcs_outputs/chr" + str(chrom) + ".out", return_value=True).strip()
+        #--after-context: number of lines to print after the match
+            #we want also the next two lines as these include the total number of SNPs and the SNPs lost due to the lack of genetic position
 
     print("see the row")
     print(row_results)
@@ -1167,51 +1168,39 @@ for chrom in chromosomes:
     print(row_results_split)
 
     print("check that we only have one row, and it can be split in three parts with comma")
-    if ("\n" not in row_results_split) & (len(row_results_split)==2):
+    if ("\n" not in row_results_split) & (len(row_results_split)==3):
         print("YES! GOOD TO GO!")
     else: 
         raise ValueError("FALSE! ERROR! We have a problem calculating the number of SNPs lost due to lack of genetic position")
 
     print("append to each list the corresponding count")
-    count_snps_lost.append(row_results_split[1])
-
-    ##add a lsit with the total of SNPSss
+    count_snps.append(row_results_split[1])
+    count_snps_lost.append(row_results_split[2])
 
 
 print_text("process the results", header=3)
 print_text("convert to int each count if the count is NOt zero", header=4)
-count_snps_acgt_list = [int(x) if x!="" else 0 for x in count_snps_acgt_list]
-count_snps_acgt_upper_anc_list = [int(x) if x!="" else 0 for x in count_snps_acgt_upper_anc_list]
-count_snps_acgt_lower_anc_list = [int(x) if x!="" else 0 for x in count_snps_acgt_lower_anc_list]
+count_snps = [int(x) if x!="" else 0 for x in count_snps]
+count_snps_lost = [int(x) if x!="" else 0 for x in count_snps_lost]
 
 print_text("check we have all chromosomes", header=4)
-#selected_list=[count_snps_acgt_list, count_snps_acgt_upper_anc_list, count_snps_acgt_lower_anc_list][0]
-check_count = [len(selected_list) == 22 for selected_list in [count_snps_acgt_list, count_snps_acgt_upper_anc_list, count_snps_acgt_lower_anc_list]]
+#selected_list=[count_snps, count_snps_lost][0]
+check_count = [len(selected_list) == 22 for selected_list in [count_snps, count_snps_lost]]
 if sum(check_count) == len(check_count):
     print("YES! GOOD TO GO!")
 else:
-    raise ValueError("FALSE! ERROR! We have a problem calculating the number of SNPs with low and high confidence ancestral alleles")
+    raise ValueError("FALSE! ERROR! We have a problem calculating the number of SNPs lost due to the lack of genetic position")
 
 print_text("make the sum across chromosomes", header=4)
-count_snps_acgt_total = sum(count_snps_acgt_list)
-count_snps_acgt_upper_anc_total = sum(count_snps_acgt_upper_anc_list)
-count_snps_acgt_lower_anc_total = sum(count_snps_acgt_lower_anc_list)
-
-print_text("check the total is equal to the sum of high and low-confidence", header=4)
-if count_snps_acgt_total == count_snps_acgt_upper_anc_total+count_snps_acgt_lower_anc_total:
-    print("YES! GOOD TO GO!")
-else:
-    raise ValueError("FALSE! ERROR! We have a problem calculating the number of SNPs with low and high confidence ancestral alleles")
+count_snps_total = sum(count_snps)
+count_snps_lost_total = sum(count_snps_lost)
 
 print_text("see the sums", header=4)
-print("Total number of SNPs with ancestral allele: " + str(count_snps_acgt_total))
-print("Total number of SNPs with high-confidence ancestral allele: " + str(count_snps_acgt_upper_anc_total))
-print("Total number of SNPs with low-confidence ancestral allele: " + str(count_snps_acgt_lower_anc_total))
+print("Total number of SNPs is: " + str(count_snps_total))
+print("Total number of SNPs lost due to lack of genetic position: " + str(count_snps_lost_total))
 
-print_text("calculate the percentage of SNPs with low-confidence ancestral allele across all chromosomes", header=4)
-print(count_snps_acgt_lower_anc_total/count_snps_acgt_total*100)
-
-print_text("IMPORTANT: if you need the number of SNPs without ancestral allele data, you can find it per chromosome in the line starting with 'The number of SNPs without ancestral allele data is'", header=4)
+print_text("calculate the percentage of SNPs lost due to the lack of genetic position across all chromosomes", header=4)
+print(count_snps_lost_total/count_snps_total*100)
 
 
 
@@ -1276,5 +1265,6 @@ for chrom in chromosomes:
 #### Next steps ####
 ####################
 print_text("Next steps", header=1)
+#check changes in this script and in 01d_hap.. in github
 #check how many SNPs we lose due to the lack of genetic position
 #check the plots of physical vs genetic distance. We should see higher increases in genetic distance in the SNPs when recombination increases in the deCODE intervals
