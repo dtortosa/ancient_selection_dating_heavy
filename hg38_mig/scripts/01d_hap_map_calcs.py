@@ -3309,6 +3309,7 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
     ## USE THE GENETIC MAP OF THE SELECTED CHROMSOOME PREVIOUSLY CREATED, USE IT TO
     #FILTER HAP 
     #FILTER THEN MAP ALSO!!
+    ###chcek that the map has no duplicate positions after filtering by the VCF, these wre multi, but multi have been removed from the VCF file
 
     #the input VCF file has was changed in the script, check it and put back the cleaned_ref_alt_switeched VCF
 

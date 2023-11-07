@@ -486,6 +486,8 @@ def master_processor(selected_chromosome, debugging=False, debug_file_size=None)
         raise ValueError("FALSE! ERROR! WE HAVE A PROBLEM WITH THE FIELDS OF THE VCF FILE BEFORE CONVERTING TO UPPER CASE ANCESTRAL ALLELES")
 
 
+    ##por aquiii
+
 
     ##########################################
     # calculate map file within selected pop #
@@ -969,6 +971,72 @@ def master_processor(selected_chromosome, debugging=False, debug_file_size=None)
     #print the check
     print(cases_gen_pos_no_last_checks.equals(snps_with_decode_data))
 
+    print_text("check whether the SNPs with duplicated physical position are different alleles of the same multiallelic SNP", header=4)
+    print("first check that no SNP has a duplicated ID")
+    print(final_genetic_pos_df["selected_snp_id"].duplicated(keep=False).sum()==0)
+    print(final_genetic_pos_df["selected_snp_old_id"].duplicated(keep=False).sum()==0)
+        #keep=False: Mark all duplicates as True
+
+    print("check that we only have the selected chromosome")
+    print(final_genetic_pos_df["selected_chromosome"].unique() == selected_chromosome)
+
+    print("select those SNPs with a duplicated physical position")
+    snps_duplicated_position = final_genetic_pos_df.loc[final_genetic_pos_df["selected_snp_physical_pos"].duplicated(keep=False), :]
+    print(snps_duplicated_position)
+
+    print("define a function to check that each of the duplicated SNPs are indeed multiallelic SNPs")
+    snps_duplicated_position_unique_positions = snps_duplicated_position["selected_snp_physical_pos"].unique()
+        #get the list of physical positions through which we have to iterate
+    #selected_position=snps_duplicated_position_unique_positions[0]
+    def check_dup_pos_fun(selected_position):
+        
+        #select the SNPs with the selected physical position
+        selected_snps_pos = snps_duplicated_position.loc[snps_duplicated_position["selected_snp_physical_pos"] == selected_position, :]
+        
+        #for each of the rows, i.e., SNPs, with the selected physical position, 
+        old_ids_split = selected_snps_pos.apply(lambda x: x["selected_snp_old_id"].split(":"), axis=1)
+            #select the old ID and then split it by ":"
+
+        #check that the chromosome is the same in both SNPs 
+        check_0 = old_ids_split.iloc[0][0] == old_ids_split.iloc[1][0]
+
+        #check that the physical position just differ in a few bases.
+        diff_position = np.abs(int(old_ids_split.iloc[0][1]) - int(old_ids_split.iloc[1][1]))
+        check_1 = (diff_position == 1 or diff_position == 2 or diff_position == 3)
+            #The position saved in the old ID seems to be the one used after separating multiallelic SNP shifting the position of their alleles in order to do phasing (SHAPEIT2 does not handle multiallelic SNPs). They put back the alleles to the original positions after phasing, but maybe they did not change the IDs because these SNPs have different position in the ID but their actual position is the same.
+            #Note that we could have more than 3 multiallelic SNPs, so the shift of positions could be larger than 1
+            #"we shifted the position of multiallelic variants (2nd, 3rd, etc ALT alleles) by 1 or more bp (depending on how many ALT alleles there are at a given position) to ensure a unique start position for all variants, which is required for SHAPEIT2"
+                #https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/README_1kGP_phased_panel_110722.pdf
+
+        #check that the REFs are the same but the ALTs are different, i.e., the expected behaviour of the alleles of the same multiallelic variant
+        check_2 = old_ids_split.iloc[0][2] == old_ids_split.iloc[1][2]
+        check_3 = old_ids_split.iloc[0][3] != old_ids_split.iloc[1][3]
+
+        #return the results as a tuple
+        return(tuple([selected_position, check_0, check_1, check_2, check_3]))
+
+    print("run the function with just one position")
+    print(check_dup_pos_fun(snps_duplicated_position_unique_positions[0]))
+
+    print("run the function across all duplicated positions")
+    check_dup_pos = list(map(check_dup_pos_fun, snps_duplicated_position_unique_positions))
+
+    print("convert the resulting list of tuples into a DF")
+    check_dup_pos_df = pd.DataFrame(check_dup_pos, columns=["selected_position", "check_0","check_1","check_2","check_3"])
+
+    print("check we have analyzed all the duplicated positions")
+    print(np.array_equal(check_dup_pos_df["selected_position"].to_numpy(), snps_duplicated_position_unique_positions))
+
+    print("check we do NOT have NA")
+    #x=check_dup_pos_df["check_0"]
+    #x=check_dup_pos_df["selected_position"]
+    print(check_dup_pos_df.apply(lambda x: (x==True).all(skipna=True) if x.name!="selected_position" else "No need to check", axis=0))
+        #in each column, check whether each row is equals to True, then check that the result is True for ALL rows of the column.
+            #skipna=True
+                #If the entire row/column is NA and skipna is True, then the result will be True, as for an empty row/column.
+                #no problem because we have previously checked that no NA is present. In addition, np.nan==True gives false, so we should have False for NA cases before doing all().
+        #do this only for the columns that are NOT the "selected_position". If the column is the "selected_position", then just print that no check is required.
+
 
     print_text("chr " + selected_chromosome + ": prepare final map file", header=3)
     print_text("subset only the columns for map files", header=4)
@@ -1088,7 +1156,6 @@ def master_processor(selected_chromosome, debugging=False, debug_file_size=None)
     print_text("remove files not required anymore", header=3)
     run_bash(" \
         rm " + input_vcf_file_map_calc + "; \
-        rm ./results/00b_map_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_decode_map.tsv.gz; \
         ls -l ./results/00b_map_files/chr" + selected_chromosome)
 
 
@@ -1265,6 +1332,7 @@ for chrom in chromosomes:
 #### Next steps ####
 ####################
 print_text("Next steps", header=1)
-#check changes in this script and in 01d_hap.. in github
 #check how many SNPs we lose due to the lack of genetic position
 #check the plots of physical vs genetic distance. We should see higher increases in genetic distance in the SNPs when recombination increases in the deCODE intervals
+    #show david abrupt changes in chromosome 1... they correlate with increases in recombination rate, so we should be fine
+    #also ask him about the accesibility mask of the next step. We already losing a lot of SNPs with the filters...
