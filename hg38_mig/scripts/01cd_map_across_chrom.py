@@ -241,13 +241,22 @@ print_text("chr define the function", header=2)
 import numpy as np
 def gen_pos(selected_snp_id):
 
-    #
-    ##CHECK THIS PRETTY WELL
+    #extract the number of the selected chromosome
     selected_chromosome=selected_snp_id.split(":")[0].split("chr")[1]
+    
+    #select the global variables of the SNP and deCODE maps for the selected chromosome
     snp_map_raw = eval("snp_map_raw_chr" + selected_chromosome)
     decode2019_map_subset = eval("decode2019_map_subset_chr" + selected_chromosome)
-
-
+        #these maps are created in the parent function (see below) for the selected chromosome and then converted to global variables that can be accessed by any other function
+        #we save them with the original name of these maps within this function, but given we are inside the child function and we are not converting them to global variables, then this would not affect to the original variables with the same name. See dummy example:
+            #a=1
+            #print("See the global 'a' variable just created: " + str(a))
+            #def eso():
+            #    a=eval("a")
+            #    a=a+1
+            #    return(a)
+            #print("See 'a' modified within the function, i.e., local: a=" + str(eso()))
+            #print("See again 'a' outside of the function, i.e., global: a=" + str(a))
 
     #extract the row in the raw map for the selected SNP
     selected_snp_row = snp_map_raw.loc[snp_map_raw["id"] == selected_snp_id,:]
@@ -898,21 +907,17 @@ def master_processor(selected_chromosome, debugging=False, debug_file_size=None)
 
 
     print_text("perform the calculation of the genetic position of each SNP", header=3)
-
-    ###check here the gen_pos function before moving foward
-
-    ##REMOVE THE GLOBAL VARIABLES OF THE SELECTED CHROMOSOME AT THE END JUST IN CASE
+    print_text("chr " + selected_chromosome + ": Convert the raw SNP map and the deCODE map for the select chromosome to global variable", header=4)
     globals()["snp_map_raw_chr"+selected_chromosome] = snp_map_raw
     globals()["decode2019_map_subset_chr"+selected_chromosome] = decode2019_map_subset
+
+    ##por aquii
 
 
     print_text("chr " + selected_chromosome + ": Run the function on just one snp", header=4)
     print(gen_pos(snp_map_raw.iloc[10]["id"]))
 
     print_text("chr " + selected_chromosome + ": run function across SNPs", header=4)
-
-
-
     import concurrent.futures as mp
     from multiprocessing import set_start_method
     nested_executor=mp.ProcessPoolExecutor(max_workers=4)
@@ -931,6 +936,7 @@ def master_processor(selected_chromosome, debugging=False, debug_file_size=None)
                 ###THINK ABOUT THIS, FORK IS UNSAFE IN OUR CASE? 
                     #spawn or fork?
                         #forks can lead to deadlocks
+                        #problem for nested parallelism?
                         #https://stackoverflow.com/questions/64095876/multiprocessing-fork-vs-spawn
 
             #https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ProcessPoolExecutor
@@ -1246,7 +1252,7 @@ def master_processor(selected_chromosome, debugging=False, debug_file_size=None)
 print_text("paralellize", header=1)
 print_text("create list with all chromosomes", header=2)
 print_text("get chromosome names", header=3)
-chromosomes = [str(i) for i in range(1, 5, 1)]
+chromosomes = [str(i) for i in range(1, 23, 1)]
 
 print_text("we are going to analyze 22 chromosomes?", header=3)
 print((len(chromosomes) == 22))
