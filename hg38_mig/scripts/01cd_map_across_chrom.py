@@ -357,8 +357,8 @@ def gen_pos(selected_snp_id):
                 #We do not need to include both extremes, we want the distance from one point to another. Imagine the window begins at 1 and ends at 3. Including both extremes, the size of the window is 3, you have 3 bases. However, the distance from the point 1 to 3 is 2 (3-1=2). We want the distance between two points with centiMorgan values.
 
             #check that calculating the distance with abs and changing order gives the same result
-            check_5a = distance_left_end == abs(lowest_interval["end"] - selected_snp_physical_pos).to_numpy()[0]
-            check_5b = distance_right_end == abs(highest_interval["end"] - selected_snp_physical_pos).to_numpy()[0]
+            check_5a = distance_left_end == np.abs(lowest_interval["end"] - selected_snp_physical_pos).to_numpy()[0]
+            check_5b = distance_right_end == np.abs(highest_interval["end"] - selected_snp_physical_pos).to_numpy()[0]
 
             #check that the sum of the physical distance of each deCODE end point to the SNP is the same than the total distance between the deCODE end points
             check_6 = distance_left_end + distance_right_end == np.abs(lowest_interval["end"].to_numpy()[0] - highest_interval["end"].to_numpy()[0])
@@ -369,7 +369,7 @@ def gen_pos(selected_snp_id):
                 #My explanation: What David is doing is 100 + ((102-100)*20)/(20+80). This gives exactly 100.4. David is using the rule of three (https://en.wikipedia.org/wiki/Cross-multiplication#Rule_of_Three). You have three points, A, B and C. If the physical distance distance A-C is 100 kb (20+80) and the genetic distance between these points is 2 cM (102-100) , what would be the genetic distance between A-B if these points are separated by 20 kb? ((102-100 cM) * 20 kb) / (20+80 kb); ((2 cM) * 20 kb) / (100 kb); ((2 cM) * 20 kb) / (100 kb); (40 cM * kb) / 100 kb; 0.4 cM. 0.4 is the genetic distance between A and B. Now we can sum 0.4 to the genetic position of A, to get the genetic position of B in the genome. 100 cM + 0.4 cM = 100.4 cM.
                 #If the point for which you calculate the genetic distance is exactly in the middle of the two points with 100 and 102 cM of genetic distance, the resulting genetic distance would be exactly in the middle, i.e., 101: 100 + ((102-100)*50)/(50+50). 50 is the physical distance between cM point and the point of interest. 
                 #This method assumes that relationship between genetic distance and physical distance between two points is lineal and stable, so you can estimate the genetic distance based on the physical distance in the genomic region encompassed by these points. Note that you are using points that are at least 1MB close to the point under study, therefore, we are estimating the genetic distance using the relationship between physical and genetic distance in a specific genomic region, not the whole genome.
-                #see figure 31 for further details.
+                #see figure 31 in method_deep folder for further details.
         else:
 
             #if not and hence we have an deCODE interval exactly in the SNP position
@@ -411,6 +411,10 @@ def gen_pos(selected_snp_id):
         right_cM = np.nan
         distance_left_end = np.nan
         distance_right_end = np.nan
+
+    #remove the maps
+    del(snp_map_raw)
+    del(decode2019_map_subset)
 
     #save results
     return(tuple([selected_chromosome, selected_snp_id, selected_snp_old_id, selected_snp_physical_pos, check_0, check_1, check_2, check_3, check_4a, check_4b, check_5a, check_5b, check_6, genetic_distance, left_cM, right_cM, distance_left_end, distance_right_end]))
@@ -953,8 +957,8 @@ def master_processor(selected_chromosome, debugging=False, debug_file_size=None)
     #run the genetic position function in parallel within the pool
     #IF DEBUGGING, CHECK gen_pos AT THIS POINT
     final_genetic_pos_list = nested_executor.map(gen_pos, snp_map_raw["id"])
+    #get a list with a tuple for the results of each SNP
     final_genetic_pos = list(final_genetic_pos_list)
-        #the first line is lazy, so we need to actually ask for a list with the results, i,e., a list of tuples as the function return a tuple for each SNP id
     #close the pool
     nested_executor.shutdown(wait=True)
         #wait: If True then shutdown will not return until all running futures have finished executing and the resources used by the
@@ -975,9 +979,9 @@ def master_processor(selected_chromosome, debugging=False, debug_file_size=None)
         #we set replacement as False, so the same row cannot be select two times
         #https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.sample.html
     #calculate the genetic position of these SNPs using map
-    final_genetic_pos_2 = list(map(gen_pos, ids_to_check))
+    final_genetic_pos_random_check = list(map(gen_pos, ids_to_check))
     #convert the result to pandas DF
-    final_genetic_pos_2_df = pd.DataFrame(final_genetic_pos_2, columns=["selected_chromosome", "selected_snp_id", "selected_snp_old_id", "selected_snp_physical_pos", "check_0", "check_1", "check_2", "check_3", "check_4a", "check_4b", "check_5a", "check_5b", "check_6", "genetic_distance", "left_cM", "right_cM", "distance_left_end", "distance_right_end"])
+    final_genetic_pos_random_check_df = pd.DataFrame(final_genetic_pos_random_check, columns=["selected_chromosome", "selected_snp_id", "selected_snp_old_id", "selected_snp_physical_pos", "check_0", "check_1", "check_2", "check_3", "check_4a", "check_4b", "check_5a", "check_5b", "check_6", "genetic_distance", "left_cM", "right_cM", "distance_left_end", "distance_right_end"])
     #select the randomly selected SNPs from the previous DF with results, which has been obtained using the new parallelization method
     results_new_method = final_genetic_pos_df \
         .iloc[np.where(final_genetic_pos_df["selected_snp_id"].isin(ids_to_check))[0],:] \
@@ -992,7 +996,7 @@ def master_processor(selected_chromosome, debugging=False, debug_file_size=None)
         #remove the index, not including it as a new column
         #fill NANs with zero
     #format the results obtained with map so they can be compared with the previous results obtained with the new parallelization method
-    results_old_method = final_genetic_pos_2_df \
+    results_old_method = final_genetic_pos_random_check_df \
         .set_index("selected_snp_id", drop=False) \
         .sort_index() \
         .reset_index(drop=True) \
@@ -1312,8 +1316,6 @@ master_executor = mp.ProcessPoolExecutor(max_workers=22)
 
 print_text("run function across chromosomes", header=3)
 master_executor.map(master_processor, chromosomes)
-    #in the nested executor, we obtained a list of tuples as result. In order to get that, I had to force nested_executor.map to do the list using list(nested_executor.map())
-    #I guess in this case is not lazy because we are not getting an object as output but just run the code of master_processor and save the corresponding outputs as files.
 
 print_text("close the pool", header=3)
 master_executor.shutdown(wait=True)
