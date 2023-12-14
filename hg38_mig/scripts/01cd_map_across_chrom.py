@@ -674,7 +674,6 @@ def master_processor(selected_chromosome, debugging=False, debug_file_size=None)
         raise ValueError("FALSE! ERROR! WE HAVE A PROBLEM WITH THE FIELDS OF THE VCF FILE BEFORE CONVERTING TO UPPER CASE ANCESTRAL ALLELES")
 
 
-    ##por aquiii
 
 
     ##########################################
@@ -911,17 +910,15 @@ def master_processor(selected_chromosome, debugging=False, debug_file_size=None)
     globals()["snp_map_raw_chr"+selected_chromosome] = snp_map_raw
     globals()["decode2019_map_subset_chr"+selected_chromosome] = decode2019_map_subset
 
-    ##por aquii
-
-
     print_text("chr " + selected_chromosome + ": Run the function on just one snp", header=4)
     print(gen_pos(snp_map_raw.iloc[10]["id"]))
 
-    print_text("chr " + selected_chromosome + ": run function across SNPs", header=4)
+    print_text("chr " + selected_chromosome + ": run function across SNPs using a pool for parallelization", header=4)
+    #set the pool
     import concurrent.futures as mp
-    from multiprocessing import set_start_method
-    nested_executor=mp.ProcessPoolExecutor(max_workers=4)
+    nested_executor=mp.ProcessPoolExecutor(max_workers=5)
         #The ProcessPoolExecutor class is an Executor subclass that uses a pool of processes to execute calls asynchronously. ProcessPoolExecutor uses the multiprocessing module, which allows it to side-step the Global Interpreter Lock but also means that only picklable objects can be executed and returned.
+            #https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ProcessPoolExecutor
             #max_workers
                 #the number of processes
                 #An Executor subclass that executes calls asynchronously using a pool of at most max_workers processes. If max_workers is None or not given, it will default to the number of processors on the machine. If max_workers is less than or equal to 0, then a ValueError will be raised.
@@ -930,52 +927,84 @@ def master_processor(selected_chromosome, debugging=False, debug_file_size=None)
                 #we are using the default context on POSIX except macOS, which is "fork".
                     #"fork": The parent process uses os.fork() to fork the Python interpreter. The child process, when it begins, is effectively identical to the parent process. All resources of the parent are inherited by the child process. Note that safely forking a multithreaded process is problematic.
                     #set_start_method() of multiprocessing can set the type of context
+                        #from multiprocessing import set_start_method
+                        #mp_context=set_start_method("spawn")
                     #Users of macOS or users of libc or malloc implementations other than those typically found in glibc to date are among those already more likely to experience deadlocks running such code.
                     #https://docs.python.org/3/library/os.html#os.fork
                     #https://docs.python.org/3/library/multiprocessing.html#multiprocessing-start-methods
-                ###THINK ABOUT THIS, FORK IS UNSAFE IN OUR CASE? 
-                    #spawn or fork?
-                        #forks can lead to deadlocks
-                        #problem for nested parallelism?
-                        #https://stackoverflow.com/questions/64095876/multiprocessing-fork-vs-spawn
-
-            #https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ProcessPoolExecutor
-
+                #when forking, the child inherits everything (global variables, modules...) except threads that are already running in the parent. In contrast, when using spawn, you get a fresh python interpreter. The problem with the former option is that the child could try to write something in the same place than the parent is also writing. I do not fully understand why, but it seems the file can be lock the first time and then the child cannot open it. This is exactly correct, but you can get an idea.
+                    #https://pythonspeed.com/articles/python-multiprocessing/
+                    #https://britishgeologicalsurvey.github.io/science/python-forking-vs-spawn/
+                    #https://stackoverflow.com/questions/64095876/multiprocessing-fork-vs-spawn
+                #This is a deadlock, resources shared are locked, and none of the parallel processes can move forward. For example: Suppose process P1 is waiting for a resource R1 currently being used by process P2. Meanwhile, P2 is waiting for resource R2 that's being used by P1. Neither process is able to proceed.
+                    #https://devopedia.org/deadlock
+                #I do not think we have a problem in my case, because the initial fork of master processor generates independent processes that are working on different chromosomes. There is one file, the deCODE map, that is used for each of the different processes, but just read, then a subset of that file for the corresponding selected chromosome is created, meaning each process writes in different files. Therefore, I do not see a problem here.
+                #In any case, I am doing checks to check whether all SNPs of the corresponding chromosome have been analyzed and also compare for the first few first thousand lines with map, which does not use parallelization.
+    #run the genetic position function in parallel within the pool
+    #IF DEBUGGING, CHECK gen_pos AT THIS POINT
     final_genetic_pos_list = nested_executor.map(gen_pos, snp_map_raw["id"])
-
     final_genetic_pos = list(final_genetic_pos_list)
-    
+        #the first line is lazy, so we need to actually ask for a list with the results, i,e., a list of tuples as the function return a tuple for each SNP id
+    #close the pool
     nested_executor.shutdown(wait=True)
+        #wait: If True then shutdown will not return until all running futures have finished executing and the resources used by the
 
-    ##delete the global variables created for the selected chromosome
-    globals().pop("snp_map_raw_chr"+selected_chromosome, None)
-    globals().pop("decode2019_map_subset_chr"+selected_chromosome, None)
-        #https://stackoverflow.com/a/64594852
-
-
-
-    #convert the tuple to DF and add the column names
+    print_text("convert the tuple to DF and add the column names", header=4)
     final_genetic_pos_df = pd.DataFrame(final_genetic_pos, columns=["selected_chromosome", "selected_snp_id", "selected_snp_old_id", "selected_snp_physical_pos", "check_0", "check_1", "check_2", "check_3", "check_4a", "check_4b", "check_5a", "check_5b", "check_6", "genetic_distance", "left_cM", "right_cM", "distance_left_end", "distance_right_end"])
     print("see results:")
     print(final_genetic_pos_df)
 
+    print_text("calculate a few thousand rows with the original 'map' function and compare with the previous results to check we did not mess with the parallelization", header=4)
+    #randomly select SNP IDs
+    if debugging == True:
+        n_snps_to_check = 10000
+    elif debugging == False:
+        n_snps_to_check = 50000
+    ids_to_check = snp_map_raw.sample(n=n_snps_to_check, replace=False)["id"]
+        #Return a random sample of items from an axis of object
+        #we set replacement as False, so the same row cannot be select two times
+        #https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.sample.html
+    #calculate the genetic position of these SNPs using map
+    final_genetic_pos_2 = list(map(gen_pos, ids_to_check))
+    #convert the result to pandas DF
+    final_genetic_pos_2_df = pd.DataFrame(final_genetic_pos_2, columns=["selected_chromosome", "selected_snp_id", "selected_snp_old_id", "selected_snp_physical_pos", "check_0", "check_1", "check_2", "check_3", "check_4a", "check_4b", "check_5a", "check_5b", "check_6", "genetic_distance", "left_cM", "right_cM", "distance_left_end", "distance_right_end"])
+    #select the randomly selected SNPs from the previous DF with results, which has been obtained using the new parallelization method
+    results_new_method = final_genetic_pos_df \
+        .iloc[np.where(final_genetic_pos_df["selected_snp_id"].isin(ids_to_check))[0],:] \
+        .set_index("selected_snp_id", drop=False) \
+        .sort_index() \
+        .reset_index(drop=True) \
+        .fillna(0)
+        #select rows where the ID is included in the Series with the IDs to be checked
+        #convert the SNP IDs as index, but without removing it as a column
+            #https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.set_index.html
+        #sort the rows using the new index, i.e., SNP ID
+        #remove the index, not including it as a new column
+        #fill NANs with zero
+    #format the results obtained with map so they can be compared with the previous results obtained with the new parallelization method
+    results_old_method = final_genetic_pos_2_df \
+        .set_index("selected_snp_id", drop=False) \
+        .sort_index() \
+        .reset_index(drop=True) \
+        .fillna(0)
+        #like before, set SNP ID as index, reorder using it, and then remove the index, finish converting NANs to zero
+    #check whether each value is NOT the same between both approaches. Sum 
+    check_old_new_parallel_method = (results_new_method != results_old_method).apply(sum, axis=0) == 0
+        #axis=0 so if performs the operation considering all rows of a given column, i.e., number of True cases per column
+        #the total number of Trues per column should be zero.
+    print(check_old_new_parallel_method)
+    #the check should be True for all columns, if not raise error
+    if (check_old_new_parallel_method.shape[0] != check_old_new_parallel_method.sum()):
+        raise ValueError("ERROR: FALSE! WE HAVE A PROBLEM: The genetic position calculation for 50K random rows is not the same between 'map' and the new parallelization method.")
 
-
-    ###compare with just map()
-    #we do not use pool.map because we will only want to use 1 core. The parallelization will be done in the parent function across chromosome*pop combinations
-    #map seems to be faster than loop even using just 1 core, although there is not a big difference
-        #https://www.linkedin.com/pulse/loops-maps-who-faster-time-space-complexity-we-coming-george-michelon/
-    #final_genetic_pos_2 = list(map(gen_pos, snp_map_raw["id"]))
-    #final_genetic_pos_2_df = pd.DataFrame(final_genetic_pos_2, columns=["selected_chromosome", "selected_snp_id", "selected_snp_old_id", "selected_snp_physical_pos", "check_0", "check_1", "check_2", "check_3", "check_4a", "check_4b", "check_5a", "check_5b", "check_6", "genetic_distance", "left_cM", "right_cM", "distance_left_end", "distance_right_end"])
-
-
-
-
-
-
+    print_text("delete the global variables created for the selected chromosome", header=4)
+    del globals()["snp_map_raw_chr"+selected_chromosome]
+    del globals()["decode2019_map_subset_chr"+selected_chromosome]
+        #https://stackoverflow.com/a/47717307
 
     print_text("chr " + selected_chromosome + ": all checks of genetic position calculation are True?", header=4)
     checks_across_snps_pos = final_genetic_pos_df[["check_0", "check_1", "check_2", "check_3", "check_4a", "check_4b", "check_5a", "check_5b", "check_6"]].all(axis=0, skipna=True)
+        #Exclude NA/null values. If the entire row/column is NA and skipna is True, then the result will be True, as for an empty row/column. If skipna is False, then NA are treated as True, because these are not equal to zero.
     print(checks_across_snps_pos)
         #important:
             #all() does not consider nan, so if you have nan and the rest True, the output is True.
@@ -998,19 +1027,22 @@ def master_processor(selected_chromosome, debugging=False, debug_file_size=None)
             #count the number of lines in the cleaned VCF file without the header, and check that number is equal to the number of SNPs we have in the map file loaded in python 
 
     print_text("chr " + selected_chromosome + ": check that we have the exact same snps than in the raw map", header=4)
-    print(np.array_equal(
+    list_check_all_snps = list()
+    list_check_all_snps.append(np.array_equal(
         snp_map_raw["chr"].to_numpy(),
         ("chr" + final_genetic_pos_df["selected_chromosome"]).to_numpy()))
-    print(np.array_equal(
+    list_check_all_snps.append(np.array_equal(
         snp_map_raw["id"].to_numpy(),
         final_genetic_pos_df["selected_snp_id"].to_numpy()))
-    print(np.array_equal(
+    list_check_all_snps.append(np.array_equal(
         snp_map_raw["id_old"].to_numpy(),
         final_genetic_pos_df["selected_snp_old_id"].to_numpy()))
-    print(np.array_equal(
+    list_check_all_snps.append(np.array_equal(
         snp_map_raw["pos"].to_numpy(),
         final_genetic_pos_df["selected_snp_physical_pos"].to_numpy()))
- 
+    print(list_check_all_snps)
+    if False in list_check_all_snps:
+        raise ValueError("ERROR: FALSE! WE HAVE A PROBLEM: There is an error when comparing the raw SNP map and the new one created with deCODE data")
     
     print_text("recalculate genetic distance of each SNP", header=4)
     #but we exclude SNPs that have cM exactly in their position in the decode map or SNPs without decode data around
@@ -1261,23 +1293,21 @@ print_text("See them", header=3)
 print(chromosomes)
 
 
-import concurrent.futures as mp
-pool = mp.ProcessPoolExecutor(max_workers=4)
-pool.map(master_processor, chromosomes)
-pool.shutdown()
-
-
 print_text("run parallel analyses", header=2)
 print_text("open the pool", header=3)
-import multiprocessing as mp
-pool = mp.Pool(len(chromosomes))
-
+import concurrent.futures as mp
+master_executor = mp.ProcessPoolExecutor(max_workers=22)
+    #we are using 22 processes, 1 per chromosome. Then, a nested executor will be run inside master_processor within each chromosome. That nested executor will use 5 processes, i.e., we can have up to 5 processes working on the calculation of the genetic position of each chromosome. Therefore 22*5 makes a total of 110 processes.
+    #see the nested parallelization in master_processor for details about concurrent.futures
 
 print_text("run function across chromosomes", header=3)
-pool.map(master_processor, chromosomes)
+master_executor.map(master_processor, chromosomes)
+    #in the nested executor, we obtained a list of tuples as result. In order to get that, I had to force nested_executor.map to do the list using list(nested_executor.map())
+    #I guess in this case is not lazy because we are not getting an object as output but just run the code of master_processor and save the corresponding outputs as files.
 
 print_text("close the pool", header=3)
-pool.close()
+master_executor.shutdown(wait=True)
+    #wait: If True then shutdown will not return until all running futures have finished executing and the resources used by the
 
 
 
