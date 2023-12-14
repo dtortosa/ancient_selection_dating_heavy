@@ -257,6 +257,7 @@ def gen_pos(selected_snp_id):
             #    return(a)
             #print("See 'a' modified within the function, i.e., local: a=" + str(eso()))
             #print("See again 'a' outside of the function, i.e., global: a=" + str(a))
+            #the global variable "a" is NOT modified by the function eso()
 
     #extract the row in the raw map for the selected SNP
     selected_snp_row = snp_map_raw.loc[snp_map_raw["id"] == selected_snp_id,:]
@@ -727,12 +728,16 @@ def master_processor(selected_chromosome, debugging=False, debug_file_size=None)
             }{ \
                 print $index_chrom, $index_id, $index_pos, $index_ref, $index_alt \
             }' | \
-        gzip --force > ./results/00b_map_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_raw.map.gz")
+        gzip --force > ./results/00b_map_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_raw.map.gz; \
+        gunzip \
+            --stdout \
+            ./results/00b_map_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_raw.map.gz | head -20")
         #load the VCF file without header
         #select the columns of interest with AWK
             #we want chromosome, position, REF/ALT to compare with the positions in the raw hap file (see below)
             #output "space" separated to meet salescan requirements
         #compress
+        #take a look at it
 
     #Note about the format of the positions
     #pos in VCF files v4.2 is 1-based according to the specification file (this is the format of 1KGP data). Therefore, we have here 1-based coordinates.
@@ -807,6 +812,11 @@ def master_processor(selected_chromosome, debugging=False, debug_file_size=None)
         #Data S3.genetic.map.final.sexavg.gor.gz:
             #average genetic map computed from the paternal and maternal genetic maps, which were in turn computed from the paternal and maternal crossover, respectively. The data columns are as follows: Chr (chromosome), Begin (start point position of interval in GRCh38 coordinates), End (end point position of interval in GRCh38 coordinates), cMperMb (recombination rate in interval), cM (centiMorgan location of END POINT of interval)
             #Page 85 of "aau1043-halldorsson-sm-revision1.pdf"
+        #Importantly, we have confirmation about this from the first author of the paper:
+            #I sent an email to the first author of the deCODE 2019 map paper asking whether the coordinates are 1- or 0-based, but I got an answer a bit difficult to understand for me.
+            #I asked this: "I would like to confirm that the three genetic maps published as supplementary files (Data S1-S3, i.e., maternal, paternal and average maps) have 1-based coordinates. From the description, I understand this is the case, but I want to double check that with you to ensure these are not 0-based."
+            #He replied: "This shouldn't be the case, but let us know if you think there is a problem."
+            #David answered: "About the deCode map, he is saying that the coordinates are 1-based, we can proceed."
 
     #1KGP is aligned to hg38 (see paper) and coordinates are 1-based as VCF format 4.2 has 1-based coordinates.
 
