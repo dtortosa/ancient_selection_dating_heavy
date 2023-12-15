@@ -3313,6 +3313,12 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
 
     #the input VCF file has was changed in the script, check it and put back the cleaned_ref_alt_switeched VCF
 
+
+
+
+
+
+
     print_text("Create the final HAP and MAP files by selecting only SNPs with genetic position for both files", header=2)
     print_text("chr " + selected_chromosome + ": filter the already cleaned VCF with bcftools", header=3)
     #this file is cleaned regarding biallelic snps, duplicates... but need to retain only SNPs with genetic position
@@ -3321,7 +3327,18 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
     print("filter")
     run_bash("\
         bcftools view \
-            --include ID==@./results/00b_map_files/chr" + selected_chromosome + "/list_snps_with_gen_pos_" + selected_chromosome + ".tsv.gz \
+            --include ID==@<( \
+                awk \
+                    'BEGIN{ \
+                        FS=OFS=\" \"\
+                    }{ \
+                        print $3 \
+                    }' \
+                    <( \
+                        gunzip \
+                            --stdout \
+                            ./results/00b_map_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_selscan.map.gz) \
+                ) \
             --output ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.only_snps_gen_pos.vcf.gz \
             --output-type z \
             --compression-level 1 \
@@ -3341,25 +3358,125 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
 
     print_text("check that IDs in the filtered VCF file are the same than the ones in the list of IDs used as input to filter", header=4)
     run_bash(" \
+        awk \
+            'BEGIN{ \
+                FS=OFS=\"\t| \"; \
+                index_id=" + index_id + "; \
+                header_vcf=\"yes\" \
+            }{ \
+                if(NR==FNR){ \
+                    list_snps[$3] \
+                } else { \
+                    if((header_vcf==\"no\") && !($index_id in list_snps)){ \
+                        print \"FALSE\" \
+                    } \
+                    if($0 ~ /^#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT/){ \
+                        header_vcf=\"no\" \
+                    } \
+                } \
+            }' \
+            <( \
+                gunzip \
+                    --stdout \
+                    ./results/00b_map_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_selscan.map.gz \
+            ) \
+            <( \
+                gunzip \
+                    --stdout \
+                    ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.only_snps_gen_pos.vcf.gz \
+            ) \
+        ")
+        #BEGIN block
+            #setting the field separator for input and output, which is tab in bot cases (VCF has tabs after the header)
+            #create a variable 
+                #with the index of the SNP ID
+                #information about whether a line of the VCF file belongs to the header or not. Default is "yes" because the file starts with the header
+        #Processing
+            #if the number of rows of the current file (FNR) is the same than the total number of rows, i.e., we are processing the first file
+                #create an array with the first field, which is the ID of one of the SNPs with genetic position
+                #https://stackoverflow.com/a/32488079
+            #else, means we are processing the second file
+                #if the row does not belong to the header, and its SNP ID is NOT a key inside the previously created array
+                    #this means that the current SNP is not included in the list of SNPs with genetic position, so print FALSE
+                    #https://stackoverflow.com/a/17994142
+                #change header_vcf to "no" only at the end of the script, if we reached the last line of the header (i.e., the row starts with #CHROM...). In this way, we avoid doing anything with that row, and the processing starts with the next row, which is the first with SNP data 
+                    #https://unix.stackexchange.com/a/72763
+
+    print_text("subset the map file with the SNPs remaining in the hap file", header=4)
+    run_bash(" \
+        awk \
+            'BEGIN{ \
+                FS=OFS=\" \"; \
+                header_vcf=\"yes\"; \
+            }{ \
+                if(NR==FNR){ \
+                    if(header_vcf==\"no\"){ \
+                        list_snps[$3] \
+                    } \
+                    if($0 ~ /^#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT/){ \
+                        header_vcf=\"no\" \
+                    } \
+                } else { \
+                    if($3 in list_snps){ \
+                        print $0 \
+                    } \
+                } \
+            }' \
+            <( \
+                gunzip \
+                    --stdout \
+                    ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.only_snps_gen_pos.vcf.gz \
+            ) \
+            <( \
+                gunzip \
+                    --stdout \
+                    ./results/00b_map_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_selscan.map.gz \
+            ) | \
+            gzip --force > ./results/02_hap_map_files_raw/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_selscan_raw.map.gz; \
+        gunzip \
+            --stdout \
+            ./results/02_hap_map_files_raw/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_selscan_raw.map.gz | head -20 \
+        ")
+        #BEGIN block
+            #both hap and map files use space as separator
+        #Processing
+            #create an array with the SNP IDs of the hap file (first file) as index
+            #then, with the second file (map), if the ID of the corresponding SNP is included in the array, i.e., the SNP is included in the hap file, print the whole row
+        #compress the result
+    
+
+
+
+    run_bash(" \
         STATUS=$( \
             cmp \
                 --silent \
                 <( \
-                    bcftools view \
-                        --no-header \
+                    gunzip \
+                        --stdout \
                         ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.only_snps_gen_pos.vcf.gz | \
                     awk \
                         'BEGIN{ \
                             FS=OFS=\"\t\"; \
-                            index_id=" + index_id + "} \
-                        { \
-                            print $index_id \
+                            header_vcf=\"yes\"; \
+                        }{ \
+                            if(header_vcf==\"no\"){ \
+                                print $1, $3, $2 \
+                            } \
+                            if($0 ~ /^#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT/){ \
+                                header_vcf=\"no\" \
+                            } \
                         }' \
                 ) \
                 <( \
                     gunzip \
                         --stdout \
-                        ./results/00b_map_files/chr" + selected_chromosome + "/list_snps_with_gen_pos_" + selected_chromosome + ".tsv.gz \
+                        ./results/02_hap_map_files_raw/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_selscan_raw.map.gz | \
+                    awk \
+                        'BEGIN{ \
+                            FS=\" \"; \
+                            OFS=\"\t\"} \
+                        { print $1, $3, $5 }' \
                 ); \
             echo $?); \
         if [[ $STATUS -eq 0 ]]; then \
@@ -3367,24 +3484,34 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
         else \
             echo 'FALSE'; \
         fi")
-        #compare two files with cmp in silent mode, as we will use the exit code to make the check
-            #both files are directly processed and used as input with process substitution
-                #Piping the stdout of a command into the stdin of another is a powerful technique. But, what if you need to pipe the stdout of multiple commands? This is where process substitution comes in.
-                #https://tldp.org/LDP/abs/html/process-sub.html
-            #file 1
-                #load the VCF file with only the SNPs having genetic position using bcftools, remove the header
-                #awk: for each row, print the ID
-            #file 2:
-                #just ungzip the file with the list of SNPs having genetic position
-        #if the exist status is 0, we are good. Both files are identical, byte by byte.
-            #An exit status of 0 means no differences were found, 1 means some differences were found, and 2 means trouble.
-            #https://www.gnu.org/software/diffutils/manual/diffutils.html#Invoking-cmp
 
 
-    ##load here the map file of the selected chromosome and select only snps included in the VCF
-    ##FILTER THE MAP!!
-    ##I guess we no longer need a raw map file...
-    #remove the old id from the map, use only the new one!!!
+    ##REMOVE THE OLD ID!!! in the genetic map
+    run_bash(
+        "gunzip \
+            --stdout \
+            ./results/02_hap_map_files_raw/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_selscan_raw.map.gz | \
+        awk \
+            'BEGIN{ \
+                FS=\" \"; \
+                OFS=\"\t\"} \
+            { \
+                print $1, $2, $4, $5 \
+            }' | \
+        gzip --force > ./results/03_hap_map_files/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz")
+
+
+
+
+
+
+    ###por aquii
+    #it seems we have the same REF ALT in both files, the problem is that some SNPs from the hap file are missing in the map file
+        #THIS IS AN ERROR, WE ARE FILTERING THE HAP FILE USING THE MAP FILE
+        #also check the thing of ref alt in both files, the filtering of snps in the VCF file for a pop could change this?
+
+
+
 
     print_text("create the hap file", header=3)
     print("chr " + selected_chromosome + " - " + selected_pop + ": convert to hap file")
@@ -3420,6 +3547,10 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
                 #In addition, hap files in yoruba folder of flexsweep are just our hap files for iHS, i.e., ONLY THE HAPLOTYPE COLUMNS.
                     #/xdisk/denard/lauterbur/yoruba/hapmap_YRI_hg19_decode2019/
 
+
+
+    
+    #this check fails but the next one chceks the same and works!!??
     print_text("as the IDs are created during the hap file creation (see docs above), we should have the same IDs in hap and map files. Also chromosome and position should be the same between both files", header=4)
     run_bash(" \
         STATUS=$( \
@@ -3443,7 +3574,7 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
                         'BEGIN{ \
                             FS=\" \"; \
                             OFS=\"\t\"} \
-                        { print $1, $2, $4 }' \
+                        { print $1, $2, $5 }' \
                 ); \
             echo $?); \
         if [[ $STATUS -eq 0 ]]; then \
@@ -3452,6 +3583,33 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
             echo 'FALSE'; \
         fi")
         #see previous cmp comparison for explanations about the code
+
+
+    run_bash(" \
+            awk \
+                'BEGIN{FS=OFS=\" \"}{ \
+                    if(NR==FNR){ \
+                        list_snps_hap[$2] \
+                    } else { \
+                        if(!$2 in list_snps_hap){ \
+                            print $2; \
+                        } \
+                    } \
+                }' \
+                <( \
+                    gunzip \
+                        --stdout \
+                        ./results/02_hap_map_files_raw/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz \
+                ) \
+                <( \
+                    gunzip \
+                        --stdout \
+                        ./results/03_hap_map_files/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz \
+                )")
+
+
+    #check the last lines of the map script, you removed the list of snps with genetic position data
+
 
     #note about the output of hap conversion
         #I get an output like this

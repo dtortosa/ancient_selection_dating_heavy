@@ -1178,35 +1178,6 @@ def master_processor(selected_chromosome, debugging=False, debug_file_size=None)
     print(final_genetic_pos_map_file.shape[0])
     print(final_genetic_pos_map_file.shape[0] - final_genetic_pos_map_file_pruned.shape[0])
 
-    print_text("select old_id from the map that have genetic position. this ID is the original retained from the VCF file, so we can use it to subset the VCF file", header=4)
-    snps_id_with_gen_pos = final_genetic_pos_map_file_pruned.loc[:, "selected_snp_old_id"]
-
-    print("check")
-    print(final_genetic_pos_map_file_pruned["selected_snp_old_id"].equals(snps_id_with_gen_pos))
-
-
-    print_text("save the names in a txt file", header=4)
-    with open(r"./results/00b_map_files/chr" + selected_chromosome + "/list_snps_with_gen_pos_" + selected_chromosome + ".tsv", "w") as fp:
-        fp.write("\n".join(snps_id_with_gen_pos))
-            #each name in a different line so we have to add "\n" to the name
-            #https://pynative.com/python-write-list-to-file/
-        fp.write("\n")
-            #add empty line at the end
-
-    print("compress")
-    run_bash(" \
-        gzip \
-            --force \
-            ./results/00b_map_files/chr" + selected_chromosome + "/list_snps_with_gen_pos_" + selected_chromosome + ".tsv")
-
-    print("take a look to the file")
-    run_bash(" \
-        gunzip \
-            --stdout \
-            ./results/00b_map_files/chr" + selected_chromosome + "/list_snps_with_gen_pos_" + selected_chromosome + ".tsv.gz | \
-        awk \
-            '{if(NR<20){print $0}}'")
-
     print_text("plot the genetic vs physical distance vs recombination rate to check whether there is a correlation", header=4)
     import matplotlib.pyplot as plt
     fig, (ax1, ax2) = plt.subplots(2, 1)
@@ -1231,9 +1202,7 @@ def master_processor(selected_chromosome, debugging=False, debug_file_size=None)
     plt.close()
 
     print_text("see final map and save", header=4)
-    print_text("remove old ID as we have already filtered the VCF file and check", header=4)
-    final_genetic_pos_map_file_pruned = final_genetic_pos_map_file_pruned.drop(["selected_snp_old_id"], axis=1)
-    print(final_genetic_pos_map_file_pruned.columns == ["selected_chromosome", "selected_snp_id", "genetic_distance", "selected_snp_physical_pos"])
+    print(final_genetic_pos_map_file_pruned.columns == ["selected_chromosome", "selected_snp_id", "selected_snp_old_id", "genetic_distance", "selected_snp_physical_pos"])
     print(final_genetic_pos_map_file_pruned)
         #required format according to hapbin
             #The map files (--map) should be in the same format as used by Selscan with one row per variant and four space-separated columns specifiying 
@@ -1263,7 +1232,7 @@ def master_processor(selected_chromosome, debugging=False, debug_file_size=None)
             awk \
                 -F ' ' \
                 'END {print NF}'); \
-        if [[ $n_cols -eq 4 && $n_rows -eq " + str(final_genetic_pos_map_file_pruned.shape[0]) + " ]];then \
+        if [[ $n_cols -eq 5 && $n_rows -eq " + str(final_genetic_pos_map_file_pruned.shape[0]) + " ]];then \
             echo 'TRUE'; \
         else \
             echo 'FALSE'; \
