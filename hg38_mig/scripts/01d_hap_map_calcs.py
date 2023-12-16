@@ -3480,19 +3480,6 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
             echo 'FALSE'; \
         fi")
 
-    print_text("remove the OLD ID in the genetic map", header=4)
-    run_bash(
-        "gunzip \
-            --stdout \
-            ./results/02_hap_map_files_raw/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_selscan_raw.map.gz | \
-        awk \
-            'BEGIN{ \
-                FS=OFS=\" \" \
-            }{ \
-                print $1, $2, $4, $5 \
-            }' | \
-        gzip --force > ./results/03_hap_map_files/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz")
-
 
     print_text("create the hap file", header=3)
     print_text("chr " + selected_chromosome + " - " + selected_pop + ": convert to hap file", header=4)
@@ -3531,6 +3518,56 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
 
 
     #por aquii
+    
+    ##the problem is caused by the switching of the alleles!
+    #so associate each hap id with its row number and then look for that row number but in the map file, then change the ID of the map if the alleles are switched
+    #check well from the substed of the hap file with ID@ and also the end of the map script
+
+
+    print_text("remove the OLD ID and update the new ID cases for switeched alleles in the genetic map", header=4)
+    run_bash(" \
+            awk \
+                'BEGIN{FS=OFS=\" \"}{ \
+                    if(NR==FNR){ \
+                        snp_hap[$2]=FNR; \
+                    } else { \
+                        if(!($2 in snp_hap)){ \
+                            for(i in snp_hap){ \
+                                if(snp_hap[i]==FNR){ \
+                                    split(i, hap_id_split, \"_\"); \
+                                    split($2, map_id_split, \"_\"); \
+                                    for(k in hap_id_split){ \
+                                        if(k==1){ \
+                                            if(hap_id_split[k] != map_id_split[k]){ \
+                                                exit 1; \
+                                            } \
+                                        }; \
+                                        if(k==2){ \
+                                            if((hap_id_split[k] == map_id_split[k+1]) && (hap_id_split[k+1] == map_id_split[k])){ \
+                                                $2=i\
+                                            } \
+                                        } \
+                                    } \
+                                } \
+                            } \
+                        }; \
+                        print $1, $2, $4, $5 \
+                    } \
+                }' \
+                <( \
+                    gunzip \
+                        --stdout \
+                        ./results/02_hap_map_files_raw/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz \
+                ) \
+                <( \
+                    gunzip \
+                        --stdout \
+                        ./results/02_hap_map_files_raw/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_selscan_raw.map.gz \
+                ) | \
+            gzip --force > ./results/03_hap_map_files/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz")
+
+
+
     #this check fails but the next one chceks the same and works!!??
     
 
@@ -3574,8 +3611,8 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
                     if(NR==FNR){ \
                         snps_hap[$2] \
                     } else { \
-                        if($2 in snps_hap){ \
-                            print $2; \
+                        if(!($2 in snps_hap)){ \
+                            print \"FALSE\"; \
                         } \
                     } \
                 }' \
