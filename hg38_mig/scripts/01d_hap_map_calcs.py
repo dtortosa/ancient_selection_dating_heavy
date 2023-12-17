@@ -3308,9 +3308,6 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
 
     print_text("Create the final HAP and MAP files by selecting only SNPs with genetic position for both files", header=2)
     print_text("chr " + selected_chromosome + ": filter the already cleaned VCF with bcftools", header=3)
-    #this file is cleaned regarding biallelic snps, duplicates... but need to retain only SNPs with genetic position
-    #We could do this by just creating before the hap file, extract snp positions from there, calculate genetic position and then remove from the hap those rows of SNPs without genetic position. The problem is that we would do that by row index instead of SNP ID, at least if we use the final hap file, so we are going for this option better. In addition, we would have snps that cannot be used in the VCF file because they do not have genetic position. With the other approach we would have a VCF with all SNPs filtered and another one with only snps with genetic position.
-    
     print_text("filter using the ID of SNPs in the genetic map of the selected chromosome", header=4)
     run_bash("\
         bcftools view \
@@ -3515,16 +3512,41 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
                 #In addition, hap files in yoruba folder of flexsweep are just our hap files for iHS, i.e., ONLY THE HAPLOTYPE COLUMNS.
                     #/xdisk/denard/lauterbur/yoruba/hapmap_YRI_hg19_decode2019/
 
+    print_text("check that the chromosome and positions are the same in the filtered map file and the hap file", header=4)
+    run_bash(" \
+        STATUS=$( \
+            cmp \
+                --silent \
+                <( \
+                    gunzip \
+                        --stdout \
+                        ./results/02_hap_map_files_raw/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
+                    awk \
+                        'BEGIN{ \
+                            FS=\" \"; \
+                            OFS=\"\t\"; \
+                        }{ \
+                            print $1, $3 \
+                        }' \
+                ) \
+                <( \
+                    gunzip \
+                        --stdout \
+                        ./results/02_hap_map_files_raw/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_selscan_raw.map.gz | \
+                    awk \
+                        'BEGIN{ \
+                            FS=\" \"; \
+                            OFS=\"\t\"} \
+                        {print $1, $5}' \
+                ); \
+            echo $?); \
+        if [[ $STATUS -eq 0 ]]; then \
+            echo 'TRUE'; \
+        else \
+            echo 'FALSE'; \
+        fi")
 
-
-    #por aquii
-    
-    ##the problem is caused by the switching of the alleles!
-    #so associate each hap id with its row number and then look for that row number but in the map file, then change the ID of the map if the alleles are switched
-    #check well from the substed of the hap file with ID@ and also the end of the map script
-
-
-    print_text("remove the OLD ID and update the new ID cases for switeched alleles in the genetic map", header=4)
+    print_text("remove the OLD ID and update the new ID cases for switched alleles in the genetic map. The new ID includes the REF and ALT names, but in the hap file, some SNPs have their REF/aLT switched due to the fact that the REF was not the ancestral, see above", header=4)
     run_bash(" \
             awk \
                 'BEGIN{FS=OFS=\" \"}{ \
@@ -3565,13 +3587,27 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
                         ./results/02_hap_map_files_raw/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_selscan_raw.map.gz \
                 ) | \
             gzip --force > ./results/03_hap_map_files/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz")
+    #BEGIN:
+        #Space as delimiter for input and output, as this is required for hap and map files.
+    #file 1: hap file
+        #create index with the SNP ID as index and the row number of the file (FNR) as value
+    #file 2: map file
+        #if the SNP ID of the corresponding SNP in the map is NOT present in the hap file
+            #iterate across the array with SNP IDs of hap
+                #if the value of the array, i.e., the row number of that SNP in the hap file is the same to the current row number in the map file, do things. We are selecting the SNP from the hap file in the same line than the current SNP in the map file.
+                    #Remember that both the map and the hap file comes from the same file, the VCF file of 1KGP. Yes, we filtered many SNPs during the preparation of the hap file, BUT we filtered the map file using the hap file, and viceversa, so the missing SNPs should be out and we should have the same number of SNPs and position in both files.
+                        #Indeed, I checked this by checking whether the chrom, old ID and position in the filtered VCF and map files was the same. I also checked that the chrom and position are the same in the hap and map files.
+                    #ID in both files follow the format "chr1:1527046_C_T", thus we split both IDs using "_" to get chrom:pos, REF and ALT alleles. The result will be saved in two different arrays, with 1,2,3 as keys and the chrom:pos, REF and ALT as values
+                        #https://stackoverflow.com/a/36211699
+                    #iterate along one of the arrays (both should have the same length as IDs follow the same format in both cases)
+                        #first, check if the first element is the same in both arrays, i.e., we have the same chromosome and position in hap and map file
+                            #If they are not, then stop with non-zero exit status
+                        #second
+                            #if the REF allele of the hap is the same than the ALT of the map file and the REF allele of the map is the same to the ALT of the hap, i.e., if the alleles are switched, then the difference between map and hap is caused because the switching of alleles we performed in the VCF file to set REF as ancestral
+                                #therefore, set the ID of the hap file as the new ID in the map file. Remember that we have same chromosome, position and even REF/ALT, the difference is just REF and ALT alleles are switched.
+        #then print all columns except the OLD id column
 
-
-
-    #this check fails but the next one chceks the same and works!!??
-    
-
-    print_text("as the IDs are created during the hap file creation (see docs above), we should have the same IDs in hap and map files. Also chromosome and position should be the same between both files", header=4)
+    print_text("check we have the same NEW ID in both hap and map files", header=4)
     run_bash(" \
         STATUS=$( \
             cmp \
@@ -3605,41 +3641,13 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
         #see previous cmp comparison for explanations about the code
 
 
-    run_bash(" \
-            awk \
-                'BEGIN{FS=OFS=\" \"}{ \
-                    if(NR==FNR){ \
-                        snps_hap[$2] \
-                    } else { \
-                        if(!($2 in snps_hap)){ \
-                            print \"FALSE\"; \
-                        } \
-                    } \
-                }' \
-                <( \
-                    gunzip \
-                        --stdout \
-                        ./results/02_hap_map_files_raw/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz \
-                ) \
-                <( \
-                    gunzip \
-                        --stdout \
-                        ./results/03_hap_map_files/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz \
-                )")
-
-
-    #check the last lines of the map script, you removed the list of snps with genetic position data
-
 
 
     ###por aquii
-    #it seems we have the same REF ALT in both files, the problem is that some SNPs from the hap file are missing in the map file
-        #THIS IS AN ERROR, WE ARE FILTERING THE HAP FILE USING THE MAP FILE
-        #also check the thing of ref alt in both files, the filtering of snps in the VCF file for a pop could change this?
-
     ###chcek that the map has no duplicate positions after filtering by the VCF, these wre multi, but multi have been removed from the VCF file
 
     #the input VCF file has was changed in the script, check it and put back the cleaned_ref_alt_switeched VCF
+        #not sure what this means
 
 
 
@@ -3680,11 +3688,8 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
         cut \
             --complement \
             --delimiter ' ' \
-            --fields 1-5 \
-        > ./results/03_hap_map_files/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap; \
-        gzip \
-            --force \
-            ./results/03_hap_map_files/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap")
+            --fields 1-5 | \
+        gzip --force > ./results/03_hap_map_files/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap.gz")
             #extract the content of compressed hap file
             #remove the first 5 columns
                 #--complement keeps the columns other than the ones specified in -f
