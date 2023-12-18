@@ -12,10 +12,11 @@
 #SBATCH --account=denard
 ### Optional. Request email when job begins and ends
 ### SBATCH --mail-type=ALL
+#SBATCH --mail-type=end
 ### Optional. Specify email address to use for notification
-### SBATCH --mail-user=dftortosa@email.arizona.edu
+#SBATCH --mail-user=dftortosa@email.arizona.edu
 ### REQUIRED. Set the partition for your job.
-#SBATCH --partition=high_priority
+#SBATCH --partition=standard
 ### OPTIONAL. Select the cores bought by David.
 #SBATCH --qos=user_qos_denard
 ### REQUIRED. Set the number of cores that will be used for this job.
@@ -25,11 +26,11 @@
 ### REQUIRED. Set the memory required for this job. I will set 40GC per each of the 100 cores=4000GB; https://public.confluence.arizona.edu/display/UAHPC/Allocation+and+Limits
 ###SBATCH --mem=400gb
 ### REQUIRED. Set the gb per core. YOU HAVE TO SELECT --mem or --mem-per-cpu but NOT BOTH. If you get a .core file, this usually means that the program fails because it asked for too much memory, so it creates a record of the working memory at the time that can be used for debugging. MPI jobs will usually create a core file for each task. You should increase memory limits.
-#SBATCH --mem-per-cpu=8gb
+#SBATCH --mem-per-cpu=5gb
 ### set the constraint for high memory nodes in case you use a lot of memory per node
 ###SBATCH --constraint=hi_mem
 ### REQUIRED. Specify the time required for this job, hhh:mm:ss
-#SBATCH --time=120:00:00
+#SBATCH --time=72:00:00
  
  
 # --------------------------------------------------------------

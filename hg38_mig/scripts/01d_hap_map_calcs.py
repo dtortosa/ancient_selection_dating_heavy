@@ -1146,7 +1146,7 @@ print_text("check that no SNP has filter different from 'PASS' or 'q10', which a
     #info for filter in 1KGP
         #according to the specific readme of the dataset we are using (http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/README_1kGP_phased_panel_110722.pdf), prior phasing they applied several filters, being one of them that all variants has to be PASS for FILTER. I understand that, because of this, all variants in the chromosome have now ".", being this the unique character.
 print("calculate the number of SNPs for which FILTER is not 'PASS' or 'q10'")
-problematic_fiter = run_bash(" \
+problematic_filter = run_bash(" \
     bcftools view \
         --no-header \
         --drop-genotypes \
@@ -1166,7 +1166,7 @@ problematic_fiter = run_bash(" \
             #if the value of that column ($i) is NOT ".", then add 1 to the array called count
         #END by printing the array count.
 print("check that the number of SNPs with FILTER different from 'PASS' or 'q10' is 0")
-if problematic_fiter=="":
+if problematic_filter=="":
     print("YES! GOOD TO GO!")
 else:
     raise ValueError("FALSE! ERROR! WE HAVE SNPS FOR WHICH FILTER IS NOT '.'!!!")
@@ -2196,7 +2196,7 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
     print_text("check that no SNP has filter different from '.' We do this check here because in the previous line we obtained the number of the column of FILTER", header=3)
         #according to the specific readme of the dataset we are using (http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/README_1kGP_phased_panel_110722.pdf), prior phasing they applied several filters, being one of them that all variants has to be PASS for FILTER. I understand that, because of this, all variants in the chromosome have now ".", being this the unique character.
     print("calculate the number of SNPs for which FILTER is not '.'")
-    problematic_fiter = run_bash(" \
+    problematic_filter = run_bash(" \
         bcftools view \
             --no-header \
             --drop-genotypes \
@@ -2206,14 +2206,14 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
                 if($index_filter!=\".\"){count++} \
             }END{print count}'", return_value=True).strip()
     print("check that the number of SNPs with FILTER different from '.' is 0")
-    if problematic_fiter=="":
+    if problematic_filter=="":
         print("YES! GOOD TO GO!")
     else:
         raise ValueError("FALSE! ERROR! WE HAVE SNPS FOR WHICH FILTER IS NOT '.'!!!")
 
 
 
-    print_text("calculate hap file within selected pop", header=2)
+    print_text("apply multiple filters before calculating the hap file", header=2)
     print_text("chr " + selected_chromosome + " - " + selected_pop + ": see more SNPs and their allele count to see how this data is presented for multiallelic SNPs", header=3)
     run_bash(" \
         bcftools query \
@@ -2261,6 +2261,8 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
             --format '%TYPE %ID %CHROM %POS %REF %ALT AA:%AA AN:%AN AC:%AC AF:%AF GTs:[ %GT]\n' | \
         head -20")
 
+
+    ###por aquii
 
     print_text("chr " + selected_chromosome + " - " + selected_pop + ": check we do not have SNPs with genotype missingness > 0.05. If TRUE, then we do not have to apply further filters about missing genotypes", header=3)
     check_missing = run_bash(" \
