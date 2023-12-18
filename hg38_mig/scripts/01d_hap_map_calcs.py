@@ -3512,7 +3512,33 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
                 #In addition, hap files in yoruba folder of flexsweep are just our hap files for iHS, i.e., ONLY THE HAPLOTYPE COLUMNS.
                     #/xdisk/denard/lauterbur/yoruba/hapmap_YRI_hg19_decode2019/
 
-    print_text("check that the chromosome and positions are the same in the filtered map file and the hap file", header=4)
+    #note about the output of hap conversion
+        #I get an output like this
+            #Hap file: ./results/02_hap_map_files_raw/chr1_GBR_IMPUTE2_raw.hap.gz
+            #Sample file: ./results/02_hap_map_files_raw/chr1_GBR_IMPUTE2_raw.samples
+            #852072 records written, 0 skipped: 0/0/0 no-ALT/non-biallelic/filtered
+
+        #I guess non-biallelic and non-alt should be removed to meet impute requirements, but in our case we already selected those SNPs with 2 alleles only. This explains why we get 0/0/0. This is the number of SNPs with no-ALT, no-biallelic and filtered. All the filters were previously applied.
+            #I have checked this in the dummy example.
+        
+        #if you take the VCF file, filter and then count lines, you get 852072 records, but then say that total is 945919, as when writting the file. "Lines   total/split/realigned/skipped" is produced for some commands like bcftools norm and I have seen in the dummy example that total is the total number of SNPs, while split are those splitting due to multiallelic is the multiallelic flag is used.
+            #852072
+            #Lines   total/split/realigned/skipped:  945919/0/0/0
+            #Lines   total/split/realigned/skipped:  945919/0/0/0
+
+        #the total number of snps in the raw vcf file of chr1 is 5759173, instead of 945919. What it can be happening here is that bcftools norm (the command generating the line output) is run after some (but not all) filters have been applied, thus the input number of SNPs is smaller but not the final number (852072). Indeed, if you apply these filters applied before norm, you get 945919 variants, so it makes sense that bcftools norm, which is run after these filters, gives 945919 as total number of snps.
+
+        #The smallest number (852072) is the number of SNPs after we have completely cleaned the vcf file. I have checked that for GBR.
+
+    print_text("chr " + selected_chromosome + " - " + selected_pop + ": see first variants of the hap file", header=4)
+    run_bash(
+        "gunzip \
+            --stdout \
+            ./results/02_hap_map_files_raw/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
+        head -3")
+            #decompress the hap file and show in stdout 
+
+    print_text("check that the chromosome and positions are the same in the filtered map file and the raw hap file. We cannot compare the new IDs because the IDs in hap have been just created during hap creation, so some alleles have REF/ALT switched following the changes we made in the VCF file. The map file has not this included given that was created from the original VCF file before switching alleles. This problem will be solved in the next step", header=4)
     run_bash(" \
         STATUS=$( \
             cmp \
@@ -3546,7 +3572,9 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
             echo 'FALSE'; \
         fi")
 
-    print_text("remove the OLD ID and update the new ID cases for switched alleles in the genetic map. The new ID includes the REF and ALT names, but in the hap file, some SNPs have their REF/aLT switched due to the fact that the REF was not the ancestral, see above", header=4)
+
+    print_text("prepare the final map and hap files", header=3)
+    print_text("remove the OLD ID and update the new ID cases for switched alleles in the genetic map. The new ID includes the REF and ALT names, but in the raw hap file, some SNPs have their REF/ALT switched due to the fact that the REF was not the ancestral, see above", header=4)
     run_bash(" \
             awk \
                 'BEGIN{FS=OFS=\" \"}{ \
@@ -3586,7 +3614,10 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
                         --stdout \
                         ./results/02_hap_map_files_raw/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_selscan_raw.map.gz \
                 ) | \
-            gzip --force > ./results/03_hap_map_files/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz")
+            gzip --force > ./results/03_hap_map_files/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz; \
+            gunzip \
+                --stdout \
+                ./results/03_hap_map_files/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz | head -10")
     #BEGIN:
         #Space as delimiter for input and output, as this is required for hap and map files.
     #file 1: hap file
@@ -3606,8 +3637,10 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
                             #if the REF allele of the hap is the same than the ALT of the map file and the REF allele of the map is the same to the ALT of the hap, i.e., if the alleles are switched, then the difference between map and hap is caused because the switching of alleles we performed in the VCF file to set REF as ancestral
                                 #therefore, set the ID of the hap file as the new ID in the map file. Remember that we have same chromosome, position and even REF/ALT, the difference is just REF and ALT alleles are switched.
         #then print all columns except the OLD id column
+        #compress the file
+        #take a look at it
 
-    print_text("check we have the same NEW ID in both hap and map files", header=4)
+    print_text("check we have the same NEW ID in the map and raw hap files", header=4)
     run_bash(" \
         STATUS=$( \
             cmp \
@@ -3641,44 +3674,27 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
         #see previous cmp comparison for explanations about the code
 
 
-
-
-    ###por aquii
+    #por aquii
     ###chcek that the map has no duplicate positions after filtering by the VCF, these wre multi, but multi have been removed from the VCF file
 
-    #the input VCF file has was changed in the script, check it and put back the cleaned_ref_alt_switeched VCF
-        #not sure what this means
+    run_bash(" \
+        awk \
+            'BEGIN{FS=OFS=\" \"}{ \
+                pos_array[$4]++ \
+            }END{ \
+                if(length(pos_array)==NR){ \
+                    print \"TRUE\" \
+                } else { \
+                    exit 1 \
+                } \
+            }' \
+            <( \
+                gunzip \
+                    --stdout \
+                    ./results/03_hap_map_files/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz \
+            ) \
+        ")
 
-
-
-
-
-
-    #note about the output of hap conversion
-        #I get an output like this
-            #Hap file: ./results/02_hap_map_files_raw/chr1_GBR_IMPUTE2_raw.hap.gz
-            #Sample file: ./results/02_hap_map_files_raw/chr1_GBR_IMPUTE2_raw.samples
-            #852072 records written, 0 skipped: 0/0/0 no-ALT/non-biallelic/filtered
-
-        #I guess non-biallelic and non-alt should be removed to meet impute requirements, but in our case we already selected those SNPs with 2 alleles only. This explains why we get 0/0/0. This is the number of SNPs with no-ALT, no-biallelic and filtered. All the filters were previously applied.
-            #I have checked this in the dummy example.
-        
-        #if you take the VCF file, filter and then count lines, you get 852072 records, but then say that total is 945919, as when writting the file. "Lines   total/split/realigned/skipped" is produced for some commands like bcftools norm and I have seen in the dummy example that total is the total number of SNPs, while split are those splitting due to multiallelic is the multiallelic flag is used.
-            #852072
-            #Lines   total/split/realigned/skipped:  945919/0/0/0
-            #Lines   total/split/realigned/skipped:  945919/0/0/0
-
-        #the total number of snps in the raw vcf file of chr1 is 5759173, instead of 945919. What it can be happening here is that bcftools norm (the command generating the line output) is run after some (but not all) filters have been applied, thus the input number of SNPs is smaller but the final number (852072). Indeed, if you apply these filters applied before norm, you get 945919 variants, so it makes sense that bcftools norm, which is run after these filters, gives 945919 as total number of snps.
-
-        #The smallest number (852072) is the number of SNPs after we have completely cleaned the vcf file. I have checked that for GBR.
-
-    print_text("chr " + selected_chromosome + " - " + selected_pop + ": see first variants of the hap file", header=4)
-    run_bash(
-        "gunzip \
-            --stdout \
-            ./results/02_hap_map_files_raw/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
-        head -3")
-            #decompress the hap file and show in stdout 
     
     print_text("chr " + selected_chromosome + " - " + selected_pop + ": remove first columns of hap file to leave only haplotype columns", header=4)
     run_bash(
@@ -3767,28 +3783,35 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
             #decompress the hap and map files and count the number of line
             #check the counts are the same
 
-    
     print_text("chr " + selected_chromosome + " - " + selected_pop + ": do we have the correct number of samples in the hap file?", header=4)
     run_bash(" \
         n_fields_hap=$( \
-            gunzip \
-                --stdout \
-                ./results/03_hap_map_files/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap.gz | \
             awk \
-                'BEGIN{ \
-                    FS=\" \"; \
-                    n_snps=" + str(final_genetic_pos_map_file_pruned.shape[0]) + "} \
-                { \
+                -v n_snps_map=\"$( \
+                        awk \
+                            'BEGIN{FS=OFS=\" \"}END{print NR}' \
+                            <( \
+                                gunzip \
+                                    --stdout \
+                                    ./results/03_hap_map_files/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz \
+                            ) \
+                    )\" \
+                'BEGIN{FS=\" \"}{ \
                     n_fields[NF]++ \
                 }END{ \
                     if(length(n_fields)==1){ \
                         for(i in n_fields){ \
-                            if(n_fields[i] == n_snps){ \
+                            if(n_fields[i] == n_snps_map){ \
                                 print i \
                             } \
                         } \
                     } \
                 }' \
+                <( \
+                    gunzip \
+                        --stdout \
+                        ./results/03_hap_map_files/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2.hap.gz \
+                ) \
             ); \
         n_samples_hap=$(echo 'scale=0;' $n_fields_hap '/2'| bc); \
         n_samples_original=$( \
@@ -3801,17 +3824,18 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
         else \
             echo 'FALSE'; \
         fi")
-        #compare the number of samples between the final hap file and the txt file saved with the sample IDs
-            #hap file
-                #decompress the hap file
-                #awk
-                    #begin with " " as delimiter and create a variable with the number of SNPs we have in the final map
-                    #create an array ("n_fields") and save there the number of columns adding a new entry for each new number of fields and summing 1 to the current count
-                    #at the end
-                        #the array should be 1-character long because we should only have 1 distinct number of fields, i.e., all rows have the same number of columns
-                        #now we know we have only 1 entry in the array, 1 distinct number of fields, extract it, but only if the number of times it appears is exactly the same than the number of SNPs we have in the final map file
-                            #remember that i is the index, i.e., the number of fields n_fields[i] is the count, i.e., the number of times that particular number of fields appeared across rows.
-                #the number of fields in the hap file, divided by 2 is the number of samples we have, as we have 2 columns per sample. We use "bc" so we can specify the number of decimals.
+        #Calculate the number of fields in the final hap file using awk
+            #add an external variable with the number of SNPs from bash. On the fly, use command substitution to load the final map file, and calculate the number of rows at the end of the file by calling again awk. The variable is n_snps_map
+                #https://stackoverflow.com/a/10492567
+                #https://unix.stackexchange.com/a/711781
+            #begin with " " as delimiter
+            #create an array ("n_fields") and save there the number of columns adding a new entry for each new number of fields and summing 1 to the current count
+            #at the end
+                #the array should be 1-character long because we should only have 1 distinct number of fields, i.e., all rows have the same number of columns
+                #now we know we have only 1 entry in the array, 1 distinct number of fields, extract it, but only if the number of times it appears is exactly the same than the number of SNPs we have in the final map file
+                    #remember that i is the index, i.e., the number of fields n_fields[i] is the count, i.e., the number of times that particular number of fields appeared across rows.
+                    #all rows, i.e., SNPs, should have the same number fields, i.e., samples, if not, we have a problem.
+            #the number of fields in the hap file, divided by 2 is the number of samples we have, as we have 2 columns per sample. We use "bc" so we can specify the number of decimals.
             #the txt file saved with the sample IDs 
                 #just calculate the number of rows, i.e., samples, using awk
 
@@ -3830,11 +3854,67 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
     print(sample_list_from_hap_clean["ID_1"].equals(selected_samples))
     print(sample_list_from_hap_clean["ID_2"].equals(selected_samples))
 
+    print_text("check that the raw hap file (the final hap file has only genotypes) has the same chromosome, ID and position than the final map file and the last VCF file created", header=4)
+    run_bash(" \
+        check_status_1=$( \
+            cmp \
+                --silent \
+                <( \
+                    gunzip \
+                        --stdout \
+                        ./results/02_hap_map_files_raw/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
+                    awk \
+                        'BEGIN{FS=OFS=\" \"}{print $1, $2, $3}' \
+                ) \
+                <( \
+                    gunzip \
+                        --stdout \
+                        ./results/03_hap_map_files/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz | \
+                    awk \
+                        'BEGIN{FS=OFS=\" \"}{print $1, $2, $4}' \
+                ); \
+            echo $?); \
+        check_status_2=$( \
+            cmp \
+                --silent \
+                <( \
+                    gunzip \
+                        --stdout \
+                        ./results/02_hap_map_files_raw/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz | \
+                    awk \
+                        'BEGIN{FS=OFS=\" \"}{print $1, $2, $3}' \
+                ) \
+                <( \
+                    bcftools view \
+                        --no-header \
+                        ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.only_snps_gen_pos.vcf.gz | \
+                    awk \
+                        'BEGIN{FS=\"\t\"; OFS=\" \"}{printf \"%s %s:%s_%s_%s %s\\n\", $1, $1, $2, $4, $5, $2}' \
+                ); \
+            echo $?); \
+        if [[ $check_status_1 -eq 0 && $check_status_2 -eq 0 ]]; then \
+            echo 'TRUE'; \
+        else \
+            echo 'FALSE'; \
+        fi")
+        #just extract the chromsome, ID and position from the map, VCF and raw hap file. Then compare byte by byte. In the case of the VCF file, we have manually coded the ID because it the second field ID there is still the OLD id with position and REF/ALT not updated. So we just printed the chromosome, position and alleles separated by : or _
+        #we first made one comparison and then the second. In both cases, we need exit code of zero.
+            #https://unix.stackexchange.com/a/646819
+
+
+
+
+    ###por aquii
+
+
+    #the input VCF file has was changed in the script, check it and put back the cleaned_ref_alt_switeched VCF
+        #not sure what this means
+
 
 
 
     print_text("finishing the script", header=2)
-    print_text("calculate the number of SNS removed due to the filters, i.e., the difference in the number of SNPs between the VCF file used as initial input in this script and the final VCF generated from where the hap file was created", header=3)
+    print_text("calculate the number of SNPs removed due to the filters, i.e., the difference in the number of SNPs between the VCF file used as initial input in this script and the final VCF generated from where the hap file was created", header=3)
     run_bash(" \
         n_snps_before=$( \
             bcftools view \

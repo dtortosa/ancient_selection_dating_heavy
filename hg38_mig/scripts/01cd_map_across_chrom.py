@@ -930,7 +930,7 @@ def master_processor(selected_chromosome, debugging=False, debug_file_size=None)
     print_text("chr " + selected_chromosome + ": run function across SNPs using a pool for parallelization", header=4)
     #set the pool
     import concurrent.futures as mp
-    nested_executor=mp.ProcessPoolExecutor(max_workers=5)
+    nested_executor=mp.ProcessPoolExecutor(max_workers=3)
         #The ProcessPoolExecutor class is an Executor subclass that uses a pool of processes to execute calls asynchronously. ProcessPoolExecutor uses the multiprocessing module, which allows it to side-step the Global Interpreter Lock but also means that only picklable objects can be executed and returned.
             #https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ProcessPoolExecutor
             #max_workers
