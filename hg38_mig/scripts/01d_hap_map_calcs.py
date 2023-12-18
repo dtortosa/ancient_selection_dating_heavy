@@ -3673,10 +3673,7 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
         fi")
         #see previous cmp comparison for explanations about the code
 
-
-    #por aquii
-    ###chcek that the map has no duplicate positions after filtering by the VCF, these wre multi, but multi have been removed from the VCF file
-
+    print_text("chr " + selected_chromosome + " - " + selected_pop + ": check that the final map file has no duplicate positions after filtering by the VCF. Multiallelic snps have been removed in the vcf, so no SNP within the same position should be present", header=4)
     run_bash(" \
         awk \
             'BEGIN{FS=OFS=\" \"}{ \
@@ -3694,7 +3691,9 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
                     ./results/03_hap_map_files/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz \
             ) \
         ")
-
+        #create an array with each distinct value of position, also counting the number of occurrences, i.e., add for each new occurence
+            #https://stackoverflow.com/a/27986512
+        #if the number of distinct values is equal to the total number of rows, it means we have 1 value per row, i.e., per SNP. so we are good.
     
     print_text("chr " + selected_chromosome + " - " + selected_pop + ": remove first columns of hap file to leave only haplotype columns", header=4)
     run_bash(
@@ -3900,15 +3899,6 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
         #just extract the chromsome, ID and position from the map, VCF and raw hap file. Then compare byte by byte. In the case of the VCF file, we have manually coded the ID because it the second field ID there is still the OLD id with position and REF/ALT not updated. So we just printed the chromosome, position and alleles separated by : or _
         #we first made one comparison and then the second. In both cases, we need exit code of zero.
             #https://unix.stackexchange.com/a/646819
-
-
-
-
-    ###por aquii
-
-
-    #the input VCF file has was changed in the script, check it and put back the cleaned_ref_alt_switeched VCF
-        #not sure what this means
 
 
 
