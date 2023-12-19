@@ -3340,7 +3340,7 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
             ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.only_snps_gen_pos.vcf.gz | \
         head -5")
 
-    print_text("check that any SNP ID in the filtered VCF file is NOT included in the genetic map of the selected chromosome ", header=4)
+    print_text("check that NO SNP ID in the filtered VCF file is NOT included in the genetic map of the selected chromosome ", header=4)
     run_bash(" \
         awk \
             'BEGIN{ \
@@ -3389,7 +3389,7 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
             #https://stackoverflow.com/a/24517482
 
 
-    print_text("subset the map file with the SNPs remaining in the hap file", header=3)
+    print_text("subset the map file with the SNPs remaining in the VCF file", header=3)
     print_text("filter the map file", header=4)
     run_bash(" \
         awk \
@@ -3887,7 +3887,15 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
                         --no-header \
                         ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.only_snps_gen_pos.vcf.gz | \
                     awk \
-                        'BEGIN{FS=\"\t\"; OFS=\" \"}{printf \"%s %s:%s_%s_%s %s\\n\", $1, $1, $2, $4, $5, $2}' \
+                        'BEGIN{ \
+                            FS=\"\t\"; OFS=\" \"; \
+                            index_chrom=\"" + index_chrom + "\"; \
+                            index_pos=\"" + index_pos + "\"; \
+                            index_ref=\"" + index_ref + "\"; \
+                            index_alt=\"" + index_alt + "\"; \
+                        }{ \
+                            printf \"%s %s:%s_%s_%s %s\\n\", $index_chrom, $index_chrom, $index_pos, $index_ref, $index_alt, $index_pos \
+                        }' \
                 ); \
             echo $?); \
         if [[ $check_status_1 -eq 0 && $check_status_2 -eq 0 ]]; then \
