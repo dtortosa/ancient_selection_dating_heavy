@@ -4118,6 +4118,7 @@ for i in [0.1,0.25,0.4,0.5,0.6,0.75,0.9]:
 #### Next steps ####
 ####################
 print_text("Next steps", header=1)
+#run with a few chromsomes once you have the map files calculated
 #check number of snps lost
 #once you are finished here, according to david, you can check whether the REF/ALT alleles match between the old and new hap files, but taking into account we have different coordinated, hg19 vs hg38
     ##i guess you could take the old map files, convert to hg38 coordinates and then see if the REF/ALT columns are the same than in the new map files
