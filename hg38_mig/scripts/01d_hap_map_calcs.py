@@ -2262,8 +2262,6 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
         head -20")
 
 
-    ###por aquii
-
     print_text("chr " + selected_chromosome + " - " + selected_pop + ": check we do not have SNPs with genotype missingness > 0.05. If TRUE, then we do not have to apply further filters about missing genotypes", header=3)
     check_missing = run_bash(" \
         n_snps_above_5=$( \
@@ -2369,10 +2367,10 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
         bcftools view \
             --max-alleles 2  \
             --min-alleles 2 | \
-        bcftools +fill-tags \
-            -- --tags AC,AF | \
         bcftools view \
             --phased | \
+        bcftools +fill-tags \
+            -- --tags AC,AF | \
         bcftools query \
             --format '%TYPE %ID %CHROM %POS %REF %ALT AA:%AA AN:%AN AC:%AC AF:%AF GTs:[ %GT]\n' | \
         head -7")
@@ -2398,7 +2396,7 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
         bcftools +fill-tags \
             -- --tags AN,AC,AC_Hom,AC_Het,AF,MAF,ExcHet,HWE,NS | \
         bcftools query \
-        --format '%TYPE %ID %CHROM %POS %REF %ALT AA:%AA AN:%AN AC:%AC %AC_Hom %AC_Het %AF %MAF %ExcHet %HWE %NS GTs:[ %GT]\n' | \
+            --format '%TYPE %ID %CHROM %POS %REF %ALT AA:%AA AN:%AN AC:%AC %AC_Hom %AC_Het %AF %MAF %ExcHet %HWE %NS GTs:[ %GT]\n' | \
         head -7")
             #we use +fill-tags to update fields that are not updated after subsetting like frequency of alternative allele and create some additional fields.
             #I understand that when using --multiallelic + or -, there is no update because the genotypes should not change, you are just spliting or merging the different ALT alleles. If AC/AN has changed sue to the subset, this is updated in the AC/AN fields and these are used to do the combine/split AC/AN fields. The problem is that only AC/AN are updated, not the rest of fields. In addition, --samples maintains 2 allele counts in each line of a splitted multiallelic SNP. In  the dummy example we had to update these fields with +fill-tags to have only 1 count and be able to use this count to filter out monomorphic SNPs. I have checked that splitted multiallelic SNPs in the 1KGP have only 1 count, so I guess the authors updated with fill-tags, but I update before the monomorphc check just in case. See above.
@@ -2942,7 +2940,6 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
                 #the alleles switched with my approach
         #print the exit status
 
-    ##checking code from here
 
     print_text("Also update the INFO fields like AF, AC... because these are calculated considering the old REF/ALTs, but now the AC should be the count of the old REF not the old ALT", header=3)
     #before this step, Jesús created a tabix index from the VCF file (tabix --preset vcf VCF_FILE). I have checked that the creation of a tabix index does NOT change the VCF file. From what I have read, having a tabix index is useful to make fast queries over a large file without having to read the whole file, but I am not sure if this is useful for our case, as we have to do the update of the INFO fields in each row, i.e., in all rows.
@@ -3343,7 +3340,7 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
             ./results/01_cleaned_vep_vcf_files/" + selected_pop + "/chr" + selected_chromosome + "/1kGP_high_coverage_Illumina.chr" + selected_chromosome + ".filtered.SNV_phased_panel.vep.anc_up." + selected_pop + ".cleaned.ref_alt_switched.only_snps_gen_pos.vcf.gz | \
         head -5")
 
-    print_text("check if any SNP ID in the filtered VCF file is NOT included in the genetic map of the selected chromosome ", header=4)
+    print_text("check that any SNP ID in the filtered VCF file is NOT included in the genetic map of the selected chromosome ", header=4)
     run_bash(" \
         awk \
             'BEGIN{ \
