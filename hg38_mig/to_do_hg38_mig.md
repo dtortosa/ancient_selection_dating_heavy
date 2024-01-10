@@ -5,6 +5,9 @@
 
 - important lower-case ancestral alleles!!
 
+- CLUES2!!
+	- Fast and accurate estimation of selection coefficients and allele1 histories from ancient and modern DNA
+
 - Pearl Memorial Lecture. Humans at the extremes:Exploring human adaptation to ecological and socialstressors
 	- summary human adaptations from leonard
 

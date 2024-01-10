@@ -1200,6 +1200,11 @@ def master_processor(selected_chromosome, debugging=False, debug_file_size=None)
     plt.savefig( \
         fname="./results/00b_map_files/chr" + selected_chromosome + "/chr" + selected_chromosome + "_plot_genetic_vs_phyiscal_distance.png")
     plt.close()
+        #I have checked this plot for all chromosomes and, in general, as the recombination rate increases, the slope of genetic distance increases.
+        #it is true that the pattern is not very visible sometimes because we have very large values of recombination, but it is there. When you see an accumulation of high recombination value (like at the end of many chromosomes), the genetic distance increases faster.
+        #to copy all the .png files into one folder to check again
+            #find 00b_map_files -type f | grep -i .png$ | xargs -i cp {} /home/dftortosa/Desktop/eso
+            #https://superuser.com/a/312352
 
     print_text("see final map and save", header=4)
     print(final_genetic_pos_map_file_pruned.columns == ["selected_chromosome", "selected_snp_id", "selected_snp_old_id", "genetic_distance", "selected_snp_physical_pos"])
@@ -1422,14 +1427,5 @@ for chrom in chromosomes:
 #### Next steps ####
 ####################
 print_text("Next steps", header=1)
-#add nested parallelism
-    #check that you are using executors correctly
-    #check that you get the same than with mp
-    #run in the HPC
-#check the script from "por aqui"
-#build again container with the final script and run it in the HPC
-#after 33 hours running, only chromosomes 19, 21 and 22 where done, which are the shortest ones. We at least will need 120 hours (5 days)
 #check how many SNPs we lose due to the lack of genetic position
-#check the plots of physical vs genetic distance. We should see higher increases in genetic distance in the SNPs when recombination increases in the deCODE intervals
-    #show david abrupt changes in chromosome 1... they correlate with increases in recombination rate, so we should be fine
-    #also ask him about the accesibility mask of the next step. We already losing a lot of SNPs with the filters...
+#ask David about the accesibility mask of the next step. We already losing a lot of SNPs with the filters...

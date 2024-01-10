@@ -1,0 +1,786 @@
+
+#######################################
+#######################################
+checking function to print nicely: header 1
+#######################################
+#######################################
+
+###### checking function to print nicely: header 2 ######
+
+## checking function to print nicely: header 3 ##
+
+# checking function to print nicely: header 4 #
+
+#######################################
+#######################################
+see working directory
+#######################################
+#######################################
+/xdisk/denard/dftortosa/climate_adaptation_met_genes/hg38_mig
+
+
+#######################################
+#######################################
+list files/folders there
+#######################################
+#######################################
+00_ubuntu_20_04_hg38_mig_vep_ancestral.sif
+00_ubuntu_20_04_hg38_mig_vep_ancestral.slurm
+00_ubuntu_20_04_hg38_mig_vep_ancestral.slurm.e8405219
+00_ubuntu_20_04_hg38_mig_vep_ancestral.slurm.o8405219
+00b_ubuntu_20_04_hg38_mig_map_across_chrom.sif
+00b_ubuntu_20_04_hg38_mig_map_across_chrom.slurm
+00b_ubuntu_20_04_hg38_mig_map_across_chrom.slurm.e8823787
+00b_ubuntu_20_04_hg38_mig_map_across_chrom.slurm.o8823787
+01_ubuntu_20_04_hg38_mig_hap_map.sif
+01_ubuntu_20_04_hg38_mig_hap_map.slurm
+data
+results
+scripts
+
+
+#######################################
+#######################################
+folder prep
+#######################################
+#######################################
+
+
+#######################################
+#######################################
+Preparate pedigree data
+#######################################
+#######################################
+
+#######################################
+#######################################
+Prepare bcftool
+#######################################
+#######################################
+
+#######################################
+#######################################
+see bcftools version
+#######################################
+#######################################
+bcftools 1.17
+Using htslib 1.17
+Copyright (C) 2023 Genome Research Ltd.
+License Expat: The MIT/Expat license
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+
+
+#######################################
+#######################################
+function to calculate the genetic position of a SNP
+#######################################
+#######################################
+
+###### chr define the function ######
+
+#######################################
+#######################################
+function to calculate map files for ALL SNPs
+#######################################
+#######################################
+
+#######################################
+#######################################
+paralellize
+#######################################
+#######################################
+
+###### create list with all chromosomes ######
+
+## get chromosome names ##
+
+## we are going to analyze 22 chromosomes? ##
+True
+
+## See them ##
+['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22']
+
+###### run parallel analyses ######
+
+## open the pool ##
+
+## run function across chromosomes ##
+
+## close the pool ##
+
+#######################################
+#######################################
+Do some checks after analyzing all chromosomes
+#######################################
+#######################################
+
+###### Number of SNPs lost due to the lack of genetic position ######
+
+## empty lists to save the counts ##
+
+## run loop across chromosomes ##
+Doing chromosome 1
+from the output file of the selected chromosome, extract the row with the counts of high and low confidence ancestral alleles
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+5013617
+216670
+
+see the row
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+5013617
+216670
+split the row
+['see the total number of SNPs and the number of SNPs removed due to the lack of genetic position', '5013617', '216670']
+check that we only have one row, and it can be split in three parts with comma
+YES! GOOD TO GO!
+append to each list the corresponding count
+Doing chromosome 2
+from the output file of the selected chromosome, extract the row with the counts of high and low confidence ancestral alleles
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+5318178
+102420
+
+see the row
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+5318178
+102420
+split the row
+['see the total number of SNPs and the number of SNPs removed due to the lack of genetic position', '5318178', '102420']
+check that we only have one row, and it can be split in three parts with comma
+YES! GOOD TO GO!
+append to each list the corresponding count
+Doing chromosome 3
+from the output file of the selected chromosome, extract the row with the counts of high and low confidence ancestral alleles
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+4361093
+36565
+
+see the row
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+4361093
+36565
+split the row
+['see the total number of SNPs and the number of SNPs removed due to the lack of genetic position', '4361093', '36565']
+check that we only have one row, and it can be split in three parts with comma
+YES! GOOD TO GO!
+append to each list the corresponding count
+Doing chromosome 4
+from the output file of the selected chromosome, extract the row with the counts of high and low confidence ancestral alleles
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+4264103
+36662
+
+see the row
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+4264103
+36662
+split the row
+['see the total number of SNPs and the number of SNPs removed due to the lack of genetic position', '4264103', '36662']
+check that we only have one row, and it can be split in three parts with comma
+YES! GOOD TO GO!
+append to each list the corresponding count
+Doing chromosome 5
+from the output file of the selected chromosome, extract the row with the counts of high and low confidence ancestral alleles
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+3966457
+48320
+
+see the row
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+3966457
+48320
+split the row
+['see the total number of SNPs and the number of SNPs removed due to the lack of genetic position', '3966457', '48320']
+check that we only have one row, and it can be split in three parts with comma
+YES! GOOD TO GO!
+append to each list the corresponding count
+Doing chromosome 6
+from the output file of the selected chromosome, extract the row with the counts of high and low confidence ancestral alleles
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+3747375
+31453
+
+see the row
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+3747375
+31453
+split the row
+['see the total number of SNPs and the number of SNPs removed due to the lack of genetic position', '3747375', '31453']
+check that we only have one row, and it can be split in three parts with comma
+YES! GOOD TO GO!
+append to each list the corresponding count
+Doing chromosome 7
+from the output file of the selected chromosome, extract the row with the counts of high and low confidence ancestral alleles
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+3595170
+64939
+
+see the row
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+3595170
+64939
+split the row
+['see the total number of SNPs and the number of SNPs removed due to the lack of genetic position', '3595170', '64939']
+check that we only have one row, and it can be split in three parts with comma
+YES! GOOD TO GO!
+append to each list the corresponding count
+Doing chromosome 8
+from the output file of the selected chromosome, extract the row with the counts of high and low confidence ancestral alleles
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+3422307
+37695
+
+see the row
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+3422307
+37695
+split the row
+['see the total number of SNPs and the number of SNPs removed due to the lack of genetic position', '3422307', '37695']
+check that we only have one row, and it can be split in three parts with comma
+YES! GOOD TO GO!
+append to each list the corresponding count
+Doing chromosome 9
+from the output file of the selected chromosome, extract the row with the counts of high and low confidence ancestral alleles
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+2777032
+51093
+
+see the row
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+2777032
+51093
+split the row
+['see the total number of SNPs and the number of SNPs removed due to the lack of genetic position', '2777032', '51093']
+check that we only have one row, and it can be split in three parts with comma
+YES! GOOD TO GO!
+append to each list the corresponding count
+Doing chromosome 10
+from the output file of the selected chromosome, extract the row with the counts of high and low confidence ancestral alleles
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+3044073
+53285
+
+see the row
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+3044073
+53285
+split the row
+['see the total number of SNPs and the number of SNPs removed due to the lack of genetic position', '3044073', '53285']
+check that we only have one row, and it can be split in three parts with comma
+YES! GOOD TO GO!
+append to each list the corresponding count
+Doing chromosome 11
+from the output file of the selected chromosome, extract the row with the counts of high and low confidence ancestral alleles
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+2999680
+38983
+
+see the row
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+2999680
+38983
+split the row
+['see the total number of SNPs and the number of SNPs removed due to the lack of genetic position', '2999680', '38983']
+check that we only have one row, and it can be split in three parts with comma
+YES! GOOD TO GO!
+append to each list the corresponding count
+Doing chromosome 12
+from the output file of the selected chromosome, extract the row with the counts of high and low confidence ancestral alleles
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+2879549
+55862
+
+see the row
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+2879549
+55862
+split the row
+['see the total number of SNPs and the number of SNPs removed due to the lack of genetic position', '2879549', '55862']
+check that we only have one row, and it can be split in three parts with comma
+YES! GOOD TO GO!
+append to each list the corresponding count
+Doing chromosome 13
+from the output file of the selected chromosome, extract the row with the counts of high and low confidence ancestral alleles
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+2186334
+113169
+
+see the row
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+2186334
+113169
+split the row
+['see the total number of SNPs and the number of SNPs removed due to the lack of genetic position', '2186334', '113169']
+check that we only have one row, and it can be split in three parts with comma
+YES! GOOD TO GO!
+append to each list the corresponding count
+Doing chromosome 14
+from the output file of the selected chromosome, extract the row with the counts of high and low confidence ancestral alleles
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+1993365
+114247
+
+see the row
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+1993365
+114247
+split the row
+['see the total number of SNPs and the number of SNPs removed due to the lack of genetic position', '1993365', '114247']
+check that we only have one row, and it can be split in three parts with comma
+YES! GOOD TO GO!
+append to each list the corresponding count
+Doing chromosome 15
+from the output file of the selected chromosome, extract the row with the counts of high and low confidence ancestral alleles
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+1834424
+102089
+
+see the row
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+1834424
+102089
+split the row
+['see the total number of SNPs and the number of SNPs removed due to the lack of genetic position', '1834424', '102089']
+check that we only have one row, and it can be split in three parts with comma
+YES! GOOD TO GO!
+append to each list the corresponding count
+Doing chromosome 16
+from the output file of the selected chromosome, extract the row with the counts of high and low confidence ancestral alleles
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+2069967
+42063
+
+see the row
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+2069967
+42063
+split the row
+['see the total number of SNPs and the number of SNPs removed due to the lack of genetic position', '2069967', '42063']
+check that we only have one row, and it can be split in three parts with comma
+YES! GOOD TO GO!
+append to each list the corresponding count
+Doing chromosome 17
+from the output file of the selected chromosome, extract the row with the counts of high and low confidence ancestral alleles
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+1767777
+40170
+
+see the row
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+1767777
+40170
+split the row
+['see the total number of SNPs and the number of SNPs removed due to the lack of genetic position', '1767777', '40170']
+check that we only have one row, and it can be split in three parts with comma
+YES! GOOD TO GO!
+append to each list the corresponding count
+Doing chromosome 18
+from the output file of the selected chromosome, extract the row with the counts of high and low confidence ancestral alleles
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+1714369
+48671
+
+see the row
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+1714369
+48671
+split the row
+['see the total number of SNPs and the number of SNPs removed due to the lack of genetic position', '1714369', '48671']
+check that we only have one row, and it can be split in three parts with comma
+YES! GOOD TO GO!
+append to each list the corresponding count
+Doing chromosome 19
+from the output file of the selected chromosome, extract the row with the counts of high and low confidence ancestral alleles
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+1411445
+35360
+
+see the row
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+1411445
+35360
+split the row
+['see the total number of SNPs and the number of SNPs removed due to the lack of genetic position', '1411445', '35360']
+check that we only have one row, and it can be split in three parts with comma
+YES! GOOD TO GO!
+append to each list the corresponding count
+Doing chromosome 20
+from the output file of the selected chromosome, extract the row with the counts of high and low confidence ancestral alleles
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+1430673
+72867
+
+see the row
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+1430673
+72867
+split the row
+['see the total number of SNPs and the number of SNPs removed due to the lack of genetic position', '1430673', '72867']
+check that we only have one row, and it can be split in three parts with comma
+YES! GOOD TO GO!
+append to each list the corresponding count
+Doing chromosome 21
+from the output file of the selected chromosome, extract the row with the counts of high and low confidence ancestral alleles
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+876432
+132908
+
+see the row
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+876432
+132908
+split the row
+['see the total number of SNPs and the number of SNPs removed due to the lack of genetic position', '876432', '132908']
+check that we only have one row, and it can be split in three parts with comma
+YES! GOOD TO GO!
+append to each list the corresponding count
+Doing chromosome 22
+from the output file of the selected chromosome, extract the row with the counts of high and low confidence ancestral alleles
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+925730
+131370
+
+see the row
+see the total number of SNPs and the number of SNPs removed due to the lack of genetic position
+925730
+131370
+split the row
+['see the total number of SNPs and the number of SNPs removed due to the lack of genetic position', '925730', '131370']
+check that we only have one row, and it can be split in three parts with comma
+YES! GOOD TO GO!
+append to each list the corresponding count
+
+## process the results ##
+
+# convert to int each count if the count is NOt zero #
+
+# check we have all chromosomes #
+YES! GOOD TO GO!
+
+# make the sum across chromosomes #
+
+# see the sums #
+Total number of SNPs is: 61599150
+Total number of SNPs lost due to lack of genetic position: 1606861
+
+# calculate the percentage of SNPs lost due to the lack of genetic position across all chromosomes #
+2.608576579384618
+
+###### now check we do NOT have any errors in the output files of all chromosomes ######
+
+## run loop across chromosomes ##
+
+# Doing chromosome 1 #
+
+# count number of cases with 'error' or 'false' in the output file #
+0
+
+
+# check the count of problematic cases is zero #
+YES! GOOD TO GO!
+
+# check we have the row of FINISH #
+1
+
+YES! GOOD TO GO!
+
+# Doing chromosome 2 #
+
+# count number of cases with 'error' or 'false' in the output file #
+0
+
+
+# check the count of problematic cases is zero #
+YES! GOOD TO GO!
+
+# check we have the row of FINISH #
+1
+
+YES! GOOD TO GO!
+
+# Doing chromosome 3 #
+
+# count number of cases with 'error' or 'false' in the output file #
+0
+
+
+# check the count of problematic cases is zero #
+YES! GOOD TO GO!
+
+# check we have the row of FINISH #
+1
+
+YES! GOOD TO GO!
+
+# Doing chromosome 4 #
+
+# count number of cases with 'error' or 'false' in the output file #
+0
+
+
+# check the count of problematic cases is zero #
+YES! GOOD TO GO!
+
+# check we have the row of FINISH #
+1
+
+YES! GOOD TO GO!
+
+# Doing chromosome 5 #
+
+# count number of cases with 'error' or 'false' in the output file #
+0
+
+
+# check the count of problematic cases is zero #
+YES! GOOD TO GO!
+
+# check we have the row of FINISH #
+1
+
+YES! GOOD TO GO!
+
+# Doing chromosome 6 #
+
+# count number of cases with 'error' or 'false' in the output file #
+0
+
+
+# check the count of problematic cases is zero #
+YES! GOOD TO GO!
+
+# check we have the row of FINISH #
+1
+
+YES! GOOD TO GO!
+
+# Doing chromosome 7 #
+
+# count number of cases with 'error' or 'false' in the output file #
+0
+
+
+# check the count of problematic cases is zero #
+YES! GOOD TO GO!
+
+# check we have the row of FINISH #
+1
+
+YES! GOOD TO GO!
+
+# Doing chromosome 8 #
+
+# count number of cases with 'error' or 'false' in the output file #
+0
+
+
+# check the count of problematic cases is zero #
+YES! GOOD TO GO!
+
+# check we have the row of FINISH #
+1
+
+YES! GOOD TO GO!
+
+# Doing chromosome 9 #
+
+# count number of cases with 'error' or 'false' in the output file #
+0
+
+
+# check the count of problematic cases is zero #
+YES! GOOD TO GO!
+
+# check we have the row of FINISH #
+1
+
+YES! GOOD TO GO!
+
+# Doing chromosome 10 #
+
+# count number of cases with 'error' or 'false' in the output file #
+0
+
+
+# check the count of problematic cases is zero #
+YES! GOOD TO GO!
+
+# check we have the row of FINISH #
+1
+
+YES! GOOD TO GO!
+
+# Doing chromosome 11 #
+
+# count number of cases with 'error' or 'false' in the output file #
+0
+
+
+# check the count of problematic cases is zero #
+YES! GOOD TO GO!
+
+# check we have the row of FINISH #
+1
+
+YES! GOOD TO GO!
+
+# Doing chromosome 12 #
+
+# count number of cases with 'error' or 'false' in the output file #
+0
+
+
+# check the count of problematic cases is zero #
+YES! GOOD TO GO!
+
+# check we have the row of FINISH #
+1
+
+YES! GOOD TO GO!
+
+# Doing chromosome 13 #
+
+# count number of cases with 'error' or 'false' in the output file #
+0
+
+
+# check the count of problematic cases is zero #
+YES! GOOD TO GO!
+
+# check we have the row of FINISH #
+1
+
+YES! GOOD TO GO!
+
+# Doing chromosome 14 #
+
+# count number of cases with 'error' or 'false' in the output file #
+0
+
+
+# check the count of problematic cases is zero #
+YES! GOOD TO GO!
+
+# check we have the row of FINISH #
+1
+
+YES! GOOD TO GO!
+
+# Doing chromosome 15 #
+
+# count number of cases with 'error' or 'false' in the output file #
+0
+
+
+# check the count of problematic cases is zero #
+YES! GOOD TO GO!
+
+# check we have the row of FINISH #
+1
+
+YES! GOOD TO GO!
+
+# Doing chromosome 16 #
+
+# count number of cases with 'error' or 'false' in the output file #
+0
+
+
+# check the count of problematic cases is zero #
+YES! GOOD TO GO!
+
+# check we have the row of FINISH #
+1
+
+YES! GOOD TO GO!
+
+# Doing chromosome 17 #
+
+# count number of cases with 'error' or 'false' in the output file #
+0
+
+
+# check the count of problematic cases is zero #
+YES! GOOD TO GO!
+
+# check we have the row of FINISH #
+1
+
+YES! GOOD TO GO!
+
+# Doing chromosome 18 #
+
+# count number of cases with 'error' or 'false' in the output file #
+0
+
+
+# check the count of problematic cases is zero #
+YES! GOOD TO GO!
+
+# check we have the row of FINISH #
+1
+
+YES! GOOD TO GO!
+
+# Doing chromosome 19 #
+
+# count number of cases with 'error' or 'false' in the output file #
+0
+
+
+# check the count of problematic cases is zero #
+YES! GOOD TO GO!
+
+# check we have the row of FINISH #
+1
+
+YES! GOOD TO GO!
+
+# Doing chromosome 20 #
+
+# count number of cases with 'error' or 'false' in the output file #
+0
+
+
+# check the count of problematic cases is zero #
+YES! GOOD TO GO!
+
+# check we have the row of FINISH #
+1
+
+YES! GOOD TO GO!
+
+# Doing chromosome 21 #
+
+# count number of cases with 'error' or 'false' in the output file #
+0
+
+
+# check the count of problematic cases is zero #
+YES! GOOD TO GO!
+
+# check we have the row of FINISH #
+1
+
+YES! GOOD TO GO!
+
+# Doing chromosome 22 #
+
+# count number of cases with 'error' or 'false' in the output file #
+0
+
+
+# check the count of problematic cases is zero #
+YES! GOOD TO GO!
+
+# check we have the row of FINISH #
+1
+
+YES! GOOD TO GO!
+
+#######################################
+#######################################
+Next steps
+#######################################
+#######################################

@@ -4004,7 +4004,7 @@ print(\
 print_text("run parallel analyses", header=2)
 print_text("open the pool", header=3)
 import multiprocessing as mp
-pool = mp.Pool(60)
+pool = mp.Pool(115)
 
 print_text("run function across pandas rows", header=3)
 pool.map(master_processor, full_combinations_pop_chroms)
@@ -4122,3 +4122,5 @@ print_text("Next steps", header=1)
 #check number of snps lost
 #once you are finished here, according to david, you can check whether the REF/ALT alleles match between the old and new hap files, but taking into account we have different coordinated, hg19 vs hg38
     ##i guess you could take the old map files, convert to hg38 coordinates and then see if the REF/ALT columns are the same than in the new map files
+#ask David about the accesibility mask of the next step. We already losing a lot of SNPs with the filters...
+    #we have NOT applied it
