@@ -20,13 +20,13 @@
 ### OPTIONAL. Select the cores bought by David.
 #SBATCH --qos=user_qos_denard
 ### REQUIRED. Set the number of cores that will be used for this job.
-#SBATCH --ntasks=115
+#SBATCH --ntasks=120
 ### OPTIONAL. You can set the number of cores per task. This can be useful for scripts in which inside the parallelized process there are other subprocesses. For example, you run 22 independent processes for each chromosome and then you also parallelize the calculations inside each chromosome (https://stackoverflow.com/a/51141287)
 #SBATCH --cpus-per-task=1
 ### REQUIRED. Set the memory required for this job. I will set 40GC per each of the 100 cores=4000GB; https://public.confluence.arizona.edu/display/UAHPC/Allocation+and+Limits
 ###SBATCH --mem=400gb
 ### REQUIRED. Set the gb per core. YOU HAVE TO SELECT --mem or --mem-per-cpu but NOT BOTH. If you get a .core file, this usually means that the program fails because it asked for too much memory, so it creates a record of the working memory at the time that can be used for debugging. MPI jobs will usually create a core file for each task. You should increase memory limits (https://researchcomputing.princeton.edu/support/knowledge-base/memory).
-#SBATCH --mem-per-cpu=5gb
+#SBATCH --mem-per-cpu=20gb
 ### set the constraint for high memory nodes in case you use a lot of memory per node
 ###SBATCH --constraint=hi_mem
 ### REQUIRED. Specify the time required for this job, hhh:mm:ss

@@ -3574,70 +3574,163 @@ def master_processor(chr_pop_combination, debugging=False, debug_file_size=None)
 
     print_text("prepare the final map and hap files", header=3)
     print_text("remove the OLD ID and update the new ID cases for switched alleles in the genetic map. The new ID includes the REF and ALT names, but in the raw hap file, some SNPs have their REF/ALT switched due to the fact that the REF was not the ancestral, see above", header=4)
+    #load the raw map and hap files
+    raw_hap_file=pd.read_csv(
+        "./results/02_hap_map_files_raw/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz", 
+        header=None, 
+        sep=" ", 
+        low_memory=False)
+    raw_map_file=pd.read_csv(
+        "./results/02_hap_map_files_raw/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_selscan_raw.map.gz", 
+        header=None, 
+        sep=" ", 
+        low_memory=False)
+    #if the index of both files is NOT the same, stop
+    if(not raw_map_file.index.equals(raw_hap_file.index)):
+        raise ValueError("ERROR: FALSE! WE HAVE A PROBLEM SELECTING THE SAME SNP FOR HAP AND MAP RAW")
+    #define function to switch alleles in the ID
+    #selected_row_map=raw_map_file.iloc[np.where(raw_map_file.iloc[:,1] == raw_hap_file.iloc[:,1])[0][0],:]
+        #same ID in hap and map files
+    #selected_row_map=raw_map_file.iloc[np.where(raw_map_file.iloc[:,1] != raw_hap_file.iloc[:,1])[0][0],:]
+        #different ID in hap and map files
+    def switch_map_id(selected_row_map):
+
+        #select the row of hap file corresponding with the selected SNP in the map file
+        selected_row_hap=raw_hap_file.iloc[selected_row_map.name,:]
+            #we should have SNPs in the same order in both files, but we will check it in the next lines
+
+        #extract the alleles from the ID of the map file
+        map_ref_allele=selected_row_map.iloc[1].split("_")[1]
+        map_alt_allele=selected_row_map.iloc[1].split("_")[2]
+
+        #check we have selected the correct row of the hap file
+        #if we do not have the same row number, chromosome or physical position, or the ref allele of the map file is not the same to any of the alleles in the hap file
+        if((selected_row_map.name != selected_row_hap.name) | (selected_row_hap.iloc[0] != selected_row_map.iloc[0]) | (selected_row_hap.iloc[2] != selected_row_map.iloc[4]) | ((map_ref_allele != selected_row_hap.iloc[3]) & (map_ref_allele != selected_row_hap.iloc[4]))):
+            raise ValueError("ERROR: FALSE! WE HAVE A PROBLEM SELECTING THE SAME SNP FOR HAP AND MAP RAW FOR ROW NUMBER " + str(selected_row_map.name))
+
+        #create the new ID for the map file
+        #if the REF of the map file is not the REF in the hap, but that REF map is the ALT in the hap file, then take the hap ID as the new map ID
+        if((map_ref_allele != selected_row_hap.iloc[3]) & (map_ref_allele == selected_row_hap.iloc[4])):
+            new_map_id=selected_row_hap.iloc[1]
+        else:
+            new_map_id=selected_row_map.iloc[1]
+        return(new_map_id)
+    #run the function on a few rows
+    #[switch_map_id(row) for index, row in raw_map_file.iloc[0:10,:].iterrows()]
+    #apply the function in the whole DF across rows
+    new_map_id=raw_map_file.apply(switch_map_id, axis=1)
+    #stop if the new ID is not identical to the ID in hap file
+    if(not raw_hap_file.iloc[:,1].equals(new_map_id)):
+        raise ValueError("ERROR: FALSE! WE HAVE A PROBLEM SELECTING THE SAME SNP FOR HAP AND MAP RAW")
+    #check now the SNPs of the map file that are the same to the new ID are identical to the hap ID, while those that are not same have the alleles switched
+    #get the IDS matching and not matching in the hap and map files
+    map_ids_no_match=raw_map_file.loc[raw_map_file.iloc[:,1]!=new_map_id, 1]
+    map_ids_match=raw_map_file.loc[raw_map_file.iloc[:,1]==new_map_id, 1]
+    hap_ids_no_match=raw_hap_file.loc[raw_hap_file.iloc[:,1]!=raw_map_file.iloc[:,1], 1]
+    hap_ids_match=raw_hap_file.loc[raw_hap_file.iloc[:,1]==raw_map_file.iloc[:,1], 1]
+    #extract the alleles from the IDs
+    #x=map_ids_no_match.iloc[1]
+    map_ids_no_match_alleles=map_ids_no_match.apply(lambda x: x.split("_")[1:3])
+    map_ids_match_alleles=map_ids_match.apply(lambda x: x.split("_")[1:3])
+    hap_ids_no_match_alleles=hap_ids_no_match.apply(lambda x: x.split("_")[1:3])
+    hap_ids_match_alleles=hap_ids_match.apply(lambda x: x.split("_")[1:3])
+    #alleles should be the same in the matching IDs
+    if(not map_ids_match_alleles.equals(hap_ids_match_alleles)):
+        raise ValueError("ERROR: FALSE! WE HAVE A PROBLEM WHEN UPDATING THE ID IN THE MAP FILE")
+    #The REF in map should be the ALT in hap and viceversa
+    #index=range(0,len(map_ids_no_match_alleles))[0]
+    if(False in [(map_ids_no_match_alleles.iloc[index][0] == hap_ids_no_match_alleles.iloc[index][1]) & (map_ids_no_match_alleles.iloc[index][1] == hap_ids_no_match_alleles.iloc[index][0]) for index in range(0,len(map_ids_no_match_alleles))]):
+        raise ValueError("ERROR: FALSE! WE HAVE A PROBLEM WHEN UPDATING THE ID IN THE MAP FILE")
+    #create a copy of the raw map file, being deep, i.e., not connected, changes in the original file do not affect the new one and viceversa
+    final_map_file=raw_map_file.copy(deep=True)
+    #add the new ID as the new ID column
+    final_map_file.iloc[:,1] = new_map_id
+    #check the we have the final IDs
+    if(not final_map_file.iloc[:,1].equals(raw_hap_file.iloc[:,1])):
+        raise ValueError("ERROR: FALSE! WE HAVE A PROBLEM WHEN UPDATING THE ID IN THE MAP FILE")
+    #remove the third column with old IDs
+    final_map_file=final_map_file.drop(labels=2, axis=1)
+    #save the new map file
+    final_map_file.to_csv(
+        "./results/03_hap_map_files/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz", 
+        sep=" ", \
+        header=False, \
+        index=False)
+    #take a look to the file
     run_bash(" \
-            awk \
-                'BEGIN{FS=OFS=\" \"}{ \
-                    if(NR==FNR){ \
-                        snp_hap[$2]=FNR; \
-                    } else { \
-                        if(!($2 in snp_hap)){ \
-                            for(i in snp_hap){ \
-                                if(snp_hap[i]==FNR){ \
-                                    split(i, hap_id_split, \"_\"); \
-                                    split($2, map_id_split, \"_\"); \
-                                    for(k in hap_id_split){ \
-                                        if(k==1){ \
-                                            if(hap_id_split[k] != map_id_split[k]){ \
-                                                exit 1; \
-                                            } \
-                                        }; \
-                                        if(k==2){ \
-                                            if((hap_id_split[k] == map_id_split[k+1]) && (hap_id_split[k+1] == map_id_split[k])){ \
-                                                $2=i\
+        gunzip \
+            --stdout \
+            ./results/03_hap_map_files/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz | head -10")
+    #remove files not required anymore
+    del(raw_hap_file)
+    del(raw_map_file)
+    del(final_map_file)
+    #we are not using awk for this because it is too slow
+    if(False):
+        run_bash(" \
+                awk \
+                    'BEGIN{FS=OFS=\" \"}{ \
+                        if(NR==FNR){ \
+                            snp_hap[$2]=FNR; \
+                        } else { \
+                            if(!($2 in snp_hap)){ \
+                                for(i in snp_hap){ \
+                                    if(snp_hap[i]==FNR){ \
+                                        split(i, hap_id_split, \"_\"); \
+                                        split($2, map_id_split, \"_\"); \
+                                        for(k in hap_id_split){ \
+                                            if(k==1){ \
+                                                if(hap_id_split[k] != map_id_split[k]){ \
+                                                    exit 1; \
+                                                } \
+                                            }; \
+                                            if(k==2){ \
+                                                if((hap_id_split[k] == map_id_split[k+1]) && (hap_id_split[k+1] == map_id_split[k])){ \
+                                                    $2=i\
+                                                } \
                                             } \
                                         } \
                                     } \
                                 } \
-                            } \
-                        }; \
-                        print $1, $2, $4, $5 \
-                    } \
-                }' \
-                <( \
-                    gunzip \
-                        --stdout \
-                        ./results/02_hap_map_files_raw/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz \
-                ) \
-                <( \
-                    gunzip \
-                        --stdout \
-                        ./results/02_hap_map_files_raw/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_selscan_raw.map.gz \
-                ) | \
-            gzip --force > ./results/03_hap_map_files/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz; \
-            gunzip \
-                --stdout \
-                ./results/03_hap_map_files/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz | head -10")
-    #BEGIN:
-        #Space as delimiter for input and output, as this is required for hap and map files.
-    #file 1: hap file
-        #create index with the SNP ID as index and the row number of the file (FNR) as value
-    #file 2: map file
-        #if the SNP ID of the corresponding SNP in the map is NOT present in the hap file
-            #iterate across the array with SNP IDs of hap
-                #if the value of the array, i.e., the row number of that SNP in the hap file is the same to the current row number in the map file, do things. We are selecting the SNP from the hap file in the same line than the current SNP in the map file.
-                    #Remember that both the map and the hap file comes from the same file, the VCF file of 1KGP. Yes, we filtered many SNPs during the preparation of the hap file, BUT we filtered the map file using the hap file, and viceversa, so the missing SNPs should be out and we should have the same number of SNPs and position in both files.
-                        #Indeed, I checked this by checking whether the chrom, old ID and position in the filtered VCF and map files was the same. I also checked that the chrom and position are the same in the hap and map files.
-                    #ID in both files follow the format "chr1:1527046_C_T", thus we split both IDs using "_" to get chrom:pos, REF and ALT alleles. The result will be saved in two different arrays, with 1,2,3 as keys and the chrom:pos, REF and ALT as values
-                        #https://stackoverflow.com/a/36211699
-                    #iterate along one of the arrays (both should have the same length as IDs follow the same format in both cases)
-                        #first, check if the first element is the same in both arrays, i.e., we have the same chromosome and position in hap and map file
-                            #If they are not, then stop with non-zero exit status
-                        #second
-                            #if the REF allele of the hap is the same than the ALT of the map file and the REF allele of the map is the same to the ALT of the hap, i.e., if the alleles are switched, then the difference between map and hap is caused because the switching of alleles we performed in the VCF file to set REF as ancestral
-                                #therefore, set the ID of the hap file as the new ID in the map file. Remember that we have same chromosome, position and even REF/ALT, the difference is just REF and ALT alleles are switched.
-        #then print all columns except the OLD id column
-        #compress the file
-        #take a look at it
+                            }; \
+                            print $1, $2, $4, $5 \
+                        } \
+                    }' \
+                    <( \
+                        gunzip \
+                            --stdout \
+                            ./results/02_hap_map_files_raw/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_IMPUTE2_raw.hap.gz \
+                    ) \
+                    <( \
+                        gunzip \
+                            --stdout \
+                            ./results/02_hap_map_files_raw/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_selscan_raw.map.gz \
+                    ) | \
+                gzip --force > ./results/03_hap_map_files/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz; \
+                gunzip \
+                    --stdout \
+                    ./results/03_hap_map_files/" + selected_pop + "/chr" + selected_chromosome + "/chr" + selected_chromosome + "_" + selected_pop + "_selscan.map.gz | head -10")
+        #BEGIN:
+            #Space as delimiter for input and output, as this is required for hap and map files.
+        #file 1: hap file
+            #create index with the SNP ID as index and the row number of the file (FNR) as value
+        #file 2: map file
+            #if the SNP ID of the corresponding SNP in the map is NOT present in the hap file
+                #iterate across the array with SNP IDs of hap
+                    #if the value of the array, i.e., the row number of that SNP in the hap file is the same to the current row number in the map file, do things. We are selecting the SNP from the hap file in the same line than the current SNP in the map file.
+                        #Remember that both the map and the hap file comes from the same file, the VCF file of 1KGP. Yes, we filtered many SNPs during the preparation of the hap file, BUT we filtered the map file using the hap file, and viceversa, so the missing SNPs should be out and we should have the same number of SNPs and position in both files.
+                            #Indeed, I checked this by checking whether the chrom, old ID and position in the filtered VCF and map files was the same. I also checked that the chrom and position are the same in the hap and map files.
+                        #ID in both files follow the format "chr1:1527046_C_T", thus we split both IDs using "_" to get chrom:pos, REF and ALT alleles. The result will be saved in two different arrays, with 1,2,3 as keys and the chrom:pos, REF and ALT as values
+                            #https://stackoverflow.com/a/36211699
+                        #iterate along one of the arrays (both should have the same length as IDs follow the same format in both cases)
+                            #first, check if the first element is the same in both arrays, i.e., we have the same chromosome and position in hap and map file
+                                #If they are not, then stop with non-zero exit status
+                            #second
+                                #if the REF allele of the hap is the same than the ALT of the map file and the REF allele of the map is the same to the ALT of the hap, i.e., if the alleles are switched, then the difference between map and hap is caused because the switching of alleles we performed in the VCF file to set REF as ancestral
+                                    #therefore, set the ID of the hap file as the new ID in the map file. Remember that we have same chromosome, position and even REF/ALT, the difference is just REF and ALT alleles are switched.
+            #then print all columns except the OLD id column
+            #compress the file
+            #take a look at it
 
     print_text("check we have the same NEW ID in the map and raw hap files", header=4)
     run_bash(" \
@@ -4004,7 +4097,7 @@ print(\
 print_text("run parallel analyses", header=2)
 print_text("open the pool", header=3)
 import multiprocessing as mp
-pool = mp.Pool(115)
+pool = mp.Pool(120)
 
 print_text("run function across pandas rows", header=3)
 pool.map(master_processor, full_combinations_pop_chroms)
