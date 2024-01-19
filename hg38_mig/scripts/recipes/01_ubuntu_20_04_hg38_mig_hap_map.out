@@ -2,33 +2,31 @@ INFO:    Starting build...
 INFO:    Using cached image
 INFO:    Verifying bootstrap image /root/.singularity/cache/library/sha256.cfb23cc09dd3b4570110dd6f13886fe95cc31ef2d81f7abab6796751f5700fa0
 INFO:    Running setup scriptlet
-+ mkdir -p /opt/scripts
 INFO:    Copying /home/dftortosa/diego_docs/science/other_projects/australian_army_bishop/heavy_analyses/australian_army_bishop/plink_versions/plink2_linux_x86_64_20230531/plink2 to /bin/plink2
-INFO:    Copying /home/dftortosa/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating_heavy_analyses/dating_climate_adaptation/hg38_mig/scripts/01d_hap_map_calcs.py to /opt/scripts/01d_hap_map_calcs.py
 INFO:    Running post scriptlet
 + apt -y update
 
 WARNING: apt does not have a stable CLI interface. Use with caution in scripts.
 
-Get:1 http://security.ubuntu.com/ubuntu focal-security InRelease [114 kB]
-Get:2 http://archive.ubuntu.com/ubuntu focal InRelease [265 kB]
-Get:3 http://security.ubuntu.com/ubuntu focal-security/restricted amd64 Packages [3142 kB]
-Get:4 http://archive.ubuntu.com/ubuntu focal-updates InRelease [114 kB]
+Get:1 http://archive.ubuntu.com/ubuntu focal InRelease [265 kB]
+Get:2 http://security.ubuntu.com/ubuntu focal-security InRelease [114 kB]
+Get:3 http://archive.ubuntu.com/ubuntu focal-updates InRelease [114 kB]
+Get:4 http://security.ubuntu.com/ubuntu focal-security/multiverse amd64 Packages [29.7 kB]
 Get:5 http://archive.ubuntu.com/ubuntu focal-backports InRelease [108 kB]
-Get:6 http://archive.ubuntu.com/ubuntu focal/restricted amd64 Packages [33.4 kB]
+Get:6 http://security.ubuntu.com/ubuntu focal-security/universe amd64 Packages [1165 kB]
 Get:7 http://archive.ubuntu.com/ubuntu focal/main amd64 Packages [1275 kB]
-Get:8 http://archive.ubuntu.com/ubuntu focal/universe amd64 Packages [11.3 MB]
-Get:9 http://security.ubuntu.com/ubuntu focal-security/main amd64 Packages [3290 kB]
-Get:10 http://security.ubuntu.com/ubuntu focal-security/universe amd64 Packages [1154 kB]
-Get:11 http://security.ubuntu.com/ubuntu focal-security/multiverse amd64 Packages [29.7 kB]
-Get:12 http://archive.ubuntu.com/ubuntu focal/multiverse amd64 Packages [177 kB]
-Get:13 http://archive.ubuntu.com/ubuntu focal-updates/universe amd64 Packages [1448 kB]
-Get:14 http://archive.ubuntu.com/ubuntu focal-updates/restricted amd64 Packages [3292 kB]
+Get:8 http://security.ubuntu.com/ubuntu focal-security/main amd64 Packages [3291 kB]
+Get:9 http://archive.ubuntu.com/ubuntu focal/multiverse amd64 Packages [177 kB]
+Get:10 http://archive.ubuntu.com/ubuntu focal/universe amd64 Packages [11.3 MB]
+Get:11 http://security.ubuntu.com/ubuntu focal-security/restricted amd64 Packages [3142 kB]
+Get:12 http://archive.ubuntu.com/ubuntu focal/restricted amd64 Packages [33.4 kB]
+Get:13 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 Packages [3770 kB]
+Get:14 http://archive.ubuntu.com/ubuntu focal-updates/universe amd64 Packages [1461 kB]
 Get:15 http://archive.ubuntu.com/ubuntu focal-updates/multiverse amd64 Packages [32.4 kB]
-Get:16 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 Packages [3770 kB]
-Get:17 http://archive.ubuntu.com/ubuntu focal-backports/universe amd64 Packages [28.6 kB]
-Get:18 http://archive.ubuntu.com/ubuntu focal-backports/main amd64 Packages [55.2 kB]
-Fetched 29.7 MB in 20s (1448 kB/s)
+Get:16 http://archive.ubuntu.com/ubuntu focal-updates/restricted amd64 Packages [3292 kB]
+Get:17 http://archive.ubuntu.com/ubuntu focal-backports/main amd64 Packages [55.2 kB]
+Get:18 http://archive.ubuntu.com/ubuntu focal-backports/universe amd64 Packages [28.6 kB]
+Fetched 29.7 MB in 5s (5878 kB/s)
 Reading package lists...
 Building dependency tree...
 Reading state information...
@@ -51,7 +49,7 @@ Get:1 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 locales all 2.31
 Get:2 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 language-pack-en-base all 1:20.04+20220818 [445 kB]
 Get:3 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 language-pack-en all 1:20.04+20220818 [1904 B]
 debconf: delaying package configuration, since apt-utils is not installed
-Fetched 4318 kB in 7s (614 kB/s)
+Fetched 4318 kB in 1s (4531 kB/s)
 Selecting previously unselected package locales.
 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 4126 files and directories currently installed.)
 Preparing to unpack .../locales_2.31-0ubuntu9.14_all.deb ...
@@ -109,7 +107,7 @@ Need to get 269 kB of archives.
 After this operation, 868 kB of additional disk space will be used.
 Get:1 http://archive.ubuntu.com/ubuntu focal/main amd64 nano amd64 4.8-1ubuntu1 [269 kB]
 debconf: delaying package configuration, since apt-utils is not installed
-Fetched 269 kB in 2s (173 kB/s)
+Fetched 269 kB in 0s (592 kB/s)
 Selecting previously unselected package nano.
 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 5385 files and directories currently installed.)
 Preparing to unpack .../nano_4.8-1ubuntu1_amd64.deb ...
@@ -139,7 +137,7 @@ Get:1 http://archive.ubuntu.com/ubuntu focal/main amd64 readline-common all 8.0-
 Get:2 http://archive.ubuntu.com/ubuntu focal/main amd64 libreadline8 amd64 8.0-4 [131 kB]
 Get:3 http://archive.ubuntu.com/ubuntu focal/main amd64 bc amd64 1.07.1-2build1 [86.3 kB]
 debconf: delaying package configuration, since apt-utils is not installed
-Fetched 271 kB in 2s (119 kB/s)
+Fetched 271 kB in 1s (305 kB/s)
 Selecting previously unselected package readline-common.
 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 5452 files and directories currently installed.)
 Preparing to unpack .../readline-common_8.0-4_all.deb ...
@@ -272,7 +270,7 @@ Get:37 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 gir1.2-glib-2.0
 Get:38 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 libcap2-bin amd64 1:2.32-1ubuntu0.1 [26.2 kB]
 Get:39 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 libelf1 amd64 0.176-1.1ubuntu0.1 [44.2 kB]
 Get:40 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 libglib2.0-data all 2.64.6-1~ubuntu20.04.6 [6032 B]
-Get:41 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 tzdata all 2023c-0ubuntu0.20.04.2 [301 kB]
+Get:41 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 tzdata all 2023d-0ubuntu0.20.04 [303 kB]
 Get:42 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 libicu66 amd64 66.1-2ubuntu2.1 [8515 kB]
 Get:43 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 libnss-systemd amd64 245.4-4ubuntu3.22 [95.8 kB]
 Get:44 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 libpam-cap amd64 1:2.32-1ubuntu0.1 [8364 B]
@@ -362,7 +360,7 @@ Get:127 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 python3-softwa
 Get:128 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 software-properties-common all 0.99.9.12 [10.4 kB]
 Get:129 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 unattended-upgrades all 2.3ubuntu0.3 [48.5 kB]
 debconf: delaying package configuration, since apt-utils is not installed
-Fetched 35.9 MB in 46s (786 kB/s)
+Fetched 35.9 MB in 8s (4768 kB/s)
 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 5491 files and directories currently installed.)
 Preparing to unpack .../libsystemd0_245.4-4ubuntu3.22_amd64.deb ...
 Unpacking libsystemd0:amd64 (245.4-4ubuntu3.22) over (245.4-4ubuntu3.17) ...
@@ -521,8 +519,8 @@ Selecting previously unselected package libglib2.0-data.
 Preparing to unpack .../014-libglib2.0-data_2.64.6-1~ubuntu20.04.6_all.deb ...
 Unpacking libglib2.0-data (2.64.6-1~ubuntu20.04.6) ...
 Selecting previously unselected package tzdata.
-Preparing to unpack .../015-tzdata_2023c-0ubuntu0.20.04.2_all.deb ...
-Unpacking tzdata (2023c-0ubuntu0.20.04.2) ...
+Preparing to unpack .../015-tzdata_2023d-0ubuntu0.20.04_all.deb ...
+Unpacking tzdata (2023d-0ubuntu0.20.04) ...
 Selecting previously unselected package libicu66:amd64.
 Preparing to unpack .../016-libicu66_66.1-2ubuntu2.1_amd64.deb ...
 Unpacking libicu66:amd64 (66.1-2ubuntu2.1) ...
@@ -815,7 +813,7 @@ Setting up libassuan0:amd64 (2.5.3-7ubuntu2) ...
 Setting up libldap-common (2.4.49+dfsg-2ubuntu1.9) ...
 Setting up libkrb5support0:amd64 (1.17-6ubuntu4.4) ...
 Setting up libsasl2-modules-db:amd64 (2.1.27+dfsg-2ubuntu0.1) ...
-Setting up tzdata (2023c-0ubuntu0.20.04.2) ...
+Setting up tzdata (2023d-0ubuntu0.20.04) ...
 debconf: unable to initialize frontend: Dialog
 debconf: (No usable dialog-like program is installed, so the dialog based frontend cannot be used. at /usr/share/perl5/Debconf/FrontEnd/Dialog.pm line 76.)
 debconf: falling back to frontend: Readline
@@ -836,8 +834,8 @@ Geographic area:
 Use of uninitialized value $_[1] in join or string at /usr/share/perl5/Debconf/DbDriver/Stack.pm line 111.
 
 Current default time zone: '/UTC'
-Local time is now:      Mon Jan 15 12:06:14 UTC 2024.
-Universal Time is now:  Mon Jan 15 12:06:14 UTC 2024.
+Local time is now:      Fri Jan 19 11:30:24 UTC 2024.
+Universal Time is now:  Fri Jan 19 11:30:24 UTC 2024.
 Run 'dpkg-reconfigure tzdata' if you wish to change it.
 
 Use of uninitialized value $val in substitution (s///) at /usr/share/perl5/Debconf/Format/822.pm line 83, <GEN6> line 4.
@@ -998,20 +996,20 @@ Running hooks in /etc/ca-certificates/update.d...
 done.
 Processing triggers for dbus (1.12.16-2ubuntu2.3) ...
 + add-apt-repository -y ppa:deadsnakes/ppa
-Hit:1 http://archive.ubuntu.com/ubuntu focal InRelease
-Hit:2 http://security.ubuntu.com/ubuntu focal-security InRelease
-Get:3 http://ppa.launchpad.net/deadsnakes/ppa/ubuntu focal InRelease [18.1 kB]
+Get:1 http://ppa.launchpad.net/deadsnakes/ppa/ubuntu focal InRelease [18.1 kB]
+Hit:2 http://archive.ubuntu.com/ubuntu focal InRelease
+Hit:3 http://security.ubuntu.com/ubuntu focal-security InRelease
 Hit:4 http://archive.ubuntu.com/ubuntu focal-updates InRelease
 Hit:5 http://archive.ubuntu.com/ubuntu focal-backports InRelease
 Get:6 http://ppa.launchpad.net/deadsnakes/ppa/ubuntu focal/main amd64 Packages [35.8 kB]
-Fetched 53.9 kB in 2s (29.2 kB/s)
+Fetched 53.9 kB in 1s (43.2 kB/s)
 Reading package lists...
 + apt -y update
 
 WARNING: apt does not have a stable CLI interface. Use with caution in scripts.
 
-Hit:1 http://archive.ubuntu.com/ubuntu focal InRelease
-Hit:2 http://ppa.launchpad.net/deadsnakes/ppa/ubuntu focal InRelease
+Hit:1 http://ppa.launchpad.net/deadsnakes/ppa/ubuntu focal InRelease
+Hit:2 http://archive.ubuntu.com/ubuntu focal InRelease
 Hit:3 http://security.ubuntu.com/ubuntu focal-security InRelease
 Hit:4 http://archive.ubuntu.com/ubuntu focal-updates InRelease
 Hit:5 http://archive.ubuntu.com/ubuntu focal-backports InRelease
@@ -1033,9 +1031,9 @@ Need to get 57.4 kB of archives.
 After this operation, 259 kB of additional disk space will be used.
 Get:1 http://archive.ubuntu.com/ubuntu focal/universe amd64 pigz amd64 2.4-1 [57.4 kB]
 debconf: delaying package configuration, since apt-utils is not installed
-Fetched 57.4 kB in 1s (56.0 kB/s)
+Fetched 57.4 kB in 1s (109 kB/s)
 Selecting previously unselected package pigz.
-(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 12136 files and directories currently installed.)
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 12137 files and directories currently installed.)
 Preparing to unpack .../archives/pigz_2.4-1_amd64.deb ...
 Unpacking pigz (2.4-1) ...
 Setting up pigz (2.4-1) ...
@@ -1053,9 +1051,9 @@ Need to get 348 kB of archives.
 After this operation, 1012 kB of additional disk space will be used.
 Get:1 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 wget amd64 1.20.3-1ubuntu2 [348 kB]
 debconf: delaying package configuration, since apt-utils is not installed
-Fetched 348 kB in 2s (209 kB/s)
+Fetched 348 kB in 1s (389 kB/s)
 Selecting previously unselected package wget.
-(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 12145 files and directories currently installed.)
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 12146 files and directories currently installed.)
 Preparing to unpack .../wget_1.20.3-1ubuntu2_amd64.deb ...
 Unpacking wget (1.20.3-1ubuntu2) ...
 Setting up wget (1.20.3-1ubuntu2) ...
@@ -1284,9 +1282,9 @@ Get:147 http://archive.ubuntu.com/ubuntu focal-updates/universe amd64 openjdk-8-
 Get:148 http://archive.ubuntu.com/ubuntu focal-updates/universe amd64 openjdk-8-jdk-headless amd64 8u392-ga-1~20.04 [8290 kB]
 Get:149 http://archive.ubuntu.com/ubuntu focal-updates/universe amd64 openjdk-8-jdk amd64 8u392-ga-1~20.04 [3972 kB]
 debconf: delaying package configuration, since apt-utils is not installed
-Fetched 99.6 MB in 47s (2119 kB/s)
+Fetched 99.6 MB in 19s (5195 kB/s)
 Selecting previously unselected package libbsd0:amd64.
-(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 12156 files and directories currently installed.)
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 12157 files and directories currently installed.)
 Preparing to unpack .../000-libbsd0_0.10.0-1_amd64.deb ...
 Unpacking libbsd0:amd64 (0.10.0-1) ...
 Selecting previously unselected package libfribidi0:amd64.
@@ -2111,9 +2109,9 @@ Get:2 http://ppa.launchpad.net/deadsnakes/ppa/ubuntu focal/main amd64 python3.9-
 Get:3 http://ppa.launchpad.net/deadsnakes/ppa/ubuntu focal/main amd64 libpython3.9-stdlib amd64 3.9.18-1+focal1 [1665 kB]
 Get:4 http://ppa.launchpad.net/deadsnakes/ppa/ubuntu focal/main amd64 python3.9 amd64 3.9.18-1+focal1 [495 kB]
 debconf: delaying package configuration, since apt-utils is not installed
-Fetched 5027 kB in 8s (596 kB/s)
+Fetched 5027 kB in 1s (4654 kB/s)
 Selecting previously unselected package libpython3.9-minimal:amd64.
-(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 28545 files and directories currently installed.)
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 28546 files and directories currently installed.)
 Preparing to unpack .../libpython3.9-minimal_3.9.18-1+focal1_amd64.deb ...
 Unpacking libpython3.9-minimal:amd64 (3.9.18-1+focal1) ...
 Selecting previously unselected package python3.9-minimal.
@@ -2150,9 +2148,9 @@ Get:3 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 libssh-4 amd64 0
 Get:4 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 libcurl4 amd64 7.68.0-1ubuntu2.21 [235 kB]
 Get:5 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 curl amd64 7.68.0-1ubuntu2.21 [161 kB]
 debconf: delaying package configuration, since apt-utils is not installed
-Fetched 701 kB in 2s (311 kB/s)
+Fetched 701 kB in 1s (1160 kB/s)
 Selecting previously unselected package libnghttp2-14:amd64.
-(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 29185 files and directories currently installed.)
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 29186 files and directories currently installed.)
 Preparing to unpack .../libnghttp2-14_1.40.0-1ubuntu0.2_amd64.deb ...
 Unpacking libnghttp2-14:amd64 (1.40.0-1ubuntu0.2) ...
 Selecting previously unselected package librtmp1:amd64.
@@ -2176,7 +2174,7 @@ Processing triggers for libc-bin (2.31-0ubuntu9.9) ...
 + curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0 51 2573k   51 1316k    0     0   730k      0  0:00:03  0:00:01  0:00:02  729k100 2573k  100 2573k    0     0  1114k      0  0:00:02  0:00:02 --:--:-- 1114k
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100 2573k  100 2573k    0     0  5065k      0 --:--:-- --:--:-- --:--:-- 5065k
 + apt -y install python3.9-distutils
 
 WARNING: apt does not have a stable CLI interface. Use with caution in scripts.
@@ -2194,9 +2192,9 @@ After this operation, 2115 kB of additional disk space will be used.
 Get:1 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 python3-lib2to3 all 3.8.10-0ubuntu1~20.04 [76.3 kB]
 Get:2 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 python3-distutils all 3.8.10-0ubuntu1~20.04 [141 kB]
 debconf: delaying package configuration, since apt-utils is not installed
-Fetched 218 kB in 2s (134 kB/s)
+Fetched 218 kB in 1s (347 kB/s)
 Selecting previously unselected package python3-lib2to3.
-(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 29216 files and directories currently installed.)
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 29217 files and directories currently installed.)
 Preparing to unpack .../python3-lib2to3_3.8.10-0ubuntu1~20.04_all.deb ...
 Unpacking python3-lib2to3 (3.8.10-0ubuntu1~20.04) ...
 Selecting previously unselected package python3-distutils.
@@ -2212,11 +2210,11 @@ Collecting setuptools
 Collecting wheel
   Downloading wheel-0.42.0-py3-none-any.whl.metadata (2.2 kB)
 Downloading pip-23.3.2-py3-none-any.whl (2.1 MB)
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 828.0 kB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 6.9 MB/s eta 0:00:00
 Downloading setuptools-69.0.3-py3-none-any.whl (819 kB)
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 819.5/819.5 kB 1.5 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 819.5/819.5 kB 9.7 MB/s eta 0:00:00
 Downloading wheel-0.42.0-py3-none-any.whl (65 kB)
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 65.4/65.4 kB 1.2 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 65.4/65.4 kB 3.2 MB/s eta 0:00:00
 Installing collected packages: wheel, setuptools, pip
 Successfully installed pip-23.3.2 setuptools-69.0.3 wheel-0.42.0
 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
@@ -2230,9 +2228,9 @@ WARNING: Running pip as the 'root' user can result in broken permissions and con
 + python3.9 -m pip install numpy
 Collecting numpy
   Downloading numpy-1.26.3-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (61 kB)
-     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 61.2/61.2 kB 215.3 kB/s eta 0:00:00
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 61.2/61.2 kB 1.5 MB/s eta 0:00:00
 Downloading numpy-1.26.3-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (18.2 MB)
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 18.2/18.2 MB 4.5 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 18.2/18.2 MB 9.9 MB/s eta 0:00:00
 Installing collected packages: numpy
 Successfully installed numpy-1.26.3
 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
@@ -2242,18 +2240,18 @@ Collecting pandas
 Requirement already satisfied: numpy<2,>=1.22.4 in /usr/local/lib/python3.9/dist-packages (from pandas) (1.26.3)
 Collecting python-dateutil>=2.8.2 (from pandas)
   Downloading python_dateutil-2.8.2-py2.py3-none-any.whl (247 kB)
-     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 247.7/247.7 kB 205.4 kB/s eta 0:00:00
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 247.7/247.7 kB 2.2 MB/s eta 0:00:00
 Collecting pytz>=2020.1 (from pandas)
   Downloading pytz-2023.3.post1-py2.py3-none-any.whl.metadata (22 kB)
 Collecting tzdata>=2022.1 (from pandas)
   Downloading tzdata-2023.4-py2.py3-none-any.whl.metadata (1.4 kB)
 Requirement already satisfied: six>=1.5 in /usr/lib/python3/dist-packages (from python-dateutil>=2.8.2->pandas) (1.14.0)
 Downloading pandas-2.1.4-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (12.3 MB)
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.3/12.3 MB 2.4 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.3/12.3 MB 10.2 MB/s eta 0:00:00
 Downloading pytz-2023.3.post1-py2.py3-none-any.whl (502 kB)
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 502.5/502.5 kB 3.7 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 502.5/502.5 kB 14.2 MB/s eta 0:00:00
 Downloading tzdata-2023.4-py2.py3-none-any.whl (346 kB)
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 346.6/346.6 kB 3.2 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 346.6/346.6 kB 12.1 MB/s eta 0:00:00
 Installing collected packages: pytz, tzdata, python-dateutil, pandas
 Successfully installed pandas-2.1.4 python-dateutil-2.8.2 pytz-2023.3.post1 tzdata-2023.4
 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
@@ -2282,7 +2280,7 @@ Collecting pexpect>4.3 (from ipython)
   Downloading pexpect-4.9.0-py2.py3-none-any.whl.metadata (2.5 kB)
 Collecting parso<0.9.0,>=0.8.3 (from jedi>=0.16->ipython)
   Downloading parso-0.8.3-py2.py3-none-any.whl (100 kB)
-     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100.8/100.8 kB 386.4 kB/s eta 0:00:00
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100.8/100.8 kB 2.7 MB/s eta 0:00:00
 Collecting ptyprocess>=0.5 (from pexpect>4.3->ipython)
   Downloading ptyprocess-0.7.0-py2.py3-none-any.whl (13 kB)
 Collecting wcwidth (from prompt-toolkit<3.1.0,>=3.0.41->ipython)
@@ -2295,17 +2293,17 @@ Collecting pure-eval (from stack-data->ipython)
   Downloading pure_eval-0.2.2-py3-none-any.whl (11 kB)
 Requirement already satisfied: six>=1.12.0 in /usr/lib/python3/dist-packages (from asttokens>=2.1.0->stack-data->ipython) (1.14.0)
 Downloading ipython-8.18.1-py3-none-any.whl (808 kB)
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 808.2/808.2 kB 502.4 kB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 808.2/808.2 kB 7.4 MB/s eta 0:00:00
 Downloading jedi-0.19.1-py2.py3-none-any.whl (1.6 MB)
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.6/1.6 MB 758.0 kB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.6/1.6 MB 10.3 MB/s eta 0:00:00
 Downloading pexpect-4.9.0-py2.py3-none-any.whl (63 kB)
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 63.8/63.8 kB 1.6 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 63.8/63.8 kB 7.7 MB/s eta 0:00:00
 Downloading prompt_toolkit-3.0.43-py3-none-any.whl (386 kB)
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 386.1/386.1 kB 1.3 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 386.1/386.1 kB 8.9 MB/s eta 0:00:00
 Downloading pygments-2.17.2-py3-none-any.whl (1.2 MB)
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 1.4 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 8.9 MB/s eta 0:00:00
 Downloading traitlets-5.14.1-py3-none-any.whl (85 kB)
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 85.4/85.4 kB 1.6 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 85.4/85.4 kB 7.8 MB/s eta 0:00:00
 Downloading exceptiongroup-1.2.0-py3-none-any.whl (16 kB)
 Downloading stack_data-0.6.3-py3-none-any.whl (24 kB)
 Downloading typing_extensions-4.9.0-py3-none-any.whl (32 kB)
@@ -2366,12 +2364,12 @@ Get:10 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 libperl5.30 amd
 Get:11 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 perl amd64 5.30.0-9ubuntu0.5 [224 kB]
 Get:12 http://archive.ubuntu.com/ubuntu focal/main amd64 netbase all 6.1 [13.1 kB]
 Get:13 http://archive.ubuntu.com/ubuntu focal/main amd64 manpages all 5.05-1 [1314 kB]
-Get:14 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 binutils-common amd64 2.34-6ubuntu1.7 [207 kB]
-Get:15 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 libbinutils amd64 2.34-6ubuntu1.7 [473 kB]
-Get:16 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 libctf-nobfd0 amd64 2.34-6ubuntu1.7 [47.9 kB]
-Get:17 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 libctf0 amd64 2.34-6ubuntu1.7 [46.6 kB]
-Get:18 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 binutils-x86-64-linux-gnu amd64 2.34-6ubuntu1.7 [1614 kB]
-Get:19 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 binutils amd64 2.34-6ubuntu1.7 [3380 B]
+Get:14 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 binutils-common amd64 2.34-6ubuntu1.8 [208 kB]
+Get:15 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 libbinutils amd64 2.34-6ubuntu1.8 [475 kB]
+Get:16 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 libctf-nobfd0 amd64 2.34-6ubuntu1.8 [48.1 kB]
+Get:17 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 libctf0 amd64 2.34-6ubuntu1.8 [46.7 kB]
+Get:18 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 binutils-x86-64-linux-gnu amd64 2.34-6ubuntu1.8 [1614 kB]
+Get:19 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 binutils amd64 2.34-6ubuntu1.8 [3384 B]
 Get:20 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 libc-dev-bin amd64 2.31-0ubuntu9.14 [71.8 kB]
 Get:21 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 linux-libc-dev amd64 5.4.0-169.187 [1125 kB]
 Get:22 http://archive.ubuntu.com/ubuntu focal/main amd64 libcrypt-dev amd64 1:4.4.10-10ubuntu4 [104 kB]
@@ -2410,24 +2408,24 @@ Get:54 http://archive.ubuntu.com/ubuntu focal/main amd64 libalgorithm-merge-perl
 Get:55 http://archive.ubuntu.com/ubuntu focal/main amd64 libfile-fcntllock-perl amd64 0.22-3build4 [33.1 kB]
 Get:56 http://archive.ubuntu.com/ubuntu focal/main amd64 manpages-dev all 5.05-1 [2266 kB]
 debconf: delaying package configuration, since apt-utils is not installed
-Fetched 58.9 MB in 14s (4269 kB/s)
-(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 29485 files and directories currently installed.)
+Fetched 58.9 MB in 9s (6388 kB/s)
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 29486 files and directories currently installed.)
 Preparing to unpack .../perl-base_5.30.0-9ubuntu0.5_amd64.deb ...
 Unpacking perl-base (5.30.0-9ubuntu0.5) over (5.30.0-9ubuntu0.2) ...
 Setting up perl-base (5.30.0-9ubuntu0.5) ...
-(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 29485 files and directories currently installed.)
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 29486 files and directories currently installed.)
 Preparing to unpack .../gcc-10-base_10.5.0-1ubuntu1~20.04_amd64.deb ...
 Unpacking gcc-10-base:amd64 (10.5.0-1ubuntu1~20.04) over (10.3.0-1ubuntu1~20.04) ...
 Setting up gcc-10-base:amd64 (10.5.0-1ubuntu1~20.04) ...
-(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 29485 files and directories currently installed.)
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 29486 files and directories currently installed.)
 Preparing to unpack .../libgcc-s1_10.5.0-1ubuntu1~20.04_amd64.deb ...
 Unpacking libgcc-s1:amd64 (10.5.0-1ubuntu1~20.04) over (10.3.0-1ubuntu1~20.04) ...
 Setting up libgcc-s1:amd64 (10.5.0-1ubuntu1~20.04) ...
-(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 29485 files and directories currently installed.)
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 29486 files and directories currently installed.)
 Preparing to unpack .../libstdc++6_10.5.0-1ubuntu1~20.04_amd64.deb ...
 Unpacking libstdc++6:amd64 (10.5.0-1ubuntu1~20.04) over (10.3.0-1ubuntu1~20.04) ...
 Setting up libstdc++6:amd64 (10.5.0-1ubuntu1~20.04) ...
-(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 29485 files and directories currently installed.)
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 29486 files and directories currently installed.)
 Preparing to unpack .../libc6_2.31-0ubuntu9.14_amd64.deb ...
 debconf: unable to initialize frontend: Dialog
 debconf: (No usable dialog-like program is installed, so the dialog based frontend cannot be used. at /usr/share/perl5/Debconf/FrontEnd/Dialog.pm line 76.)
@@ -2444,7 +2442,7 @@ debconf: unable to initialize frontend: Readline
 debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC contains: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.30.0 /usr/local/share/perl/5.30.0 /usr/lib/x86_64-linux-gnu/perl5/5.30 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl/5.30 /usr/share/perl/5.30 /usr/local/lib/site_perl /usr/lib/x86_64-linux-gnu/perl-base) at /usr/share/perl5/Debconf/FrontEnd/Readline.pm line 7.)
 debconf: falling back to frontend: Teletype
 Selecting previously unselected package liblocale-gettext-perl.
-(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 29485 files and directories currently installed.)
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 29486 files and directories currently installed.)
 Preparing to unpack .../00-liblocale-gettext-perl_1.07-4_amd64.deb ...
 Unpacking liblocale-gettext-perl (1.07-4) ...
 Selecting previously unselected package perl-modules-5.30.
@@ -2469,23 +2467,23 @@ Selecting previously unselected package manpages.
 Preparing to unpack .../07-manpages_5.05-1_all.deb ...
 Unpacking manpages (5.05-1) ...
 Selecting previously unselected package binutils-common:amd64.
-Preparing to unpack .../08-binutils-common_2.34-6ubuntu1.7_amd64.deb ...
-Unpacking binutils-common:amd64 (2.34-6ubuntu1.7) ...
+Preparing to unpack .../08-binutils-common_2.34-6ubuntu1.8_amd64.deb ...
+Unpacking binutils-common:amd64 (2.34-6ubuntu1.8) ...
 Selecting previously unselected package libbinutils:amd64.
-Preparing to unpack .../09-libbinutils_2.34-6ubuntu1.7_amd64.deb ...
-Unpacking libbinutils:amd64 (2.34-6ubuntu1.7) ...
+Preparing to unpack .../09-libbinutils_2.34-6ubuntu1.8_amd64.deb ...
+Unpacking libbinutils:amd64 (2.34-6ubuntu1.8) ...
 Selecting previously unselected package libctf-nobfd0:amd64.
-Preparing to unpack .../10-libctf-nobfd0_2.34-6ubuntu1.7_amd64.deb ...
-Unpacking libctf-nobfd0:amd64 (2.34-6ubuntu1.7) ...
+Preparing to unpack .../10-libctf-nobfd0_2.34-6ubuntu1.8_amd64.deb ...
+Unpacking libctf-nobfd0:amd64 (2.34-6ubuntu1.8) ...
 Selecting previously unselected package libctf0:amd64.
-Preparing to unpack .../11-libctf0_2.34-6ubuntu1.7_amd64.deb ...
-Unpacking libctf0:amd64 (2.34-6ubuntu1.7) ...
+Preparing to unpack .../11-libctf0_2.34-6ubuntu1.8_amd64.deb ...
+Unpacking libctf0:amd64 (2.34-6ubuntu1.8) ...
 Selecting previously unselected package binutils-x86-64-linux-gnu.
-Preparing to unpack .../12-binutils-x86-64-linux-gnu_2.34-6ubuntu1.7_amd64.deb ...
-Unpacking binutils-x86-64-linux-gnu (2.34-6ubuntu1.7) ...
+Preparing to unpack .../12-binutils-x86-64-linux-gnu_2.34-6ubuntu1.8_amd64.deb ...
+Unpacking binutils-x86-64-linux-gnu (2.34-6ubuntu1.8) ...
 Selecting previously unselected package binutils.
-Preparing to unpack .../13-binutils_2.34-6ubuntu1.7_amd64.deb ...
-Unpacking binutils (2.34-6ubuntu1.7) ...
+Preparing to unpack .../13-binutils_2.34-6ubuntu1.8_amd64.deb ...
+Unpacking binutils (2.34-6ubuntu1.8) ...
 Selecting previously unselected package libc-dev-bin.
 Preparing to unpack .../14-libc-dev-bin_2.31-0ubuntu9.14_amd64.deb ...
 Unpacking libc-dev-bin (2.31-0ubuntu9.14) ...
@@ -2599,9 +2597,9 @@ Preparing to unpack .../50-manpages-dev_5.05-1_all.deb ...
 Unpacking manpages-dev (5.05-1) ...
 Setting up perl-modules-5.30 (5.30.0-9ubuntu0.5) ...
 Setting up manpages (5.05-1) ...
-Setting up binutils-common:amd64 (2.34-6ubuntu1.7) ...
+Setting up binutils-common:amd64 (2.34-6ubuntu1.8) ...
 Setting up linux-libc-dev:amd64 (5.4.0-169.187) ...
-Setting up libctf-nobfd0:amd64 (2.34-6ubuntu1.7) ...
+Setting up libctf-nobfd0:amd64 (2.34-6ubuntu1.8) ...
 Setting up libgomp1:amd64 (10.5.0-1ubuntu1~20.04) ...
 Setting up libfakeroot:amd64 (1.24-1) ...
 Setting up fakeroot (1.24-1) ...
@@ -2624,7 +2622,7 @@ Setting up libubsan1:amd64 (10.5.0-1ubuntu1~20.04) ...
 Setting up libcrypt-dev:amd64 (1:4.4.10-10ubuntu4) ...
 Setting up libisl22:amd64 (0.22.1-1) ...
 Setting up netbase (6.1) ...
-Setting up libbinutils:amd64 (2.34-6ubuntu1.7) ...
+Setting up libbinutils:amd64 (2.34-6ubuntu1.8) ...
 Setting up libc-dev-bin (2.31-0ubuntu9.14) ...
 Setting up libcc1-0:amd64 (10.5.0-1ubuntu1~20.04) ...
 Setting up liblocale-gettext-perl (1.07-4) ...
@@ -2633,15 +2631,15 @@ Setting up libitm1:amd64 (10.5.0-1ubuntu1~20.04) ...
 Setting up libgdbm6:amd64 (1.18.1-5) ...
 Setting up gcc-9-base:amd64 (9.4.0-1ubuntu1~20.04.2) ...
 Setting up libtsan0:amd64 (10.5.0-1ubuntu1~20.04) ...
-Setting up libctf0:amd64 (2.34-6ubuntu1.7) ...
+Setting up libctf0:amd64 (2.34-6ubuntu1.8) ...
 Setting up manpages-dev (5.05-1) ...
 Setting up libasan5:amd64 (9.4.0-1ubuntu1~20.04.2) ...
 Setting up libgdbm-compat4:amd64 (1.18.1-5) ...
 Setting up cpp-9 (9.4.0-1ubuntu1~20.04.2) ...
 Setting up libperl5.30:amd64 (5.30.0-9ubuntu0.5) ...
 Setting up libc6-dev:amd64 (2.31-0ubuntu9.14) ...
-Setting up binutils-x86-64-linux-gnu (2.34-6ubuntu1.7) ...
-Setting up binutils (2.34-6ubuntu1.7) ...
+Setting up binutils-x86-64-linux-gnu (2.34-6ubuntu1.8) ...
+Setting up binutils (2.34-6ubuntu1.8) ...
 Setting up libgcc-9-dev:amd64 (9.4.0-1ubuntu1~20.04.2) ...
 Setting up perl (5.30.0-9ubuntu0.5) ...
 Setting up libdpkg-perl (1.19.7ubuntu3.2) ...
@@ -2683,9 +2681,9 @@ Get:4 http://archive.ubuntu.com/ubuntu focal/main amd64 libjsoncpp1 amd64 1.7.4-
 Get:5 http://archive.ubuntu.com/ubuntu focal/main amd64 librhash0 amd64 1.3.9-1 [113 kB]
 Get:6 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 cmake amd64 3.16.3-1ubuntu1.20.04.1 [3668 kB]
 debconf: delaying package configuration, since apt-utils is not installed
-Fetched 5878 kB in 5s (1079 kB/s)
+Fetched 5878 kB in 1s (5284 kB/s)
 Selecting previously unselected package libuv1:amd64.
-(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 37368 files and directories currently installed.)
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 37369 files and directories currently installed.)
 Preparing to unpack .../0-libuv1_1.34.2-1ubuntu1.3_amd64.deb ...
 Unpacking libuv1:amd64 (1.34.2-1ubuntu1.3) ...
 Selecting previously unselected package cmake-data.
@@ -2727,9 +2725,9 @@ Need to get 322 kB of archives.
 After this operation, 1545 kB of additional disk space will be used.
 Get:1 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 libcurl4-openssl-dev amd64 7.68.0-1ubuntu2.21 [322 kB]
 debconf: delaying package configuration, since apt-utils is not installed
-Fetched 322 kB in 1s (292 kB/s)
+Fetched 322 kB in 16s (20.7 kB/s)
 Selecting previously unselected package libcurl4-openssl-dev:amd64.
-(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 40175 files and directories currently installed.)
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 40176 files and directories currently installed.)
 Preparing to unpack .../libcurl4-openssl-dev_7.68.0-1ubuntu2.21_amd64.deb ...
 Unpacking libcurl4-openssl-dev:amd64 (7.68.0-1ubuntu2.21) ...
 Setting up libcurl4-openssl-dev:amd64 (7.68.0-1ubuntu2.21) ...
@@ -2752,13 +2750,13 @@ After this operation, 608 kB of additional disk space will be used.
 Get:1 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 zlib1g amd64 1:1.2.11.dfsg-2ubuntu1.5 [54.2 kB]
 Get:2 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 zlib1g-dev amd64 1:1.2.11.dfsg-2ubuntu1.5 [155 kB]
 debconf: delaying package configuration, since apt-utils is not installed
-Fetched 210 kB in 2s (94.6 kB/s)
-(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 40196 files and directories currently installed.)
+Fetched 210 kB in 1s (232 kB/s)
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 40197 files and directories currently installed.)
 Preparing to unpack .../zlib1g_1%3a1.2.11.dfsg-2ubuntu1.5_amd64.deb ...
 Unpacking zlib1g:amd64 (1:1.2.11.dfsg-2ubuntu1.5) over (1:1.2.11.dfsg-2ubuntu1.3) ...
 Setting up zlib1g:amd64 (1:1.2.11.dfsg-2ubuntu1.5) ...
 Selecting previously unselected package zlib1g-dev:amd64.
-(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 40196 files and directories currently installed.)
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 40197 files and directories currently installed.)
 Preparing to unpack .../zlib1g-dev_1%3a1.2.11.dfsg-2ubuntu1.5_amd64.deb ...
 Unpacking zlib1g-dev:amd64 (1:1.2.11.dfsg-2ubuntu1.5) ...
 Setting up zlib1g-dev:amd64 (1:1.2.11.dfsg-2ubuntu1.5) ...
@@ -2779,9 +2777,9 @@ Need to get 147 kB of archives.
 After this operation, 603 kB of additional disk space will be used.
 Get:1 http://archive.ubuntu.com/ubuntu focal-updates/main amd64 liblzma-dev amd64 5.2.4-1ubuntu1.1 [147 kB]
 debconf: delaying package configuration, since apt-utils is not installed
-Fetched 147 kB in 1s (143 kB/s)
+Fetched 147 kB in 1s (211 kB/s)
 Selecting previously unselected package liblzma-dev:amd64.
-(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 40225 files and directories currently installed.)
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 40226 files and directories currently installed.)
 Preparing to unpack .../liblzma-dev_5.2.4-1ubuntu1.1_amd64.deb ...
 Unpacking liblzma-dev:amd64 (5.2.4-1ubuntu1.1) ...
 Setting up liblzma-dev:amd64 (5.2.4-1ubuntu1.1) ...
@@ -2802,9 +2800,9 @@ After this operation, 719 kB of additional disk space will be used.
 Get:1 http://archive.ubuntu.com/ubuntu focal/main amd64 bzip2-doc all 1.0.8-2 [501 kB]
 Get:2 http://archive.ubuntu.com/ubuntu focal/main amd64 libbz2-dev amd64 1.0.8-2 [30.2 kB]
 debconf: delaying package configuration, since apt-utils is not installed
-Fetched 531 kB in 2s (255 kB/s)
+Fetched 531 kB in 1s (901 kB/s)
 Selecting previously unselected package bzip2-doc.
-(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 40265 files and directories currently installed.)
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 40266 files and directories currently installed.)
 Preparing to unpack .../bzip2-doc_1.0.8-2_all.deb ...
 Unpacking bzip2-doc (1.0.8-2) ...
 Selecting previously unselected package libbz2-dev:amd64.
@@ -2814,168 +2812,168 @@ Setting up bzip2-doc (1.0.8-2) ...
 Setting up libbz2-dev:amd64 (1.0.8-2) ...
 + cd /opt
 + wget https://github.com/samtools/bcftools/releases/download/1.17/bcftools-1.17.tar.bz2
---2024-01-15 12:09:32--  https://github.com/samtools/bcftools/releases/download/1.17/bcftools-1.17.tar.bz2
+--2024-01-19 11:32:20--  https://github.com/samtools/bcftools/releases/download/1.17/bcftools-1.17.tar.bz2
 Resolving github.com (github.com)... 140.82.121.3
 Connecting to github.com (github.com)|140.82.121.3|:443... connected.
 HTTP request sent, awaiting response... 302 Found
-Location: https://objects.githubusercontent.com/github-production-release-asset-2e65be/11368595/16f6ec2e-26b7-4d00-b7cb-6774ed9b70ec?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAVCODYLSA53PQK4ZA%2F20240115%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20240115T120933Z&X-Amz-Expires=300&X-Amz-Signature=c3cb86f3d3b3b66b35098730e0d35468f31989f97ef7874dde2d5519f5418e34&X-Amz-SignedHeaders=host&actor_id=0&key_id=0&repo_id=11368595&response-content-disposition=attachment%3B%20filename%3Dbcftools-1.17.tar.bz2&response-content-type=application%2Foctet-stream [following]
---2024-01-15 12:09:33--  https://objects.githubusercontent.com/github-production-release-asset-2e65be/11368595/16f6ec2e-26b7-4d00-b7cb-6774ed9b70ec?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAVCODYLSA53PQK4ZA%2F20240115%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20240115T120933Z&X-Amz-Expires=300&X-Amz-Signature=c3cb86f3d3b3b66b35098730e0d35468f31989f97ef7874dde2d5519f5418e34&X-Amz-SignedHeaders=host&actor_id=0&key_id=0&repo_id=11368595&response-content-disposition=attachment%3B%20filename%3Dbcftools-1.17.tar.bz2&response-content-type=application%2Foctet-stream
-Resolving objects.githubusercontent.com (objects.githubusercontent.com)... 185.199.111.133, 185.199.108.133, 185.199.109.133, ...
+Location: https://objects.githubusercontent.com/github-production-release-asset-2e65be/11368595/16f6ec2e-26b7-4d00-b7cb-6774ed9b70ec?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAVCODYLSA53PQK4ZA%2F20240119%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20240119T113329Z&X-Amz-Expires=300&X-Amz-Signature=2767e1a433df675cd333494395ed3f50f3dc718b73e8c618cae8d9f6bc393a23&X-Amz-SignedHeaders=host&actor_id=0&key_id=0&repo_id=11368595&response-content-disposition=attachment%3B%20filename%3Dbcftools-1.17.tar.bz2&response-content-type=application%2Foctet-stream [following]
+--2024-01-19 11:33:30--  https://objects.githubusercontent.com/github-production-release-asset-2e65be/11368595/16f6ec2e-26b7-4d00-b7cb-6774ed9b70ec?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAVCODYLSA53PQK4ZA%2F20240119%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20240119T113329Z&X-Amz-Expires=300&X-Amz-Signature=2767e1a433df675cd333494395ed3f50f3dc718b73e8c618cae8d9f6bc393a23&X-Amz-SignedHeaders=host&actor_id=0&key_id=0&repo_id=11368595&response-content-disposition=attachment%3B%20filename%3Dbcftools-1.17.tar.bz2&response-content-type=application%2Foctet-stream
+Resolving objects.githubusercontent.com (objects.githubusercontent.com)... 185.199.111.133, 185.199.110.133, 185.199.108.133, ...
 Connecting to objects.githubusercontent.com (objects.githubusercontent.com)|185.199.111.133|:443... connected.
 HTTP request sent, awaiting response... 200 OK
 Length: 7538043 (7.2M) [application/octet-stream]
 Saving to: 'bcftools-1.17.tar.bz2'
 
-     0K .......... .......... .......... .......... ..........  0% 47.3K 2m35s
-    50K .......... .......... .......... .......... ..........  1%  193K 96s
-   100K .......... .......... .......... .......... ..........  2%  250K 73s
-   150K .......... .......... .......... .......... ..........  2%  422K 59s
-   200K .......... .......... .......... .......... ..........  3%  516K 49s
-   250K .......... .......... .......... .......... ..........  4%  589K 43s
-   300K .......... .......... .......... .......... ..........  4%  420K 39s
-   350K .......... .......... .......... .......... ..........  5%  305K 37s
-   400K .......... .......... .......... .......... ..........  6%  446K 34s
-   450K .......... .......... .......... .......... ..........  6%  544K 32s
-   500K .......... .......... .......... .......... ..........  7%  379K 30s
-   550K .......... .......... .......... .......... ..........  8%  418K 29s
-   600K .......... .......... .......... .......... ..........  8% 1.01M 27s
-   650K .......... .......... .......... .......... ..........  9%  543K 26s
-   700K .......... .......... .......... .......... .......... 10%  481K 25s
-   750K .......... .......... .......... .......... .......... 10%  448K 24s
-   800K .......... .......... .......... .......... .......... 11%  815K 23s
-   850K .......... .......... .......... .......... .......... 12%  468K 22s
-   900K .......... .......... .......... .......... .......... 12%  655K 21s
-   950K .......... .......... .......... .......... .......... 13%  568K 21s
-  1000K .......... .......... .......... .......... .......... 14% 1.02M 20s
-  1050K .......... .......... .......... .......... .......... 14%  431K 19s
-  1100K .......... .......... .......... .......... .......... 15%  829K 19s
-  1150K .......... .......... .......... .......... .......... 16%  448K 18s
-  1200K .......... .......... .......... .......... .......... 16%  731K 18s
-  1250K .......... .......... .......... .......... .......... 17%  502K 17s
-  1300K .......... .......... .......... .......... .......... 18% 1.01M 17s
-  1350K .......... .......... .......... .......... .......... 19%  546K 17s
-  1400K .......... .......... .......... .......... .......... 19%  961K 16s
-  1450K .......... .......... .......... .......... .......... 20% 1.11M 16s
-  1500K .......... .......... .......... .......... .......... 21%  629K 15s
-  1550K .......... .......... .......... .......... .......... 21%  804K 15s
-  1600K .......... .......... .......... .......... .......... 22%  639K 15s
-  1650K .......... .......... .......... .......... .......... 23%  833K 14s
-  1700K .......... .......... .......... .......... .......... 23% 1.02M 14s
-  1750K .......... .......... .......... .......... .......... 24%  659K 14s
-  1800K .......... .......... .......... .......... .......... 25%  893K 13s
-  1850K .......... .......... .......... .......... .......... 25% 1.89M 13s
-  1900K .......... .......... .......... .......... .......... 26%  844K 13s
-  1950K .......... .......... .......... .......... .......... 27%  809K 12s
-  2000K .......... .......... .......... .......... .......... 27%  801K 12s
-  2050K .......... .......... .......... .......... .......... 28%  642K 12s
-  2100K .......... .......... .......... .......... .......... 29% 1.18M 12s
-  2150K .......... .......... .......... .......... .......... 29%  524K 11s
-  2200K .......... .......... .......... .......... .......... 30% 54.2M 11s
-  2250K .......... .......... .......... .......... .......... 31% 1.10M 11s
-  2300K .......... .......... .......... .......... .......... 31%  487K 11s
-  2350K .......... .......... .......... .......... .......... 32% 1.02M 10s
-  2400K .......... .......... .......... .......... .......... 33%  892K 10s
-  2450K .......... .......... .......... .......... .......... 33% 48.7M 10s
-  2500K .......... .......... .......... .......... .......... 34%  628K 10s
-  2550K .......... .......... .......... .......... .......... 35% 1.02M 10s
-  2600K .......... .......... .......... .......... .......... 35% 1.11M 9s
-  2650K .......... .......... .......... .......... .......... 36% 1.02M 9s
-  2700K .......... .......... .......... .......... .......... 37% 1.11M 9s
-  2750K .......... .......... .......... .......... .......... 38% 1.01M 9s
-  2800K .......... .......... .......... .......... .......... 38% 1.02M 9s
-  2850K .......... .......... .......... .......... .......... 39% 50.8M 8s
-  2900K .......... .......... .......... .......... .......... 40%  846K 8s
-  2950K .......... .......... .......... .......... .......... 40% 1.58M 8s
-  3000K .......... .......... .......... .......... .......... 41%  877K 8s
-  3050K .......... .......... .......... .......... .......... 42%  975K 8s
-  3100K .......... .......... .......... .......... .......... 42% 1.04M 8s
-  3150K .......... .......... .......... .......... .......... 43% 45.1M 7s
-  3200K .......... .......... .......... .......... .......... 44%  568K 7s
-  3250K .......... .......... .......... .......... .......... 44% 7.63M 7s
-  3300K .......... .......... .......... .......... .......... 45% 1.35M 7s
-  3350K .......... .......... .......... .......... .......... 46% 1.10M 7s
-  3400K .......... .......... .......... .......... .......... 46% 1.48M 7s
-  3450K .......... .......... .......... .......... .......... 47% 9.07M 7s
-  3500K .......... .......... .......... .......... .......... 48%  911K 6s
-  3550K .......... .......... .......... .......... .......... 48%  886K 6s
-  3600K .......... .......... .......... .......... .......... 49% 1.35M 6s
-  3650K .......... .......... .......... .......... .......... 50% 1.08M 6s
-  3700K .......... .......... .......... .......... .......... 50% 63.6M 6s
-  3750K .......... .......... .......... .......... .......... 51% 1005K 6s
-  3800K .......... .......... .......... .......... .......... 52% 1.02M 6s
-  3850K .......... .......... .......... .......... .......... 52% 17.5M 6s
-  3900K .......... .......... .......... .......... .......... 53% 1.20M 5s
-  3950K .......... .......... .......... .......... .......... 54% 1.06M 5s
-  4000K .......... .......... .......... .......... .......... 55% 1.46M 5s
-  4050K .......... .......... .......... .......... .......... 55% 61.6M 5s
-  4100K .......... .......... .......... .......... .......... 56% 1.09M 5s
-  4150K .......... .......... .......... .......... .......... 57% 1.04M 5s
-  4200K .......... .......... .......... .......... .......... 57% 72.5M 5s
-  4250K .......... .......... .......... .......... .......... 58% 1.09M 5s
-  4300K .......... .......... .......... .......... .......... 59% 4.93M 5s
-  4350K .......... .......... .......... .......... .......... 59%  921K 4s
-  4400K .......... .......... .......... .......... .......... 60% 1.15M 4s
-  4450K .......... .......... .......... .......... .......... 61% 51.9M 4s
-  4500K .......... .......... .......... .......... .......... 61% 1.38M 4s
-  4550K .......... .......... .......... .......... .......... 62% 1.35M 4s
-  4600K .......... .......... .......... .......... .......... 63% 3.61M 4s
-  4650K .......... .......... .......... .......... .......... 63% 1.14M 4s
-  4700K .......... .......... .......... .......... .......... 64% 7.60M 4s
-  4750K .......... .......... .......... .......... .......... 65%  914K 4s
-  4800K .......... .......... .......... .......... .......... 65% 69.3M 4s
-  4850K .......... .......... .......... .......... .......... 66% 1.41M 3s
-  4900K .......... .......... .......... .......... .......... 67% 2.17M 3s
-  4950K .......... .......... .......... .......... .......... 67% 1.35M 3s
-  5000K .......... .......... .......... .......... .......... 68% 1.51M 3s
-  5050K .......... .......... .......... .......... .......... 69% 5.61M 3s
-  5100K .......... .......... .......... .......... .......... 69% 1.33M 3s
-  5150K .......... .......... .......... .......... .......... 70% 1.29M 3s
-  5200K .......... .......... .......... .......... .......... 71% 63.3M 3s
-  5250K .......... .......... .......... .......... .......... 71% 1.28M 3s
-  5300K .......... .......... .......... .......... .......... 72% 8.47M 3s
-  5350K .......... .......... .......... .......... .......... 73% 1.43M 3s
-  5400K .......... .......... .......... .......... .......... 74% 4.00M 2s
-  5450K .......... .......... .......... .......... .......... 74% 1.53M 2s
-  5500K .......... .......... .......... .......... .......... 75% 1.07M 2s
-  5550K .......... .......... .......... .......... .......... 76% 57.6M 2s
-  5600K .......... .......... .......... .......... .......... 76% 1.38M 2s
-  5650K .......... .......... .......... .......... .......... 77% 2.02M 2s
-  5700K .......... .......... .......... .......... .......... 78% 7.81M 2s
-  5750K .......... .......... .......... .......... .......... 78% 1.81M 2s
-  5800K .......... .......... .......... .......... .......... 79% 1.23M 2s
-  5850K .......... .......... .......... .......... .......... 80% 55.0M 2s
-  5900K .......... .......... .......... .......... .......... 80% 1.43M 2s
-  5950K .......... .......... .......... .......... .......... 81% 1.91M 2s
-  6000K .......... .......... .......... .......... .......... 82% 1.58M 2s
-  6050K .......... .......... .......... .......... .......... 82% 52.1M 2s
-  6100K .......... .......... .......... .......... .......... 83% 1.52M 1s
-  6150K .......... .......... .......... .......... .......... 84% 58.1M 1s
-  6200K .......... .......... .......... .......... .......... 84% 1.32M 1s
-  6250K .......... .......... .......... .......... .......... 85% 9.13M 1s
-  6300K .......... .......... .......... .......... .......... 86% 1.47M 1s
-  6350K .......... .......... .......... .......... .......... 86% 1.87M 1s
-  6400K .......... .......... .......... .......... .......... 87% 44.0M 1s
-  6450K .......... .......... .......... .......... .......... 88% 1.93M 1s
-  6500K .......... .......... .......... .......... .......... 88% 3.88M 1s
-  6550K .......... .......... .......... .......... .......... 89% 1.49M 1s
-  6600K .......... .......... .......... .......... .......... 90% 1.88M 1s
-  6650K .......... .......... .......... .......... .......... 91% 67.3M 1s
-  6700K .......... .......... .......... .......... .......... 91% 1.27M 1s
-  6750K .......... .......... .......... .......... .......... 92% 7.89M 1s
-  6800K .......... .......... .......... .......... .......... 93% 2.32M 1s
-  6850K .......... .......... .......... .......... .......... 93% 4.96M 1s
-  6900K .......... .......... .......... .......... .......... 94% 1.60M 0s
-  6950K .......... .......... .......... .......... .......... 95% 56.1M 0s
-  7000K .......... .......... .......... .......... .......... 95% 1.26M 0s
-  7050K .......... .......... .......... .......... .......... 96% 7.90M 0s
-  7100K .......... .......... .......... .......... .......... 97% 1.45M 0s
-  7150K .......... .......... .......... .......... .......... 97% 8.58M 0s
-  7200K .......... .......... .......... .......... .......... 98% 1.93M 0s
-  7250K .......... .......... .......... .......... .......... 99% 13.2M 0s
-  7300K .......... .......... .......... .......... .......... 99% 1.06M 0s
-  7350K .......... .                                          100%  648K=7.9s
+     0K .......... .......... .......... .......... ..........  0% 1.35M 5s
+    50K .......... .......... .......... .......... ..........  1% 1.69M 5s
+   100K .......... .......... .......... .......... ..........  2% 4.04M 4s
+   150K .......... .......... .......... .......... ..........  2% 6.36M 3s
+   200K .......... .......... .......... .......... ..........  3% 3.99M 3s
+   250K .......... .......... .......... .......... ..........  4% 4.54M 3s
+   300K .......... .......... .......... .......... ..........  4% 10.4M 2s
+   350K .......... .......... .......... .......... ..........  5% 11.2M 2s
+   400K .......... .......... .......... .......... ..........  6% 5.35M 2s
+   450K .......... .......... .......... .......... ..........  6% 9.81M 2s
+   500K .......... .......... .......... .......... ..........  7% 12.7M 2s
+   550K .......... .......... .......... .......... ..........  8% 20.1M 2s
+   600K .......... .......... .......... .......... ..........  8% 2.36M 2s
+   650K .......... .......... .......... .......... ..........  9% 5.05M 2s
+   700K .......... .......... .......... .......... .......... 10% 11.4M 2s
+   750K .......... .......... .......... .......... .......... 10% 13.0M 1s
+   800K .......... .......... .......... .......... .......... 11% 77.5M 1s
+   850K .......... .......... .......... .......... .......... 12% 12.9M 1s
+   900K .......... .......... .......... .......... .......... 12% 5.66M 1s
+   950K .......... .......... .......... .......... .......... 13% 92.8M 1s
+  1000K .......... .......... .......... .......... .......... 14% 15.0M 1s
+  1050K .......... .......... .......... .......... .......... 14% 12.6M 1s
+  1100K .......... .......... .......... .......... .......... 15% 12.3M 1s
+  1150K .......... .......... .......... .......... .......... 16% 12.6M 1s
+  1200K .......... .......... .......... .......... .......... 16% 13.6M 1s
+  1250K .......... .......... .......... .......... .......... 17% 79.0M 1s
+  1300K .......... .......... .......... .......... .......... 18% 6.26M 1s
+  1350K .......... .......... .......... .......... .......... 19% 99.1M 1s
+  1400K .......... .......... .......... .......... .......... 19% 3.70M 1s
+  1450K .......... .......... .......... .......... .......... 20% 13.4M 1s
+  1500K .......... .......... .......... .......... .......... 21% 1.08M 1s
+  1550K .......... .......... .......... .......... .......... 21% 12.2M 1s
+  1600K .......... .......... .......... .......... .......... 22% 8.56M 1s
+  1650K .......... .......... .......... .......... .......... 23% 4.66M 1s
+  1700K .......... .......... .......... .......... .......... 23% 13.2M 1s
+  1750K .......... .......... .......... .......... .......... 24% 12.3M 1s
+  1800K .......... .......... .......... .......... .......... 25% 90.6M 1s
+  1850K .......... .......... .......... .......... .......... 25% 12.1M 1s
+  1900K .......... .......... .......... .......... .......... 26% 12.2M 1s
+  1950K .......... .......... .......... .......... .......... 27% 13.1M 1s
+  2000K .......... .......... .......... .......... .......... 27% 12.0M 1s
+  2050K .......... .......... .......... .......... .......... 28% 10.6M 1s
+  2100K .......... .......... .......... .......... .......... 29% 73.5M 1s
+  2150K .......... .......... .......... .......... .......... 29% 12.5M 1s
+  2200K .......... .......... .......... .......... .......... 30% 8.53M 1s
+  2250K .......... .......... .......... .......... .......... 31% 9.87M 1s
+  2300K .......... .......... .......... .......... .......... 31% 12.5M 1s
+  2350K .......... .......... .......... .......... .......... 32% 4.70M 1s
+  2400K .......... .......... .......... .......... .......... 33% 2.42M 1s
+  2450K .......... .......... .......... .......... .......... 33% 10.8M 1s
+  2500K .......... .......... .......... .......... .......... 34% 12.3M 1s
+  2550K .......... .......... .......... .......... .......... 35% 6.42M 1s
+  2600K .......... .......... .......... .......... .......... 35% 90.8M 1s
+  2650K .......... .......... .......... .......... .......... 36% 13.3M 1s
+  2700K .......... .......... .......... .......... .......... 37% 12.6M 1s
+  2750K .......... .......... .......... .......... .......... 38% 13.0M 1s
+  2800K .......... .......... .......... .......... .......... 38% 10.1M 1s
+  2850K .......... .......... .......... .......... .......... 39% 12.6M 1s
+  2900K .......... .......... .......... .......... .......... 40% 11.7M 1s
+  2950K .......... .......... .......... .......... .......... 40% 78.4M 1s
+  3000K .......... .......... .......... .......... .......... 41% 10.9M 1s
+  3050K .......... .......... .......... .......... .......... 42% 1.72M 1s
+  3100K .......... .......... .......... .......... .......... 42% 1.06M 1s
+  3150K .......... .......... .......... .......... .......... 43% 12.5M 1s
+  3200K .......... .......... .......... .......... .......... 44% 11.6M 1s
+  3250K .......... .......... .......... .......... .......... 44% 75.0M 1s
+  3300K .......... .......... .......... .......... .......... 45% 10.5M 1s
+  3350K .......... .......... .......... .......... .......... 46% 12.5M 1s
+  3400K .......... .......... .......... .......... .......... 46% 12.3M 1s
+  3450K .......... .......... .......... .......... .......... 47% 13.6M 1s
+  3500K .......... .......... .......... .......... .......... 48% 10.7M 1s
+  3550K .......... .......... .......... .......... .......... 48% 79.9M 1s
+  3600K .......... .......... .......... .......... .......... 49% 9.60M 1s
+  3650K .......... .......... .......... .......... .......... 50% 12.2M 1s
+  3700K .......... .......... .......... .......... .......... 50% 12.0M 1s
+  3750K .......... .......... .......... .......... .......... 51% 13.2M 1s
+  3800K .......... .......... .......... .......... .......... 52% 11.6M 1s
+  3850K .......... .......... .......... .......... .......... 52% 88.8M 0s
+  3900K .......... .......... .......... .......... .......... 53% 7.76M 0s
+  3950K .......... .......... .......... .......... .......... 54% 2.47M 0s
+  4000K .......... .......... .......... .......... .......... 55% 80.3M 0s
+  4050K .......... .......... .......... .......... .......... 55% 17.9K 3s
+  4100K .......... .......... .......... .......... .......... 56%  346M 3s
+  4150K .......... .......... .......... .......... .......... 57%  486M 3s
+  4200K .......... .......... .......... .......... .......... 57%  172M 2s
+  4250K .......... .......... .......... .......... .......... 58%  521M 2s
+  4300K .......... .......... .......... .......... .......... 59%  427M 2s
+  4350K .......... .......... .......... .......... .......... 59%  521M 2s
+  4400K .......... .......... .......... .......... .......... 60%  469M 2s
+  4450K .......... .......... .......... .......... .......... 61%  497M 2s
+  4500K .......... .......... .......... .......... .......... 61%  260M 2s
+  4550K .......... .......... .......... .......... .......... 62%  406M 2s
+  4600K .......... .......... .......... .......... .......... 63%  416M 2s
+  4650K .......... .......... .......... .......... .......... 63%  417M 2s
+  4700K .......... .......... .......... .......... .......... 64% 1.67M 2s
+  4750K .......... .......... .......... .......... .......... 65% 2.37M 2s
+  4800K .......... .......... .......... .......... .......... 65% 3.51M 2s
+  4850K .......... .......... .......... .......... .......... 66% 6.82M 2s
+  4900K .......... .......... .......... .......... .......... 67% 2.90M 2s
+  4950K .......... .......... .......... .......... .......... 67% 7.30M 2s
+  5000K .......... .......... .......... .......... .......... 68% 6.30M 2s
+  5050K .......... .......... .......... .......... .......... 69%  314M 2s
+  5100K .......... .......... .......... .......... .......... 69% 7.99M 1s
+  5150K .......... .......... .......... .......... .......... 70% 12.5M 1s
+  5200K .......... .......... .......... .......... .......... 71% 1.78M 1s
+  5250K .......... .......... .......... .......... .......... 71%  231M 1s
+  5300K .......... .......... .......... .......... .......... 72% 10.9M 1s
+  5350K .......... .......... .......... .......... .......... 73% 12.4M 1s
+  5400K .......... .......... .......... .......... .......... 74% 12.4M 1s
+  5450K .......... .......... .......... .......... .......... 74% 12.7M 1s
+  5500K .......... .......... .......... .......... .......... 75% 2.78M 1s
+  5550K .......... .......... .......... .......... .......... 76%  221M 1s
+  5600K .......... .......... .......... .......... .......... 76%  309M 1s
+  5650K .......... .......... .......... .......... .......... 77% 13.8M 1s
+  5700K .......... .......... .......... .......... .......... 78%  227M 1s
+  5750K .......... .......... .......... .......... .......... 78% 1.67M 1s
+  5800K .......... .......... .......... .......... .......... 79% 12.4M 1s
+  5850K .......... .......... .......... .......... .......... 80% 12.9M 1s
+  5900K .......... .......... .......... .......... .......... 80% 12.1M 1s
+  5950K .......... .......... .......... .......... .......... 81% 6.00M 1s
+  6000K .......... .......... .......... .......... .......... 82% 10.2M 1s
+  6050K .......... .......... .......... .......... .......... 82%  221M 1s
+  6100K .......... .......... .......... .......... .......... 83% 9.05M 1s
+  6150K .......... .......... .......... .......... .......... 84% 12.9M 1s
+  6200K .......... .......... .......... .......... .......... 84% 12.7M 1s
+  6250K .......... .......... .......... .......... .......... 85% 11.2M 1s
+  6300K .......... .......... .......... .......... .......... 86% 18.5M 1s
+  6350K .......... .......... .......... .......... .......... 86% 8.37M 1s
+  6400K .......... .......... .......... .......... .......... 87% 3.45M 1s
+  6450K .......... .......... .......... .......... .......... 88%  120M 0s
+  6500K .......... .......... .......... .......... .......... 88% 10.7M 0s
+  6550K .......... .......... .......... .......... .......... 89%  196M 0s
+  6600K .......... .......... .......... .......... .......... 90% 6.05M 0s
+  6650K .......... .......... .......... .......... .......... 91% 13.2M 0s
+  6700K .......... .......... .......... .......... .......... 91% 4.66M 0s
+  6750K .......... .......... .......... .......... .......... 92% 12.8M 0s
+  6800K .......... .......... .......... .......... .......... 93% 12.3M 0s
+  6850K .......... .......... .......... .......... .......... 93% 13.4M 0s
+  6900K .......... .......... .......... .......... .......... 94%  115M 0s
+  6950K .......... .......... .......... .......... .......... 95% 6.23M 0s
+  7000K .......... .......... .......... .......... .......... 95% 88.6M 0s
+  7050K .......... .......... .......... .......... .......... 96% 13.0M 0s
+  7100K .......... .......... .......... .......... .......... 97% 12.6M 0s
+  7150K .......... .......... .......... .......... .......... 97% 6.42M 0s
+  7200K .......... .......... .......... .......... .......... 98%  154M 0s
+  7250K .......... .......... .......... .......... .......... 99% 18.0M 0s
+  7300K .......... .......... .......... .......... .......... 99% 5.33M 0s
+  7350K .......... .                                          100%  142M=3.7s
 
-2024-01-15 12:09:43 (931 KB/s) - 'bcftools-1.17.tar.bz2' saved [7538043/7538043]
+2024-01-19 11:33:34 (1.93 MB/s) - 'bcftools-1.17.tar.bz2' saved [7538043/7538043]
 
 + tar -xf bcftools-1.17.tar.bz2
 + cd bcftools-1.17
@@ -3253,111 +3251,111 @@ install -p plugins/*.so /opt/bcftools-1.17/libexec/bcftools
 + cd
 + cd /opt
 + wget https://github.com/samtools/htslib/releases/download/1.17/htslib-1.17.tar.bz2
---2024-01-15 12:10:28--  https://github.com/samtools/htslib/releases/download/1.17/htslib-1.17.tar.bz2
-Resolving github.com (github.com)... 140.82.121.4
-Connecting to github.com (github.com)|140.82.121.4|:443... connected.
+--2024-01-19 11:34:19--  https://github.com/samtools/htslib/releases/download/1.17/htslib-1.17.tar.bz2
+Resolving github.com (github.com)... 140.82.121.3
+Connecting to github.com (github.com)|140.82.121.3|:443... connected.
 HTTP request sent, awaiting response... 302 Found
-Location: https://objects.githubusercontent.com/github-production-release-asset-2e65be/4339773/9436fb23-700c-4972-a01f-bd0d49f361aa?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAVCODYLSA53PQK4ZA%2F20240115%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20240115T121029Z&X-Amz-Expires=300&X-Amz-Signature=3cff7d7fd5ff4581731fbb7f82afb7bcc87524683ff80be84a8d78dce79af9e0&X-Amz-SignedHeaders=host&actor_id=0&key_id=0&repo_id=4339773&response-content-disposition=attachment%3B%20filename%3Dhtslib-1.17.tar.bz2&response-content-type=application%2Foctet-stream [following]
---2024-01-15 12:10:29--  https://objects.githubusercontent.com/github-production-release-asset-2e65be/4339773/9436fb23-700c-4972-a01f-bd0d49f361aa?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAVCODYLSA53PQK4ZA%2F20240115%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20240115T121029Z&X-Amz-Expires=300&X-Amz-Signature=3cff7d7fd5ff4581731fbb7f82afb7bcc87524683ff80be84a8d78dce79af9e0&X-Amz-SignedHeaders=host&actor_id=0&key_id=0&repo_id=4339773&response-content-disposition=attachment%3B%20filename%3Dhtslib-1.17.tar.bz2&response-content-type=application%2Foctet-stream
-Resolving objects.githubusercontent.com (objects.githubusercontent.com)... 185.199.109.133, 185.199.108.133, 185.199.110.133, ...
-Connecting to objects.githubusercontent.com (objects.githubusercontent.com)|185.199.109.133|:443... connected.
+Location: https://objects.githubusercontent.com/github-production-release-asset-2e65be/4339773/9436fb23-700c-4972-a01f-bd0d49f361aa?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAVCODYLSA53PQK4ZA%2F20240119%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20240119T113419Z&X-Amz-Expires=300&X-Amz-Signature=48c0db1033020cc876140c0ae34e247b49f2eb3ea2d2c25244938b7e13d353f1&X-Amz-SignedHeaders=host&actor_id=0&key_id=0&repo_id=4339773&response-content-disposition=attachment%3B%20filename%3Dhtslib-1.17.tar.bz2&response-content-type=application%2Foctet-stream [following]
+--2024-01-19 11:34:19--  https://objects.githubusercontent.com/github-production-release-asset-2e65be/4339773/9436fb23-700c-4972-a01f-bd0d49f361aa?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAVCODYLSA53PQK4ZA%2F20240119%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20240119T113419Z&X-Amz-Expires=300&X-Amz-Signature=48c0db1033020cc876140c0ae34e247b49f2eb3ea2d2c25244938b7e13d353f1&X-Amz-SignedHeaders=host&actor_id=0&key_id=0&repo_id=4339773&response-content-disposition=attachment%3B%20filename%3Dhtslib-1.17.tar.bz2&response-content-type=application%2Foctet-stream
+Resolving objects.githubusercontent.com (objects.githubusercontent.com)... 185.199.108.133, 185.199.111.133, 185.199.109.133, ...
+Connecting to objects.githubusercontent.com (objects.githubusercontent.com)|185.199.108.133|:443... connected.
 HTTP request sent, awaiting response... 200 OK
 Length: 4619884 (4.4M) [application/octet-stream]
 Saving to: 'htslib-1.17.tar.bz2'
 
-     0K .......... .......... .......... .......... ..........  1% 46.6K 96s
-    50K .......... .......... .......... .......... ..........  2%  183K 59s
-   100K .......... .......... .......... .......... ..........  3%  254K 45s
-   150K .......... .......... .......... .......... ..........  4%  431K 36s
-   200K .......... .......... .......... .......... ..........  5%  520K 30s
-   250K .......... .......... .......... .......... ..........  6%  536K 26s
-   300K .......... .......... .......... .......... ..........  7%  541K 23s
-   350K .......... .......... .......... .......... ..........  8%  305K 22s
-   400K .......... .......... .......... .......... ..........  9%  395K 20s
-   450K .......... .......... .......... .......... .......... 11%  375K 19s
-   500K .......... .......... .......... .......... .......... 12%  543K 18s
-   550K .......... .......... .......... .......... .......... 13%  463K 17s
-   600K .......... .......... .......... .......... .......... 14%  734K 16s
-   650K .......... .......... .......... .......... .......... 15%  480K 15s
-   700K .......... .......... .......... .......... .......... 16%  568K 14s
-   750K .......... .......... .......... .......... .......... 17%  358K 14s
-   800K .......... .......... .......... .......... .......... 18%  958K 13s
-   850K .......... .......... .......... .......... .......... 19%  464K 13s
-   900K .......... .......... .......... .......... .......... 21% 1.11M 12s
-   950K .......... .......... .......... .......... .......... 22%  704K 11s
-  1000K .......... .......... .......... .......... .......... 23%  414K 11s
-  1050K .......... .......... .......... .......... .......... 24%  955K 11s
-  1100K .......... .......... .......... .......... .......... 25%  522K 10s
-  1150K .......... .......... .......... .......... .......... 26%  959K 10s
-  1200K .......... .......... .......... .......... .......... 27%  403K 10s
-  1250K .......... .......... .......... .......... .......... 28% 1.12M 9s
-  1300K .......... .......... .......... .......... .......... 29%  291K 9s
-  1350K .......... .......... .......... .......... .......... 31%  734K 9s
-  1400K .......... .......... .......... .......... .......... 32%  625K 9s
-  1450K .......... .......... .......... .......... .......... 33%  960K 8s
-  1500K .......... .......... .......... .......... .......... 34%  959K 8s
-  1550K .......... .......... .......... .......... .......... 35% 1.02M 8s
-  1600K .......... .......... .......... .......... .......... 36%  595K 7s
-  1650K .......... .......... .......... .......... .......... 37% 1.01M 7s
-  1700K .......... .......... .......... .......... .......... 38%  548K 7s
-  1750K .......... .......... .......... .......... .......... 39% 1.02M 7s
-  1800K .......... .......... .......... .......... .......... 41% 1.74M 6s
-  1850K .......... .......... .......... .......... .......... 42%  521K 6s
-  1900K .......... .......... .......... .......... .......... 43%  963K 6s
-  1950K .......... .......... .......... .......... .......... 44% 1.27M 6s
-  2000K .......... .......... .......... .......... .......... 45%  808K 6s
-  2050K .......... .......... .......... .......... .......... 46% 4.64M 5s
-  2100K .......... .......... .......... .......... .......... 47%  680K 5s
-  2150K .......... .......... .......... .......... .......... 48% 1.57M 5s
-  2200K .......... .......... .......... .......... .......... 49% 1023K 5s
-  2250K .......... .......... .......... .......... .......... 50%  896K 5s
-  2300K .......... .......... .......... .......... .......... 52% 1.10M 5s
-  2350K .......... .......... .......... .......... .......... 53%  907K 4s
-  2400K .......... .......... .......... .......... .......... 54% 1.08M 4s
-  2450K .......... .......... .......... .......... .......... 55% 1.11M 4s
-  2500K .......... .......... .......... .......... .......... 56%  895K 4s
-  2550K .......... .......... .......... .......... .......... 57%  802K 4s
-  2600K .......... .......... .......... .......... .......... 58% 68.3M 4s
-  2650K .......... .......... .......... .......... .......... 59%  941K 4s
-  2700K .......... .......... .......... .......... .......... 60% 1.02M 3s
-  2750K .......... .......... .......... .......... .......... 62%  628K 3s
-  2800K .......... .......... .......... .......... .......... 63% 60.5M 3s
-  2850K .......... .......... .......... .......... .......... 64% 1.03M 3s
-  2900K .......... .......... .......... .......... .......... 65%  962K 3s
-  2950K .......... .......... .......... .......... .......... 66% 1.54M 3s
-  3000K .......... .......... .......... .......... .......... 67% 1.44M 3s
-  3050K .......... .......... .......... .......... .......... 68% 1.23M 3s
-  3100K .......... .......... .......... .......... .......... 69% 1.03M 2s
-  3150K .......... .......... .......... .......... .......... 70% 1002K 2s
-  3200K .......... .......... .......... .......... .......... 72% 47.4M 2s
-  3250K .......... .......... .......... .......... .......... 73% 1.94M 2s
-  3300K .......... .......... .......... .......... .......... 74% 1.09M 2s
-  3350K .......... .......... .......... .......... .......... 75%  841K 2s
-  3400K .......... .......... .......... .......... .......... 76% 64.0M 2s
-  3450K .......... .......... .......... .......... .......... 77% 1.08M 2s
-  3500K .......... .......... .......... .......... .......... 78% 4.15M 2s
-  3550K .......... .......... .......... .......... .......... 79%  530K 2s
-  3600K .......... .......... .......... .......... .......... 80% 50.0M 1s
-  3650K .......... .......... .......... .......... .......... 82% 1.40M 1s
-  3700K .......... .......... .......... .......... .......... 83% 1.05M 1s
-  3750K .......... .......... .......... .......... .......... 84% 50.2M 1s
-  3800K .......... .......... .......... .......... .......... 85%  879K 1s
-  3850K .......... .......... .......... .......... .......... 86% 1.48M 1s
-  3900K .......... .......... .......... .......... .......... 87% 44.0M 1s
-  3950K .......... .......... .......... .......... .......... 88% 1.23M 1s
-  4000K .......... .......... .......... .......... .......... 89% 45.2M 1s
-  4050K .......... .......... .......... .......... .......... 90% 1.01M 1s
-  4100K .......... .......... .......... .......... .......... 91%  765K 1s
-  4150K .......... .......... .......... .......... .......... 93% 12.4M 0s
-  4200K .......... .......... .......... .......... .......... 94% 12.2M 0s
-  4250K .......... .......... .......... .......... .......... 95% 1.06M 0s
-  4300K .......... .......... .......... .......... .......... 96%  957K 0s
-  4350K .......... .......... .......... .......... .......... 97% 4.65M 0s
-  4400K .......... .......... .......... .......... .......... 98% 1.72M 0s
-  4450K .......... .......... .......... .......... .......... 99% 1014K 0s
-  4500K .......... .                                          100% 75.7M=6.6s
+     0K .......... .......... .......... .......... ..........  1% 1.71M 3s
+    50K .......... .......... .......... .......... ..........  2% 1.64M 3s
+   100K .......... .......... .......... .......... ..........  3% 5.71M 2s
+   150K .......... .......... .......... .......... ..........  4% 10.8M 2s
+   200K .......... .......... .......... .......... ..........  5% 2.69M 2s
+   250K .......... .......... .......... .......... ..........  6% 3.35M 1s
+   300K .......... .......... .......... .......... ..........  7% 56.8M 1s
+   350K .......... .......... .......... .......... ..........  8% 5.15M 1s
+   400K .......... .......... .......... .......... ..........  9% 12.2M 1s
+   450K .......... .......... .......... .......... .......... 11% 15.3M 1s
+   500K .......... .......... .......... .......... .......... 12% 31.3M 1s
+   550K .......... .......... .......... .......... .......... 13% 4.62M 1s
+   600K .......... .......... .......... .......... .......... 14% 1.63M 1s
+   650K .......... .......... .......... .......... .......... 15% 15.3M 1s
+   700K .......... .......... .......... .......... .......... 16% 11.8M 1s
+   750K .......... .......... .......... .......... .......... 17% 12.5M 1s
+   800K .......... .......... .......... .......... .......... 18% 10.1M 1s
+   850K .......... .......... .......... .......... .......... 19%  141M 1s
+   900K .......... .......... .......... .......... .......... 21% 6.09M 1s
+   950K .......... .......... .......... .......... .......... 22%  121M 1s
+  1000K .......... .......... .......... .......... .......... 23% 7.99M 1s
+  1050K .......... .......... .......... .......... .......... 24% 3.50M 1s
+  1100K .......... .......... .......... .......... .......... 25% 4.98M 1s
+  1150K .......... .......... .......... .......... .......... 26% 83.7M 1s
+  1200K .......... .......... .......... .......... .......... 27% 14.1M 1s
+  1250K .......... .......... .......... .......... .......... 28% 12.0M 1s
+  1300K .......... .......... .......... .......... .......... 29% 5.97M 1s
+  1350K .......... .......... .......... .......... .......... 31% 11.4M 1s
+  1400K .......... .......... .......... .......... .......... 32% 97.9M 1s
+  1450K .......... .......... .......... .......... .......... 33% 5.41M 0s
+  1500K .......... .......... .......... .......... .......... 34% 85.9M 0s
+  1550K .......... .......... .......... .......... .......... 35% 5.53M 0s
+  1600K .......... .......... .......... .......... .......... 36% 11.1M 0s
+  1650K .......... .......... .......... .......... .......... 37% 77.4M 0s
+  1700K .......... .......... .......... .......... .......... 38% 6.52M 0s
+  1750K .......... .......... .......... .......... .......... 39% 83.2M 0s
+  1800K .......... .......... .......... .......... .......... 41% 5.35M 0s
+  1850K .......... .......... .......... .......... .......... 42% 73.4M 0s
+  1900K .......... .......... .......... .......... .......... 43% 14.8M 0s
+  1950K .......... .......... .......... .......... .......... 44% 12.6M 0s
+  2000K .......... .......... .......... .......... .......... 45% 11.4M 0s
+  2050K .......... .......... .......... .......... .......... 46% 11.9M 0s
+  2100K .......... .......... .......... .......... .......... 47% 12.2M 0s
+  2150K .......... .......... .......... .......... .......... 48% 6.28M 0s
+  2200K .......... .......... .......... .......... .......... 49% 9.50M 0s
+  2250K .......... .......... .......... .......... .......... 50% 6.16M 0s
+  2300K .......... .......... .......... .......... .......... 52% 91.7M 0s
+  2350K .......... .......... .......... .......... .......... 53% 5.65M 0s
+  2400K .......... .......... .......... .......... .......... 54% 75.9M 0s
+  2450K .......... .......... .......... .......... .......... 55% 4.51M 0s
+  2500K .......... .......... .......... .......... .......... 56% 88.3M 0s
+  2550K .......... .......... .......... .......... .......... 57% 7.07M 0s
+  2600K .......... .......... .......... .......... .......... 58% 5.55M 0s
+  2650K .......... .......... .......... .......... .......... 59% 73.0M 0s
+  2700K .......... .......... .......... .......... .......... 60% 5.62M 0s
+  2750K .......... .......... .......... .......... .......... 62% 88.0M 0s
+  2800K .......... .......... .......... .......... .......... 63% 7.11M 0s
+  2850K .......... .......... .......... .......... .......... 64% 79.9M 0s
+  2900K .......... .......... .......... .......... .......... 65% 6.81M 0s
+  2950K .......... .......... .......... .......... .......... 66% 82.5M 0s
+  3000K .......... .......... .......... .......... .......... 67% 7.67M 0s
+  3050K .......... .......... .......... .......... .......... 68% 80.9M 0s
+  3100K .......... .......... .......... .......... .......... 69% 7.63M 0s
+  3150K .......... .......... .......... .......... .......... 70% 74.3M 0s
+  3200K .......... .......... .......... .......... .......... 72% 2.79M 0s
+  3250K .......... .......... .......... .......... .......... 73% 8.60M 0s
+  3300K .......... .......... .......... .......... .......... 74% 5.93M 0s
+  3350K .......... .......... .......... .......... .......... 75% 12.4M 0s
+  3400K .......... .......... .......... .......... .......... 76% 82.7M 0s
+  3450K .......... .......... .......... .......... .......... 77% 4.92M 0s
+  3500K .......... .......... .......... .......... .......... 78% 92.8M 0s
+  3550K .......... .......... .......... .......... .......... 79% 13.4M 0s
+  3600K .......... .......... .......... .......... .......... 80% 14.2M 0s
+  3650K .......... .......... .......... .......... .......... 82% 6.05M 0s
+  3700K .......... .......... .......... .......... .......... 83% 8.95M 0s
+  3750K .......... .......... .......... .......... .......... 84% 5.73M 0s
+  3800K .......... .......... .......... .......... .......... 85% 95.3M 0s
+  3850K .......... .......... .......... .......... .......... 86% 13.2M 0s
+  3900K .......... .......... .......... .......... .......... 87% 6.34M 0s
+  3950K .......... .......... .......... .......... .......... 88% 12.9M 0s
+  4000K .......... .......... .......... .......... .......... 89% 95.4M 0s
+  4050K .......... .......... .......... .......... .......... 90% 13.2M 0s
+  4100K .......... .......... .......... .......... .......... 91% 10.7M 0s
+  4150K .......... .......... .......... .......... .......... 93% 13.0M 0s
+  4200K .......... .......... .......... .......... .......... 94% 3.26M 0s
+  4250K .......... .......... .......... .......... .......... 95% 7.29M 0s
+  4300K .......... .......... .......... .......... .......... 96% 11.5M 0s
+  4350K .......... .......... .......... .......... .......... 97% 15.8M 0s
+  4400K .......... .......... .......... .......... .......... 98% 17.7M 0s
+  4450K .......... .......... .......... .......... .......... 99% 23.1M 0s
+  4500K .......... .                                          100% 66.0M=0.5s
 
-2024-01-15 12:10:36 (687 KB/s) - 'htslib-1.17.tar.bz2' saved [4619884/4619884]
+2024-01-19 11:34:20 (8.23 MB/s) - 'htslib-1.17.tar.bz2' saved [4619884/4619884]
 
 + tar -xf htslib-1.17.tar.bz2
 + cd htslib-1.17
@@ -3621,7 +3619,6 @@ install -p -m 644 bgzip.1 htsfile.1 tabix.1 /opt/htslib-1.17/share/man/man1
 install -p -m 644 faidx.5 sam.5 vcf.5 /opt/htslib-1.17/share/man/man5
 install -p -m 644 htslib-s3-plugin.7 /opt/htslib-1.17/share/man/man7
 + cd
-+ chmod +x /opt/scripts/01d_hap_map_calcs.py
 INFO:    Adding labels
 INFO:    Adding environment to container
 INFO:    Adding runscript

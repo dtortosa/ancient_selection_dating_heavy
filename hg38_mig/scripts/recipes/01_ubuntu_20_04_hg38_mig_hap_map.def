@@ -20,7 +20,7 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 	#The first time I got an error "cannot create directory ‘/opt/data’: Not a directory". It seems that there is a file called "data", and when you have a file called like the folder you are trying to create, you get error ("https://stackoverflow.com/questions/14496897/mkdir-p-fails-when-directory-exists"). Therefore I did "rm /opt/data" and everything works.
 	#Note that some files that were created in initial containers remained, like the "test" folder or "eso.txt". I have removed those too.
  	#mkdir -p /opt/data
- 	mkdir -p /opt/scripts
+ 	#mkdir -p /opt/scripts
 
 
 
@@ -42,7 +42,7 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 	/home/dftortosa/diego_docs/science/other_projects/australian_army_bishop/heavy_analyses/australian_army_bishop/plink_versions/plink2_linux_x86_64_20230531/plink2 /bin/plink2
 
 	#copy scripts
-    /home/dftortosa/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating_heavy_analyses/dating_climate_adaptation/hg38_mig/scripts/01d_hap_map_calcs.py /opt/scripts/01d_hap_map_calcs.py
+    #/home/dftortosa/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating_heavy_analyses/dating_climate_adaptation/hg38_mig/scripts/01d_hap_map_calcs.py /opt/scripts/01d_hap_map_calcs.py
 
     #From the original folder in the host, we copy a R script to a new folder in the container called scripts. NEVER PUT ANYTHING ELSE IN THE LINE WITH SOURCE AND DESTINATION, GIVES ERROR.
     #https://groups.google.com/a/lbl.gov/forum/#!topic/singularity/4NFDsohnxgg
@@ -208,7 +208,7 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 
 
 	##give rights to run script
-	chmod +x /opt/scripts/01d_hap_map_calcs.py
+	#chmod +x /opt/scripts/01d_hap_map_calcs.py
 
 
 
@@ -262,7 +262,7 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 %runscript
 
 	#run scripts. NOT USE "&", each script have to be run after the previous one have been run
-	/opt/scripts/01d_hap_map_calcs.py > ./scripts/01d_hap_map_calcs.out 2>&1
+	#/opt/scripts/01d_hap_map_calcs.py > ./scripts/01d_hap_map_calcs.out 2>&1
 		#to get output and errors in the same file
 		#see bash script for details
 

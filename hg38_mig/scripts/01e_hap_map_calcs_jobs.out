@@ -1,0 +1,88 @@
+
+#######################################
+#######################################
+checking function to print nicely: header 1
+#######################################
+#######################################
+
+###### checking function to print nicely: header 2 ######
+
+## checking function to print nicely: header 3 ##
+
+# checking function to print nicely: header 4 #
+
+#######################################
+#######################################
+see working directory
+#######################################
+#######################################
+/home/dftortosa/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating_heavy_analyses/dating_climate_adaptation/hg38_mig
+
+
+#######################################
+#######################################
+list files/folders there
+#######################################
+#######################################
+00b_ubuntu_20_04_hg38_mig_map_across_chrom.sif
+00_ubuntu_20_04_hg38_mig_vep_ancestral.sif
+01_ubuntu_20_04_hg38_mig_hap_map.sif
+data
+results
+scripts
+to_do_hg38_mig.md
+
+
+#######################################
+#######################################
+Preparate pedigree data
+#######################################
+#######################################
+
+#######################################
+#######################################
+Calculate the files
+#######################################
+#######################################
+
+
+#######################################
+#######################################
+check we have all files
+#######################################
+#######################################
+27
+
+qsub
+qsub
+qsub
+qsub
+qsub
+qsub
+qsub
+qsub
+qsub
+qsub
+qsub
+qsub
+qsub
+qsub
+qsub
+qsub
+qsub
+qsub
+qsub
+qsub
+qsub
+qsub
+qsub
+qsub
+qsub
+qsub
+
+
+#######################################
+#######################################
+FINISH
+#######################################
+#######################################
