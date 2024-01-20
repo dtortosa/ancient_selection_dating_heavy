@@ -4140,5 +4140,9 @@ print_text("Next steps", header=1)
 #check number of snps lost and if false, error, finish...
 #once you are finished here, according to david, you can check whether the REF/ALT alleles match between the old and new hap files, but taking into account we have different coordinated, hg19 vs hg38
     ##i guess you could take the old map files, convert to hg38 coordinates and then see if the REF/ALT columns are the same than in the new map files
+#I have detected a SNP with genetic position of zero
+    #in chromsome 10. The first SNP at position 616253 has 0 cM, while the second SNP a few hundred bases away has a cM of 9.5723387155704e-43, pretty low but no zero.
+    #in chromosome 4 the same, first SNP at zero, and the next at 4.12e-108
+    #I guess this is a matter of decimals, should I check this in more detail?
 #ask David about the accesibility mask of the next step. We already losing a lot of SNPs with the filters...
     #we have NOT applied it

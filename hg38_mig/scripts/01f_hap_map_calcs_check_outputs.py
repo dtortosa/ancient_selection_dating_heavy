@@ -315,6 +315,43 @@ for combination in full_combinations_pop_chroms:
         raise ValueError("ERROR! FALSE! THE PERCENTAGE OF SNPS LOST IS 90 OR HIGHER FOR COMBINATION " + combination)
     remaining_snps=int(row_results_split[8])-int(row_results_split[5])
 
+    print_text("check we have the correct number of SNPs and samples in the hap and the map files", header=4)
+    print("calculate the number of rows (SNPs) and columns (samples*2) in the hap file")
+    hap_shape=run_bash("\
+        awk \
+            'BEGIN{ \
+                FS=OFS=\" \" \
+            }END{ \
+                print NR,NF\
+            }' \
+            <( \
+                gunzip \
+                    --stdout \
+                    ./results/03_hap_map_files/" + comb_pop + "/chr" + comb_chrom + "/chr" + comb_chrom + "_" + comb_pop + "_IMPUTE2.hap.gz \
+            )", return_value=True).strip()
+    hap_n_rows=int(hap_shape.split(" ")[0])
+    hap_n_columns=int(hap_shape.split(" ")[1])
+    print("calculate the number of rows (SNPs) and columns (chrom, id, gen pos, physical pos) in the map file")
+    map_shape=run_bash("\
+        awk \
+            'BEGIN{ \
+                FS=OFS=\" \" \
+            }END{ \
+                print NR,NF\
+            }' \
+            <( \
+                gunzip \
+                    --stdout \
+                    ./results/03_hap_map_files/" + comb_pop + "/chr" + comb_chrom + "/chr" + comb_chrom + "_" + comb_pop + "_selscan.map.gz \
+            )", return_value=True).strip()
+    map_n_rows=int(map_shape.split(" ")[0])
+    map_n_columns=int(map_shape.split(" ")[1])
+    print("the number of columns of hap should be the number of samples of the pop times 2. It should be 4 in am")
+    if((unrelated_samples.loc[unrelated_samples["pop"]==comb_pop,:].shape[0]!=hap_n_columns/2) | (map_n_columns!=4)):
+        raise ValueError("ERROR! FALSE! THE NUMBER OF COLUMNS OF THE HAP FILE IS NOT THE NUMBER OF SAMPLES TIMES 2 OR 4 IN MAP FOR COMBINATION " + combination)
+    if((hap_n_rows!=remaining_snps) | (map_n_rows != remaining_snps)):
+        raise ValueError("ERROR! FALSE! THE NUMBER OF ROWS OF THE HAP AND MAP FILES IS NOT THE SAME THAN THE NUMBRE OF REMAINING SNPS CALCULATED AT THE END FOR COMBINATION " + combination)
+
     print_text("save", header=4)
     snps_lost_percentage.append(percent_lost)
     snps_remaining_list.append(remaining_snps)

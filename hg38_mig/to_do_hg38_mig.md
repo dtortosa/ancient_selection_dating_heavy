@@ -1,4 +1,9 @@
 - ask David
+	- comparison with hg19
+	- I have detected a SNP with genetic position of zero
+		- in chromsome 10. The first SNP at position 616253 has 0 cM, while the second SNP a few hundred bases away has a cM of 9.5723387155704e-43, pretty low but no zero.
+		- in chromosome 4 the same, first SNP at zero, and the next at 4.12e-108
+		- I guess this is a matter of decimals, should I check this in more detail?
 	- we are NOT using the mask!!!
 		- Jesus: "Respecto a la máscara, creo que no hace falta usarla. La máscara está hecha para evitar los sitios con bajo de coverage del phase3. Si asumimos que los datos de Byrska-Bishop tienen un coverage 30X de media, no debería de ser necesario aplicarla."
 		- I understand that If we have 30X coverage, we should be ok even those regions with low-depth for the low-coverage dataset, right? Or they could be still low-depth even having for 30X average depth?
