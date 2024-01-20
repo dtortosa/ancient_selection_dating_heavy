@@ -230,6 +230,7 @@ print(\
 print_text("check we do NOT have any errors in the output files of all chromosomes*pops combinations, also calculate the percentage of SNPs lost", header=2)
 print_text("run loop across chromosomes*pops combinations", header=3)
 snps_lost_percentage = []
+snps_remaining_list = []
 #combination=full_combinations_pop_chroms[0]
 for combination in full_combinations_pop_chroms:
     print_text("Doing combination " + combination, header=4)
@@ -307,18 +308,92 @@ for combination in full_combinations_pop_chroms:
             ./scripts/01_hap_map_calcs_outputs/" + comb_pop + "/chr" + comb_chrom + "_" + comb_pop + ".out", return_value=True).strip()
         #look for the row including these results
 
-    print_text("split the row, extract the numbers and calculate the percentage", header=4)
+    print_text("split the row, extract the numbers and calculate the percentage of lost snps and the number of remaining snps", header=4)
     row_results_split = row_results.split(" ")
-    snps_lost_percentage.append(int(row_results_split[5])/int(row_results_split[8])*100)
+    percent_lost=int(row_results_split[5])/int(row_results_split[8])*100
+    if(percent_lost>=90):
+        raise ValueError("ERROR! FALSE! THE PERCENTAGE OF SNPS LOST IS 90 OR HIGHER FOR COMBINATION " + combination)
+    remaining_snps=int(row_results_split[8])-int(row_results_split[5])
+
+    print_text("save", header=4)
+    snps_lost_percentage.append(percent_lost)
+    snps_remaining_list.append(remaining_snps)
+
 
 print_text("see the percentiles of percentage of SNPs lost across all chromosomes and populations", header=3)
 print("Do we have calculated all combinations")
 print(len(snps_lost_percentage)==len(full_combinations_pop_chroms))
+print(len(snps_remaining_list)==len(full_combinations_pop_chroms))
 
-print("calculate the percentiles across combinations")
+print("calculate the percentiles of the number of snps lost across combinations")
 import numpy as np
-for i in [0.1,0.25,0.4,0.5,0.6,0.75,0.9]:
+for i in [0.025, 0.1,0.25,0.4,0.5,0.6,0.75,0.9, 0.975]:
     print("Percentile " + str(i) + "%: " + str(np.quantile(snps_lost_percentage, i)))
+print("max percentage of lost "+str(np.max(snps_lost_percentage)))
+print("This is combination " + full_combinations_pop_chroms[np.where(snps_lost_percentage==np.max(snps_lost_percentage))[0][0]])
+
+print("calculate the percentiles of the number of snps left across combinations")
+for i in [0.025, 0.1,0.25,0.4,0.5,0.6,0.75,0.9, 0.975]:
+    print("Percentile " + str(i) + "%: " + str(np.quantile(snps_remaining_list, i)))
+print("min number of snps left "+str(np.min(snps_remaining_list)))
+print("This is combination " + full_combinations_pop_chroms[np.where(snps_remaining_list==np.min(snps_remaining_list))[0][0]])
 
 
-##also check if the general script of each pop has finished? I do not think is worht it, after the pool there is nothing, the thing is that each worker has actually finished with its pop*chrom combination
+print_text("check we do NOT have any errors in the global output of each pop, also check that we reached the end of the script", header=2)
+print_text("run loop across pops combinations", header=3)
+#selected_pop=pop_names[0]
+for selected_pop in pop_names:
+    print_text("Doing pop " + selected_pop, header=4)
+
+    print_text("count number of cases with 'error' or 'false' in the output file", header=4)
+    count_error_false = run_bash(" \
+        grep \
+            'error|false' \
+            --extended-regexp \
+            --ignore-case \
+            --count \
+            ./scripts/01_hap_map_calcs_outputs/global_outputs/" + selected_pop + ".out || \
+        [[ $? == 1 ]]", return_value=True).strip()
+        #using grep, look for 
+            #"error" OR "false" using "|". In order to avoid escaping the symbol, i.e., "\|", we need to use the flag "--extended-regexp"
+                #"error" include any string combing after like "errorS", "errores", etc... If the string "error" is present alone or in combination with other strings, you will get a hit
+            #ignore the case, so "Error" and "ERROR" are also included
+            #get the count, not the rows matching
+        #if the exit code of grep indicates error run the code after "||". This is the function of "||", run the code at the right only if the code at the left failed
+            #check if the exit code ("$?") is 1, if so, this will give 0 as exist status (i.e., no error and True) and give the count, which is zero, as stdout. As explained below, if the count is zero (stdout=0), the exit code is 1 in grep:
+                #0: no error and one or more lines were selected
+                #1: no error but no lines were selected
+                #>1: an error occurred
+            #This is different from other programs where exit code equals to 1 is error, and we coded that accordingly in run_bash.
+            #Because of this, in this particular case, we add an additional line in case grep gives non-zero exist status, and avoid error if the exit status is 1.
+                #If grep gives "1" as exit status because the string is not present in the file, we run [[ $? == 1 ]]. This will give "0" as exist status if the previous exit status was "1", while maintaining the previous stdout, i.e., the "count=0" because grep did not find the string in the file.
+                #If the exit status is >1 and thus, there is an error, this will give "1" as exist status and run_bash will fail, so we are not hiding errors. 
+                #If the exist status is 0, "||" avoids running the conditional (I have checked looking for "ancestral"), so we are good.
+            #https://unix.stackexchange.com/a/427598
+            #https://pubs.opengroup.org/onlinepubs/9699919799/utilities/grep.html#tag_20_55_14
+        #https://linuxize.com/post/grep-multiple-patterns/
+
+    print_text("check the count of problematic cases is zero", header=4)
+    if count_error_false == "0":
+        print("YES! GOOD TO GO!")
+    else:
+        raise ValueError("ERROR! FALSE! WE HAVE ERROR/FALSE IN THE GLOBAL OUTPUT FILE OF POP " + selected_pop)
+
+    print_text("check we have the row of Next steps", header=4)
+    check_finish = run_bash(" \
+        grep \
+            'Next steps' \
+            --count \
+            ./scripts/01_hap_map_calcs_outputs/global_outputs/" + selected_pop + ".out || \
+        [[ $? == 1 ]]", return_value=True).strip()
+        #check we have the output indicating finish with a specific way, in uppercase and separated by "#", so we avoid the flag "--ignore-case". Ask for the count.
+        #as in the previous case, we add a line to avoid errors if the count is zero. We will deal with the lack of FINISH in the next line indicating also the chromosome name for which we found an error
+    if check_finish == "1":
+        print("YES! GOOD TO GO!")
+    else:
+        raise ValueError("ERROR! FALSE! THE SCRIPT HAS NOT FINISHED FOR POP " + selected_pop)
+
+
+
+print_text("FINISH", header=1)
+#chmod +x ./scripts/01f_hap_map_calcs_check_outputs.py; ./scripts/01f_hap_map_calcs_check_outputs.py > ./scripts/01f_hap_map_calcs_check_outputs.out 2>&1
