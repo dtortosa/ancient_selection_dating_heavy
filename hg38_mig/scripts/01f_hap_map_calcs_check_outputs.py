@@ -456,6 +456,7 @@ import matplotlib.cm as cm
 import numpy as np
 #import seaborn as sns
 #palette = sns.color_palette(None, len(results_df["chrom"].unique()))
+    #https://stackoverflow.com/questions/876853/generating-color-ranges-in-python
 palette = cm.rainbow(np.linspace(0, 1, len(results_df["chrom"].unique())))
     #Return evenly spaced numbers over a specified interval
         #we want 22 numbers (one per chromosome) between 0 and 1
