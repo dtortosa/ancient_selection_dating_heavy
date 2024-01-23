@@ -228,18 +228,16 @@ print(\
 
 
 print_text("check we do NOT have any errors in the output files of all chromosomes*pops combinations, also calculate the percentage of SNPs lost", header=2)
-print_text("run loop across chromosomes*pops combinations", header=3)
-snps_lost_percentage = []
-snps_remaining_list = []
+print_text("define function", header=3)
 #combination=full_combinations_pop_chroms[0]
-for combination in full_combinations_pop_chroms:
+def heavy_checks(combination):
     print_text("Doing combination " + combination, header=4)
 
     print_text("split the combination name", header=4)
     comb_pop = combination.split("_")[0]
     comb_chrom = combination.split("_")[1]
 
-    print_text("count number of cases with 'error' or 'false' in the output file", header=4)
+    print_text("count number of problematic cases in the output file", header=4)
     count_error_false = run_bash(" \
         grep \
             'error|false' \
@@ -315,7 +313,36 @@ for combination in full_combinations_pop_chroms:
         raise ValueError("ERROR! FALSE! THE PERCENTAGE OF SNPS LOST IS 90 OR HIGHER FOR COMBINATION " + combination)
     remaining_snps=int(row_results_split[8])-int(row_results_split[5])
 
-    print_text("check we have the correct number of SNPs and samples in the hap and the map files", header=4)
+    print_text("check we have the correct number of SNPs and samples in the hap, map and vcf files. Also check we have selected the correct ID samples in the VCF file", header=4)
+    print("extract the IDs of the samples included in the VCF file and the rows without counting the header")
+    id_samples_n_row_raw=run_bash("\
+        awk \
+            'BEGIN{ \
+                FS=OFS=\"\t\" \
+            }{ \
+                if($0 ~ /^#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT/){ \
+                    print $0; \
+                    last_row_header=NR \
+                } \
+            }END{ \
+                print NR-last_row_header \
+            }' \
+            <( \
+                gunzip \
+                    --stdout \
+                    ./results/01_cleaned_vep_vcf_files/" + comb_pop + "/chr" + comb_chrom + "/1kGP_high_coverage_Illumina.chr" + comb_chrom + ".filtered.SNV_phased_panel.vep.anc_up." + comb_pop + ".cleaned.ref_alt_switched.only_snps_gen_pos.vcf.gz \
+            )", return_value=True).strip()
+        #we are just getting the last row of the header with the sample IDs and getting the number of rows of the VCF file after subtracting the number of rows of the header, i.e., getting the number of SNPs.
+    vcf_n_rows=int(id_samples_n_row_raw.split("\n")[1])
+    id_samples_raw=id_samples_n_row_raw.split("\n")[0]
+        #the row with IDs and the number of rows are separated by "\n".
+    id_samples=id_samples_raw.split("\t")[9:]
+        #within the last row of the header, i.e., the one with sample IDs, the columns are separated with tabs
+        #We are assuming here that sample ID start at position 9 (counting from zero). If, for any reason, you analyze a different VCF file format, then we will not be selecting all sample IDs and the check will fail, so no problem. We would come here to check what is going on.
+    print("check the IDs obtained from the last version of the VCF file are the same than those of the pop file")
+    if(id_samples!=unrelated_samples.loc[unrelated_samples["pop"]==comb_pop, "sample"].tolist()):
+        raise ValueError("ERROR! FALSE! WE HAVE NOT SELECTED THE CORRECT SAMPLE IDS FOR COMBINATION " + combination)
+
     print("calculate the number of rows (SNPs) and columns (samples*2) in the hap file")
     hap_shape=run_bash("\
         awk \
@@ -349,31 +376,213 @@ for combination in full_combinations_pop_chroms:
     print("the number of columns of hap should be the number of samples of the pop times 2. It should be 4 in am")
     if((unrelated_samples.loc[unrelated_samples["pop"]==comb_pop,:].shape[0]!=hap_n_columns/2) | (map_n_columns!=4)):
         raise ValueError("ERROR! FALSE! THE NUMBER OF COLUMNS OF THE HAP FILE IS NOT THE NUMBER OF SAMPLES TIMES 2 OR 4 IN MAP FOR COMBINATION " + combination)
-    if((hap_n_rows!=remaining_snps) | (map_n_rows != remaining_snps)):
+    print("the number of rows of the hap, map and VCF files should be the same than the one indicated as the remaining number of snps")
+    if((hap_n_rows!=remaining_snps) | (map_n_rows != remaining_snps) | (vcf_n_rows != remaining_snps)):
         raise ValueError("ERROR! FALSE! THE NUMBER OF ROWS OF THE HAP AND MAP FILES IS NOT THE SAME THAN THE NUMBRE OF REMAINING SNPS CALCULATED AT THE END FOR COMBINATION " + combination)
 
-    print_text("save", header=4)
-    snps_lost_percentage.append(percent_lost)
-    snps_remaining_list.append(remaining_snps)
+    print_text("return the combination, the number of samples (i.e., half hap columns), remaining snps and the percentage of snps lost", header=4)
+    return([combination, hap_n_columns/2, remaining_snps, percent_lost])
+
+
+print_text("run function", header=3)
+#heavy_checks(full_combinations_pop_chroms[0])
+import multiprocessing as mp
+pool = mp.Pool(20)
+results_map = pool.map( \
+    func=heavy_checks, \
+    iterable=full_combinations_pop_chroms)
+        #Apply `func` to each element in `iterable`, collecting the results in a list that is returned
+        #if you need more arguments, you can use "partial" to fix the value of other argument and only iterate across the combination
+pool.close()
+print_text("see first 10 gene ids", header=4)
+print(results_map[0:10])
+
+print_text("convert to DF, set column names and check we do have all the combinations", header=4)
+print("create final DF")
+results_df=pd.DataFrame( \
+    results_map, \
+    columns=["combination", "n_samples", "remaining_snps", "percent_lost"])
+print(results_df)
+print("create columns for pop and chrom separately")
+#x=results_df.iloc[0,:]
+pop_column=results_df.apply(lambda x: x["combination"].split("_")[0], axis=1)
+chrom_column=results_df.apply(lambda x: x["combination"].split("_")[1], axis=1)
+    #in each row, select the combination and split it, selecting the pop and the chrom, respectively
+results_df.insert(1, "pop", pop_column)
+results_df.insert(2, "chrom", chrom_column)
+    #insert both series in a specific location
+        #https://stackoverflow.com/a/18674915
+if(not results_df["combination"].equals(results_df["pop"]+"_"+results_df["chrom"])):
+    raise ValueError("ERROR! FALSE! WE HAVE A PROBLEM GENERATING THE POP-CHROM COLUMNS")
+if(results_df.columns.tolist()!=["combination", "pop", "chrom", "n_samples", "remaining_snps", "percent_lost"]):
+    raise ValueError("ERROR! FALSE! WE HAVE A PROBLEM GENERATING THE POP-CHROM COLUMNS")
+print("check no NA and all combinations have been analyzed")
+if(not results_df.dropna().equals(results_df)):
+    raise ValueError("ERROR! FALSE! WE HAVE NOT ANALYZED ALL COMBINATIONS")
+if(results_df["combination"].unique().tolist() != full_combinations_pop_chroms):
+    raise ValueError("ERROR! FALSE! WE HAVE NOT ANALYZED ALL COMBINATIONS")
+if(results_df.shape[0]!=26*22):
+    raise ValueError("ERROR! FALSE! WE HAVE NOT ANALYZED ALL COMBINATIONS")
+print("check that we have the same number of sample for the combinations of the same pop")
+#x=results_df.loc[results_df["pop"]=="GBR",:]
+if(sum(results_df.groupby(["pop"]).apply(lambda x: len(x["n_samples"].unique())==1))!= len(results_df["pop"].unique())):
+    raise ValueError("ERROR! FALSE! THE CHROMS OF THE SAME POP DO NOT HAVE THE SAME NUMBER OF SAMPLES")
+    #for each group of rows of the same pop, extract the number of samples, select unique cases and count them, check it is 1. the total number of Trues should be the same than unique number of pops
+        #https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.groupby.html
+print("check we have 22 chromosomes in each population")
+#x=results_df.loc[results_df["pop"]=="GBR",:]
+if(sum(results_df.groupby(["pop"]).apply(lambda x: x["chrom"].values.tolist()==[str(item) for item in range(1, 23, 1)]))!= len(results_df["pop"].unique())):
+    raise ValueError("ERROR! FALSE! WE DO NOT HAVE FROM 1 TO 22 CHROMOSOMES IN ALL POPS")
+
+print_text("calculate percentiles per pop", header=4)
+#x=results_df.loc[results_df["pop"]=="GBR",:]
+results_df_quantiles=results_df.groupby(["pop"])[["percent_lost", "remaining_snps"]].quantile([0.025, 0.5, 0.975])
+    #you get two columns with the percentiles of each pop one after other
+results_df_quantiles.index.names=["pop", "quantiles"]
+    #add the name of the multiindex
+        #one index is population
+        #the second column of the index is the quantile
+    #these two indexes will be columns when writing
+results_df_quantiles=results_df_quantiles.reset_index()
+    #convert the index as columns to do operatiosn later on
+        #https://stackoverflow.com/a/20461206
+if(results_df_quantiles.shape[0]!=26*3):
+    raise ValueError("ERROR! FALSE! PROBLEM IN PERCENTILE FILE. we should have 3 QUANTILES FOR EACH OF THE 26 POPS")
+
+print_text("plot the number of snps lost and retained across pops and chromosomes", header=4)
+print("create an array with the colors for each chromosome")
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+import numpy as np
+#import seaborn as sns
+#palette = sns.color_palette(None, len(results_df["chrom"].unique()))
+palette = cm.rainbow(np.linspace(0, 1, len(results_df["chrom"].unique())))
+    #Return evenly spaced numbers over a specified interval
+        #we want 22 numbers (one per chromosome) between 0 and 1
+    #then create a colormap object based on lookup tables using these linear segments.
+        #The lookup table is generated using linear interpolation for each primary color, with the 0-1 domain divided into any number of segments
+    #the result is 22 arrays with 4 numbers in each one, I guess indicating the color 
+print("get the pop names sorted by the median number of remaining snps")
+pops_sort=results_df_quantiles[results_df_quantiles["quantiles"]==0.5].sort_values("remaining_snps", ascending=False)["pop"]
+    #first the pops with more snps
+print("plot chroms of each pop as a loop")
+fig, axs = plt.subplots(2)
+    #https://matplotlib.org/stable/gallery/subplots_axes_and_figures/subplots_demo.html
+#pop_index=1; pop=pops_sort.iloc[1,] 
+for pop_index, pop in enumerate(pops_sort):
+    
+    #select the data (raw, not median) of the selected pop
+    subset_pop=results_df.loc[results_df["pop"]==pop]
+    
+    #caculate the position in X axis for the datapoints (i.e., value per chromosome) for the selected pop
+    xtics_pos=np.arange(1,23,1)+(22*pop_index)
+        #for the first pop, pop_index=0, thus we sum 0 leading to 1...22
+        #for the second, pop_index=1, thus we sum 22, leading to 23, 24...
+        #and so on...
+
+    #get a list the possible markers
+    list_markers=list(Line2D.markers.keys())[:-4]
+        #we use a dict with the symbols as keys
+        #avoid the last 4 cases which are None
+            #https://stackoverflow.com/a/59648414
+            #https://matplotlib.org/stable/api/markers_api.html#module-matplotlib.markers
+
+    #plot the remaining and lost snps in each position and disable xticks
+    axs[0].scatter(x=xtics_pos, y=subset_pop["remaining_snps"], s=20, c=palette, marker=list_markers[pop_index])
+        #https://stackoverflow.com/a/12236808
+    axs[1].scatter(x=xtics_pos, y=subset_pop["percent_lost"], s=20, c=palette, marker=list_markers[pop_index])
+        #s: marker size
+        #c: marker colors
+            #it can be an array of values to be colormapped
+        #marker: shape to plot
+
+    #disable xticks
+    axs[0].set_xticks([])
+    axs[1].set_xticks([])
+        #https://www.geeksforgeeks.org/how-to-hide-axis-text-ticks-or-tick-labels-in-matplotlib/
+
+    #set titles of X and Y axes for each plot
+    axs[0].set_ylabel("Number of SNPs retained", fontsize=12.5)
+    axs[1].set_ylabel("Percentage of SNPs lost", fontsize=12.5)
+    axs[1].set_xlabel("Population", fontsize=12.5)
+
+    #add the title of the whole plot
+    fig.suptitle(t="Results of filtering", x=0.5, y=0.92, fontsize=17)
+        #https://stackoverflow.com/a/7066293
+
+#plot the population names sorted by the number fo remaining snps putting them in the middle of the points in each case
+axs[1].set_xticks(ticks=[i for i in range(12, results_df.shape[0]+1, 22)], labels=pops_sort, fontsize=12.5)
+    #we create a range staring at 19 every 22 chromosomes, to cover the chromosomes of each pop. Se we are jumping from position the middle of chromosomes of one population to the next one
+
+#get a list of the chromosomes
+list_chrom=[chrom for chrom in range(1, len(results_df["chrom"].unique())+1, 1)]
+
+#create a list with the objects indicating the color of each chromosome in the legend
+from matplotlib.lines import Line2D
+list_color_points=list()
+#index_chrom=0; chrom=list_chrom[0]
+for index_chrom, chrom in enumerate(list_chrom):
+
+    #selected point color
+    selected_point_color=Line2D([0], [0], marker="o", color="white", markerfacecolor=palette[index_chrom], label=chrom, markersize=5)
+        #xdata, ydata
+            #coordinates of the line
+        #marker: shape, you can select a line or a dot
+        #color: color of the line (a line is always plotted indepently of the shape, if you do not want it, use "white")
+        #markerfacecolor: color of the shape
+        #label to be shown
+        #size of the marker shape
+            #https://matplotlib.org/stable/gallery/text_labels_and_annotations/custom_legends.html
+            #https://matplotlib.org/stable/api/_as_gen/matplotlib.lines.Line2D.html#matplotlib.lines.Line2D
+
+    #append
+    list_color_points.append(selected_point_color)
+
+#plot the legend with each chromosome
+axs[0].legend(labels=list_chrom, handles=list_color_points, bbox_to_anchor=(1.12, 1.05), fontsize=15, markerscale=1.5, title="Chromosome", title_fontsize=12.5)
+    #we use handle to explicitly listing the artists in the legend
+        #https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.legend.html
+    #bbox_to_anchor for having the legend outside the plot
+        #https://stackoverflow.com/questions/4700614/how-to-put-the-legend-outside-the-plot
+    #fontsize is the size of the labels
+    #markerscale is the size of the marker with respect of the size of the marker in the plot
+
+#set size of the plot
+plt.gcf().set_size_inches(w=18, h=9)
+    #width and height in inches
+        #https://stackoverflow.com/a/72199494
+
+#save
+plt.savefig(fname="./results/03_hap_map_files/snps_lost_retain.png", dpi=200)
+plt.close()
+
+print_text("save the tables", header=4)
+results_df.to_csv( \
+    "./results/03_hap_map_files/snps_lost_retain.tsv", \
+    sep="\t", \
+    header=True, \
+    index=False)
+results_df_quantiles.to_csv( \
+    "./results/03_hap_map_files/snps_lost_retain_quantiles.tsv", \
+    sep="\t", \
+    header=True, \
+    index=True)
 
 
 print_text("see the percentiles of percentage of SNPs lost across all chromosomes and populations", header=3)
-print("Do we have calculated all combinations")
-print(len(snps_lost_percentage)==len(full_combinations_pop_chroms))
-print(len(snps_remaining_list)==len(full_combinations_pop_chroms))
-
-print("calculate the percentiles of the number of snps lost across combinations")
+print_text("calculate the percentiles of the number of snps lost across combinations", header=4)
 import numpy as np
 for i in [0.025, 0.1,0.25,0.4,0.5,0.6,0.75,0.9, 0.975]:
-    print("Percentile " + str(i) + "%: " + str(np.quantile(snps_lost_percentage, i)))
-print("max percentage of lost "+str(np.max(snps_lost_percentage)))
-print("This is combination " + full_combinations_pop_chroms[np.where(snps_lost_percentage==np.max(snps_lost_percentage))[0][0]])
+    print("Percentile " + str(i) + "%: " + str(results_df["percent_lost"].quantile(i)))
+print("max percentage of lost "+str(results_df["percent_lost"].max()))
+print("This is combination " + results_df.loc[results_df["percent_lost"]==results_df["percent_lost"].max(), "combination"].values)
 
-print("calculate the percentiles of the number of snps left across combinations")
+print_text("calculate the percentiles of the number of snps left across combinations", header=4)
 for i in [0.025, 0.1,0.25,0.4,0.5,0.6,0.75,0.9, 0.975]:
-    print("Percentile " + str(i) + "%: " + str(np.quantile(snps_remaining_list, i)))
-print("min number of snps left "+str(np.min(snps_remaining_list)))
-print("This is combination " + full_combinations_pop_chroms[np.where(snps_remaining_list==np.min(snps_remaining_list))[0][0]])
+    print("Percentile " + str(i) + "%: " + str(results_df["remaining_snps"].quantile(i)))
+print("min number of snps left "+str(results_df["remaining_snps"].min()))
+print("This is combination " + results_df.loc[results_df["remaining_snps"]==results_df["remaining_snps"].min(), "combination"].values)
+
 
 
 print_text("check we do NOT have any errors in the global output of each pop, also check that we reached the end of the script", header=2)
@@ -382,7 +591,7 @@ print_text("run loop across pops combinations", header=3)
 for selected_pop in pop_names:
     print_text("Doing pop " + selected_pop, header=4)
 
-    print_text("count number of cases with 'error' or 'false' in the output file", header=4)
+    print_text("count number of problematic cases in the output file", header=4)
     count_error_false = run_bash(" \
         grep \
             'error|false' \
