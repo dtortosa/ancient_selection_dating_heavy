@@ -454,6 +454,7 @@ print("create an array with the colors for each chromosome")
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import numpy as np
+from matplotlib.lines import Line2D
 #import seaborn as sns
 #palette = sns.color_palette(None, len(results_df["chrom"].unique()))
     #https://stackoverflow.com/questions/876853/generating-color-ranges-in-python
@@ -521,7 +522,6 @@ axs[1].set_xticks(ticks=[i for i in range(12, results_df.shape[0]+1, 22)], label
 list_chrom=[chrom for chrom in range(1, len(results_df["chrom"].unique())+1, 1)]
 
 #create a list with the objects indicating the color of each chromosome in the legend
-from matplotlib.lines import Line2D
 list_color_points=list()
 #index_chrom=0; chrom=list_chrom[0]
 for index_chrom, chrom in enumerate(list_chrom):
@@ -569,7 +569,7 @@ results_df_quantiles.to_csv( \
     "./results/03_hap_map_files/snps_lost_retain_quantiles.tsv", \
     sep="\t", \
     header=True, \
-    index=True)
+    index=False)
 
 
 print_text("see the percentiles of percentage of SNPs lost across all chromosomes and populations", header=3)
