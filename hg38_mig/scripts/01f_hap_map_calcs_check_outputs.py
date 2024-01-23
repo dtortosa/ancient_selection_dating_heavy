@@ -469,6 +469,8 @@ pops_sort=results_df_quantiles[results_df_quantiles["quantiles"]==0.5].sort_valu
 print("plot chroms of each pop as a loop")
 fig, axs = plt.subplots(2)
     #https://matplotlib.org/stable/gallery/subplots_axes_and_figures/subplots_demo.html
+#plot the data of each population (i.e., pandas series) separately, first pop 1, then pop 2, so we can set a different shape of each population and also apply the same color pattern for chromosomes across all of them
+    #https://stackoverflow.com/a/12236808
 #pop_index=1; pop=pops_sort.iloc[1,] 
 for pop_index, pop in enumerate(pops_sort):
     
