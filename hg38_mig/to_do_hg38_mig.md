@@ -1,24 +1,28 @@
-- ask David
-	- comparison with hg19
-	- I have detected a SNP with genetic position of zero
-		- in chromsome 10. The first SNP at position 616253 has 0 cM, while the second SNP a few hundred bases away has a cM of 9.5723387155704e-43, pretty low but no zero.
-		- in chromosome 4 the same, first SNP at zero, and the next at 4.12e-108
-		- I guess this is a matter of decimals, should I check this in more detail?
-	- we are NOT using the mask!!!
-		- Jesus: "Respecto a la máscara, creo que no hace falta usarla. La máscara está hecha para evitar los sitios con bajo de coverage del phase3. Si asumimos que los datos de Byrska-Bishop tienen un coverage 30X de media, no debería de ser necesario aplicarla."
-		- I understand that If we have 30X coverage, we should be ok even those regions with low-depth for the low-coverage dataset, right? Or they could be still low-depth even having for 30X average depth?
+# Things to do about hg38 mig
 
-- important lower-case ancestral alleles!!
+- CHECK ANSWER OF DAVID ABOUT MASK AND GEN POS ZERO
 
-- CLUES2!!
-	- Fast and accurate estimation of selection coefficients and allele1 histories from ancient and modern DNA
-
-- Pearl Memorial Lecture. Humans at the extremes:Exploring human adaptation to ecological and socialstressors
-	- summary human adaptations from leonard
-
-
-
-
+- final mails about hg38 mig with David
+	- mail 1
+		- Hi David, As you have probably seen in the email to Addison, I have already calculated the hap and map files for all the populations and chromosomes of the 1KGP. I am attaching a plot with the number of SNPs retained (upper panel) and the percentage lost (lower panel) for each chromosome and population after filtering. Chromosomes are color coded, while data points of each population have a distinct shape, showing the population names in the X axis. As expected, the number of SNPs decreased from chrom 1 to 22 and from african vs non-african populations. The final number of SNPs ranges from 120K to 1.8 million per chromosome. I guess non-african lose less SNPs just by their higher diversity, having less monomorphic SNPs. As I mentioned in my previous email, I have done many many checks in order to avoid silly errors like not selecting the correct samples or SNPs, but I remember you told me something about comparing with SNPs of the previous hg19 panel. Do you want me to do that additional check? If so, maybe, we can meet so you can give a bit of guidance about what to compare. 
+	- mail 2
+		- Hi Diego,  I am going to check the coordinates with a quick liftOver and let you know if everything is fine.
+	- mail 3
+		- Hi David, 
+			- Just a few things about the new data:
+			- Coordinates in the map files
+        		- The map files use the selscan format, so columns are: chromosome, locus ID, genetic position, physical position.
+        		- I initially calculated the map files for the 22 chromosomes with decode hg38 and then used them as templates for the map files of each population. In case it is easier for you to check the coordinates in only 22 files, you can find them here:
+            		- /xdisk/denard/dftortosa/climate_adaptation_met_genes/hg38_mig/results/00b_map_files/
+            		- The files are named as follows: chrXXX_selscan.map.gz
+		        - Please, for future analyses, use the map files of each population. These are the final files with updated SNP after applying all the filters we discussed.
+		            - /xdisk/denard/dftortosa/climate_adaptation_met_genes/hg38_mig/results/03_hap_map_files/
+    		- I talked again with Jesús about the accessibility masks, and he told me that, in reality, there is no need to use them. These masks were made for the low-coverage sites of phase 3, but assuming that the new data has a 30X average depth, this is not really needed. Thus, I have not applied the masks.
+		    - Genetic position. I have a few SNPs with a genetic position of 0.0 cM. 
+		        - For example, in chromosome 10, the first SNP at position 616253 has 0.0 cM, while the second SNP, which is 179 bases away, has a cM value of 5.3e-43, pretty low but not zero.
+		        - In chromosome 4 is the same, the first SNP has 0.0 cM, and the next one, which is 30 bases away, has 5.13e-109 cM. It is physically closer, hence its genetic position is closer to 0.
+		        - This seems to be a matter of decimals (maybe decimal limit in python?) and just affecting the first SNP. Also, I visually inspected the correlation between genetic position (calculated by me) and the recombination rates (reported by decode hg38) for all chromosomes and everything seems to be fine (larger increases in genetic position under higher recombination rates). So I guess we should not have problems with this.
+			- If all of this is ok for you, and you do not find anything wrong with the coordinates, I think we are good to go and the lab can start using the new hap and map files.
 
 - Comment jesus
 	- mail 1
