@@ -2,6 +2,8 @@
 
 - CHECK ANSWER OF DAVID ABOUT MASK AND GEN POS ZERO
 
+- WE HAVE TO CONVERT THE GENES IDS TO HG38? thermogenic list names are hg19 and probably the BAT connectome, so we should check this
+
 - final mails about hg38 mig with David
 	- mail 1
 		- Hi David, As you have probably seen in the email to Addison, I have already calculated the hap and map files for all the populations and chromosomes of the 1KGP. I am attaching a plot with the number of SNPs retained (upper panel) and the percentage lost (lower panel) for each chromosome and population after filtering. Chromosomes are color coded, while data points of each population have a distinct shape, showing the population names in the X axis. As expected, the number of SNPs decreased from chrom 1 to 22 and from african vs non-african populations. The final number of SNPs ranges from 120K to 1.8 million per chromosome. I guess non-african lose less SNPs just by their higher diversity, having less monomorphic SNPs. As I mentioned in my previous email, I have done many many checks in order to avoid silly errors like not selecting the correct samples or SNPs, but I remember you told me something about comparing with SNPs of the previous hg19 panel. Do you want me to do that additional check? If so, maybe, we can meet so you can give a bit of guidance about what to compare. 
