@@ -57,7 +57,7 @@ biomartCacheInfo()
 #biomartCacheClear()
 #biomartCacheInfo()
 
-#look for the list of marts currently included. Everything is version 111.
+#look for the list of marts currently included. At the time of writing this code (April 8th 2024), everything is version 111, which is the latest version released in Jan 2024.
 listMarts()
 
 #connect with the BioMart database we are interested. In this case, ensemble genes
@@ -69,78 +69,83 @@ head(datasets)
 
 #search for the name of your dataset of interest, which should include 'hsapiens' in its name
 searchDatasets(mart = ensembl, pattern = "hsapiens")
-#the name of the dataset with human data is 'hsapiens_gene_ensembl'
 
 #We are interested in hsapiens_gene_ensembl
-datasets[which(datasets$dataset == 'hsapiens_gene_ensembl'),] #the version indicated is GRCh38.p13, but we need GRCh37 (aka hg19), which is the version used by David in previous analyses. Moreover, I think it will be easier to get data of confounding factors according the gene coordinates of this assemble. I think David told me that it is easier to translate data of genomic factors from newer to the older version. For example, we have the new recombination data from deCode in GRCh38, but we can transform it to hg19. I am going to specify the older version GRCh37.
+datasets[which(datasets$dataset == "hsapiens_gene_ensembl"), ]
+#the version indicated is GRCh38.p14, which is the version we need, i.e., hg38.
 
 #we want to view the available archived versions. listEnsemblArchives takes no arguments, and produces a table containing the names of the available archived versions, the date they were first available, and the URL where they can be accessed.
-listEnsemblArchives() #we select the URL of grch37, aka hg19: http://grch37.ensembl.org
+listEnsemblArchives()
+#we select the last version at the moment of writting this code, which is the Ensembl Release 111 (January 2024): https://jan2024.archive.ensembl.org
 
-#take a look to the databases in the version of GRCh37 
-listMarts(host = 'http://grch38.ensembl.org') #we see ensemble genes, variation and regulation. In all cases release 111, which is the lastest in general (this is not the same than patch release, the last of which is 14 in GRCh38).
+#take a look for the marts in the Jan 2024 release
+listMarts(host = "https://jan2024.archive.ensembl.org") 
+#we see ensemble genes, variation and regulation. In all cases release 111, which is the lastest in general (this is not the same than patch release, the last of which is 14 in GRCh38).
 
-#extract the datasets of grch38, aka hg38
-grch37_datasets = listDatasets(useMart(host='http://grch38.ensembl.org', biomart='ENSEMBL_MART_ENSEMBL'))
+#extract the datasets of ensemble genes for grch38, aka hg38
+grch38_datasets <- listDatasets(useMart(host = "https://jan2024.archive.ensembl.org", biomart = "ENSEMBL_MART_ENSEMBL"))
 
 #We are interested in 'hsapiens_gene_ensembl' ()Human genes. 
-grch37_datasets[which(grch37_datasets$dataset == 'hsapiens_gene_ensembl'),] #The version indicated is GRCh37.p13, which is the last patch release of GRCh37. It makes sense that 'grch37.ensembl.org' automatically connect with the last patch release of GRC37, but we are going to check it.
+grch38_datasets[which(grch38_datasets$dataset == "hsapiens_gene_ensembl"), ] 
+#The version indicated is GRCh38.p14, which is the last patch release of GRCh38 in the first quarter of 2024.
+#this patch seems to be the latest in ncbi
+#https://www.ncbi.nlm.nih.gov/assembly/?term=GRCh38
 
-#We are going to check that this is the last patch release of GRCh17 of human is 13.
-#feb 2014
-feb2014_datasets = listDatasets(useMart(host='http://feb2014.archive.ensembl.org', biomart='ENSEMBL_MART_ENSEMBL')) 
-feb2014_datasets[which(feb2014_datasets$dataset == 'hsapiens_gene_ensembl'),] #human dataset in feb 2014 is GRCh37.p13
-
-#oct 2014
-oct2014_datasets = listDatasets(useMart(host='http://oct2014.archive.ensembl.org', biomart='ENSEMBL_MART_ENSEMBL')) 
-oct2014_datasets[which(oct2014_datasets$dataset == 'hsapiens_gene_ensembl'),] #human dataset in oct 2014 (the next release after feb 2014) is GRCh38. In addition, the searcher of ncbi for assemblies give GRCh37.p13 as the last one: 'https://www.ncbi.nlm.nih.gov/assembly/?term=GRCh37'. 
-	#I don´t know why, but the dates of versions according to listDatasets are different respect to that shows in ncbi. BUT, we have enough evidence to consider GRCh37.p13 as the last one.  
-
+#We are going to use GCRh38.p14 (release of Jan 2024; see above).
 #it is useful to use the specific URL for avoiding changes in the results if you compile the code again in several months and the current version (default) has changed. We select the url of the specific version we are interested, which is the release of feb 2014, last patch release of GRCh37
 
-#We are going to use GCRh37.p13 (release of feb 2014; see above). Select ensemble genes of human datasets and the GRCh37.p13
-grch37_human = useMart(host='http://feb2014.archive.ensembl.org', biomart='ENSEMBL_MART_ENSEMBL', dataset='hsapiens_gene_ensembl')
-str(grch37_human) #we use 'http://feb2014.archive.ensembl.org' instead of 'http://grch37.ensembl.org' because the latter is very slow. I have even changed the mirror to useast and the problem persists. The former is a lot of faster. 
-#check
-listDatasets(grch37_human)[26,] #GRCh37.p13
+#Select ensemble genes of human datasets and the GRCh38.p14, Jan 2024 release (111)
+grch38_human <- useMart(host = "https://jan2024.archive.ensembl.org", biomart = "ENSEMBL_MART_ENSEMBL", dataset = "hsapiens_gene_ensembl")
+str(grch38_human)
+
+#check we have the correct assembly and patch in the human dataset
+list_datasets_hg38 <- listDatasets(grch38_human)
+if(list_datasets_hg38[which(list_datasets_hg38$dataset == "hsapiens_gene_ensembl"), "version"] != "GRCh38.p14") {
+    stop("The version of the assembly and patch is not GRCh38.p14")
+}
 
 #See the attributes
-grch37_human_attributes = listAttributes(grch37_human)
+grch38_human_attributes <- listAttributes(grch38_human)
 
 #see for attributes related to exons
-searchAttributes(mart = grch37_human, pattern = c("exon"))
-	#ensembl_exon_id is the only attribute within the list of feature_page type that is related to exons.
-	#exon_chrom_start and exon_chrom_end are attributes for sequences. You have to use getSequence with the id of a gene to get the beinign and end of the exons. For example: getSequence(id="ENSG00000198793",type="ensembl_gene_id", seqType="gene_exon",mart=ensembl). I think that adding the id of a gene in the argument value of getBM will alos work
-	#exon_chrom_start  and exon_chrom_end could alos work, but they are attributes for pages type structure.
-	#YOU CANNOT ask for atribbute of type 'pages' when you are filtering by a gene and a the same time get info of the exons.., so for most of the exon characteristics (except ensembl_exon_id), you must filter by gene. Previously you will have to get gen id in a different query.
+searchAttributes(mart = grch38_human, pattern = c("exon"))
+#ensembl_exon_id is the only attribute within the list of feature_page type that is related to exons.
+#exon_chrom_start and exon_chrom_end are attributes for sequences. You have to use getSequence with the id of a gene to get the beinign and end of the exons. For example: getSequence(id="ENSG00000198793",type="ensembl_gene_id", seqType="gene_exon",mart=ensembl). I think that adding the id of a gene in the argument value of getBM will alos work
+#exon_chrom_start  and exon_chrom_end could alos work, but they are attributes for pages type structure.
+#YOU CANNOT ask for atribbute of type 'pages' when you are filtering by a gene and a the same time get info of the exons.., so for most of the exon characteristics (except ensembl_exon_id), you must filter by gene. Previously you will have to get gen id in a different query.
 
 #see for attributes related to coding density length
-searchAttributes(mart = grch37_human, pattern = c("cds"))
-searchAttributes(mart = grch37_human, pattern = c('genomic'))
+searchAttributes(mart = grch38_human, pattern = c("cds"))
+searchAttributes(mart = grch38_human, pattern = c('genomic'))
 
 #see for attributes related to the sense of the strand
-searchAttributes(mart = grch37_human, pattern = c('strand')) #we have attraibutes for the stran in sequences and feature pages
+searchAttributes(mart = grch38_human, pattern = c('strand')) 
+#we have attraibutes for the stran in sequences and feature pages
 
 #see for attributes related to entrez
-searchAttributes(mart = grch37_human, pattern = c("entrez"))
-	#I have not seen infor for the theree attributes related to entrez in too many rows... 
+searchAttributes(mart = grch38_human, pattern = c("entrez"))
 
-#See what filter we can apply. 
-grch37_human_filters = listFilters(grch37_human)
+#See what filter we can apply
+grch38_human_filters <- listFilters(grch38_human)
 
 #see for filters related to exons
-searchFilters(mart = grch37_human, pattern = c("exon"))
-	#Only ensembl_exon_id Exon ID(s)
+searchFilters(mart = grch38_human, pattern = c("exon"))
+#Only ensembl_exon_id Exon ID(s)
 
 #see the values of one the filter we will apply, the chromosome name
-listFilterValues(mart = grch37_human, filter = "chromosome_name") #we are only interested in 'normal' data within the 1:22 chromosomes
-
-#select those values of chromosome name that begin by 1 or by 2, i.e., the 22 chromosomes
-searchFilterValues(mart = grch37_human, filter = "chromosome_name", pattern = '^1|^2') #we will use only chromsome 1:22 removing all the highly variable regions like those related to the MHC. In these regions the chromosome name is not the actual chromosome where the sequence is, but a different notation for example if it is a highly varaible region with several versions included in the esemble
+listFilterOptions(mart = grch38_human, filter = "chromosome_name") 
+#we are only interested in 'normal' data within the 1:22 chromosomes
+#we will use only chromsome 1:22 removing all the highly variable regions like those related to the MHC. In these regions the chromosome name is not the actual chromosome where the sequence is, but a different notation for example if it is a highly varaible region with several versions included in the esemble
 	#We will also include the X to do a small paper aobut X and differences with the rest of the genome. See below.
 
 #extract the ids of ALL human genes. This will be used to split the query of all data into each gene (see below)
-all_gene_ids_grch37_human <- getBM(attributes = c("ensembl_gene_id"), mart = grch37_human)
+all_gene_ids_grch38_human <- getBM(attributes = c("ensembl_gene_id"), mart = grch38_human)
+
+
+
+
+###POR AQUIII, WE HAVE TO CHECK PREVIOUS LINES
+
 
 
 

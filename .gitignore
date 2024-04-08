@@ -4,6 +4,8 @@
 *.gz
 *.pdf
 *.RData
+*.lintr
+*.vscode/
 eur_ranks_*
 eas_ranks_*
 all_ranks_*
