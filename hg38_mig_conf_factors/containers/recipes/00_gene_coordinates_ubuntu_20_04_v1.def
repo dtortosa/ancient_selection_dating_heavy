@@ -37,10 +37,6 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 
 %files
 
-    #copy the R scripts
-    /home/dftortosa/diego_docs/science/phd/nicho_pinus/code/phylo/global_test_phylo_current_v1.R /opt/scripts/global_test_phylo_current_v1.R
-
-
     #From the original folder in the host, we copy a R script to a new folder in the container called scripts. NEVER PUT ANYTHING ELSE IN THE LINE WITH SOURCE AND DESTINATION, GIVES ERROR.
     #https://groups.google.com/a/lbl.gov/forum/#!topic/singularity/4NFDsohnxgg
 
@@ -130,22 +126,9 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 	apt-get -y install libcurl4-gnutls-dev libxml2-dev libssl-dev
 
 	#install R packages
-	Rscript -e 'install.packages("exactRankTests", repos="https://cloud.r-project.org", dep=T)'
-	Rscript -e 'install.packages("MuMIn", repos="https://cloud.r-project.org", dep=T)'
-	Rscript -e 'install.packages("lme4", repos="https://cloud.r-project.org", dep=T)'
-	Rscript -e 'install.packages("optparse", repos="https://cloud.r-project.org", dep=T)'
-	Rscript -e 'install.packages("modEvA", repos="https://cloud.r-project.org", dep=T)'
-	Rscript -e 'install.packages("ecospat", repos="https://cloud.r-project.org", dep=T)'
-	Rscript -e 'install.packages("randomForest", repos="https://cloud.r-project.org", dep=T)'
-	Rscript -e 'install.packages("gam", repos="https://cloud.r-project.org", dep=T)'
-	Rscript -e 'install.packages("dismo", repos="https://cloud.r-project.org", dep=T)'
-	Rscript -e 'install.packages("terra", repos="https://cloud.r-project.org", dep=T)'
-	Rscript -e 'install.packages("raster", repos="https://cloud.r-project.org", dep=T)'
-	Rscript -e 'install.packages("sf", repos="https://cloud.r-project.org", dep=T)'
-	Rscript -e 'install.packages("R.utils", repos="https://cloud.r-project.org", dep=T)' 
-	Rscript -e 'install.packages("foreach", repos="https://cloud.r-project.org", dep=T)' 
-	Rscript -e 'install.packages("doParallel", repos="https://cloud.r-project.org", dep=T)'
-	Rscript -e 'install.packages("RColorBrewer", repos="https://cloud.r-project.org", dep=T)'
+	Rscript -e 'install.packages("BiocManager", repos="https://cloud.r-project.org", dep=T)'
+	Rscript -e 'BiocManager::install("biomaRt")'
+	Rscript -e 'BiocManager::install("GenomicRanges")'
 	#Rscript -e 'install.packages("devtools", repos="https://cloud.r-project.org", dep=T)' 
 	#Rscript -e 'devtools::install_github("jalvesaq/colorout")' 
 	#Rscript -e 'devtools::install_github("DanielRivasMD/SistWrapper")'
