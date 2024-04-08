@@ -2,7 +2,6 @@
 
 - CHECK ANSWER OF DAVID ABOUT MASK AND GEN POS ZERO
 
-- WE HAVE TO CONVERT THE GENES IDS TO HG38? thermogenic list names are hg19 and probably the BAT connectome, so we should check this
 
 - final mails about hg38 mig with David
 	- mail 1
@@ -53,7 +52,7 @@
 			- Si no me equivoco debes de poder usarlo, por lo que quizás te recomendaría usar la imagen de singularity por defecto de VEP en el chr22 y comprobar los resultados.
 				- singularity pull --name vep.sif docker://ensemblorg/ensembl-vep
 				- Para poder acceder a la partición desde singularity debes de usar un punto de acceso. Lo más sencillo es usar el mismo path y ya está
-				- singularity exec --bind /labstorage/jmurgamoreno/mk_data/raw_data/:/labstorage/jmurgamoreno/mk_data/raw_data/ vep.sif <comando>
+				- singularity exec --bind /labstorage/jmurgamoreno/mk_data/raw_data/:/labstorage/jmurgamoreno/mk_data/raw_data/ vep.sif
 		- Para extraer los ancestrales yo primero suelo hacer que haya sólo un tipo de anotación por línea y luego bcftools +split-vep. Te envío el script que uso para separar las anotaciones, pero creo que basta con bcftools.
 		- Respecto a la máscara, creo que no hace falta usarla. La máscara está hecha para evitar los sitios con bajo de coverage del phase3. Si asumimos que los datos de Byrska-Bishop tienen un coverage 30X de media, no debería de ser necesario aplicarla.
 
@@ -94,7 +93,7 @@
 	- check the original map is hg38
 		- it says it is hg38 in the origina file, aau1043_DataS3.gz
 	- check if the data is 1 or 0 based
-
+		- this was answered by the first author of the paper, saying these are 1-based coordinates.
 	- DAVID: according to DAvid, you can check that with the assembly file, if the base the map is saying is in position X is indeed at position X, you are good.
 
 
