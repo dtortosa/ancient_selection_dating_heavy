@@ -76,17 +76,19 @@ datasets[which(datasets$dataset == "hsapiens_gene_ensembl"), ]
 
 #we want to view the available archived versions. listEnsemblArchives takes no arguments, and produces a table containing the names of the available archived versions, the date they were first available, and the URL where they can be accessed.
 listEnsemblArchives()
-#we select the last version at the moment of writting this code, which is the Ensembl Release 111 (January 2024): https://jan2024.archive.ensembl.org
+#we select the last version at the moment of writting this code, which is the Ensembl Release 111 (January 2024), this version has "*" as value in the column current_release, which means it is the current release, because the rest of releases have an empty value.
+#https://jan2024.archive.ensembl.org
 
 #take a look for the marts in the Jan 2024 release
 listMarts(host = "https://jan2024.archive.ensembl.org") 
 #we see ensemble genes, variation and regulation. In all cases release 111, which is the lastest in general (this is not the same than patch release, the last of which is 14 in GRCh38).
 
-#extract the datasets of ensemble genes for grch38, aka hg38
+#extract the mart of ensemble genes for hg38, release Jan 2024
 grch38_datasets <- listDatasets(useMart(host = "https://jan2024.archive.ensembl.org", biomart = "ENSEMBL_MART_ENSEMBL"))
+head(grch38_datasets)
 
 #We are interested in 'hsapiens_gene_ensembl' ()Human genes. 
-grch38_datasets[which(grch38_datasets$dataset == "hsapiens_gene_ensembl"), ] 
+grch38_datasets[which(grch38_datasets$dataset == "hsapiens_gene_ensembl"), ]
 #The version indicated is GRCh38.p14, which is the last patch release of GRCh38 in the first quarter of 2024.
 #this patch seems to be the latest in ncbi
 #https://www.ncbi.nlm.nih.gov/assembly/?term=GRCh38
@@ -94,14 +96,18 @@ grch38_datasets[which(grch38_datasets$dataset == "hsapiens_gene_ensembl"), ]
 #We are going to use GCRh38.p14 (release of Jan 2024; see above).
 #it is useful to use the specific URL for avoiding changes in the results if you compile the code again in several months and the current version (default) has changed. We select the url of the specific version we are interested, which is the release of feb 2014, last patch release of GRCh37
 
-#Select ensemble genes of human datasets and the GRCh38.p14, Jan 2024 release (111)
+#Select the mart with ensemble genes of humans and the GRCh38.p14, Jan 2024 release (111)
 grch38_human <- useMart(host = "https://jan2024.archive.ensembl.org", biomart = "ENSEMBL_MART_ENSEMBL", dataset = "hsapiens_gene_ensembl")
 str(grch38_human)
+
+
+###POR AQUIIII
+
 
 #check we have the correct assembly and patch in the human dataset
 list_datasets_hg38 <- listDatasets(grch38_human)
 if(list_datasets_hg38[which(list_datasets_hg38$dataset == "hsapiens_gene_ensembl"), "version"] != "GRCh38.p14") {
-    stop("The version of the assembly and patch is not GRCh38.p14")
+	stop("The version of the assembly and patch is not GRCh38.p14")
 }
 
 #See the attributes
