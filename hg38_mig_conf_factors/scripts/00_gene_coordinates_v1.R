@@ -41,27 +41,7 @@
 library(biomaRt) #for connecting with ensemble
 library(GenomicRanges) #for calculating overlap between exons of a gene
 require(stringr) #for replacing "," in the total chromosome length
-require(D3GB) #for loading the chromosome length
 
-
-
-###########################################
-###### SET THE ENVIRONMENT PROPERLY #######
-###########################################
-
-#This is indicated in my .Rprofile, but just in case yo forgot it, I have pasted here.
-
-#Always remove previous workspace
-rm(list=ls())
-
-#load colorout package to have colorful outputs in the R console
-require(colorout)
-
-#load SistWrapper package. In that we can use the function wideScreen to change$
-require(SistWrapper)
-
-#For this script we want to see more than 8 digits in the terminal. 8 is the default, so for example, if you make the following division: (45959538+45965751)/2. You will get 45962644, instead of 45962644.5, which is the correct solution. This is caused becasue 45962644.5 has more than 8 numbers, so the last one it is not shown. This does not mean that the calculation is wrong, the correct calculus is made (you can check it with print(x, digits=8 or 9)), but you don´t see the complete solution in the terminal. Because of this, for this work with long numbers (genetic coordinates) we will set the a higher number of digits that are shown
-options(digits = 15)
 
 
 
@@ -70,25 +50,26 @@ options(digits = 15)
 ##################################################################################
 
 #before run the final analyses we check if we have something in the cache.
-	#To save time and computing resources biomaRt will attempt to identify when you are re-running a query you have executed before. Each time a new query is run, the results will be saved to a cache on your computer. If a query is identified as having been run previously, rather than submitting the query to the server, the results will be loaded from the cache. You can get some information on the size and location of the cache using the function biomartCacheInfo():
+#To save time and computing resources biomaRt will attempt to identify when you are re-running a query you have executed before. Each time a new query is run, the results will be saved to a cache on your computer. If a query is identified as having been run previously, rather than submitting the query to the server, the results will be loaded from the cache. You can get some information on the size and location of the cache using the function biomartCacheInfo():
 biomartCacheInfo()
 
 #The cache can be deleted using the command biomartCacheClear(). This will remove all cached files.
 #biomartCacheClear()
 #biomartCacheInfo()
 
-#look for the list of marts currently included. Everything is version 98.
+#look for the list of marts currently included. Everything is version 111.
 listMarts()
 
 #connect with the BioMart database we are interested. In this case, ensemble genes
-ensembl = useMart(biomart="ENSEMBL_MART_ENSEMBL")
+ensembl <- useMart(biomart = "ENSEMBL_MART_ENSEMBL")
 
-#see the list of datasets included in the database 'ensemble' 
-datasets = listDatasets(ensembl) 
+#see the list of datasets included in the database 'ensemble'
+datasets <- listDatasets(ensembl)
 head(datasets)
 
 #search for the name of your dataset of interest, which should include 'hsapiens' in its name
-searchDatasets(mart = ensembl, pattern = "hsapiens") #the name of the dataset with human data is 'hsapiens_gene_ensembl'
+searchDatasets(mart = ensembl, pattern = "hsapiens")
+#the name of the dataset with human data is 'hsapiens_gene_ensembl'
 
 #We are interested in hsapiens_gene_ensembl
 datasets[which(datasets$dataset == 'hsapiens_gene_ensembl'),] #the version indicated is GRCh38.p13, but we need GRCh37 (aka hg19), which is the version used by David in previous analyses. Moreover, I think it will be easier to get data of confounding factors according the gene coordinates of this assemble. I think David told me that it is easier to translate data of genomic factors from newer to the older version. For example, we have the new recombination data from deCode in GRCh38, but we can transform it to hg19. I am going to specify the older version GRCh37.
@@ -97,10 +78,10 @@ datasets[which(datasets$dataset == 'hsapiens_gene_ensembl'),] #the version indic
 listEnsemblArchives() #we select the URL of grch37, aka hg19: http://grch37.ensembl.org
 
 #take a look to the databases in the version of GRCh37 
-listMarts(host = 'http://grch37.ensembl.org') #we see ensemble genes, variation and regulation. In all cases release 98, which is the lastest in general (this is not the same than patch release, the last of which is 13 in GRCh37).
+listMarts(host = 'http://grch38.ensembl.org') #we see ensemble genes, variation and regulation. In all cases release 111, which is the lastest in general (this is not the same than patch release, the last of which is 14 in GRCh38).
 
-#extract the datasets of grch37, aka hg19
-grch37_datasets = listDatasets(useMart(host='http://grch37.ensembl.org', biomart='ENSEMBL_MART_ENSEMBL'))
+#extract the datasets of grch38, aka hg38
+grch37_datasets = listDatasets(useMart(host='http://grch38.ensembl.org', biomart='ENSEMBL_MART_ENSEMBL'))
 
 #We are interested in 'hsapiens_gene_ensembl' ()Human genes. 
 grch37_datasets[which(grch37_datasets$dataset == 'hsapiens_gene_ensembl'),] #The version indicated is GRCh37.p13, which is the last patch release of GRCh37. It makes sense that 'grch37.ensembl.org' automatically connect with the last patch release of GRC37, but we are going to check it.

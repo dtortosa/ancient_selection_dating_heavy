@@ -129,6 +129,7 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 	Rscript -e 'install.packages("BiocManager", repos="https://cloud.r-project.org", dep=T)'
 	Rscript -e 'BiocManager::install("biomaRt")'
 	Rscript -e 'BiocManager::install("GenomicRanges")'
+	Rscript -e 'install.packages("stringr", repos="https://cloud.r-project.org", dep=T)'
 	#Rscript -e 'install.packages("devtools", repos="https://cloud.r-project.org", dep=T)' 
 	#Rscript -e 'devtools::install_github("jalvesaq/colorout")' 
 	#Rscript -e 'devtools::install_github("DanielRivasMD/SistWrapper")'
@@ -154,7 +155,7 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 		require(SystWrapper)
 		
 		#For this script we want to see more than 8 digits in the terminal. 8 is the default, so for example, if you make the following division: (45959538+45965751)/2. You will get 45962644, instead of 45962644.5, which is the correct solution. This is caused becasue 45962644.5 has more than 8 numbers, so the last one it is not shown. This does not mean that the calculation is wrong, the correct calculus is made (you can check it with print(x, digits=8 or 9)), but you don´t see the complete solution in the terminal. Because of this, for this work with long numbers (genetic coordinates) we will set the a higher number of digits that are shown
-		options(digits = 10)' > /opt/.Rprofile
+		options(digits = 15)' > /opt/.Rprofile
 		#https://www.cyberciti.biz/faq/linux-append-text-to-end-of-file/
 		#if you want more option to easily customize your R profile, check this link out:
 			#https://www.r-bloggers.com/2020/01/customising-your-rprofile/
@@ -212,7 +213,6 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 %runscript
 
 	#run scripts. NOT USE "&", each script have to be run after the previous one have been run
-    R CMD BATCH /opt/scripts/global_test_phylo_current_v1.R
 
 
 
@@ -223,15 +223,15 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 
 #Command to build, enter interactively or run
 	#now apply the definition file final_test_def for creating a container
-		#sudo singularity build --force /home/dftortosa/diego_docs/science/phd/nicho_pinus/01_global_test_phylo_ubuntu_20_04_v1.sif /home/dftortosa/diego_docs/science/phd/nicho_pinus/code/phylo/recipes/01_global_test_phylo_ubuntu_20_04_v1.def &> /home/dftortosa/diego_docs/science/phd/nicho_pinus/code/phylo/recipes/01_global_test_phylo_ubuntu_20_04_v1.out
+		#sudo singularity build --force /home/dftortosa/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating_heavy_analyses/dating_climate_adaptation/hg38_mig_conf_factors/containers/00_gene_coordinates_ubuntu_20_04_v1.sif /home/dftortosa/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating_heavy_analyses/dating_climate_adaptation/hg38_mig_conf_factors/containers/recipes/00_gene_coordinates_ubuntu_20_04_v1.def
 			#--force to force overwrite
 			#In the definition file is indicate that we will take an Ubuntu 20.04 container from the Singularity library. We do not need anything else. We do not need a previous image in the host system! The definition file has the instructions to get the required container from the library.
 	#you can run this image interactively with shell. For that you have to be in a specific folder in order to have the scripts workingnter in the container
-		#cd /home/dftortosa/diego_docs/science/phd/nicho_pinus
-		#sudo singularity shell /home/dftortosa/diego_docs/science/phd/nicho_pinus/01_global_test_phylo_ubuntu_20_04_v1.sif
+		#cd /home/dftortosa/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating_heavy_analyses/dating_climate_adaptation/hg38_mig_conf_factors/containers/
+		#sudo singularity shell ./00_gene_coordinates_ubuntu_20_04_v1.sif
 	#to run the container. For that you have to be in a specific folder in order to have the scripts workingnter in the container
-		#cd /home/dftortosa/diego_docs/science/phd/nicho_pinus
-		#sudo singularity run /home/dftortosa/diego_docs/science/phd/nicho_pinus/01_global_test_phylo_ubuntu_20_04_v1.sif
+		#cd /home/dftortosa/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating_heavy_analyses/dating_climate_adaptation/hg38_mig_conf_factors/containers/
+		#sudo singularity run ./00_gene_coordinates_ubuntu_20_04_v1.sif
 
 %labels
     Author dftortosa
