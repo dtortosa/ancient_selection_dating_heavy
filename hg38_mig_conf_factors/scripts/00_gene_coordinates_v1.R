@@ -18,7 +18,7 @@
 ######## OBTAIN GENE COORDINATES ########
 #########################################
 
-#From this script we will get the center of each 
+#From this script we will get the center of each
 #coding gene along with several genomic factors
 #This gene center will be used in other scripts to get the data
 #about different confounding genomic
