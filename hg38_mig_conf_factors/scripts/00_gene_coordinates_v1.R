@@ -1,5 +1,4 @@
 #!/usr/bin/env Rscript
-
 # coding: utf-8
 #to run this script: chmod +x script.R; ./script.R
 #!/bin/sh does not work with my terminal en msi of David.
@@ -294,58 +293,54 @@ tail(all_genes_grch38_human)
 nrow(all_genes_grch38_human)
 #I cannot obtain the start and end position of each gene (feature_page characteristics) and at the same time obtain info of each exon (structure or sequences characteristics) because we have to filter by gene for that. We need this information to calculate some confounding factors like the density of coding sequence density, but I think we will need to obtain the list of genes first, and the make a loop for gene calculating the confounding factors we can obtain.
 
-
-###POR AQUIII
-
-
 #check differences between total rows and the number of uniques values of ensembl_gene_id
-nrow(all_genes_grch38_human) #1314467
-length(unique(all_genes_grch38_human$ensembl_gene_id)) #64102 unique gene id.
+nrow(all_genes_grch38_human) #1791149
+length(unique(all_genes_grch38_human$ensembl_gene_id)) #70711 unique gene id.
 #this difference is because for each gene we can have several transcripts, and within each transcript we can have several exons. In addition, note that you can have several gene id for the same hgnc symbol (gene name), I think these are cases with high variability, so different versions of the gene are included, BUT I am not sure. In any case, i think after applying the filter for coding genes, these redundant gene id will be remove.
 
-#remove all the rows that have a chromosome_name different than 1:22. In that way, we remove the exons of genes that are in  mithocondrial DNA or messy sequences like those of the MHC (highly variable regions for which the assemble include several versions, in that cases chromosome name is some like V_MHC...). In addition, we remove the sexual chromosomes. 
+#remove all the rows that have a chromosome_name different than 1:22. In that way, we remove the exons of genes that are in  mithocondrial DNA or messy sequences like those of the MHC (highly variable regions for which the assemble include several versions, in that cases chromosome name is some like V_MHC...). In addition, we remove the sexual chromosomes.
 #We don´t take data from the Y because is very small, it has very few genes, so the estimates of the slope of confounding factors only considering this chromosome would have very wide confidence interval (low sample size).
-#We remove X because we do not have iHS for that chromosome right now, and it would entail a great amount of effort to calculate that. In addition, much of the analyses i could do for example with climate would be done within the autosomal only. 
-unique(all_genes_grch37_human$chromosome_name)
-all_genes_grch37_human_filtered = all_genes_grch37_human[which(all_genes_grch37_human$chromosome_name %in% c(1:22)),]
-nrow(all_genes_grch37_human) - nrow(all_genes_grch37_human_filtered)
+#We remove X because we do not have iHS for that chromosome right now, and it would entail a great amount of effort to calculate that. In addition, much of the analyses i could do for example with climate would be done within the autosomal only.
+unique(all_genes_grch38_human$chromosome_name)
+all_genes_grch38_human_filtered <- all_genes_grch38_human[which(all_genes_grch38_human$chromosome_name %in% c(1:22)), ]
 
 #check that there is not row with other chromosome_name rather than 1:22
-nrow(all_genes_grch37_human_filtered[which(!(all_genes_grch37_human_filtered$chromosome_name %in% c(1:22))),]) == 0 
-c(1:22) %in% unique(all_genes_grch37_human_filtered$chromosome_name)
-unique(all_genes_grch37_human_filtered$chromosome_name) %in% c(1:22)
+if(FALSE %in% c(unique(all_genes_grch38_human_filtered$chromosome_name) %in% c(1:22))) {
+	stop("The type of the chromosomes is not correct")
+}
 
 #check that each gene name has only one gene id. I can not select those cases without gene name
-#extract the gene names without empty cases ('')
-gene_names_no_null = unique(all_genes_grch37_human_filtered$hgnc_symbol)
-gene_names_no_null = gene_names_no_null[-which(gene_names_no_null == '')]
-!'' %in% gene_names_no_null
+#extract the gene names without empty cases ("")
+gene_names_no_null <- unique(all_genes_grch38_human_filtered$hgnc_symbol)
+gene_names_no_null <- gene_names_no_null[which(gene_names_no_null != "")]
+!"" %in% gene_names_no_null
 #for each gene name
-test_duplicated_gene_id = data.frame(selected_gene_name=NA, test_result=NA)
+test_duplicated_gene_id <- data.frame(selected_gene_name = NA, test_result = NA)
+#i=1
 for(i in 1:length(gene_names_no_null)){
 
 	#select the [i] gene name
-	selected_gene_name = gene_names_no_null[i]
+	selected_gene_name <- gene_names_no_null[i]
 
 	#extract the unique cases of gene id for the [i] hgnc symbol
-	unique_gene_id = unique(all_genes_grch37_human_filtered[which(all_genes_grch37_human_filtered$hgnc_symbol == selected_gene_name),]$ensembl_gene_id)
+	unique_gene_id <- unique(all_genes_grch38_human_filtered[which(all_genes_grch38_human_filtered$hgnc_symbol == selected_gene_name), ]$ensembl_gene_id)
 
 	#test that the number of unique cases is 1 (only 1 gene id for each gene name)
-	test_result = length(unique_gene_id) == 1
+	test_result <- length(unique_gene_id) == 1
 
 	#save
-	test_duplicated_gene_id = rbind.data.frame(test_duplicated_gene_id, cbind.data.frame(selected_gene_name, test_result))
+	test_duplicated_gene_id <- rbind.data.frame(test_duplicated_gene_id, cbind.data.frame(selected_gene_name, test_result))
 }
 #remove first row with NAs
-test_duplicated_gene_id = test_duplicated_gene_id[-1,]
+test_duplicated_gene_id <- test_duplicated_gene_id[-1, ]
 #take a look for genes with repeated gene id
 summary(test_duplicated_gene_id) #we have several cases
 #extract information of these genes
-genes_with_duplicated_id = test_duplicated_gene_id[which(test_duplicated_gene_id$test_result == FALSE),]$selected_gene_name
-all_genes_grch37_human_filtered[which(all_genes_grch37_human_filtered$hgnc_symbol %in% genes_with_duplicated_id),]
-	#there are a lot of micro RNA with repeated gene names, but they should be removed after filtering by biotype (check)
-	#there is one case of non microRNAs: UGT2A1 has two gene ids, ENSG00000270386 (http://grch37.ensembl.org/Homo_sapiens/Gene/Summary?g=ENSG00000270386;r=4:70454912-70518967;t=ENST00000514019) and ENSG00000173610 (http://grch37.ensembl.org/Homo_sapiens/Gene/Summary?g=ENSG00000173610;r=4:70454135-70518965). It is like ENSG00000270386 is a transcript of ENSG00000270386 that has been separated as an independent gene. They are in the same region, and has the same hgcn symbol. 
-		#I do not know what to do with the latter case. Should I removed the gene id with only one transcript, if not we will have the start of two windows in that region. Moreover, I don´t know how detect more cases like this in genes that have no hgcn symbol. 
+genes_with_duplicated_id <- test_duplicated_gene_id[which(test_duplicated_gene_id$test_result == FALSE), ]$selected_gene_name
+all_genes_grch38_human_filtered[which(all_genes_grch38_human_filtered$hgnc_symbol %in% genes_with_duplicated_id), ]
+#there are a lot of micro RNA with repeated gene names, but they should be removed after filtering by biotype (check)
+#there is one case of non microRNAs: UGT2A1 has two gene ids, ENSG00000270386 (https://jan2024.archive.ensembl.org/Homo_sapiens/Transcript/Summary?db=core;g=ENSG00000173610;r=4:69589194-69653249;t=ENST00000514019) and ENSG00000173610 (https://jan2024.archive.ensembl.org/Homo_sapiens/Gene/Summary?g=ENSG00000173610;r=4:70454135-70518965). It is like ENSG00000270386 is a transcript of ENSG00000270386 that has been separated as an independent gene. They are in the same region, and has the same hgcn symbol.
+#I do not know what to do with the latter case. Should I removed the gene id with only one transcript, if not we will have the start of two windows in that region. Moreover, I don´t know how detect more cases like this in genes that have no hgcn symbol.
 
 
 
@@ -354,8 +349,12 @@ all_genes_grch37_human_filtered[which(all_genes_grch37_human_filtered$hgnc_symbo
 ###################################################################
 
 #we are going to load the positions of all exons of the genome
-full_exon_data = getBM(attributes=c('chromosome_name', 'ensembl_gene_id', 'gene_biotype', 'ensembl_transcript_id', 'transcript_biotype', 'strand', 'transcript_start', 'transcript_end', 'ensembl_exon_id', 'exon_chrom_start', 'exon_chrom_end', 'genomic_coding_start', 'genomic_coding_end', 'cds_length', 'cds_start', 'cds_end'), mart = grch37_human, filters = "ensembl_gene_id", values = all_gene_ids_grch37_human)
-	#we apply the gene ids as a filter but setting as value the ids of ALL human genes, which were previously downloaded. I do the download in that way because if you download the whole data is an individual query with a wait limit of 5 minutes. This made the query be stopped. In contrast, if we apply the filter, you will download each gene as an independent query with 5 minutes each one BUT in one file. In addition, we get a bar of progress and an estimated time to the query be finished. See more information and other options for solving this problem here: https://github.com/grimbough/biomaRt/issues/20
+full_exon_data <- getBM(
+    attributes = c("chromosome_name", "ensembl_gene_id", "gene_biotype", "ensembl_transcript_id", "transcript_biotype", "strand", "transcript_start", "transcript_end", "ensembl_exon_id", "exon_chrom_start", "exon_chrom_end", "genomic_coding_start", "genomic_coding_end", "cds_length", "cds_start", "cds_end"),
+    mart = grch38_human,
+    filters = "ensembl_gene_id",
+    values = all_gene_ids_grch38_human)
+#we apply the gene ids as a filter but setting as value the ids of ALL human genes, which were previously downloaded. I do the download in that way because if you download the whole data is an individual query with a wait limit of 5 minutes. This made the query be stopped. In contrast, if we apply the filter, you will download each gene as an independent query with 5 minutes each one BUT in one file. In addition, we get a bar of progress and an estimated time to the query be finished. See more information and other options for solving this problem here: https://github.com/grimbough/biomaRt/issues/20
 head(full_exon_data)
 	#cds_start and cds_end work fine. For example with ENSG00000196189 (SEMA4A), I have checked the exons in the exon visualizer of the first transcript (ENST00000435124). The first exon is non-coding, so cds start and end is NA. This finishes at 156117221, at 156117222 begins an intron that ends at 156,124,340. At 156,124,341 begins the next exon, first coding (Figure 12). It has as cds start 1, because it is the first one. The first exon have a value of CDS length because it is a global value for the whole gene, but that exon does not contribute to coding length. The same goes for the second transcript (ENST00000414683; figure 13).
 	#BUT the most interesting variables are genomic_coding_start and genomic_coding_end. For example, this first transcript of SEMA4A (ENST00000435124) has 139 coding basis in the first coding exon, as cds_start is 1 and cds_end is 139. The range of sequences included between genomic_coding_start and genomic_coding_end (156124508 - 156124370 + 1) is 139. The same goes for the last coding exon, according to the webpage, the coding length here is 153. The range according to genomic coding start and end is also 153 (156131289 - 156131137 + 1), also according to the data of cds_start and end.

@@ -1,3 +1,19 @@
+#!/usr/bin/env Rscript
+# coding: utf-8
+#to run this script: chmod +x script.R; ./script.R
+#!/bin/sh does not work with my terminal en msi of David.
+#if you are using "$" to paste the path of the executable,
+#you do not need to use "./" for running the executable.
+#you can save the output and the errors
+#./script.R > script.Rout #only output #nolint
+#./script.R 2> error.Rout #only error
+#./script.R > script.Rout 2> error.out #both in different files
+#./script.R > script.Rout 2>&1 #both in the same file
+#https://www.cyberciti.biz/faq/linux-redirect-error-output-to-file/
+
+
+
+
 ########################################################
 ########## SCRIPTS FOR CALCULATING GC CONTENT ##########
 ########################################################
@@ -9,21 +25,6 @@
 ###################################################
 ###### CHANGES RESPECT TO PREVIOUS VERSIONS #######
 ###################################################
-
-#Respect to v1, 
-	#I have changed the way to calculate GC density. Now we sum the GC content of all segments inside a window and divide by the sum of the numbers of data points for all the segments inside the window.
-
-	#I have added a check to review if the segments of GC content inside each chromosome are overlapped.
-
-#Respect to v2, 
-	#Rerun the script revising everything that could be wrong about the changes made about the coordinate windows in gene_coordinates_v10.r. We REMOVED those windows that surpass the chromosome limit (start or and). In the previous version we trimmed them. If you trimmed them, you can have 100kb and a 50 kb with similar size (less difference than it should be). We have to consider this. 
-
-
-
-##########################################
-########## REMOVE PREVIOUS WORKSPACE #####
-##########################################
-remove(list=ls(all=TRUE))
 
 
 
@@ -39,9 +40,24 @@ require(plyr) #for apply functions across lists and data.frames. This is better 
 ####### DESCRIPTION OF "GC PERCENT IN 5-BASE WINDOWS" #######
 #############################################################
 
-#From: "https://genome.ucsc.edu/cgi-bin/hgTrackUi?hgsid=801848801_WrOkvQQaHYn0IPPS2avBfoahfyXU&c=chr1&g=gc5Base"
+#From:
+#https://genome.ucsc.edu/cgi-bin/hgTrackUi?hgsid=801848801_WrOkvQQaHYn0IPPS2avBfoahfyXU&c=chr1&g=gc5Base
 
 #The GC percent track shows the percentage of G (guanine) and C (cytosine) bases in 5-base windows. High GC content is typically associated with gene-rich areas.
+
+
+
+
+#I ahve found GC content in the usual format in "https://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/"
+#the problem is this is only for the first hg38 version, but not for the patch 14
+#the patch 14 is in bigwig format which is veery heavy and I do not know how to use it....
+#
+
+#the original page for search GC content has only bigwig 
+#https://genome.cse.ucsc.edu/cgi-bin/hgTables?db=hg38&hgta_group=map&hgta_track=gc5BaseBw&hgta_table=gc5BaseBw&hgta_doSchema=describe+table+schema
+
+#in theory we could use bigWigToWig to conver to the tpyical wig..
+	#https://genome.cse.ucsc.edu/goldenPath/help/bigWig.html
 
 
 
@@ -49,7 +65,7 @@ require(plyr) #for apply functions across lists and data.frames. This is better 
 ###### SCHEMA FOR "GC PERCENT IN 5-BASE WINDOWS" ######
 #######################################################
 
-#From: "https://genome.ucsc.edu/cgi-bin/hgTables?db=hg19&hgta_group=map&hgta_track=gc5Base&hgta_table=gc5Base&hgta_doSchema=describe+table+schema".
+#From: "https://genome.cse.ucsc.edu/cgi-bin/hgTables?db=hg38&hgta_group=map&hgta_track=gc5BaseBw&hgta_table=gc5BaseBw&hgta_doSchema=describe+table+schema".
 
 
 ##The file is in the WIG format. Info from here: "http://genome.ucsc.edu/goldenPath/help/wiggle.html"

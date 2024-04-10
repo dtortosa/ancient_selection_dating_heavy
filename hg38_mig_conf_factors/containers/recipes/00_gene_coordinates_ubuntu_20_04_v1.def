@@ -126,6 +126,7 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 	apt-get -y install libcurl4-gnutls-dev libxml2-dev libssl-dev
 
 	#install R packages
+	Rscript -e 'install.packages("plyr", repos="https://cloud.r-project.org", dep=T)'
 	Rscript -e 'install.packages("BiocManager", repos="https://cloud.r-project.org", dep=T)'
 	Rscript -e 'BiocManager::install("biomaRt")'
 	Rscript -e 'BiocManager::install("GenomicRanges")'
