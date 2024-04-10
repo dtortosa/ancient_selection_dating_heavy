@@ -33,6 +33,16 @@
 
 
 
+#################################################
+###### MOVE FROM CONTAINER TO MAIN FOLDER #######
+#################################################
+
+#we move the WD to the parent folder
+setwd("../")
+getwd()
+
+
+
 ######################
 ###### LIBRARY #######
 ######################
@@ -100,13 +110,9 @@ grch38_datasets[which(grch38_datasets$dataset == "hsapiens_gene_ensembl"), ]
 grch38_human <- useMart(host = "https://jan2024.archive.ensembl.org", biomart = "ENSEMBL_MART_ENSEMBL", dataset = "hsapiens_gene_ensembl")
 str(grch38_human)
 
-
-###POR AQUIIII
-
-
 #check we have the correct assembly and patch in the human dataset
 list_datasets_hg38 <- listDatasets(grch38_human)
-if(list_datasets_hg38[which(list_datasets_hg38$dataset == "hsapiens_gene_ensembl"), "version"] != "GRCh38.p14") {
+if (list_datasets_hg38[which(list_datasets_hg38$dataset == "hsapiens_gene_ensembl"), "version"] != "GRCh38.p14") {
 	stop("The version of the assembly and patch is not GRCh38.p14")
 }
 
@@ -142,15 +148,9 @@ searchFilters(mart = grch38_human, pattern = c("exon"))
 listFilterOptions(mart = grch38_human, filter = "chromosome_name") 
 #we are only interested in 'normal' data within the 1:22 chromosomes
 #we will use only chromsome 1:22 removing all the highly variable regions like those related to the MHC. In these regions the chromosome name is not the actual chromosome where the sequence is, but a different notation for example if it is a highly varaible region with several versions included in the esemble
-	#We will also include the X to do a small paper aobut X and differences with the rest of the genome. See below.
 
 #extract the ids of ALL human genes. This will be used to split the query of all data into each gene (see below)
 all_gene_ids_grch38_human <- getBM(attributes = c("ensembl_gene_id"), mart = grch38_human)
-
-
-
-
-###POR AQUIII, WE HAVE TO CHECK PREVIOUS LINES
 
 
 
@@ -162,90 +162,61 @@ all_gene_ids_grch38_human <- getBM(attributes = c("ensembl_gene_id"), mart = grc
 #This will be used to stop the windows that reach the start or end of the chromosomes.
 
 ##data from ncbi
-#load chromosome length for GRCh37.p13 copied into a txt file from "https://www.ncbi.nlm.nih.gov/grc/human/data?asm=GRCh37.p13"
-chrom_length_ncbi_hg19 = read.table("/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/postdoc_enard_lab/projects/method_deep/data/search_diego/gene_coordinates/chrom_length/chromosome_length_hg19_from_ncbi.txt", sep="\t", header=T) #chromosome lengths are calculated by summing the length of the placed scaffolds and estimated gaps.
+#load chromosome length for GRCh38.p14 copied into a txt file from "https://www.ncbi.nlm.nih.gov/grc/human/data?asm=GRCh37.p13"
+chrom_length_ncbi_hg38 <- read.table("./data/gene_coordinates/chromosome_length/chromosome_length_hg38_from_ncbi.csv", sep = ",", header = TRUE) #chromosome lengths are calculated by summing the length of the placed scaffolds and estimated gaps.
 
 #change col names
-colnames(chrom_length_ncbi_hg19) <- c("chromosome", "length_bp", "GenBank.accession", "RefSeq.accession")
+colnames(chrom_length_ncbi_hg38) <- c("chromosome", "length_bp", "GenBank.accession", "RefSeq.accession")
 
 #see structure
-str(chrom_length_ncbi_hg19)
-
-#change the chromosome length from string to numeric
-chrom_length_ncbi_hg19$length_bp_string <- chrom_length_ncbi_hg19$length_bp #save the string length as a new variable
-chrom_length_ncbi_hg19$length_bp <- NULL #remove the previous one
-require(stringr) #load stringr
-chrom_length_ncbi_hg19$length_bp = as.numeric(str_replace_all(chrom_length_ncbi_hg19$length_bp_string, ",", "")) #replace the "," by nothing and convert to numeric. If you do not remove the ",", as.numeric() does not work. 
+str(chrom_length_ncbi_hg38)
 
 #select only the autosomal chromosomes
-chrom_length_ncbi_hg19 = chrom_length_ncbi_hg19[which(chrom_length_ncbi_hg19$chromosome %in% 1:22),]
+chrom_length_ncbi_hg38 <- chrom_length_ncbi_hg38[which(chrom_length_ncbi_hg38$chromosome %in% 1:22),]
 
 #check that the order of the chromosomes are ok
-!FALSE %in% c(chrom_length_ncbi_hg19$chromosome == 1:22)
-
+if (FALSE %in% c(chrom_length_ncbi_hg38$chromosome == 1:22)) {
+	stop("The type of the chromosomes is not correct")
+}
 
 ##data from uscs
-#load chromosome length for GRCh37 as the chromInfo.txt file from "http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/"
-chrom_length_ucsc_hg19 = read.table("/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/postdoc_enard_lab/projects/method_deep/data/search_diego/gene_coordinates/chrom_length/ucsc_golden_path_hg19/chromInfo.txt", sep="\t", header=F) 
-	#the sql page for this file indicates that is hg19: "http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/chromInfo.sql".
-	#info obtained from here "https://support.bioconductor.org/p/14766/"
-	
-#change colnames 
-colnames(chrom_length_ucsc_hg19) <- c("chromosome", "length_bp", "path_not_sure")
+#load chromosome length for GRCh38 as the chromInfo.txt file. This directory contains a dump of the UCSC genome annotation database for the Dec. 2013 (GRCh38/hg38) assembly of the human genome (hg38, GRCh38 Genome Reference Consortium Human Reference 38
+#http://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/
+chrom_length_ucsc_hg38 <- read.table("./data/gene_coordinates/chromosome_length/chromInfo.txt.gz", sep = "\t", header = FALSE)
+
+#change colnames
+colnames(chrom_length_ucsc_hg38) <- c("chromosome", "length_bp", "path_not_sure")
 
 #select only autosomal
-chrom_length_ucsc_hg19 = chrom_length_ucsc_hg19[which(chrom_length_ucsc_hg19$chromosome %in% paste("chr", 1:22, sep="")),]
+chrom_length_ucsc_hg38 <- chrom_length_ucsc_hg38[which(chrom_length_ucsc_hg38$chromosome %in% paste("chr", 1:22, sep = "")), ]
 
 #see structure
-str(chrom_length_ucsc_hg19)
+str(chrom_length_ucsc_hg38)
 
 #reorder the rows to have the chromosome number in increasing order
-chrom_length_ucsc_hg19 = chrom_length_ucsc_hg19[match(paste("chr", 1:22, sep=""), chrom_length_ucsc_hg19$chromosome),]
+chrom_length_ucsc_hg38 <- chrom_length_ucsc_hg38[match(paste("chr", 1:22, sep = ""), chrom_length_ucsc_hg38$chromosome), ]
 
 #check rows order
-!FALSE %in% c(chrom_length_ucsc_hg19$chromosome == paste("chr", 1:22, sep=""))
+if (FALSE %in% c(chrom_length_ucsc_hg38$chromosome == paste("chr", 1:22, sep = ""))) {
+	stop("The type of the chromosomes is not correct")
+}
 
-
-##load chromosome length from D3GB
-#load the required package
-require(D3GB)
-
-#load the chromosome length in GRCh37
-chromosome_length_D3GB_hg19 = GRCh37 #Length of human chromosomes based on GRCh37 assembly. See http://www.ncbi.nlm.nih.gov/assembly/GCF_000001405.13/#/st
-
-#change chromosome name
-colnames(chromosome_length_D3GB_hg19) <- c("chromosome", "start", "end")
-
-#see structure
-str(chromosome_length_D3GB_hg19)
-
-#select only autosomal
-chromosome_length_D3GB_hg19 = chromosome_length_D3GB_hg19[which(chromosome_length_D3GB_hg19$chromosome %in% 1:22),]
-
-#see again structure
-str(chromosome_length_D3GB_hg19)
-
-#reorder the rows to have the chromosome number in increasing order
-chromosome_length_D3GB_hg19 = chromosome_length_D3GB_hg19[match(1:22, chromosome_length_D3GB_hg19$chromosome),]
-
+## compare both sources
 #check that three sources have the same chromosome length
-summary(chrom_length_ncbi_hg19$length_bp - chrom_length_ucsc_hg19$length_bp)
-summary(chrom_length_ncbi_hg19$length_bp - chromosome_length_D3GB_hg19$end)
-summary(chrom_length_ucsc_hg19$length_bp - chromosome_length_D3GB_hg19$end) #all are the same
+if (FALSE %in% (chrom_length_ncbi_hg38$length_bp - chrom_length_ucsc_hg38$length_bp) == 0) {
+	stop("The chromosome length of the two sources is not the same")
+} else {
+	print("The chromosome length of the two sources is the same")
+}
 
 
 ##save the chromosome length from ucsc
-write.table(chrom_length_ucsc_hg19, "/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/postdoc_enard_lab/projects/method_deep/data/search_diego/gene_coordinates/chrom_length/chrom_length_final_v1.txt", col.names=TRUE, row.names=FALSE, sep="\t")
-	
-#I have checked that these lengths matches those of:
-	#http://grch37.ensembl.org/Homo_sapiens/Location/Chromosome?r=1%3A1-1000
-	
-	#"https://www.ncbi.nlm.nih.gov/assembly/GCF_000001405.13/#/st_Primary-Assembly"
-		#The chromosome length in ucsc matches that the length of assembled molecules. It does not included the unlocalized scaffolds. 
+write.table(chrom_length_ucsc_hg38, "./data/gene_coordinates/chromosome_length/chrom_length_final_v1.txt", col.names = TRUE, row.names = FALSE, sep = "\t")
+#I have checked that these lengths match those showed in ensembl hg38
+#https://www.ensembl.org/Homo_sapiens/Location/Chromosome?r=1%3A1-1000
+#https://www.ensembl.org/Homo_sapiens/Location/Chromosome?r=2%3A1-1000
+#https://www.ensembl.org/Homo_sapiens/Location/Chromosome?r=3%3A1-1000
 
-		#In that page, the ungapped length is smaller than the total length of the Assembled molecule. 
-		
-		#All of this suggest that gaps and placed scaffolds are included in the length I am using. 
 
 
 
@@ -256,7 +227,12 @@ write.table(chrom_length_ucsc_hg19, "/media/dftortosa/Windows/Users/dftor/Docume
 #check that the beginning and end of genes refers to the beginning and end of the region with exons. You have to bear in mind that by definition, an intron is any nucleotide sequence within a gene that is removed by RNA splicing before translation. The word intro is derived from the them intragenic, i.e., a region inside a gene, thus I guess by definition, an intron must be between exons of a gene. Therefore, I don´t think that the end or start of the gene in ensemble would be an intronic region not flanked by exons of the corresponding gene. You can have non-coding sequences but inside a coding exon, like the 5´ UTR (see figure 11; the 3´ and 5´ below of the line i think that refer to the other strand). Said this, we are going to check it for two genes.
 
 #load the chromosome name, gene id, transcript id, hgnc symbol (gene name), start and end position for genes in chromosome 1. We only use chromosome 1 because it is faster
-chr_1_positions <- getBM(attributes=c('chromosome_name', 'ensembl_gene_id', 'hgnc_symbol','start_position','end_position', 'ensembl_transcript_id', 'ensembl_exon_id'), mart = grch37_human, filter='chromosome_name', values='1')
+chr_1_positions <- getBM(
+    attributes = c("chromosome_name", "ensembl_gene_id", "hgnc_symbol","start_position", "end_position", "ensembl_transcript_id", "ensembl_exon_id"),
+    mart = grch38_human,
+    filter = "chromosome_name",
+    values = "1"
+)
 colnames(chr_1_positions)
 head(chr_1_positions)
 tail(chr_1_positions)
@@ -264,58 +240,39 @@ nrow(chr_1_positions)
 
 #SEMA4A
 #manual checking with the ensembl browser
-chr_1_positions[which(chr_1_positions$ensembl_gene_id =='ENSG00000196189'),]
-	#We check that the start (156117157) and end (156147543) correspond to the start and end in the GRCh37.p13 webpage ('http://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000196189;r=1:156117157-156147543'), and that´s exactly right. The location indicated in the webpage is 'Chromosome 1: 156,117,157-156,147,543' 
+chr_1_positions[which(chr_1_positions$ensembl_gene_id == "ENSG00000196189"), ]
+	#We check that the start (156147366) and end (156177752) correspond to the start and end in the GRCh38.p14 webpage ('https://jan2024.archive.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000196189;r=1:156147366-156177752'), and that´s exactly right. The location indicated in the webpage is 'Chromosome 1: 156,147,366-156,177,752'
 
 	#In figures 3,4 and 6 ('/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/postdoc_enard_lab/projects/method_deep/data/search_diego') you can see as the first exon of all transcripts matches the start position and the end position matches the last exon of all transcripts (figure 5).
 
 #extract the structural info (structure characteristics) of the exons included in SEMA4A (ENSG00000196189) to make an additonal check
-exons_sema4a = getBM(attributes=c('exon_chrom_start', 'exon_chrom_end', 'is_constitutive','ensembl_exon_id'), mart = grch37_human, filter='ensembl_gene_id', values='ENSG00000196189')
+exons_sema4a <- getBM(
+    attributes=c("exon_chrom_start", "exon_chrom_end", "is_constitutive", "ensembl_exon_id"),
+    mart = grch38_human,
+    filter="ensembl_gene_id",
+    values="ENSG00000196189")
+head(exons_sema4a)
 
 #select the first exon, i.e., smaller pair base of start
-start_first_exon_sema4a = exons_sema4a[which(exons_sema4a$exon_chrom_start == min(exons_sema4a$exon_chrom_start)),]$exon_chrom_start
+start_first_exon_sema4a <- exons_sema4a[which(exons_sema4a$exon_chrom_start == min(exons_sema4a$exon_chrom_start)), ]$exon_chrom_start
 
 #check that this exon begin just in the start of the gene
-start_first_exon_sema4a == unique(chr_1_positions[which(chr_1_positions$ensembl_gene_id =='ENSG00000196189'),]$start_position)
+start_first_exon_sema4a == unique(chr_1_positions[which(chr_1_positions$ensembl_gene_id == "ENSG00000196189"), ]$start_position)
 
 #select the last exon, i.e., bigger pair base of end
-end_last_exon_sema4a = exons_sema4a[which(exons_sema4a$exon_chrom_end == max(exons_sema4a$exon_chrom_end)),]$exon_chrom_end
+end_last_exon_sema4a <- exons_sema4a[which(exons_sema4a$exon_chrom_end == max(exons_sema4a$exon_chrom_end)), ]$exon_chrom_end
 
 #check that this exon begin just in the start of the gene
-end_last_exon_sema4a == unique(chr_1_positions[which(chr_1_positions$ensembl_gene_id =='ENSG00000196189'),]$end_position)
+end_last_exon_sema4a == unique(chr_1_positions[which(chr_1_positions$ensembl_gene_id == "ENSG00000196189"), ]$end_position)
 
 #TMEM183A
-#manual checking with the ensembl browser
-chr_1_positions[which(chr_1_positions$ensembl_gene_id =='ENSG00000163444'),]
-	#We check that the start (202976514) and end (202993976) correspond to the start and end in the GRCh37.p13 webpage ('http://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000163444;r=1:202976514-202993976'), and that´s exactly right. The location indicated in the webpage is 'Chromosome 1: 202,976,514-202,993,976' 
-
-	#In figures 6, 7 and 8 ('/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/postdoc_enard_lab/projects/method_deep/data/search_diego') you can see as the first exon of all transcripts matches the start position and the end position matches the last exon of all transcripts (figure 7,8).
-
-#extract the structural info (structure characteristics) of the exons included in tmem183a (ENSG00000196189) to make an additonal check
-exons_tmem183a = getBM(attributes=c('exon_chrom_start', 'exon_chrom_end', 'is_constitutive','ensembl_exon_id'), mart = grch37_human, filter='ensembl_gene_id', values='ENSG00000163444')
-
-#select the first exon, i.e., smaller pair base of start
-start_first_exon_tmem183a = exons_tmem183a[which(exons_tmem183a$exon_chrom_start == min(exons_tmem183a$exon_chrom_start)),]$exon_chrom_start
-
-#check that this exon begin just in the start of the gene
-start_first_exon_tmem183a == unique(chr_1_positions[which(chr_1_positions$ensembl_gene_id =='ENSG00000163444'),]$start_position)
-
-#select the last exon, i.e., bigger pair base of end
-end_last_exon_tmem183a = exons_tmem183a[which(exons_tmem183a$exon_chrom_end == max(exons_tmem183a$exon_chrom_end)),]$exon_chrom_end
-
-#check that this exon begin just in the start of the gene
-end_last_exon_tmem183a == unique(chr_1_positions[which(chr_1_positions$ensembl_gene_id =='ENSG00000163444'),]$end_position)
+#Done in the original gene coordinate script for the MDR paper
 
 #We can conclude that the variables start and end positions correspond with the begining and end of the exons. However, an exon can included non-coding sequences:
+#I have found that the start/stop position of each exon sum the transcript length, but this length is bigger than the coding sequence length variable. The transcript size includes non-coding sequences like the 5'UTR extreme, BUT NOT introns (Figure 9). I think we should use start and end positions of exons to calculate gene center, but for density of coding sequences, in that case i think the sum of coding sequences if better.
+#David - Coding density. that is very true. You don want to include these sequences when calculating the coding density. You can have an exon, the half of which is translated into a protein, but the other half not (see figure 11; the 3´ and 5´ below of the line i think that refer to the other strand). We can use the attributes CDS length, cds start and cds end of a structure for that.	
+#David - gene length: For gene length does not matter. Even include transcripts that are not translated to functional proteins (decay), because this only move some dozens of bases the gene position, while LD blocks in humans have a length of thousands of pair bases.
 
-	#I have found that the start/stop position of each exon sum the transcript length, but this length is bigger than the coding sequence length variable. The transcript size includes non-coding sequences like the 5'UTR extreme, BUT NOT introns (Figure 9). I think we should use start and end positions of exons to calculate gene center, but for density of coding sequences, in that case i think the sum of coding sequences if better.
-		#David - Coding density. that is very true. You don want to include these sequences when calculating the coding density. You can have an exon, the half of which is translated into a protein, but the other half not (see figure 11; the 3´ and 5´ below of the line i think that refer to the other strand). We can use the attributes CDS length, cds start and cds end of a structure for that.	
-		#David - gene length: For gene length does not matter. Even include transcripts that are not translated to functional proteins (decay), because this only move some dozens of bases the gene position, while LD blocks in humans have a length of thousands of pair bases.
-
-	#the transcript density
-		#An additional feature could be the length of sequences transcripts divided by gene length. This will be very correlated with coding density, but it would include additional sequences that are not coding like the 5´ UTR. See figure 11 (the 3´ and 5´ below of the line i think that refer to the other strand).
-		#We will do the models without this, but then we can added and see if it worth, I guess not... more correlation between predictor...
-		#the variable for this would be transcript_length
 
 
 
@@ -324,22 +281,31 @@ end_last_exon_tmem183a == unique(chr_1_positions[which(chr_1_positions$ensembl_g
 ##############################################
 
 #load the chromosome name, gene id, transcript id, hgnc symbol (gene name), start and end position for all genes in ensembl
-all_genes_grch37_human <- getBM(attributes=c('chromosome_name', 'ensembl_gene_id', 'ensembl_transcript_id', 'strand', 'ensembl_exon_id', 'hgnc_symbol', 'start_position','end_position'), mart = grch37_human, filters = "ensembl_gene_id", values = all_gene_ids_grch37_human)
-	#we apply the gene ids as a filter but setting as value the ids of ALL human genes, which were previously downloaded. I do the download in that way because if you download the whole data is an individual query with a wait limit of 5 minutes. This made the query be stopped. In contrast, if we apply the filter, you will download each gene as an independent query with 5 minutes each one BUT in one file. In addition, we get a bar of progress and an estimated time to the query be finished. See more information and other options for solving this problem here: https://github.com/grimbough/biomaRt/issues/20
-colnames(all_genes_grch37_human)
-head(all_genes_grch37_human)
-tail(all_genes_grch37_human)
-nrow(all_genes_grch37_human)
-	#I cannot obtain the start and end position of each gene (feature_page characteristics) and at the same time obtain info of each exon (structure or sequences characteristics) because we have to filter by gene for that. We need this information to calculate some confounding factors like the density of coding sequence density, but I think we will need to obtain the list of genes first, and the make a loop for gene calculating the confounding factors we can obtain.
+all_genes_grch38_human <- getBM(
+    attributes = c("chromosome_name", "ensembl_gene_id", "ensembl_transcript_id", "strand", "ensembl_exon_id", "hgnc_symbol", "start_position", "end_position"),
+    mart = grch38_human,
+    filters = "ensembl_gene_id",
+    values = all_gene_ids_grch38_human
+)
+#we apply the gene ids as a filter but setting as value the ids of ALL human genes, which were previously downloaded. I do the download in that way because if you download the whole data is an individual query with a wait limit of 5 minutes. This made the query be stopped. In contrast, if we apply the filter, you will download each gene as an independent query with 5 minutes each one BUT in one file. In addition, we get a bar of progress and an estimated time to the query be finished. See more information and other options for solving this problem here: https://github.com/grimbough/biomaRt/issues/20
+colnames(all_genes_grch38_human)
+head(all_genes_grch38_human)
+tail(all_genes_grch38_human)
+nrow(all_genes_grch38_human)
+#I cannot obtain the start and end position of each gene (feature_page characteristics) and at the same time obtain info of each exon (structure or sequences characteristics) because we have to filter by gene for that. We need this information to calculate some confounding factors like the density of coding sequence density, but I think we will need to obtain the list of genes first, and the make a loop for gene calculating the confounding factors we can obtain.
+
+
+###POR AQUIII
+
 
 #check differences between total rows and the number of uniques values of ensembl_gene_id
-nrow(all_genes_grch37_human) #1314467
-length(unique(all_genes_grch37_human$ensembl_gene_id)) #64102 unique gene id.
-	#this difference is because for each gene we can have several transcripts, and within each transcript we can have several exons. In addition, note that you can have several gene id for the same hgnc symbol (gene name), I think these are cases with high variability, so different versions of the gene are included, BUT I am not sure. In any case, i think after applying the filter for coding genes, these redundant gene id will be remove.
+nrow(all_genes_grch38_human) #1314467
+length(unique(all_genes_grch38_human$ensembl_gene_id)) #64102 unique gene id.
+#this difference is because for each gene we can have several transcripts, and within each transcript we can have several exons. In addition, note that you can have several gene id for the same hgnc symbol (gene name), I think these are cases with high variability, so different versions of the gene are included, BUT I am not sure. In any case, i think after applying the filter for coding genes, these redundant gene id will be remove.
 
 #remove all the rows that have a chromosome_name different than 1:22. In that way, we remove the exons of genes that are in  mithocondrial DNA or messy sequences like those of the MHC (highly variable regions for which the assemble include several versions, in that cases chromosome name is some like V_MHC...). In addition, we remove the sexual chromosomes. 
-	#We don´t take data from the Y because is very small, it has very few genes, so the estimates of the slope of confounding factors only considering this chromosome would have very wide confidence interval (low sample size).
-	#We remove X because we do not have iHS for that chromosome right now, and it would entail a great amount of effort to calculate that. In addition, much of the analyses i could do for example with climate would be done within the autosomal only. 
+#We don´t take data from the Y because is very small, it has very few genes, so the estimates of the slope of confounding factors only considering this chromosome would have very wide confidence interval (low sample size).
+#We remove X because we do not have iHS for that chromosome right now, and it would entail a great amount of effort to calculate that. In addition, much of the analyses i could do for example with climate would be done within the autosomal only. 
 unique(all_genes_grch37_human$chromosome_name)
 all_genes_grch37_human_filtered = all_genes_grch37_human[which(all_genes_grch37_human$chromosome_name %in% c(1:22)),]
 nrow(all_genes_grch37_human) - nrow(all_genes_grch37_human_filtered)
