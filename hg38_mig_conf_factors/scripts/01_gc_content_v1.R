@@ -66,15 +66,41 @@ require(rtracklayer) #to load bigwig files
 # The bigWig format is for display of dense, continuous data that will be displayed in the Genome Browser as a graph. BigWig files are created initially from wiggle (wig) type files, using the program wigToBigWig. The resulting bigWig files are in an indexed binary format. The main advantage of the bigWig files is that only the portions of the files needed to display a particular region are transferred to UCSC, so for large data sets bigWig is considerably faster than regular wiggle files. The bigWig file remains on your web accessible server (http, https, or ftp), not on the UCSC server. Only the portion that is needed for the chromosomal position you are currently viewing is locally cached as a "sparse file".
 #https://genomebrowser.wustl.edu/goldenPath/help/bigWig.html
 
+#the file is named as "hg38.p14.gc5Base.bw" and it is located at "./data/gc_content/"
 
-chromosome_length <- read.table("./data/gene_coordinates/chrom_length_final_v1.txt", sep="\t")
 
-colnames(chromosome_length) <- c("chromosome", "length")
+
+######################################
+####### LOAD CHROMOSOME LENGTH #######
+######################################
+
+#load the file with the chromosome length
+chromosome_length <- read.table(
+	"./data/gene_coordinates/chromosome_length/chrom_length_final_v1.txt",
+	sep = "\t",
+	header = TRUE
+)
+#we have selected the chromosome length from USCS hg38 patch 14 (https://hgdownload.cse.ucsc.edu/goldenpath/hg38/bigZips/p14/hg38.p14.chrom.sizes). Indeed, this is the same folder where we have downloaded the GC track (big wig format)
+head(chromosome_length)
+str(chromosome_length)
+
+#we are going to use the chromosome length to select only the segments of the chromosome we are interested in within the function run along genes
+#if, for any reason, we have data after the limit of the chromosome, this is going to be removed anyways because we calculate gene windows removing those that reach the end of the chromosome. The point here is to use the correct chromosome length, and this is the case, see above.
+
+
+
+################################
+####### PROCESS GC TRACK #######
+################################
+
+#FUNCTION
 
 chr1_length=chromosome_length[which(chromosome_length$chromosome=="chr1"), "length"]
 #checl chromosome length
-#if, for any reason, we have data after the limit of the chromsome, this is going ot be removed anyways because we calculate gene windows removing those that reach the end of the chromosome
-#the point here is to be sure the lengths of the chromosomes are correct and this is the case, as we have selected the chromosome length from USCS hg38 patch 14 (https://hgdownload.cse.ucsc.edu/goldenpath/hg38/bigZips/p14/hg38.p14.chrom.sizes). Indeed, this is the same folder where we have downloaded the GC track
+
+
+
+#i think we should write a function to process the data of each chromsome and produce as output the GC content of each chromosome
 
 
 #load the big wig file

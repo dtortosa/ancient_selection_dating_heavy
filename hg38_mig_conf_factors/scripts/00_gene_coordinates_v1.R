@@ -84,16 +84,25 @@ datasets[which(datasets$dataset == "hsapiens_gene_ensembl"), ]
 #the version indicated is GRCh38.p14, which is the version we need, i.e., hg38.
 
 #we want to view the available archived versions. listEnsemblArchives takes no arguments, and produces a table containing the names of the available archived versions, the date they were first available, and the URL where they can be accessed.
-listEnsemblArchives()
+ensemble_archives <- listEnsemblArchives()
+ensemble_archives
+
 #we select the last version at the moment of writting this code, which is the Ensembl Release 111 (January 2024), this version has "*" as value in the column current_release, which means it is the current release, because the rest of releases have an empty value.
 #https://jan2024.archive.ensembl.org
+current_version <- ensemble_archives[ which(ensemble_archives$current_release == "*"), "version"]
+if(current_version != "111") {
+	stop("The current version is not 111. You need to change the host to 'https://jan2024.archive.ensembl.org' so we can get version 111 and get reproducible results")
+}
 
-#take a look for the marts in the Jan 2024 release
-listMarts(host = "https://jan2024.archive.ensembl.org") 
+
+#take a look for the marts
+listMarts(host = "https://www.ensembl.org")
+#REMEMBER: If you run this and the current version is no longer 111, then you have to change the mirror/host to https://jan2024.archive.ensembl.org
 #we see ensemble genes, variation and regulation. In all cases release 111, which is the lastest in general (this is not the same than patch release, the last of which is 14 in GRCh38).
 
 #extract the mart of ensemble genes for hg38, release Jan 2024
-grch38_datasets <- listDatasets(useMart(host = "https://jan2024.archive.ensembl.org", biomart = "ENSEMBL_MART_ENSEMBL"))
+grch38_datasets <- listDatasets(useMart(host = "https://www.ensembl.org", biomart = "ENSEMBL_MART_ENSEMBL"))
+#REMEMBER: If you run this and the current version is no longer 111, then you have to change the mirror/host to https://jan2024.archive.ensembl.org
 head(grch38_datasets)
 
 #We are interested in 'hsapiens_gene_ensembl' ()Human genes. 
@@ -106,7 +115,8 @@ grch38_datasets[which(grch38_datasets$dataset == "hsapiens_gene_ensembl"), ]
 #it is useful to use the specific URL for avoiding changes in the results if you compile the code again in several months and the current version (default) has changed. We select the url of the specific version we are interested, which is the release of feb 2014, last patch release of GRCh37
 
 #Select the mart with ensemble genes of humans and the GRCh38.p14, Jan 2024 release (111)
-grch38_human <- useMart(host = "https://jan2024.archive.ensembl.org", biomart = "ENSEMBL_MART_ENSEMBL", dataset = "hsapiens_gene_ensembl")
+grch38_human <- useMart(host = "https://www.ensembl.org", biomart = "ENSEMBL_MART_ENSEMBL", dataset = "hsapiens_gene_ensembl")
+#REMEMBER: If you run this and the current version is no longer 111, then you have to change the mirror/host to https://jan2024.archive.ensembl.org
 str(grch38_human)
 
 #check we have the correct assembly and patch in the human dataset
@@ -390,9 +400,7 @@ full_exon_data <- getBM(
 
 
 ##por aquii
-
-###Batch submitting query [=====>-------------------------]  20% eta: 35mError: biomaRt has encountered an unknown server error. HTTP error code: 405 Please report this on the Bioconductor support site at https://support.bioconductor.org/ Consider trying one of the Ensembl mirrors (for more details look at ?useEnsembl)
-
+##run again
 
 
 #we apply the gene ids as a filter but setting as value the ids of ALL human genes, which were previously downloaded. I do the download in that way because if you download the whole data is an individual query with a wait limit of 5 minutes. This made the query be stopped. In contrast, if we apply the filter, you will download each gene as an independent query with 5 minutes each one BUT in one file. In addition, we get a bar of progress and an estimated time to the query be finished. See more information and other options for solving this problem here: https://github.com/grimbough/biomaRt/issues/20
