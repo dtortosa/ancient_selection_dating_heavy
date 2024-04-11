@@ -128,6 +128,7 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 	#install R packages
 	Rscript -e 'install.packages("plyr", repos="https://cloud.r-project.org", dep=T)'
 	Rscript -e 'install.packages("BiocManager", repos="https://cloud.r-project.org", dep=T)'
+	Rscript -e 'BiocManager::install("rtracklayer")'
 	Rscript -e 'BiocManager::install("biomaRt")'
 	Rscript -e 'BiocManager::install("GenomicRanges")'
 	Rscript -e 'install.packages("stringr", repos="https://cloud.r-project.org", dep=T)'

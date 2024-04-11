@@ -28,11 +28,22 @@
 
 
 
+#################################################
+###### MOVE FROM CONTAINER TO MAIN FOLDER #######
+#################################################
+
+#we move the WD to the parent folder
+setwd("../")
+getwd()
+
+
+
 #################################
 ###### REQUIRE PACKAGES #########
 #################################
 
 require(plyr) #for apply functions across lists and data.frames. This is better than apply, because split rows of a data.frame without converting into matrix or array. In that way you can use "$" to call columns. In addition, you can save the output as a data frame or a list.
+require(rtracklayer) #to load bigwig files
 
 
 
@@ -40,78 +51,69 @@ require(plyr) #for apply functions across lists and data.frames. This is better 
 ####### DESCRIPTION OF "GC PERCENT IN 5-BASE WINDOWS" #######
 #############################################################
 
-#From:
-#https://genome.ucsc.edu/cgi-bin/hgTrackUi?hgsid=801848801_WrOkvQQaHYn0IPPS2avBfoahfyXU&c=chr1&g=gc5Base
+#We have downloaded the GC track from:
+#https://hgdownload.cse.ucsc.edu/goldenpath/hg38/bigZips/
+#The documentation of that folder says that the information contained there belongs to hg38 human data. There is also new folders for each new patch released.
 
-#The GC percent track shows the percentage of G (guanine) and C (cytosine) bases in 5-base windows. High GC content is typically associated with gene-rich areas.
+#In the folder for patch 14 (the last one at the moment of writting), we can find the GC content in 5-base windows (hg38.p14.gc5Base.bw)
+#https://hgdownload.cse.ucsc.edu/goldenpath/hg38/bigZips/p14/
+
+#This is a track showing the percentage of G (guanine) and C (cytosine) bases in 5-base windows. High GC content is typically associated with gene-rich areas. 
+#https://genome.cse.ucsc.edu/cgi-bin/hgTables?db=hg38&hgta_group=map&hgta_track=dup_0_gc5BaseBw&hgta_table=gc5BaseBw&hgta_doSchema=describe+table+schema
+
+#the file is in big wig format, i.e., binary bigWig data for the gc5Base track. Therefore, we have use an specific package to load big wig files into R.
+
+# The bigWig format is for display of dense, continuous data that will be displayed in the Genome Browser as a graph. BigWig files are created initially from wiggle (wig) type files, using the program wigToBigWig. The resulting bigWig files are in an indexed binary format. The main advantage of the bigWig files is that only the portions of the files needed to display a particular region are transferred to UCSC, so for large data sets bigWig is considerably faster than regular wiggle files. The bigWig file remains on your web accessible server (http, https, or ftp), not on the UCSC server. Only the portion that is needed for the chromosomal position you are currently viewing is locally cached as a "sparse file".
+#https://genomebrowser.wustl.edu/goldenPath/help/bigWig.html
+
+
+chromosome_length <- read.table("./data/gene_coordinates/chrom_length_final_v1.txt", sep="\t")
+
+colnames(chromosome_length) <- c("chromosome", "length")
+
+chr1_length=chromosome_length[which(chromosome_length$chromosome=="chr1"), "length"]
+#checl chromosome length
+#if, for any reason, we have data after the limit of the chromsome, this is going ot be removed anyways because we calculate gene windows removing those that reach the end of the chromosome
+#the point here is to be sure the lengths of the chromosomes are correct and this is the case, as we have selected the chromosome length from USCS hg38 patch 14 (https://hgdownload.cse.ucsc.edu/goldenpath/hg38/bigZips/p14/hg38.p14.chrom.sizes). Indeed, this is the same folder where we have downloaded the GC track
+
+
+#load the big wig file
+gc5Base <- rtracklayer::import.bw(
+	con = "./data/gc_content/hg38.p14.gc5Base.bw",
+	as = "GRanges", 
+	which=GRanges(c("chr1"), IRanges(1, chr1_length))
+)
+#Function supports the import and export of the UCSC BigWig format, a compressed, binary form of WIG/BEDGraph with a spatial index and precomputed summaries. These functions do not work on Windows.
+#con: A path, URL or 'BigWigFile' object
+#object: The object to export, should be an 'RleList', 'IntegerList', 'NumericList', 'GRanges' or something coercible to a 'GRanges'.
+#as: Specifies the class of the return object. Default is 'GRanges', which has one range per range in the file, and a score column holding the value for each range. For 'NumericList', one numeric vector is returned for each range in the 'selection' argument. For 'RleList', there is one 'Rle' per sequence, and that 'Rle' spans the entire sequence.
 
 
 
+###apunta url to checl for tbfs!!
+#https://hgdownload.soe.ucsc.edu/goldenPath/hg38/encRegTfbsClustered/
 
-#I ahve found GC content in the usual format in "https://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/"
-#the problem is this is only for the first hg38 version, but not for the patch 14
-#the patch 14 is in bigwig format which is veery heavy and I do not know how to use it....
+
+
+#CHECK 1 BASES, i HINK gr RANGE IS 1 BASED
+
+
 #
+gc5Base_autosomal <- gc5Base[seqnames(gc5Base) %in% paste("chr", 1:22, sep="")]
+#https://support.bioconductor.org/p/9138058/
 
-#the original page for search GC content has only bigwig 
-#https://genome.cse.ucsc.edu/cgi-bin/hgTables?db=hg38&hgta_group=map&hgta_track=gc5BaseBw&hgta_table=gc5BaseBw&hgta_doSchema=describe+table+schema
+rm(gc5Base)
 
-#in theory we could use bigWigToWig to conver to the tpyical wig..
-	#https://genome.cse.ucsc.edu/goldenPath/help/bigWig.html
-
-
-
-#######################################################
-###### SCHEMA FOR "GC PERCENT IN 5-BASE WINDOWS" ######
-#######################################################
-
-#From: "https://genome.cse.ucsc.edu/cgi-bin/hgTables?db=hg38&hgta_group=map&hgta_track=gc5BaseBw&hgta_table=gc5BaseBw&hgta_doSchema=describe+table+schema".
+str(gc5Base_autosomal)
 
 
-##The file is in the WIG format. Info from here: "http://genome.ucsc.edu/goldenPath/help/wiggle.html"
-	#The wiggle (WIG) format is an older format for display of dense, continuous data such as GC percent, probability scores, and transcriptome data. Wiggle data elements must be equally sized.
+length(gc5Base_autosomal@ranges@start)
 
-	#For speed and efficiency, wiggle data is compressed and stored internally in 128 unique bins. This compression means that there is a minor loss of precision when data is exported from a wiggle track (i.e., with output format "data points" or "bed format" within the Table Browser). The bedGraph format should be used if it is important to retain exact data when exporting.
-		#we get the sum of percentages of GC content for 5 base windows, so you can calculate the mean but you do not have the GC-percentage of each window.
 
-	#Wiggle format is line-oriented. For wiggle custom tracks, the first line must be a track definition line (i.e., track type=wiggle_0), which designates the track as a wiggle track and adds a number of options for controlling the default display.
+ 
 
-	#Wiggle format is composed of declaration lines and data lines, and require a separate wiggle track definition line. There are two options for formatting wiggle data: variableStep and fixedStep. These formats were developed to allow the file to be written as compactly as possible. 
 
-		#varaibleStep format: This format is used for data with irregular intervals between new data points, and is the more commonly used wiggle format. After the wiggle track definition line, variableStep begins with a declaration line and is followed by two columns containing chromosome positions and data values. The declaration line starts with the word variableStep and is followed by a specification for a chromosome. The optional span parameter (default: span=1) allows data composed of contiguous runs of bases with the same data value to be specified more succinctly. The span begins at each chromosome position specified and indicates the number of bases that data value should cover.
 
-		#fixedStep format: This format is used for data with regular intervals between new data values and is the more compact wiggle format. After the wiggle track definition line, fixedStep begins with a declaration line and is followed by a single column of data values. The declaration line starts with the word fixedStep and includes specifications for chromosome, start coordinate, and step size. The span specification has the same meaning as in variableStep format
-
-		#Note that for both variableStep and fixedStep formats, the same span must be used throughout the dataset. If no span is specified, the default span of 1 is used. As the name suggests, fixedStep wiggles require the same size step throughout the dataset. If not specified, a step size of 1 is used.
-
-#load the data, This is Wig file.
-raw_gc_data <- read.table(file="/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/postdoc_enard_lab/projects/method_deep/data/search_diego/gc_content/gc5Base.txt", header=FALSE, sep="\t", stringsAsFactors=FALSE)
-	#header=FALSE: because the file has not header, the first row already includes data.
-	#sep="\t": The file is separated by tabs. I have checked if it works reading it with ";" or "," and it doesn´t. 
-	#stringsAsFactors=FALSE: Not sure if including the 9th variable as a factor could give problems. For each row, they have a path. So we set stringsAsFactors as FALSE. 
-	#Note: In case would have some problems reading the file ("EOF within quoted string" or "number of items read is not a multiple of the number of columns") you can add 'quote=""' ("https://www.biostars.org/p/170631/"; first response).
-str(raw_gc_data)
-head(raw_gc_data, 10)
-nrow(raw_gc_data)
-	#Download:
-		#I did not find the link for this exact table, so from the path indicated in the David´s Cell paper for conserved elements ("http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/"), I look for the GC track (5 window). I found the file called "gc5Base.txt.gz". I decompressed, and loaded it. 
-			#It has exactly the same values than the 10 first rows showed in the scheme.
-			#It has also exactly the same number of rows of the file described in the scheme of GC Percent - GC Percent in 5-Base Windows. 
-	
-		#There are other files that I have discarded, CHECK:
-			#In the page for downloads ("http://hgdownload.soe.ucsc.edu/downloads.html#human"), I selected Genome sequence files and select annotations (2bit, GTF, GC-content, etc) in hg19, leading to "http://hgdownload.soe.ucsc.edu/goldenPath/hg19/bigZips/". There, I selected the file called "hg19.gc5Base.wig.gz". This is also a Wig file.
-				#It has the same columns, and the first 10 rows are similar to those showed in the scheme, BUT it has more rows. This file was modified the last year, while the track explained in the scheme was last updated in 2009 (like the file included in the golden path for hg19).
-					#More info of this file: wiggle database table for the GC Percent track this is an older standard alternative to the current bigWig format of the track, sometimes useful for analysis.
-
-			#In the same golden Path ("http://hgdownload.soe.ucsc.edu/goldenPath/hg19/bigZips/"), we have the data to obtain this track in a bigWig format. This is a new format for this type of files, more compressed. I have not been able to open it, because require some operations.  
-				#Info:
-					#http://genome.ucsc.edu/goldenPath/help/wiggle.html
-					#http://genomewiki.ucsc.edu/index.php/Using_hgWiggle_without_a_database
-
-			#In the page for downloads ("http://hgdownload.soe.ucsc.edu/downloads.html#human"), I selected GC percent data in hg19, leading to "http://hgdownload.soe.ucsc.edu/goldenPath/hg19/gc5Base/". There, I selected the file called "hg19.gc5Base.txt.gz".
-				#This file is much heavier than the previous ones (1.5GB). The webpage says that " it is the raw data used to encode the gc5Base track on hg19." In addition, says that is not 0-based but 1-based, which does not match what the scheme says. 
-				#It seems this data was used to create the final tracks.
-				
 
 ##Scheme:
 	

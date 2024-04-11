@@ -161,7 +161,7 @@ all_gene_ids_grch38_human <- getBM(attributes = c("ensembl_gene_id"), mart = grc
 #This will be used to stop the windows that reach the start or end of the chromosomes.
 
 ##data from ncbi
-#load chromosome length for GRCh38.p14 copied into a txt file from "https://www.ncbi.nlm.nih.gov/grc/human/data?asm=GRCh37.p13"
+#load chromosome length for GRCh38.p14 copied into a txt file from "https://www.ncbi.nlm.nih.gov/grc/human/data?asm=GRCh38.p14"
 chrom_length_ncbi_hg38 <- read.table("./data/gene_coordinates/chromosome_length/chromosome_length_hg38_from_ncbi.csv", sep = ",", header = TRUE) #chromosome lengths are calculated by summing the length of the placed scaffolds and estimated gaps.
 
 #change col names
@@ -200,22 +200,55 @@ if (FALSE %in% c(chrom_length_ucsc_hg38$chromosome == paste("chr", 1:22, sep = "
 	stop("The type of the chromosomes is not correct")
 }
 
-## compare both sources
+
+##data from uscs golden path patch 14
+#data downloaded using this command
+#cd ./data/gene_coordinates/chromosome_length/; wget https://hgdownload.cse.ucsc.edu/goldenpath/hg38/bigZips/p14/hg38.p14.chrom.sizes
+#this is the last patch according to ncbi, released in feb 2022, while the chromosome file was relesaed in oct 2022. The information in the folder (hg38/bigZips) says we have there data for hg38 humans, including the different patches. 
+#https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_000001405.26/
+
+#load the data
+chrom_length_ucsc_hg38_14 <- read.table(
+	"./data/gene_coordinates/chromosome_length/hg38.p14.chrom.sizes",
+	header=FALSE,
+	sep="\t"
+)
+colnames(chrom_length_ucsc_hg38_14) <- c("chromosome", "length_bp")
+head(chrom_length_ucsc_hg38_14)
+str(chrom_length_ucsc_hg38_14)
+
+#select autosomals
+chrom_length_ucsc_hg38_14 <- chrom_length_ucsc_hg38_14[which(chrom_length_ucsc_hg38_14$chromosome %in% paste("chr", 1:22, sep = "")), ]
+
+#reorder by chromosome name
+chrom_length_ucsc_hg38_14 <- chrom_length_ucsc_hg38_14[match(paste("chr", 1:22, sep = ""), chrom_length_ucsc_hg38_14$chromosome), ]
+
+
+## compare the three sources
+#calculate the difference of length between sources
+ncbi_vs_uscs <- chrom_length_ncbi_hg38$length_bp - chrom_length_ucsc_hg38$length_bp
+ncbi_vs_uscs_14 <- chrom_length_ncbi_hg38$length_bp - chrom_length_ucsc_hg38_14$length_bp
+
 #check that three sources have the same chromosome length
-if (FALSE %in% (chrom_length_ncbi_hg38$length_bp - chrom_length_ucsc_hg38$length_bp) == 0) {
+if (FALSE %in% c(ncbi_vs_uscs == 0) || FALSE %in% c(ncbi_vs_uscs_14 == 0)) {
 	stop("The chromosome length of the two sources is not the same")
 } else {
-	print("The chromosome length of the two sources is the same")
+	print("The chromosome length of the all sources is the same")
 }
 
-
 ##save the chromosome length from ucsc
-write.table(chrom_length_ucsc_hg38, "./data/gene_coordinates/chromosome_length/chrom_length_final_v1.txt", col.names = TRUE, row.names = FALSE, sep = "\t")
+write.table(
+	chrom_length_ucsc_hg38_14,
+	"./data/gene_coordinates/chromosome_length/chrom_length_final_v1.txt",
+	col.names = TRUE,
+	row.names = FALSE,
+	sep = "\t"
+)
 #I have checked that these lengths match those showed in ensembl hg38
 #https://www.ensembl.org/Homo_sapiens/Location/Chromosome?r=1%3A1-1000
 #https://www.ensembl.org/Homo_sapiens/Location/Chromosome?r=2%3A1-1000
 #https://www.ensembl.org/Homo_sapiens/Location/Chromosome?r=3%3A1-1000
-
+#and so on...
 
 
 
@@ -354,6 +387,14 @@ full_exon_data <- getBM(
     mart = grch38_human,
     filters = "ensembl_gene_id",
     values = all_gene_ids_grch38_human)
+
+
+##por aquii
+
+###Batch submitting query [=====>-------------------------]  20% eta: 35mError: biomaRt has encountered an unknown server error. HTTP error code: 405 Please report this on the Bioconductor support site at https://support.bioconductor.org/ Consider trying one of the Ensembl mirrors (for more details look at ?useEnsembl)
+
+
+
 #we apply the gene ids as a filter but setting as value the ids of ALL human genes, which were previously downloaded. I do the download in that way because if you download the whole data is an individual query with a wait limit of 5 minutes. This made the query be stopped. In contrast, if we apply the filter, you will download each gene as an independent query with 5 minutes each one BUT in one file. In addition, we get a bar of progress and an estimated time to the query be finished. See more information and other options for solving this problem here: https://github.com/grimbough/biomaRt/issues/20
 head(full_exon_data)
 	#cds_start and cds_end work fine. For example with ENSG00000196189 (SEMA4A), I have checked the exons in the exon visualizer of the first transcript (ENST00000435124). The first exon is non-coding, so cds start and end is NA. This finishes at 156117221, at 156117222 begins an intron that ends at 156,124,340. At 156,124,341 begins the next exon, first coding (Figure 12). It has as cds start 1, because it is the first one. The first exon have a value of CDS length because it is a global value for the whole gene, but that exon does not contribute to coding length. The same goes for the second transcript (ENST00000414683; figure 13).
