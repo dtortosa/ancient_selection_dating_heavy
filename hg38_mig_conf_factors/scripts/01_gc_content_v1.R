@@ -93,312 +93,317 @@ str(chromosome_length)
 ####### PROCESS GC TRACK #######
 ################################
 
-#FUNCTION
+#define a function to process the data
+#selected_chr <- "chr1"
+process_gc_track <- function(selected_chr){
 
-chr1_length=chromosome_length[which(chromosome_length$chromosome=="chr1"), "length"]
-#checl chromosome length
+	#extract the chromosome length
+	chr_length <- chromosome_length[which(chromosome_length$chromosome == selected_chr), "length_bp"]
 
+	###POR AQUIII
 
-
-#i think we should write a function to process the data of each chromsome and produce as output the GC content of each chromosome
-
-
-#load the big wig file
-gc5Base <- rtracklayer::import.bw(
-	con = "./data/gc_content/hg38.p14.gc5Base.bw",
-	as = "GRanges", 
-	which=GRanges(c("chr1"), IRanges(1, chr1_length))
-)
-#Function supports the import and export of the UCSC BigWig format, a compressed, binary form of WIG/BEDGraph with a spatial index and precomputed summaries. These functions do not work on Windows.
-#con: A path, URL or 'BigWigFile' object
-#object: The object to export, should be an 'RleList', 'IntegerList', 'NumericList', 'GRanges' or something coercible to a 'GRanges'.
-#as: Specifies the class of the return object. Default is 'GRanges', which has one range per range in the file, and a score column holding the value for each range. For 'NumericList', one numeric vector is returned for each range in the 'selection' argument. For 'RleList', there is one 'Rle' per sequence, and that 'Rle' spans the entire sequence.
-
-
-
-###apunta url to checl for tbfs!!
-#https://hgdownload.soe.ucsc.edu/goldenPath/hg38/encRegTfbsClustered/
+	#load the big wig file but only data for the selected chromosome
+	gc5Base <- rtracklayer::import.bw(
+		con = "./data/gc_content/hg38.p14.gc5Base.bw",
+		as = "GRanges",
+		which=GRanges(c("chr1"), IRanges(1, chr1_length))
+	)
+	#Function supports the import and export of the UCSC BigWig format, a compressed, binary form of WIG/BEDGraph with a spatial index and precomputed summaries. These functions do not work on Windows. See above for more details about bigwig format.
+	#con: A path, URL or 'BigWigFile' object
+	#object: The object to export, should be an 'RleList', 'IntegerList', 'NumericList', 'GRanges' or something coercible to a 'GRanges'.
+	#as: Specifies the class of the return object. Default is 'GRanges', which has one range per range in the file, and a score column holding the value for each range. For 'NumericList', one numeric vector is returned for each range in the 'selection' argument. For 'RleList', there is one 'Rle' per sequence, and that 'Rle' spans the entire sequence.
 
 
 
-#CHECK 1 BASES, i HINK gr RANGE IS 1 BASED
-
-
-#
-gc5Base_autosomal <- gc5Base[seqnames(gc5Base) %in% paste("chr", 1:22, sep="")]
-#https://support.bioconductor.org/p/9138058/
-
-rm(gc5Base)
-
-str(gc5Base_autosomal)
-
-
-length(gc5Base_autosomal@ranges@start)
-
-
- 
+	#i think we should write a function to process the data of each chromsome and produce as output the GC content of each chromosome
 
 
 
 
-##Scheme:
+
+	###apunta url to checl for tbfs!!
+	#https://hgdownload.soe.ucsc.edu/goldenPath/hg38/encRegTfbsClustered/
+
+
+
+	#CHECK 1 BASES, i HINK gr RANGE IS 1 BASED
+
+
+	#
+	gc5Base_autosomal <- gc5Base[seqnames(gc5Base) %in% paste("chr", 1:22, sep="")]
+	#https://support.bioconductor.org/p/9138058/
+
+	rm(gc5Base)
+
+	str(gc5Base_autosomal)
+
+
+	length(gc5Base_autosomal@ranges@start)
+
+
 	
-	#You can see as the database is hg19 (i.e., GRch37).
-
-	#Definitions of each column:
-		#bin: Indexing field to speed chromosome range queries.
-
-		#chrom: The name of the chromosome (e.g. chr3, chrY, chr2_random) or scaffold (e.g. scaffold10671).
-		unique(raw_gc_data$V2) #we have several names different from the autosomal and sexual chromosomes 
-			#For what I have read, some cases can be sequences with not great reliability about the exact position in the chromosome (not finished) or different haplotypes from the Major Histocompatibility Complex. For example, COX is an haplotipe of MHC in chromosome 6 (https://www.biostars.org/p/7629/)
-
-				#Starting with the April 2003 human assembly, these tables also include data for sequence that is not in a finished state, but whose location in the chromosome is known, in addition to the unordered sequence. Because this sequence is not quite finished, it could not be included in the main "finished" ordered and oriented section of the chromosome.
-
-				#Also, in a very few cases in the April 2003 assembly, the random files contain data related to sequence for alternative haplotypes. This is present primarily in chr6, where we have included two alternative versions of the MHC region in chr6_random. There are a few clones in other chromosomes that also correspond to a different haplotype. Because the primary reference sequence can only display a single haplotype, these alternatives were included in random files. In subsequent assemblies, these regions have been moved into separate files (e.g. chr6_hla_hap1).
-
-				#More info:
-					#https://www.biostars.org/p/7629/
-					#http://vega.archive.ensembl.org/info/data/MHC_Homo_sapiens.html
-					#regions under review: https://www.ncbi.nlm.nih.gov/grc/human
-
-			#We should remove all the rows that do not belong to the typical autosomal and X chromosome. Y has very few genes. The X will be used for another paper, but we will take the data. As we do not have gene ids for other chromosomes, no other chromosome will be considered when calculating density, because the windows will be calculated around genes of 1:22 and X.
-
-		#chromStart: The starting position of the feature in the chromosome or scaffold. The first base in a chromosome is numbered 0.
-		summary(raw_gc_data$V3) #min chromosome start is 0. In contrast with tbfs, no areas with a low score were removed. 
-
-		#chromEnd: The ending position of the feature in the chromosome or scaffold.
-		summary(raw_gc_data$V4) #the min (4260) is higher than the min of chromosome start, which makes sense.
-			
-		#Important: Like for tbfs, in this data: all start coordinates in our database are 0-based, not 1-based. Therefore, the chromEnd base is not included in the display of the feature, however, the number in position format will be represented. For example, the first 100 bases of chromosome 1 are defined as chrom=1, chromStart=0, chromEnd=100, and span the bases numbered 0-99 in our software (not 0-100), because the start is included instead of the ending ("0-based, not 1-based"), BUT note this will be represented as the position notation chr1:1-100.
-
-			#Note that this is clearly stated in the scheme of "GC Percent - GC Percent in 5-Base Windows" as it is said "all start coordinates in our database are 0-based, not 1-based. See explanation here", referring to the same link that in the case of tbfs: "http://genome.ucsc.edu/FAQ/FAQtracks#tracks1"
-
-			#I have checked the first row, start at 10000 (+1) and end at 15120. According to the browser, this region has 1024 data points of GC percentage, being the mean 58.5984. The mean calculate with the sum of squared of our table is 60360/1024=58.94. There is a small difference, I have checked other regions and difference is several decimals (0.3-0.4). 
-				#"https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&lastVirtModeType=default&lastVirtModeExtraState=&virtModeType=default&virtMode=0&nonVirtPosition=&position=chr1%3A10001%2D15120&hgsid=801849049_39a6h5dF0SWu20mQNJOBVVVySYur"
-				#detail "https://genome.ucsc.edu/cgi-bin/hgc?c=chr1&l=10000&r=15120&o=10000&t=15120&g=gc5Base&i=gc5Base&db=hg19"
-				#For doing this query I had to select "full" in GC percent (Mapping and Sequencing).
-
-			#THIS IS IMPORTANT: https://genome.ucsc.edu/FAQ/FAQtracks#tracks1
-				#FAQ UCSC: I am confused about the start coordinates for items in the refGene table. It looks like you need to add "1" to the starting point in order to get the same start coordinate as is shown by the Genome Browser. Why is this the case?
-					#Our internal database representations of coordinates always have a zero-based start (first base is zero) and a one-based end (the last number typed in the range is not really included). We add 1 to the start before displaying coordinates in the Genome Browser. Therefore, they appear as one-based start, one-based end in the graphical display. The refGene.txt file is a database file, and consequently is based on the internal representation.
-
-					#We use this particular internal representation because it simplifies coordinate arithmetic, i.e. it eliminates the need to add or subtract 1 at every step. If you use a database dump file but would prefer to see the one-based start coordinates, you will always need to add 1 to each start coordinate.
-
-					#If you submit data to the browser in position format (chr#:##-##), the browser assumes this information is 1-based. If you submit data in any other format (BED (chr# ## ##) or otherwise), the browser will assume it is 0-based. You can see this both in our liftOver utility and in our search bar, by entering the same numbers in position or BED format and observing the results. Similarly, any data returned by the browser in position format is 1-based, while data returned in BED format is 0-based.
-
-					#For a detailed explanation, please see our blog entry for the UCSC Genome Browser coordinate counting systems: http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/
-
-				#Following the previous example: 
-					#The first 100 bases of chromosome 1 are defined as chrom=1, chromStart=0, chromEnd=100, and span the bases numbered 0-99 in our software (not 0-100), but will represent the position notation chr1:1-100. 
-					#We really want the 100 first bases to compare with ensemble, 1-100. If we sum 1 to the start and do nothing to the end, we would have chromStart=1 and chromEnd=100, which is exactly we want. All the positions are moved to the left, right? The end is the first base after the end of the segment, so we do not have to sum 1.
-
-			#The regions are to be not overlapped, right? so a region covered by chromosome start and end in a given chromosome will have only 1 row and 1 score right?
-				#I have checked the first 10 rows and seems not overlapped regions.
-				#In addition, there is a check in the following lines of this scripts about this, just before loading gene coordinates.
-
-		#name: Defines the name of the item. This label is displayed to the left of line in the Genome Browser window when the track is open to full display mode or directly to the left of the item in pack mode.
-		summary(raw_gc_data$V5)
-		nrow(raw_gc_data) == length(unique(raw_gc_data$V5)) #No repeated names
-		raw_gc_data[which(raw_gc_data$V5 == "chr1.0"),] #1 row. It is an identification of the data point.
-
-		#span: each value spans this many bases
-		summary(raw_gc_data$V6) #the window is ALWAYS 5 because we are working with GC percentage calculated in 5 base windows. 
-
-		#count: number of values in this block
-		summary(raw_gc_data$V7) #
-		raw_gc_data[1,] #If you have 1024 values in the first row, and each value correspond with 5 bases, this block will have 1024*5=5120. The size og this block is 15120 - 10001 + 1 = 5120. MATCHES.
-			#Note, we have 1024 data points of GC percentage, but this is summarized into one row by summing all of them (sumData column).
-
-		#offset: offset in File to fetch data
-		summary(raw_gc_data$V8) #it seems the total number of data point from the beginning to a given row. 1024+1024 for second 1024+1024+1024 for the third one.
-
-		#file: path name to data file, one byte per value
-		summary(raw_gc_data$V9)
-
-		#lowerLimit: lowest data value in this block
-		summary(raw_gc_data$V10)
-
-		#dataRange: lowerLimit + dataRange = upperLimit
-		summary(raw_gc_data$V11) #it is not higher than 100 (it is GC PERCENTAGE)
-
-		#validCount: number of valid data values in this block
-		summary(raw_gc_data$V12)
-
-		#sumData: sum of the data points, for average and stddev calc
-		summary(raw_gc_data$V13) #For each region of the genome, they take all the data points of GC percentage and sum them to get sumData. This sum divided by the total number of valid point will give us the average of GC percentage across all the 5 base - windows in a given region. 
-			#IMPORTANT: We cannot use the sumData column as indicator of GC content. We have one value of sumData per row, higher GC content would lead to higher sum, but the problem is that not all rows refer to regions of the same size. If you regions have the same sum, but one has half of the size, the smaller has a higher GC content because it is the same content but in less space (see "/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/postdoc_enard_lab/projects/method_deep/data/search_diego/figures_tentative_conf_text/figure_21.jpeg"). Because of this we have to use a metric that consider the N. Given they release the sumData in this table, we can calculate the mean.
-
-		#sumSquares: sum of data points squared, for stddev calc
-		summary(raw_gc_data$V14) 
 
 
 
-#################################
-###### PREPARE THE DATASET ######
-#################################
 
-##select only variables of interest
-raw_gc_data_subset = raw_gc_data[,c(2,3,4,7,12,13)] #we are going to use only the chromosome, the start/end, the number and valid number of data points and the sum of percentages inside each region
-head(raw_gc_data_subset)
+	##Scheme:
+		
+		#You can see as the database is hg19 (i.e., GRch37).
 
-#set the corresponding names of the columns
-colnames(raw_gc_data_subset) <- c("chrom", "chromStart", "chromEnd", "count", "validCount", "sumData")
-str(raw_gc_data_subset)
+		#Definitions of each column:
+			#bin: Indexing field to speed chromosome range queries.
+
+			#chrom: The name of the chromosome (e.g. chr3, chrY, chr2_random) or scaffold (e.g. scaffold10671).
+			unique(raw_gc_data$V2) #we have several names different from the autosomal and sexual chromosomes 
+				#For what I have read, some cases can be sequences with not great reliability about the exact position in the chromosome (not finished) or different haplotypes from the Major Histocompatibility Complex. For example, COX is an haplotipe of MHC in chromosome 6 (https://www.biostars.org/p/7629/)
+
+					#Starting with the April 2003 human assembly, these tables also include data for sequence that is not in a finished state, but whose location in the chromosome is known, in addition to the unordered sequence. Because this sequence is not quite finished, it could not be included in the main "finished" ordered and oriented section of the chromosome.
+
+					#Also, in a very few cases in the April 2003 assembly, the random files contain data related to sequence for alternative haplotypes. This is present primarily in chr6, where we have included two alternative versions of the MHC region in chr6_random. There are a few clones in other chromosomes that also correspond to a different haplotype. Because the primary reference sequence can only display a single haplotype, these alternatives were included in random files. In subsequent assemblies, these regions have been moved into separate files (e.g. chr6_hla_hap1).
+
+					#More info:
+						#https://www.biostars.org/p/7629/
+						#http://vega.archive.ensembl.org/info/data/MHC_Homo_sapiens.html
+						#regions under review: https://www.ncbi.nlm.nih.gov/grc/human
+
+				#We should remove all the rows that do not belong to the typical autosomal and X chromosome. Y has very few genes. The X will be used for another paper, but we will take the data. As we do not have gene ids for other chromosomes, no other chromosome will be considered when calculating density, because the windows will be calculated around genes of 1:22 and X.
+
+			#chromStart: The starting position of the feature in the chromosome or scaffold. The first base in a chromosome is numbered 0.
+			summary(raw_gc_data$V3) #min chromosome start is 0. In contrast with tbfs, no areas with a low score were removed. 
+
+			#chromEnd: The ending position of the feature in the chromosome or scaffold.
+			summary(raw_gc_data$V4) #the min (4260) is higher than the min of chromosome start, which makes sense.
+				
+			#Important: Like for tbfs, in this data: all start coordinates in our database are 0-based, not 1-based. Therefore, the chromEnd base is not included in the display of the feature, however, the number in position format will be represented. For example, the first 100 bases of chromosome 1 are defined as chrom=1, chromStart=0, chromEnd=100, and span the bases numbered 0-99 in our software (not 0-100), because the start is included instead of the ending ("0-based, not 1-based"), BUT note this will be represented as the position notation chr1:1-100.
+
+				#Note that this is clearly stated in the scheme of "GC Percent - GC Percent in 5-Base Windows" as it is said "all start coordinates in our database are 0-based, not 1-based. See explanation here", referring to the same link that in the case of tbfs: "http://genome.ucsc.edu/FAQ/FAQtracks#tracks1"
+
+				#I have checked the first row, start at 10000 (+1) and end at 15120. According to the browser, this region has 1024 data points of GC percentage, being the mean 58.5984. The mean calculate with the sum of squared of our table is 60360/1024=58.94. There is a small difference, I have checked other regions and difference is several decimals (0.3-0.4). 
+					#"https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&lastVirtModeType=default&lastVirtModeExtraState=&virtModeType=default&virtMode=0&nonVirtPosition=&position=chr1%3A10001%2D15120&hgsid=801849049_39a6h5dF0SWu20mQNJOBVVVySYur"
+					#detail "https://genome.ucsc.edu/cgi-bin/hgc?c=chr1&l=10000&r=15120&o=10000&t=15120&g=gc5Base&i=gc5Base&db=hg19"
+					#For doing this query I had to select "full" in GC percent (Mapping and Sequencing).
+
+				#THIS IS IMPORTANT: https://genome.ucsc.edu/FAQ/FAQtracks#tracks1
+					#FAQ UCSC: I am confused about the start coordinates for items in the refGene table. It looks like you need to add "1" to the starting point in order to get the same start coordinate as is shown by the Genome Browser. Why is this the case?
+						#Our internal database representations of coordinates always have a zero-based start (first base is zero) and a one-based end (the last number typed in the range is not really included). We add 1 to the start before displaying coordinates in the Genome Browser. Therefore, they appear as one-based start, one-based end in the graphical display. The refGene.txt file is a database file, and consequently is based on the internal representation.
+
+						#We use this particular internal representation because it simplifies coordinate arithmetic, i.e. it eliminates the need to add or subtract 1 at every step. If you use a database dump file but would prefer to see the one-based start coordinates, you will always need to add 1 to each start coordinate.
+
+						#If you submit data to the browser in position format (chr#:##-##), the browser assumes this information is 1-based. If you submit data in any other format (BED (chr# ## ##) or otherwise), the browser will assume it is 0-based. You can see this both in our liftOver utility and in our search bar, by entering the same numbers in position or BED format and observing the results. Similarly, any data returned by the browser in position format is 1-based, while data returned in BED format is 0-based.
+
+						#For a detailed explanation, please see our blog entry for the UCSC Genome Browser coordinate counting systems: http://genome.ucsc.edu/blog/the-ucsc-genome-browser-coordinate-counting-systems/
+
+					#Following the previous example: 
+						#The first 100 bases of chromosome 1 are defined as chrom=1, chromStart=0, chromEnd=100, and span the bases numbered 0-99 in our software (not 0-100), but will represent the position notation chr1:1-100. 
+						#We really want the 100 first bases to compare with ensemble, 1-100. If we sum 1 to the start and do nothing to the end, we would have chromStart=1 and chromEnd=100, which is exactly we want. All the positions are moved to the left, right? The end is the first base after the end of the segment, so we do not have to sum 1.
+
+				#The regions are to be not overlapped, right? so a region covered by chromosome start and end in a given chromosome will have only 1 row and 1 score right?
+					#I have checked the first 10 rows and seems not overlapped regions.
+					#In addition, there is a check in the following lines of this scripts about this, just before loading gene coordinates.
+
+			#name: Defines the name of the item. This label is displayed to the left of line in the Genome Browser window when the track is open to full display mode or directly to the left of the item in pack mode.
+			summary(raw_gc_data$V5)
+			nrow(raw_gc_data) == length(unique(raw_gc_data$V5)) #No repeated names
+			raw_gc_data[which(raw_gc_data$V5 == "chr1.0"),] #1 row. It is an identification of the data point.
+
+			#span: each value spans this many bases
+			summary(raw_gc_data$V6) #the window is ALWAYS 5 because we are working with GC percentage calculated in 5 base windows. 
+
+			#count: number of values in this block
+			summary(raw_gc_data$V7) #
+			raw_gc_data[1,] #If you have 1024 values in the first row, and each value correspond with 5 bases, this block will have 1024*5=5120. The size og this block is 15120 - 10001 + 1 = 5120. MATCHES.
+				#Note, we have 1024 data points of GC percentage, but this is summarized into one row by summing all of them (sumData column).
+
+			#offset: offset in File to fetch data
+			summary(raw_gc_data$V8) #it seems the total number of data point from the beginning to a given row. 1024+1024 for second 1024+1024+1024 for the third one.
+
+			#file: path name to data file, one byte per value
+			summary(raw_gc_data$V9)
+
+			#lowerLimit: lowest data value in this block
+			summary(raw_gc_data$V10)
+
+			#dataRange: lowerLimit + dataRange = upperLimit
+			summary(raw_gc_data$V11) #it is not higher than 100 (it is GC PERCENTAGE)
+
+			#validCount: number of valid data values in this block
+			summary(raw_gc_data$V12)
+
+			#sumData: sum of the data points, for average and stddev calc
+			summary(raw_gc_data$V13) #For each region of the genome, they take all the data points of GC percentage and sum them to get sumData. This sum divided by the total number of valid point will give us the average of GC percentage across all the 5 base - windows in a given region. 
+				#IMPORTANT: We cannot use the sumData column as indicator of GC content. We have one value of sumData per row, higher GC content would lead to higher sum, but the problem is that not all rows refer to regions of the same size. If you regions have the same sum, but one has half of the size, the smaller has a higher GC content because it is the same content but in less space (see "/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/postdoc_enard_lab/projects/method_deep/data/search_diego/figures_tentative_conf_text/figure_21.jpeg"). Because of this we have to use a metric that consider the N. Given they release the sumData in this table, we can calculate the mean.
+
+			#sumSquares: sum of data points squared, for stddev calc
+			summary(raw_gc_data$V14) 
 
 
-##remove chromosomes that are not the typical autosomal and sex chromosomes
-#chromosome of interest
-selected_chromosomes = paste("chr", 1:22, sep="") #Y has very few genes, thus it is not included. The X could be used for another paper, but we have no iHS data, so we will not use it right now. As we do not have gene ids for other chromosomes, no other chromosome will be considered when calculating density, because the windows will be calculated around genes of 1:22.
 
-#select those rows whose chromosome name is included in selected_chromosomes
-raw_gc_data_subset = raw_gc_data_subset[which(raw_gc_data_subset$chrom %in% selected_chromosomes),]
+	#################################
+	###### PREPARE THE DATASET ######
+	#################################
 
-#check that everything works well
-unique(raw_gc_data_subset$chrom)
-all(unique(raw_gc_data_subset$chrom) %in% paste("chr", 1:22, sep=""))
-all(paste("chr", 1:22, sep="") %in% unique(raw_gc_data_subset$chrom))
-!c("chrY", "chrX") %in% unique(raw_gc_data_subset$chrom) #we have only the 22 autosomes, while we do not have the Y and X chromosome. 
+	##select only variables of interest
+	raw_gc_data_subset = raw_gc_data[,c(2,3,4,7,12,13)] #we are going to use only the chromosome, the start/end, the number and valid number of data points and the sum of percentages inside each region
+	head(raw_gc_data_subset)
 
-
-##sum 1 to the start because the start begins at zero in bed files (see above)
-raw_gc_data_subset$chromStart_new <- (raw_gc_data_subset$chromStart) + 1
-#check 
-summary(raw_gc_data_subset$chromStart_new-1 == raw_gc_data_subset$chromStart)
-
-#remove the previous chromStart variable
-raw_gc_data_subset$chromStart <- NULL
-
-#reorder columns
-raw_gc_data_subset = raw_gc_data_subset[,c("chrom", "chromStart_new", "chromEnd", "count", "validCount", "sumData")]
-
-#see the new structure
-str(raw_gc_data_subset)
-head(raw_gc_data_subset)
-
-#check that start is always smaller than the end
-summary(raw_gc_data_subset$chromStart_new < raw_gc_data_subset$chromEnd)
-
-#check if there are difference in the number of counts and valid counts
-summary(raw_gc_data_subset$count == raw_gc_data_subset$validCount)
-differences_count = raw_gc_data_subset[which(raw_gc_data_subset$count != raw_gc_data_subset$validCount),] #12 cases
-summary(differences_count$count > differences_count$validCount) #in all cases count is bigger than validCount. ValidCount seems to indicate the total number of adequate counts. We will use validCount to calculate the mean.
+	#set the corresponding names of the columns
+	colnames(raw_gc_data_subset) <- c("chrom", "chromStart", "chromEnd", "count", "validCount", "sumData")
+	str(raw_gc_data_subset)
 
 
-##calculate the GC content multiplied by the total number of points inside each segment just in case want to use this variable
-#we have to calculate the mean of data point. Remember, for each region there are several values of GC percentage, as many as 5 base - windows we have inside the region. The final total number of points is validCount, this is the N. All this data points of GC percentage are summarized into 1 value by summing all of them. We have their sum and the N
-raw_gc_data_subset$gc_sample_size_product <- (raw_gc_data_subset$sumData * raw_gc_data_subset$validCount)
-summary(raw_gc_data_subset$gc_sample_size_product) #IMPORTANT: David told me to multiply the sum of GC of each segment by the number of data points in that segment. Then sum all the products of all segments inside a window and divide it by the sum of the number of points of these segment. I agree with the second part, but not with the first, but I leave this multiplied just in case David tell me to do it. 
+	##remove chromosomes that are not the typical autosomal and sex chromosomes
+	#chromosome of interest
+	selected_chromosomes = paste("chr", 1:22, sep="") #Y has very few genes, thus it is not included. The X could be used for another paper, but we have no iHS data, so we will not use it right now. As we do not have gene ids for other chromosomes, no other chromosome will be considered when calculating density, because the windows will be calculated around genes of 1:22.
+
+	#select those rows whose chromosome name is included in selected_chromosomes
+	raw_gc_data_subset = raw_gc_data_subset[which(raw_gc_data_subset$chrom %in% selected_chromosomes),]
+
+	#check that everything works well
+	unique(raw_gc_data_subset$chrom)
+	all(unique(raw_gc_data_subset$chrom) %in% paste("chr", 1:22, sep=""))
+	all(paste("chr", 1:22, sep="") %in% unique(raw_gc_data_subset$chrom))
+	!c("chrY", "chrX") %in% unique(raw_gc_data_subset$chrom) #we have only the 22 autosomes, while we do not have the Y and X chromosome. 
 
 
-##check that the regions with GC content inside each chromosome are not overlapped. We will used Genomic Ranges for that
-#load the required package
-require(GenomicRanges)
+	##sum 1 to the start because the start begins at zero in bed files (see above)
+	raw_gc_data_subset$chromStart_new <- (raw_gc_data_subset$chromStart) + 1
+	#check 
+	summary(raw_gc_data_subset$chromStart_new-1 == raw_gc_data_subset$chromStart)
 
-#open an empty data.frame to save the results of the loop
-check_overlapping_gc_content = data.frame(chromosome_name_gap_check=NA, check_overlapping_gc_content_1=NA, check_overlapping_gc_content_2=NA, check_overlapping_gc_content_3=NA)
+	#remove the previous chromStart variable
+	raw_gc_data_subset$chromStart <- NULL
 
-#for each chromosome in raw_gc_data_subset (you can have the same coordinate in different chromosomes)
-for(i in 1:length(unique(raw_gc_data_subset$chrom))){
+	#reorder columns
+	raw_gc_data_subset = raw_gc_data_subset[,c("chrom", "chromStart_new", "chromEnd", "count", "validCount", "sumData")]
 
-	#extract the name of the [i] chromosome
-	chromosome_name_gap_check = unique(raw_gc_data_subset$chrom)[i]
+	#see the new structure
+	str(raw_gc_data_subset)
+	head(raw_gc_data_subset)
 
-	#subset the gc content data for the [i] chromosome
-	gc_content_subset_chromosome = raw_gc_data_subset[which(raw_gc_data_subset$chrom == chromosome_name_gap_check),]
+	#check that start is always smaller than the end
+	summary(raw_gc_data_subset$chromStart_new < raw_gc_data_subset$chromEnd)
 
-	#check that you have only the chromosome [i]
-	check_overlapping_gc_content_1 = unique(gc_content_subset_chromosome$chrom) == chromosome_name_gap_check
+	#check if there are difference in the number of counts and valid counts
+	summary(raw_gc_data_subset$count == raw_gc_data_subset$validCount)
+	differences_count = raw_gc_data_subset[which(raw_gc_data_subset$count != raw_gc_data_subset$validCount),] #12 cases
+	summary(differences_count$count > differences_count$validCount) #in all cases count is bigger than validCount. ValidCount seems to indicate the total number of adequate counts. We will use validCount to calculate the mean.
 
-	#convert the segments with GC content in the [i] chromosome as a IRange object
-	gc_ranges = IRanges(start=gc_content_subset_chromosome$chromStart_new, end=gc_content_subset_chromosome$chromEnd) #create a IRange object with the start and end of each segment with GC content.
 
-	#convert the IRange file into a genomic range file
-	gc_ranges_gr = GRanges(seqnames=gc_content_subset_chromosome$chrom, ranges=gc_ranges, strand = '*') #sequnames are the names of the chromosome names. This is very important, because if we select as seq names de exons ids, it consider each exon as independent and do not search for overlapping ranges within all exons; ranges are the start and end of each sequence, and are created with the function IRanges. I have checked that when an exon occupy the whole window, if you use exon id as sequence name, the complete length of the range is not calculated, I have to use the chromosome name. The same occurs when you try to get all the ranges without overlapping with disjoin, only are considered the ranges of the same seqname; strand indicate the sense of the sequence. We have the information of the strand in the strand variable, but as I have revised previously, genomic start/end have the same sense independently of the strand. Just in case, i will use *. In any case, I have seen no changes if this modified in the exon data (i have checked the no impact of strand in this exact example for gap length).
-				#this explanation is taken from gene_coordinates_v8.r
+	##calculate the GC content multiplied by the total number of points inside each segment just in case want to use this variable
+	#we have to calculate the mean of data point. Remember, for each region there are several values of GC percentage, as many as 5 base - windows we have inside the region. The final total number of points is validCount, this is the N. All this data points of GC percentage are summarized into 1 value by summing all of them. We have their sum and the N
+	raw_gc_data_subset$gc_sample_size_product <- (raw_gc_data_subset$sumData * raw_gc_data_subset$validCount)
+	summary(raw_gc_data_subset$gc_sample_size_product) #IMPORTANT: David told me to multiply the sum of GC of each segment by the number of data points in that segment. Then sum all the products of all segments inside a window and divide it by the sum of the number of points of these segment. I agree with the second part, but not with the first, but I leave this multiplied just in case David tell me to do it. 
 
-	#check that you have all segments of the [i] chromosome inside the genomic range object
-	check_overlapping_gc_content_2 = length(gc_ranges_gr@ranges) == nrow(gc_content_subset_chromosome)
 
-	#calculate the not overlapping ranges with GC content
-	gc_ranges_gr_not_overlapped = disjoin(gc_ranges_gr, with.revmap=TRUE) #‘disjoin’ returns an object of the same type as ‘x’ containing disjoint ranges for each distinct (seqname, strand) pairing. Split all the segments to have no overlap. If for example you have 1-10 and 5-7, the first range would be 1-4, then 5-7, and finally 8-10. You have the second range included within the first one. If ‘with.revmap=TRUE’, a metadata column that maps the ouput ranges to the input ranges is added to the returned object. This is basically a map, tells you what initial ranges are included in each of the new non-overlapped range.
+	##check that the regions with GC content inside each chromosome are not overlapped. We will used Genomic Ranges for that
+	#load the required package
+	require(GenomicRanges)
 
-	#compare overlapped and not overlapped ranges
-	check_overlapping_gc_content_3 = identical(gc_ranges_gr@ranges, gc_ranges_gr_not_overlapped@ranges) #if there is no differences, then no overlap exists between segments with GC content.
+	#open an empty data.frame to save the results of the loop
+	check_overlapping_gc_content = data.frame(chromosome_name_gap_check=NA, check_overlapping_gc_content_1=NA, check_overlapping_gc_content_2=NA, check_overlapping_gc_content_3=NA)
 
-	#save results
-	check_overlapping_gc_content = rbind.data.frame(check_overlapping_gc_content, cbind.data.frame(chromosome_name_gap_check, check_overlapping_gc_content_1, check_overlapping_gc_content_2, check_overlapping_gc_content_3))
+	#for each chromosome in raw_gc_data_subset (you can have the same coordinate in different chromosomes)
+	for(i in 1:length(unique(raw_gc_data_subset$chrom))){
+
+		#extract the name of the [i] chromosome
+		chromosome_name_gap_check = unique(raw_gc_data_subset$chrom)[i]
+
+		#subset the gc content data for the [i] chromosome
+		gc_content_subset_chromosome = raw_gc_data_subset[which(raw_gc_data_subset$chrom == chromosome_name_gap_check),]
+
+		#check that you have only the chromosome [i]
+		check_overlapping_gc_content_1 = unique(gc_content_subset_chromosome$chrom) == chromosome_name_gap_check
+
+		#convert the segments with GC content in the [i] chromosome as a IRange object
+		gc_ranges = IRanges(start=gc_content_subset_chromosome$chromStart_new, end=gc_content_subset_chromosome$chromEnd) #create a IRange object with the start and end of each segment with GC content.
+
+		#convert the IRange file into a genomic range file
+		gc_ranges_gr = GRanges(seqnames=gc_content_subset_chromosome$chrom, ranges=gc_ranges, strand = '*') #sequnames are the names of the chromosome names. This is very important, because if we select as seq names de exons ids, it consider each exon as independent and do not search for overlapping ranges within all exons; ranges are the start and end of each sequence, and are created with the function IRanges. I have checked that when an exon occupy the whole window, if you use exon id as sequence name, the complete length of the range is not calculated, I have to use the chromosome name. The same occurs when you try to get all the ranges without overlapping with disjoin, only are considered the ranges of the same seqname; strand indicate the sense of the sequence. We have the information of the strand in the strand variable, but as I have revised previously, genomic start/end have the same sense independently of the strand. Just in case, i will use *. In any case, I have seen no changes if this modified in the exon data (i have checked the no impact of strand in this exact example for gap length).
+					#this explanation is taken from gene_coordinates_v8.r
+
+		#check that you have all segments of the [i] chromosome inside the genomic range object
+		check_overlapping_gc_content_2 = length(gc_ranges_gr@ranges) == nrow(gc_content_subset_chromosome)
+
+		#calculate the not overlapping ranges with GC content
+		gc_ranges_gr_not_overlapped = disjoin(gc_ranges_gr, with.revmap=TRUE) #‘disjoin’ returns an object of the same type as ‘x’ containing disjoint ranges for each distinct (seqname, strand) pairing. Split all the segments to have no overlap. If for example you have 1-10 and 5-7, the first range would be 1-4, then 5-7, and finally 8-10. You have the second range included within the first one. If ‘with.revmap=TRUE’, a metadata column that maps the ouput ranges to the input ranges is added to the returned object. This is basically a map, tells you what initial ranges are included in each of the new non-overlapped range.
+
+		#compare overlapped and not overlapped ranges
+		check_overlapping_gc_content_3 = identical(gc_ranges_gr@ranges, gc_ranges_gr_not_overlapped@ranges) #if there is no differences, then no overlap exists between segments with GC content.
+
+		#save results
+		check_overlapping_gc_content = rbind.data.frame(check_overlapping_gc_content, cbind.data.frame(chromosome_name_gap_check, check_overlapping_gc_content_1, check_overlapping_gc_content_2, check_overlapping_gc_content_3))
+	}
+
+	#remove the firs row with NAs
+	check_overlapping_gc_content = check_overlapping_gc_content[-which( rowSums(is.na(check_overlapping_gc_content)) == ncol(check_overlapping_gc_content) ),]
+
+	#check results
+	nrow(check_overlapping_gc_content) == 22 #we have all the autosomal chromosomes
+	summary(check_overlapping_gc_content) #no FALSE
+	summary(check_overlapping_gc_content$check_overlapping_gc_content_3) #Specially important the case of check 3. TRUE means that the no overlap exists between the segments with GC content in a given chromosome. 
+
+
+	##load coordinate data
+	gene_coordinates = read.table('/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/postdoc_enard_lab/projects/method_deep/data/search_diego/results/gene_number_cds_coords.txt', sep='\t', header=TRUE)
+	str(gene_coordinates)
+	head(gene_coordinates)
+	unique(gene_coordinates$chromosome) #Only autosomal. Y has very few genes. The X can be used for another paper, but we will take the data later as we do not have iHS data. As we do not have gene ids for other chromosomes, no other chromosome will be considered when calculating density, because the windows will be calculated around genes of 1:22.
+
+	#remove duplicates
+	gene_coordinates_no_duplicates = gene_coordinates[-which(duplicated(gene_coordinates$gene_id)),]
+		#remember we have all exons of each gene, so we have several rows for the same gene. You have the same windows in all the rows of the same gene. 
+
+	#check that the remove of duplicates is correct
+	#coordinates_data_row_dupli_test = gene_coordinates[which(gene_coordinates$gene_id == "ENSG00000000457"),] #extract the rows of the first gene, with all the exons to check that the function will work in ddply. We will introduce a data.frame and "gene_id" as variable to split, so we will get a value of each window per gene.
+	#write a function to make the check
+	if(FALSE){ #we run it one time and worked. No more because it spends to much memory.
+	check_windows_duplicate = function(coordinates_data_row_dupli_test){
+
+		#extract the gene id of the gene under study
+		selected_gene_id = unique(coordinates_data_row_dupli_test$gene_id)
+
+		#check that the number of cases for upper/lower limit in each size is exactly 1, i.e., for all the rows of a given gene, we have the same windows 
+		lower_end_window_50kb_identical = length(unique(coordinates_data_row_dupli_test$lower_end_window_50kb)) == 1   
+		upper_end_window_50kb_identical = length(unique(coordinates_data_row_dupli_test$upper_end_window_50kb)) == 1   
+		lower_end_window_100kb_identical = length(unique(coordinates_data_row_dupli_test$lower_end_window_100kb)) == 1  
+		upper_end_window_100kb_identical = length(unique(coordinates_data_row_dupli_test$upper_end_window_100kb)) == 1  
+		lower_end_window_200kb_identical = length(unique(coordinates_data_row_dupli_test$lower_end_window_200kb)) == 1  
+		upper_end_window_200kb_identical = length(unique(coordinates_data_row_dupli_test$upper_end_window_200kb)) == 1  
+		lower_end_window_500kb_identical = length(unique(coordinates_data_row_dupli_test$lower_end_window_500kb)) == 1  
+		upper_end_window_500kb_identical = length(unique(coordinates_data_row_dupli_test$upper_end_window_500kb)) == 1  
+		lower_end_window_1000kb_identical = length(unique(coordinates_data_row_dupli_test$lower_end_window_1000kb)) == 1 
+		upper_end_window_1000kb_identical = length(unique(coordinates_data_row_dupli_test$upper_end_window_1000kb)) == 1 
+
+		#save the gene id and the checks
+		results_check_coord_duplicate = cbind.data.frame(selected_gene_id, lower_end_window_50kb_identical, upper_end_window_50kb_identical, lower_end_window_100kb_identical, upper_end_window_100kb_identical, lower_end_window_200kb_identical, upper_end_window_200kb_identical, lower_end_window_500kb_identical, upper_end_window_500kb_identical, lower_end_window_1000kb_identical, upper_end_window_1000kb_identical)
+
+		#return the results
+		return(results_check_coord_duplicate)
+	}
+	#apply the function to gene_coordinates, splitting the data.frame for each gene id (all row of a gene together)
+	check_coords_dupli = ddply(.data=gene_coordinates, .variables="gene_id", .fun=check_windows_duplicate, .inform=TRUE, .parallel=FALSE, .paropts=NULL)
+		#".inform=TRUE" generates and shows the errors. This increases the computation time, BUT is very useful to detect problems in your analyses.
+		#".parallel" to paralelize with foreach. 
+		#".paropts" is used to indicate additional arguments in for each, specially interesting for using the .export and .packages arguments to supply them so that all cluster nodes have the correct environment set up for computing. 
+			#ADD PACKAGES USED INSIDE THE FUNCTION
+
+	#check we have the correct number of rows
+	nrow(check_coords_dupli) == length(unique(gene_coordinates$gene_id))
+	#check that all cases we have only TRUE, i.e., only 1 upper/lower limit for each window and gene. 
+	summary(check_coords_dupli)
+
+	#check the gene ids are correct
+	if(all(check_coords_dupli$gene_id == check_coords_dupli$selected_gene_id)){ #if all TRUE
+
+		#remove the second column with id
+		check_coords_dupli$selected_gene_id <- NULL
+	} else {
+
+		#if not we have an error
+		stop("ERROR!! We have a problem with the gene id in check_coords_dupli!!!!")
+	}
+	}
 }
-
-#remove the firs row with NAs
-check_overlapping_gc_content = check_overlapping_gc_content[-which( rowSums(is.na(check_overlapping_gc_content)) == ncol(check_overlapping_gc_content) ),]
-
-#check results
-nrow(check_overlapping_gc_content) == 22 #we have all the autosomal chromosomes
-summary(check_overlapping_gc_content) #no FALSE
-summary(check_overlapping_gc_content$check_overlapping_gc_content_3) #Specially important the case of check 3. TRUE means that the no overlap exists between the segments with GC content in a given chromosome. 
-
-
-##load coordinate data
-gene_coordinates = read.table('/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/postdoc_enard_lab/projects/method_deep/data/search_diego/results/gene_number_cds_coords.txt', sep='\t', header=TRUE)
-str(gene_coordinates)
-head(gene_coordinates)
-unique(gene_coordinates$chromosome) #Only autosomal. Y has very few genes. The X can be used for another paper, but we will take the data later as we do not have iHS data. As we do not have gene ids for other chromosomes, no other chromosome will be considered when calculating density, because the windows will be calculated around genes of 1:22.
-
-#remove duplicates
-gene_coordinates_no_duplicates = gene_coordinates[-which(duplicated(gene_coordinates$gene_id)),]
-	#remember we have all exons of each gene, so we have several rows for the same gene. You have the same windows in all the rows of the same gene. 
-
-#check that the remove of duplicates is correct
-#coordinates_data_row_dupli_test = gene_coordinates[which(gene_coordinates$gene_id == "ENSG00000000457"),] #extract the rows of the first gene, with all the exons to check that the function will work in ddply. We will introduce a data.frame and "gene_id" as variable to split, so we will get a value of each window per gene.
-#write a function to make the check
-if(FALSE){ #we run it one time and worked. No more because it spends to much memory.
-check_windows_duplicate = function(coordinates_data_row_dupli_test){
-
-	#extract the gene id of the gene under study
-	selected_gene_id = unique(coordinates_data_row_dupli_test$gene_id)
-
-	#check that the number of cases for upper/lower limit in each size is exactly 1, i.e., for all the rows of a given gene, we have the same windows 
-	lower_end_window_50kb_identical = length(unique(coordinates_data_row_dupli_test$lower_end_window_50kb)) == 1   
-	upper_end_window_50kb_identical = length(unique(coordinates_data_row_dupli_test$upper_end_window_50kb)) == 1   
-	lower_end_window_100kb_identical = length(unique(coordinates_data_row_dupli_test$lower_end_window_100kb)) == 1  
-	upper_end_window_100kb_identical = length(unique(coordinates_data_row_dupli_test$upper_end_window_100kb)) == 1  
-	lower_end_window_200kb_identical = length(unique(coordinates_data_row_dupli_test$lower_end_window_200kb)) == 1  
-	upper_end_window_200kb_identical = length(unique(coordinates_data_row_dupli_test$upper_end_window_200kb)) == 1  
-	lower_end_window_500kb_identical = length(unique(coordinates_data_row_dupli_test$lower_end_window_500kb)) == 1  
-	upper_end_window_500kb_identical = length(unique(coordinates_data_row_dupli_test$upper_end_window_500kb)) == 1  
-	lower_end_window_1000kb_identical = length(unique(coordinates_data_row_dupli_test$lower_end_window_1000kb)) == 1 
-	upper_end_window_1000kb_identical = length(unique(coordinates_data_row_dupli_test$upper_end_window_1000kb)) == 1 
-
-	#save the gene id and the checks
-	results_check_coord_duplicate = cbind.data.frame(selected_gene_id, lower_end_window_50kb_identical, upper_end_window_50kb_identical, lower_end_window_100kb_identical, upper_end_window_100kb_identical, lower_end_window_200kb_identical, upper_end_window_200kb_identical, lower_end_window_500kb_identical, upper_end_window_500kb_identical, lower_end_window_1000kb_identical, upper_end_window_1000kb_identical)
-
-	#return the results
-	return(results_check_coord_duplicate)
-}
-#apply the function to gene_coordinates, splitting the data.frame for each gene id (all row of a gene together)
-check_coords_dupli = ddply(.data=gene_coordinates, .variables="gene_id", .fun=check_windows_duplicate, .inform=TRUE, .parallel=FALSE, .paropts=NULL)
-	#".inform=TRUE" generates and shows the errors. This increases the computation time, BUT is very useful to detect problems in your analyses.
-	#".parallel" to paralelize with foreach. 
-	#".paropts" is used to indicate additional arguments in for each, specially interesting for using the .export and .packages arguments to supply them so that all cluster nodes have the correct environment set up for computing. 
-		#ADD PACKAGES USED INSIDE THE FUNCTION
-
-#check we have the correct number of rows
-nrow(check_coords_dupli) == length(unique(gene_coordinates$gene_id))
-#check that all cases we have only TRUE, i.e., only 1 upper/lower limit for each window and gene. 
-summary(check_coords_dupli)
-
-#check the gene ids are correct
-if(all(check_coords_dupli$gene_id == check_coords_dupli$selected_gene_id)){ #if all TRUE
-
-	#remove the second column with id
-	check_coords_dupli$selected_gene_id <- NULL
-} else {
-
-	#if not we have an error
-	stop("ERROR!! We have a problem with the gene id in check_coords_dupli!!!!")
-}
-}
-
 
 
 ###############################################

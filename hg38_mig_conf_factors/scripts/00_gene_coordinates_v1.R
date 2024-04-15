@@ -397,77 +397,82 @@ full_exon_data <- getBM(
     mart = grch38_human,
     filters = "ensembl_gene_id",
     values = all_gene_ids_grch38_human)
-
-
-##por aquii
-##run again
-
-
 #we apply the gene ids as a filter but setting as value the ids of ALL human genes, which were previously downloaded. I do the download in that way because if you download the whole data is an individual query with a wait limit of 5 minutes. This made the query be stopped. In contrast, if we apply the filter, you will download each gene as an independent query with 5 minutes each one BUT in one file. In addition, we get a bar of progress and an estimated time to the query be finished. See more information and other options for solving this problem here: https://github.com/grimbough/biomaRt/issues/20
 head(full_exon_data)
-	#cds_start and cds_end work fine. For example with ENSG00000196189 (SEMA4A), I have checked the exons in the exon visualizer of the first transcript (ENST00000435124). The first exon is non-coding, so cds start and end is NA. This finishes at 156117221, at 156117222 begins an intron that ends at 156,124,340. At 156,124,341 begins the next exon, first coding (Figure 12). It has as cds start 1, because it is the first one. The first exon have a value of CDS length because it is a global value for the whole gene, but that exon does not contribute to coding length. The same goes for the second transcript (ENST00000414683; figure 13).
-	#BUT the most interesting variables are genomic_coding_start and genomic_coding_end. For example, this first transcript of SEMA4A (ENST00000435124) has 139 coding basis in the first coding exon, as cds_start is 1 and cds_end is 139. The range of sequences included between genomic_coding_start and genomic_coding_end (156124508 - 156124370 + 1) is 139. The same goes for the last coding exon, according to the webpage, the coding length here is 153. The range according to genomic coding start and end is also 153 (156131289 - 156131137 + 1), also according to the data of cds_start and end.
-		#http://grch37.ensembl.org/Homo_sapiens/Transcript/Exons?db=core;g=ENSG00000196189;r=1:156117157-156147543;t=ENST00000414683
+#cds_start and cds_end work fine. For example with ENSG00000196189 (SEMA4A), I have checked the exons in the exon visualizer of the first transcript (ENST00000435124). The first exon is non-coding, so cds start and end is NA. This starts at 156147366 and ends at 156147430. Then an intron starts at 156147431 and ends at 156154549. At 156154550 begins the next exon, first coding. It has as cds start 1, because it is the first one. The first exon have a value of CDS length because it is a global value for the whole gene, but that exon does not contribute to coding length.
+sema4a_full_first_transcript <- full_exon_data[which(full_exon_data$ensembl_gene_id == "ENSG00000196189" & full_exon_data$ensembl_transcript_id == "ENST00000435124"), ]
+sema4a_full_first_transcript
+#BUT the most interesting variables are genomic_coding_start and genomic_coding_end. For example, this first transcript of SEMA4A (ENST00000435124) has 139 coding basis in the first coding exon, as cds_start is 1 and cds_end is 139. The range of sequences included between genomic_coding_start and genomic_coding_end (156154717 - 156154579 + 1) is 139. The same goes for the last coding exon. The range according to genomic coding start and end is also 153 (156161498 - 156161346 + 1), also according to the data of cds_start and end (963-811+1).
+#https://www.ensembl.org/Homo_sapiens/Transcript/Exons?db=core;g=ENSG00000196189;r=1:156147366-156177752;t=ENST00000435124
 
 
-## check that exons from the whole data and from individual queries are the same
-
+##check that exons from the whole data and from individual queries are the same
 #from full_exon_data extract the data of SEMA4A
-sema4a_exon_data_full_query = full_exon_data[which(full_exon_data$ensembl_gene_id == 'ENSG00000196189'),]
+sema4a_exon_data_full_query <- full_exon_data[which(full_exon_data$ensembl_gene_id == "ENSG00000196189"), ]
 
 #extract exon data of SEMA4A through and individual query
-sema4a_exon_data_indv_query = getBM(attributes=c('ensembl_transcript_id', 'transcript_biotype', 'strand', 'transcript_start', 'transcript_end', 'exon_chrom_start', 'exon_chrom_end','ensembl_exon_id', 'genomic_coding_start', 'genomic_coding_end', 'cds_length', 'cds_start', 'cds_end'), mart = grch37_human, filter='ensembl_gene_id', values='ENSG00000196189')
+sema4a_exon_data_indv_query <- getBM(
+	attributes = c("ensembl_transcript_id", "transcript_biotype", "strand", "transcript_start", "transcript_end", "exon_chrom_start", "exon_chrom_end", "ensembl_exon_id", "genomic_coding_start", "genomic_coding_end", "cds_length", "cds_start", "cds_end"),
+	mart = grch38_human,
+	filter = "ensembl_gene_id",
+	values = "ENSG00000196189")
 
-#order rows of the full query according to the exon start position 
-sema4a_exon_data_full_query_ordered = sema4a_exon_data_full_query[order(sema4a_exon_data_full_query$exon_chrom_start),]
+#order rows of the full query according to the exon start position
+sema4a_exon_data_full_query_ordered <- sema4a_exon_data_full_query[order(sema4a_exon_data_full_query$exon_chrom_start), ]
 sort(sema4a_exon_data_full_query_ordered$exon_chrom_start) == sema4a_exon_data_full_query_ordered$exon_chrom_start #check the order is correct
 
-#order rows of the individual query according to the exon start position 
-sema4a_exon_data_indv_query_ordered = sema4a_exon_data_indv_query[order(sema4a_exon_data_indv_query$exon_chrom_start),]
+#order rows of the individual query according to the exon start position
+sema4a_exon_data_indv_query_ordered <- sema4a_exon_data_indv_query[order(sema4a_exon_data_indv_query$exon_chrom_start), ]
 sort(sema4a_exon_data_indv_query_ordered$exon_chrom_start) == sema4a_exon_data_indv_query_ordered$exon_chrom_start
 
 #check that the transcript_id, start/end of the exons and the start/end and length of the coding sequence are the same in both queries
-identical(sema4a_exon_data_full_query_ordered$ensembl_transcript_id, sema4a_exon_data_indv_query_ordered$ensembl_transcript_id)
-identical(sema4a_exon_data_full_query_ordered$exon_chrom_start, sema4a_exon_data_indv_query_ordered$exon_chrom_start)
-identical(sema4a_exon_data_full_query_ordered$exon_chrom_end, sema4a_exon_data_indv_query_ordered$exon_chrom_end)
-identical(sema4a_exon_data_full_query_ordered$cds_start, sema4a_exon_data_indv_query_ordered$cds_start)
-identical(sema4a_exon_data_full_query_ordered$cds_end, sema4a_exon_data_indv_query_ordered$cds_end)
-identical(sema4a_exon_data_full_query_ordered$cds_length, sema4a_exon_data_indv_query_ordered$cds_length)
-identical(sema4a_exon_data_full_query_ordered$genomic_coding_start, sema4a_exon_data_indv_query_ordered$genomic_coding_start)
-identical(sema4a_exon_data_full_query_ordered$genomic_coding_end, sema4a_exon_data_indv_query_ordered$genomic_coding_end)
-identical(sema4a_exon_data_full_query_ordered$strand, sema4a_exon_data_indv_query_ordered$strand)
+for (column in c("ensembl_transcript_id", "exon_chrom_start", "exon_chrom_end", "cds_start", "cds_end", "cds_length", "genomic_coding_start", "genomic_coding_end", "strand")) {
 
-### CHECK ###
-##check that the exons obtained from sema4a_exon_data_full_query are the same than those showed in the webpage 
-	
-	#('http://grch37.ensembl.org/Homo_sapiens/Transcript/Exons?db=core;g=ENSG00000196189;r=1:156117157-156147543;t=ENST00000435124')
-	
-	#I have checked that the exons of the first transcript (ENST00000435124) have the same end and start in my data than in the webpage. The introns are not included between exon_chrom_start and exon_chrom_end (Figure 9 in '/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/postdoc_enard_lab/projects/method_deep/data/search_diego').
+	#check equality
+	check_columns <- identical(
+		sema4a_exon_data_full_query_ordered[, column], sema4a_exon_data_indv_query_ordered[, column]
+	)
 
-	#I have also checked the size of the transcript and the coding sequence. The length of the transcript is exactly the same than the sum of exon length showed in the webpage:65+168+161+63+99+106+117+125+153 = 1057. BUT the coding sequence length is slightly smaller, 963. I guess that transcript length include UTR extreme and other non-coding sequences. You can see these sequences in the server page.
-
-	#Positions of start and end of exons matches the transcript length, so they included non-coding sequences of the exon, BUT not introns. 
-	exons_first_transcript = sema4a_exon_data_full_query[which(sema4a_exon_data_full_query$ensembl_transcript_id == 'ENST00000435124'),] #select data of the first transcript
-	exon_sizes_first_transcript = (exons_first_transcript$exon_chrom_end - exons_first_transcript$exon_chrom_start)+1 # calculate the difference between and start of the exons in the first transcript. We sum 1 because we want to include the first and last base. If you calculate the difference between 3 and 5 (5-3), you get 2. 2 consider the middle number (4) and one of the extremes (3 or 5) but not bot of them, and we want the complete distance between 3 and 5 including extremes, so we have to sum 1, 2+1=3. This includes 3, 4, and 5.
-	sum(exon_sizes_first_transcript) 
-	#sum of the exon sizes of the first transcript is equal to the size of the transcript (1057). This size is bigger than coding sequence length so, both transcript and end/start exon positions included some non-coding sequences as the 5' UTR.
-	
-	#calculate the length of the whole transcript including introns
-	whole_transcript_length = unique(exons_first_transcript$transcript_end) - unique(exons_first_transcript$transcript_start) + 1 
-
-	#calculate the length of introns
-	intron_lengths = NULL
-	for(i in 1:(nrow(exons_first_transcript)-1)){ #we don´t want the last exon, because the transcript ends there, no more intros after that (only the UTR sequence)
-
-		#calculate the difference between end of the [i] exon and the beginning of the [i+1] exon (i.e., the next one) without including the extremes. Because of this we subtract 1. 2:4 has 3 number including the extremes but only 1 without them (4-2-1=1). This will calculate the introns between each pair of exons. 
-		calculated_intron_length = exons_first_transcript[i+1,]$exon_chrom_start - exons_first_transcript[i,]$exon_chrom_end - 1 #the start of the second exon has a higher position than the end of the previous one, because of this the former has to be first.
-
-		#save
-		intron_lengths = append(intron_lengths, calculated_intron_length)
+	#stop if FALSE
+	if (check_columns == FALSE) {
+		stop(paste("The column", column, "is not the same in both queries"))
 	}
+}
 
-	#The whole transcript including introns (but UTR before the first coding exon) should be equal to the sum of the exon sizes plus the sum of intron lengths
-	whole_transcript_length == sum(exon_sizes_first_transcript) + sum(intron_lengths)
+
+##check that the exons obtained from sema4a_exon_data_full_query are the same than those showed in the webpage 
+
+#looking in the web
+#https://www.ensembl.org/Homo_sapiens/Transcript/Summary?db=core;g=ENSG00000196189;r=1:156147366-156177752;t=ENST00000435124
+
+#I have checked that the exons of the first transcript (ENST00000435124) have the same end and start in my data than in the webpage. The introns are not included between exon_chrom_start and exon_chrom_end (Figure 9 in '/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/postdoc_enard_lab/projects/method_deep/data/search_diego').
+sema4a_full_first_transcript
+
+#I have also checked the size of the transcript and the coding sequence. If we calculate the difference between the start and the end of each exon plus 1, i.e., calculate the length of each exon, and then sum all of them, we get 1057 for the length of all exons. This is exactly the length showed in the transcript table for this transcript. BUT the coding sequence length is slightly smaller, 963. I guess that transcript length include UTR extreme and other non-coding sequences. You can see these sequences in the server page.
+exon_sizes_first_transcript <- (sema4a_full_first_transcript$exon_chrom_end - sema4a_full_first_transcript$exon_chrom_start) + 1 
+#calculate the difference between and start of the exons in the first transcript. We sum 1 because we want to include the first and last base. If you calculate the difference between 3 and 5 (5-3), you get 2. 2 consider the middle number (4) and one of the extremes (3 or 5) but not bot of them, and we want the complete distance between 3 and 5 including extremes, so we have to sum 1, 2+1=3. This includes 3, 4, and 5.
+sum(exon_sizes_first_transcript) 
+#sum of the exon sizes of the first transcript is equal to the size of the transcript (1057). This size is bigger than coding sequence length so, both transcript and end/start exon positions included some non-coding sequences as the 5' UTR.
+	
+#calculate the length of the whole transcript including introns
+whole_transcript_length <- unique(sema4a_full_first_transcript$transcript_end) - unique(sema4a_full_first_transcript$transcript_start) + 1
+
+#calculate the length of introns
+intron_lengths <- NULL
+#i=1
+for (i in 1:(nrow(sema4a_full_first_transcript) - 1)) { #we don´t want the last exon, because the transcript ends there, no more intros after that (only the UTR sequence)
+
+	#calculate the difference between end of the [i] exon and the beginning of the [i+1] exon (i.e., the next one) without including the extremes. Because of this we subtract 1. 2:4 has 3 number including the extremes but only 1 without them (4-2-1=1). This will calculate the introns between each pair of exons. 
+	calculated_intron_length <- sema4a_full_first_transcript[i + 1, ]$exon_chrom_start - sema4a_full_first_transcript[i, ]$exon_chrom_end - 1 #the start of the second exon has a higher position than the end of the previous one, because of this the former has to be first.
+
+	#save
+	intron_lengths <- append(intron_lengths, calculated_intron_length)
+}
+
+#The whole transcript including introns (but UTR before the first coding exon) should be equal to the sum of the exon sizes plus the sum of intron lengths
+if( whole_transcript_length != sum(exon_sizes_first_transcript) + sum(intron_lengths)) {
+	stop("The length of the whole transcript is not equal to the sum of the exon sizes plus the sum of intron lengths")
+}
 
 
 
@@ -475,7 +480,7 @@ identical(sema4a_exon_data_full_query_ordered$strand, sema4a_exon_data_indv_quer
 ### USE OF CDS START AND END TO CALCULATE THE LENGTH OF CODING REGIONS ####
 ###########################################################################
 
-#cds start and end can be used to calculate when the coding regions start and end. Below you have support for this. HOWEVER, it much easier to use genomic coding start and genomic coding end. These variables give the exact position in which the coding region start and end in each exon. 
+#cds start and end can be used to calculate when the coding regions start and end. Below you have support for this. HOWEVER, it much easier to use genomic coding start and genomic coding end. These variables give the exact position in which the coding region start and end in each exon.
 sema4a_exon_data_indv_query
 
 	#cds_start seems to indicate the beginning of the coding region in a exon, what it is the coding sequence length at that point. 1 for example would indicate that this is the beginning of the exon. If that exon have a total transcript length of 60, the coding sequences would end at 60. See several examples with
