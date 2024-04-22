@@ -498,7 +498,7 @@ sema4a_full_first_transcript
 #The transcript (ENST00000368282.1):
 sema4a_full_second_transcript <- full_exon_data[which(full_exon_data$ensembl_gene_id == "ENSG00000196189" & full_exon_data$ensembl_transcript_id == "ENST00000368282"), ]
 #reorder by exon position
-sema4a_full_second_transcript <- sema4a_full_second_transcript[match(sort(sema4a_full_second_transcript$exon_chrom_start), sema4a_full_second_transcript$exon_chrom_start),]
+sema4a_full_second_transcript <- sema4a_full_second_transcript[match(sort(sema4a_full_second_transcript$exon_chrom_start), sema4a_full_second_transcript$exon_chrom_start), ]
 sema4a_full_second_transcript
 #The first exon (ENSE00001446766; 156154371-156154717) has as start and end cds 1 and 139, which makes 139-1+1=139 cosing bases. According the webpage, the last 139 bases are coding bases (removing the initial bases in green).
 
@@ -531,9 +531,7 @@ test_genomic_start_end_sema4a_1 <- sema4a_exon_data_indv_query[which(sema4a_exon
 test_genomic_start_end_sema4a_1
 
 #remove the exons without any coding sequence
-test_genomic_start_end_sema4a_1 <- test_genomic_start_end_sema4a_1[
-	which(!is.na(test_genomic_start_end_sema4a_1$genomic_coding_start) | !is.na(test_genomic_start_end_sema4a_1$genomic_coding_end)), 
-]
+test_genomic_start_end_sema4a_1 <- test_genomic_start_end_sema4a_1[which(!is.na(test_genomic_start_end_sema4a_1$genomic_coding_start) | !is.na(test_genomic_start_end_sema4a_1$genomic_coding_end)), ]
 
 #reorder en basis on position
 test_genomic_start_end_sema4a_1 <- test_genomic_start_end_sema4a_1[order(test_genomic_start_end_sema4a_1$cds_start), ]
@@ -574,6 +572,11 @@ summary(coding_length_by_genom_start_end_sema4a_2 == (test_genomic_start_end_sem
 #check that the genomic starts and ends are the same than the ranges I have calculated
 #Check the original script for the MDR paper to see this check
 
+#IN SUMMARY:
+#The number of coding bases in each exon is the same calculated with cds start/end and genomic_coding_start/end.
+#Importantly, genomic_coding_start/end give the coordinate position of the start and end of coding basis, which is much more useful to calculate the number of coding bases within a genomic window.
+#Therefore, we will use genomic_coding_start/end for calculating coding density.
+
 
 
 #############################################################
@@ -581,134 +584,144 @@ summary(coding_length_by_genom_start_end_sema4a_2 == (test_genomic_start_end_sem
 #############################################################
 
 #extract the unique cases of gene and transcript type
-unique_gene_types = unique(full_exon_data$gene_biotype)
-unique_transcript_types = unique(full_exon_data$transcript_biotype)
+unique_gene_types <- unique(full_exon_data$gene_biotype)
+unique_transcript_types <- unique(full_exon_data$transcript_biotype)
 
 #gene and transcript types are not exactly the same. All gene types are included in the transcript types, but some transcript types are not included in the gene types
 unique_gene_types %in% unique_transcript_types
 unique_transcript_types %in% unique_gene_types
 
-### see what types of genes have only NA for cds_length ###
+
+## see what types of genes have only NA for cds_length ###
 #for each gene types
-test_gene_type_cds_length = data.frame(selected_gene_type=NA, result_test=NA)
+test_gene_type_cds_length <- data.frame(selected_gene_type = NA, result_test = NA)
+#i=1
 for(i in 1:length(unique_gene_types)){
 
 	#select the [i] gene type
-	selected_gene_type = unique_gene_types[i]
+	selected_gene_type <- unique_gene_types[i]
 
 	#extract the exons belonging to gene of the [i] gene type
-	cds_lengths = full_exon_data[which(full_exon_data$gene_biotype == selected_gene_type),]$cds_length
+	cds_lengths <- full_exon_data[which(full_exon_data$gene_biotype == selected_gene_type), ]$cds_length
 
 	#test if all lengths of coding sequences are equal to NA for this type
-	result_test = all(is.na(cds_lengths))
+	result_test <- all(is.na(cds_lengths))
 
 	#save the results
-	test_gene_type_cds_length = rbind.data.frame(test_gene_type_cds_length, cbind.data.frame(selected_gene_type, result_test))
-} 	
-
+	test_gene_type_cds_length <- rbind.data.frame(test_gene_type_cds_length, cbind.data.frame(selected_gene_type, result_test))
+}
 #remove first row with NAs
-test_gene_type_cds_length = test_gene_type_cds_length[-1,]
+test_gene_type_cds_length <- test_gene_type_cds_length[-1, ]
 
 #take a look to case with ALL NA for coding sequence length
-test_gene_type_cds_length[which(test_gene_type_cds_length$result_test == TRUE),]
+test_gene_type_cds_length[which(test_gene_type_cds_length$result_test == TRUE), ]
 
-### see what types of transcripts have only NA for cds_length ###
+
+## see what types of transcripts have only NA for cds_length ###
 #for each type of transcript
-test_transcript_type_cds_length = data.frame(selected_transcript_type=NA, result_test=NA)
+test_transcript_type_cds_length <- data.frame(selected_transcript_type = NA, result_test = NA)
+#i=1
 for(i in 1:length(unique_transcript_types)){
 
 	#select the [i] transcript type
-	selected_transcript_type = unique_transcript_types[i]
+	selected_transcript_type <- unique_transcript_types[i]
 
 	#extract the exons belonging to transcript of the [i] transcript type
-	cds_lengths = full_exon_data[which(full_exon_data$transcript_biotype == selected_transcript_type),]$cds_length
+	cds_lengths <- full_exon_data[which(full_exon_data$transcript_biotype == selected_transcript_type), ]$cds_length
 
 	#test if all lengths of coding sequences are equal to NA for this type
-	result_test = all(is.na(cds_lengths))
+	result_test <- all(is.na(cds_lengths))
 
 	#save the results
-	test_transcript_type_cds_length	= rbind.data.frame(test_transcript_type_cds_length, cbind.data.frame(selected_transcript_type, result_test))
-}	
+	test_transcript_type_cds_length	<- rbind.data.frame(test_transcript_type_cds_length, cbind.data.frame(selected_transcript_type, result_test))
+}
 
 #remove first row with NAs
-test_transcript_type_cds_length = test_transcript_type_cds_length[-1,]
+test_transcript_type_cds_length <- test_transcript_type_cds_length[-1, ]
 
 #take a look to case with ALL NA for coding sequence length
-test_transcript_type_cds_length[which(test_transcript_type_cds_length$result_test == TRUE),] #I have found that for many gene and transcript types have only NA data for coding sequence length. These sequences are not translated. For example, ENST00000485575 of SEMA4A-008, which has no translation length (http://grch37.ensembl.org/Homo_sapiens/Transcript/Summary?db=core;g=ENSG00000196189;r=1:156119994-156126365;t=ENST00000485575)
-	#Removing these gene types would lead to consider genes that are not coding
-		#Non-coding genes will be removed.
-	#Removing these transcript types would not affect to coding density withing a coding gene if we use coding sequence length, as these transcript types have NA for that variable. The problem I see is that one of this transcript is at the end or beginning of a gene, then we would be considering non-coding regions for gene size. This would affect to gene length and the calculation of the center. I would REMOVE all the rows without cds_length data. Line 200.
-		#David said that for gene center we can use the full gene length according gene start and end, but for coding density we need to avoid these transcripts. 
+test_transcript_type_cds_length[which(test_transcript_type_cds_length$result_test == TRUE), ]
+
+#I have found that many gene and transcript types have only NA data for coding sequence length. These sequences are not translated. For example, ENST00000485575 of SEMA4A-008, which has no translation length (https://www.ensembl.org/Homo_sapiens/Transcript/Summary?db=core;g=ENSG00000196189;r=1:156147366-156177752;t=ENST00000485575)
+
+#Removing these gene types would lead to consider genes that are not coding
+#Non-coding genes will be removed.
+
+#Removing these transcript types would not affect to coding density withing a coding gene if we use coding sequence length, as these transcript types have NA for that variable. The problem I see is that one of this transcript is at the end or beginning of a gene, then we would be considering non-coding regions for gene size. This would affect to gene length and the calculation of the center. I would REMOVE all the rows without cds_length data. Line 200.
+
+#SOLUTION: David said that for gene center we can use the full gene length according gene start and end, but for coding density we need to avoid these transcripts.
 
 #gene and transcript biotypes removing those cases with cds_length all NA
-unique(full_exon_data[which(!is.na(full_exon_data$cds_length)),]$gene_biotype)
-unique(full_exon_data[which(!is.na(full_exon_data$cds_length)),]$transcript_biotype)
+unique(full_exon_data[which(!is.na(full_exon_data$cds_length)), ]$gene_biotype)
+unique(full_exon_data[which(!is.na(full_exon_data$cds_length)), ]$transcript_biotype)
 
-#check for non-functional transcripts
-	#I have found some genes with coding sequences, but that are not functional, like a inmunglobulin gene (IGHV1OR15-9; ENSG00000188403; http://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000188403;r=15:20169919-20170354;t=ENST00000338912).
-		#Do you think we should get ride of them? I am not very sure if there a filter or attribute to remove non functional transcripts. I have seen it in some gene types that include in their name the label variable (i guess too much variability in the sequence) like TR_V_gene (T cell receptor gamma variable) or IG_V_gene (immunoglobulin variable), but not in other genes of the variable category (ENST00000390633). In other types like T cell receptor gamma joining (TR_J_gene) or T cell receptor delta diversity (TR_D_gene) i have found functional proteins
-		#I don´t understand why these cases have a different gene type from protein coding...
-head(full_exon_data[which(!is.na(full_exon_data$cds_length) & full_exon_data$transcript_biotype == 'IG_V_gene'),], 100)
-head(full_exon_data[which(!is.na(full_exon_data$cds_length) & full_exon_data$transcript_biotype == 'TR_V_gene'),], 100)
-head(full_exon_data[which(!is.na(full_exon_data$cds_length) & full_exon_data$transcript_biotype == 'TR_C_gene'),], 100)
-head(full_exon_data[which(!is.na(full_exon_data$cds_length) & full_exon_data$transcript_biotype == 'TR_J_gene'),], 100)
-head(full_exon_data[which(!is.na(full_exon_data$cds_length) & full_exon_data$transcript_biotype == 'TR_D_gene'),], 100)
+
+##check for non-functional transcripts
+#I have found some genes with coding sequences, but that are not functional, like a inmunglobulin gene (IGHV1OR15-9; ENSG00000188403; http://grch37.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000188403;r=15:20169919-20170354;t=ENST00000338912).
+
+#Do you think we should get ride of them? I am not very sure if there a filter or attribute to remove non functional transcripts. I have seen it in some gene types that include in their name the label variable (i guess too much variability in the sequence) like TR_V_gene (T cell receptor gamma variable) or IG_V_gene (immunoglobulin variable), but not in other genes of the variable category (ENST00000390633). In other types like T cell receptor gamma joining (TR_J_gene) or T cell receptor delta diversity (TR_D_gene) i have found functional proteins
+
+#I don´t understand why these cases have a different gene type from protein coding...
+head(full_exon_data[which(!is.na(full_exon_data$cds_length) & full_exon_data$transcript_biotype == 'IG_V_gene'), ], 100)
+head(full_exon_data[which(!is.na(full_exon_data$cds_length) & full_exon_data$transcript_biotype == 'TR_V_gene'), ], 100)
+head(full_exon_data[which(!is.na(full_exon_data$cds_length) & full_exon_data$transcript_biotype == 'TR_C_gene'), ], 100)
+head(full_exon_data[which(!is.na(full_exon_data$cds_length) & full_exon_data$transcript_biotype == 'TR_J_gene'), ], 100)
+head(full_exon_data[which(!is.na(full_exon_data$cds_length) & full_exon_data$transcript_biotype == 'TR_D_gene'), ], 100)
 
 #transcripts with decay and pseudogenes
-head(full_exon_data[which(!is.na(full_exon_data$cds_length) & full_exon_data$transcript_biotype == 'non_stop_decay'),], 100)
-head(full_exon_data[which(!is.na(full_exon_data$cds_length) & full_exon_data$transcript_biotype == 'nonsense_mediated_decay'),], 100)
-head(full_exon_data[which(!is.na(full_exon_data$cds_length) & full_exon_data$transcript_biotype == 'polymorphic_pseudogene'),], 100)
-	#transcript with decay I guess means that these transcript are destroyed because have not stop codon or the stop codon is too soon. Am I right? We should consider this in our analyses?
-	#Same goes for pseudogenes. A gene that has homology to known protein-coding genes but contain a frame shift and/or stop codon(s) which disrupts the open reading frame. Thought to have arisen through duplication followed by loss of function.
+head(full_exon_data[which(!is.na(full_exon_data$cds_length) & full_exon_data$transcript_biotype == 'non_stop_decay'), ], 100)
+head(full_exon_data[which(!is.na(full_exon_data$cds_length) & full_exon_data$transcript_biotype == 'nonsense_mediated_decay'), ], 100)
+head(full_exon_data[which(!is.na(full_exon_data$cds_length) & full_exon_data$transcript_biotype == 'polymorphic_pseudogene'), ], 100)
+#transcript with decay I guess means that these transcript are destroyed because have not stop codon or the stop codon is too soon. Am I right? We should consider this in our analyses?
+#Same goes for pseudogenes. A gene that has homology to known protein-coding genes but contain a frame shift and/or stop codon(s) which disrupts the open reading frame. Thought to have arisen through duplication followed by loss of function.
 
 #This is the list of all transcript biotypes:
 unique(full_exon_data$transcript_biotype)
-	#list		
-		#"protein_coding"                    
- 		#"nonsense_mediated_decay"           
- 		#"processed_transcript"              
- 		#"miRNA"                             
- 		#"processed_pseudogene"              
- 		#"misc_RNA"                          
- 		#"lincRNA"                           
- 		#"snRNA"                             
- 		#"snoRNA"                            
-		#"antisense"                         
-		#"rRNA"                              
-		#"transcribed_unprocessed_pseudogene"
-		#"transcribed_processed_pseudogene"  
-		#"unprocessed_pseudogene"            
-		#"sense_intronic"                    
-		#"pseudogene"                        
-		#"retained_intron"                   
-		#"unitary_pseudogene"                
-		#"sense_overlapping"                 
-		#"IG_V_gene"                         
-		#"IG_D_gene"                         
-		#"3prime_overlapping_ncrna"          
-		#"IG_V_pseudogene"                   
-		#"non_stop_decay"                    
-		#"polymorphic_pseudogene"            
-		#"Mt_tRNA"                           
-		#"Mt_rRNA"                           
-		#"TR_V_pseudogene"                   
-		#"IG_C_pseudogene"                   
-		#"TR_C_gene"                         
-		#"TR_J_gene"                         
-		#"TR_V_gene"                         
-		#"TR_J_pseudogene"                   
-		#"translated_processed_pseudogene"   
-		#"IG_J_pseudogene"                   
-		#"IG_J_gene"                         
-		#"IG_C_gene"                         
-		#"TR_D_gene"
-		#def of gene types: https://uswest.ensembl.org/info/genome/genebuild/biotypes.html
-	
-	#Should we remove all this types and only use protein coding? I know that between these categories there are non-functional proteins, but not sure if all of them.. should I revise each type to ensure that these types of sequences have no influence on phenotype?
-		#YES, we only want coding genes. For transcripts withing coding-functional genes, we will also remove this type of transcripts. We do not want them in coding density calculation. For gene length, we will use gene start and end, so it could include them, but it is not problematic (small changes of length and center...)
+#"protein_coding"
+#"nonsense_mediated_decay"
+#"processed_transcript"
+#"miRNA"
+#"processed_pseudogene"
+#"misc_RNA"
+#"lincRNA"
+#"snRNA"
+#"snoRNA"
+#"antisense"
+#"rRNA"
+#"transcribed_unprocessed_pseudogene
+#"transcribed_processed_pseudogene"
+#"unprocessed_pseudogene"
+#"sense_intronic"
+#"pseudogene"
+#"retained_intron"
+#"unitary_pseudogene"
+#"sense_overlapping"
+#"IG_V_gene"
+#"IG_D_gene"
+#"3prime_overlapping_ncrna"
+#"IG_V_pseudogene"
+#"non_stop_decay"
+#"polymorphic_pseudogene"
+#"Mt_tRNA"
+#"Mt_rRNA"
+#"TR_V_pseudogene"
+#"IG_C_pseudogene"
+#"TR_C_gene"
+#"TR_J_gene"
+#"TR_V_gene"
+#"TR_J_pseudogene"
+#"translated_processed_pseudogene"
+#"IG_J_pseudogene"
+#"IG_J_gene"
+#"IG_C_gene"
+#"TR_D_gene"
+#def of gene types: https://uswest.ensembl.org/info/genome/genebuild/biotypes.html
+
+#Should we remove all this types and only use protein coding? I know that between these categories there are non-functional proteins, but not sure if all of them.. should I revise each type to ensure that these types of sequences have no influence on phenotype?
+#YES, we only want coding genes. For transcripts withing coding-functional genes, we will also remove this type of transcripts. We do not want them in coding density calculation. For gene length, we will use gene start and end, so it could include them, but it is not problematic (small changes of length and center...)
 
 #select those rows without NA for coding sequence length and with gene and transcript type equal to protein coding
-full_exon_data_filtered = full_exon_data[which(!is.na(full_exon_data$cds_length) & full_exon_data$gene_biotype == 'protein_coding' & full_exon_data$transcript_biotype == 'protein_coding'),]
+full_exon_data_filtered <- full_exon_data[which(!is.na(full_exon_data$cds_length) & full_exon_data$gene_biotype == "protein_coding" & full_exon_data$transcript_biotype == "protein_coding"), ]
 head(full_exon_data_filtered)
 
 #check the difference in size
@@ -717,13 +730,19 @@ length(unique(full_exon_data_filtered$ensembl_gene_id))
 length(unique(full_exon_data$ensembl_gene_id)) - length(unique(full_exon_data_filtered$ensembl_gene_id))
 
 #check
-all(!is.na(full_exon_data_filtered$cds_length)) #No NA in coding sequence length
-unique(full_exon_data_filtered$gene_biotype) #only protein coding
-unique(full_exon_data_filtered$transcript_biotype) #only protein coding in transcript biotype.
+if( 
+	all(!is.na(full_exon_data_filtered$cds_length)) &
+	unique(full_exon_data_filtered$gene_biotype) == "protein_coding" &
+	unique(full_exon_data_filtered$transcript_biotype) == "protein_coding"
+){
+	print("All rows have coding sequence length and gene and transcript type equal to protein coding")
+} else {
+	stop("There are rows without coding sequence length or with gene or transcript type different to protein coding")
+}
 
-#As we remove all sequences without data for cds. if a transcript have at least one coding exon, will have cds value and it will be included. This cds value will not count for the non-coding bases inside the coding exon like the 5´ UTR extreme, etc.. See figures 11 and 15 (the 3´ and 5´ below of the line i think that refer to the other strand).
+#Given that we remove all sequences without data for cds, if a transcript have at least one coding exon, it will have cds value and it will be included. This cds value will not consider the non-coding bases inside the coding exon like the 5´ UTR extreme, etc.. See figures 11 and 15 (the 3´ and 5´ below of the line i think that refer to the other strand).
 
-#For gene length and center, we count these non-coding sequences inside the coding exons along with non-functional transcripts we use gene start and end, but according to David this is not a problem. The difference in size and center position will be small in relation to the LD blocks in the human genome (thousands of bases).
+#For gene length and center, we count these non-coding sequences inside the coding exons along with non-functional transcripts as we use gene start and end. According to David, this is not a problem. The difference in size and center position will be small in relation to the LD blocks in the human genome (thousands of bases).
 
 
 
@@ -731,46 +750,58 @@ unique(full_exon_data_filtered$transcript_biotype) #only protein coding in trans
 ###### FILTER GENE LIST USING THE PREVIOUS FILTER APPLIES ON EXON DATA #######
 ##############################################################################
 
-#We are going to filter the gene list all_genes_grch37_human_filtered removing those id genes that are not included in our exon data, i.e., non coding genes or genes without protein coding transcripts.
+#We are going to filter the gene list all_genes_grch38_human_filtered removing those id genes that are not included in our exon data, i.e., non coding genes or genes without protein coding transcripts.
 
-#note that you can have exon data from genes in the sexual chromosomes, but the all_genes_grch37_human_filtered list is already filtered for that. Therefore, the loop for calculating windows and coding density will only use autosomal genes. Only coding density of autosomal genes will be calculated. 
+#note that you can have exon data from genes in the sexual chromosomes, but the all_genes_grch38_human_filtered list is already filtered for that. Therefore, the loop for calculating windows and coding density will only use autosomal genes. Only coding density of autosomal genes will be calculated.
 
-#REMEMBER: "all_genes_grch37_human_filtered" determine the genes that will be used in the analyses. 
+#REMEMBER: "all_genes_grch38_human_filtered" determine the genes that will be used in the analyses.
 
-#extract from all_genes_grch37_human_filtered, i.e., dataframe with the gene names data, those rows with an gene id included in the filtered dataset with exon data.
-all_genes_grch37_exon_filter = all_genes_grch37_human_filtered[which(all_genes_grch37_human_filtered$ensembl_gene_id %in% unique(full_exon_data_filtered$ensembl_gene_id)),]
+#extract from all_genes_grch38_human_filtered, i.e., dataframe with the gene names data, those rows with an gene id included in the filtered dataset with exon data.
+all_genes_grch38_exon_filter <- all_genes_grch38_human_filtered[which(all_genes_grch38_human_filtered$ensembl_gene_id %in% unique(full_exon_data_filtered$ensembl_gene_id)), ]
 
 #check that the filtering occurred well
-summary(unique(all_genes_grch37_exon_filter$ensembl_gene_id) %in% unique(full_exon_data_filtered$ensembl_gene_id))
-summary(unique(full_exon_data_filtered$ensembl_gene_id) %in% unique(all_genes_grch37_exon_filter$ensembl_gene_id))
+summary(unique(all_genes_grch38_exon_filter$ensembl_gene_id) %in% unique(full_exon_data_filtered$ensembl_gene_id))
+summary(unique(full_exon_data_filtered$ensembl_gene_id) %in% unique(all_genes_grch38_exon_filter$ensembl_gene_id))
 
 #some genes of the exon data are not included in the list of genes
 #extract the list of lost genes in exon data, i.e., genes that are includqed in the exon data but not in the gene list
-lost_genes = full_exon_data_filtered[which(!full_exon_data_filtered$ensembl_gene_id %in% unique(all_genes_grch37_exon_filter$ensembl_gene_id)),]$ensembl_gene_id
+lost_genes <- full_exon_data_filtered[which(!full_exon_data_filtered$ensembl_gene_id %in% unique(all_genes_grch38_exon_filter$ensembl_gene_id)), ]$ensembl_gene_id
 #extract the exon data of these genes
-exon_data_lost_genes = full_exon_data_filtered[which(full_exon_data_filtered$ensembl_gene_id %in% lost_genes),]
+exon_data_lost_genes <- full_exon_data_filtered[which(full_exon_data_filtered$ensembl_gene_id %in% lost_genes), ]
 #take a look
 head(exon_data_lost_genes, 100)
-exon_data_lost_genes[1,] #the first one is form X chromosome.
+exon_data_lost_genes[1,] #the first one is from Y chromosome.
 unique(exon_data_lost_genes$chromosome_name) #but there are also from Y chromosome and patches from areas with high variability.
 
+#check no lost gene is included in the original autosomals
+if (TRUE %in% c(1:22 %in% unique(exon_data_lost_genes$chromosome_name))) {
+	stop("There are genes of the Y chromosome in the lost genes")
+}
 
-#We also have a gene id of SLC25A26 (ENSG00000261657). This is id is not included the filtered gene list but the hgcs symbol does!!
-exon_data_lost_genes[which(exon_data_lost_genes$ensembl_gene_id == 'ENSG00000261657'),]
+#These genes id are not included in all_genes_grch38_exon_filter because we removed those that do not have 1:22 chromosome data. There are some regions with great variability like the MHC for which different patches are included. Also fixing patches are created. similar, genes of the Y and X chromosome are not included. We have removed all of this in all_genes_grch38_exon_filter. Therefore, they will be not used in the analyses!
 
-#These genes id are not included in all_genes_grch37_exon_filter because we removed those that have not 1:22 or X in chromosome data. There are some regions with great variability like the MHC for which different patches are included. Also fixing patches are created. similar, genes of the Y and X chromosome are not included. We have removed all of this in all_genes_grch37_exon_filter. Therefore, they will be not used in the analyses!
+#In hg19, we also have a gene id of SLC25A26 (ENSG00000261657). This is id was not included the filtered gene list but the hgcs symbol does!!
+exon_data_lost_genes[which(exon_data_lost_genes$ensembl_gene_id == "ENSG00000144741"), ]
 
 #If you look for SLC25A26 in the filtered gene list, you will obtain a gene id that is already included exon data.
-all_genes_grch37_exon_filter[which(all_genes_grch37_exon_filter$hgnc_symbol == 'SLC25A26'),]$ensembl_gene_id #gene id is ENSG00000144741 
-	#According to the biomart online server, ENSG00000144741 is SLC25A26, a gene of the chromosome 3, while ENSG00000261657 is also SLC25A26, but its chromosome name is Chromosome HG991_PATCH, i.e., it is a patch. 
+all_genes_grch38_exon_filter[which(all_genes_grch38_exon_filter$hgnc_symbol == "SLC25A26"), ]$ensembl_gene_id #gene id is ENSG00000144741
 
-#THEREFORE, if we use the gene list as a guide for searching genes, we will have these genes but NOT the patches. 
+#According to the biomart online server, ENSG00000144741 is SLC25A26, a gene of the chromosome 3, while ENSG00000261657 is also SLC25A26, but it was removed in hg38 and merged with ENSG00000144741
+#https://www.ensembl.org/Homo_sapiens/Gene/Idhistory?g=ENSG00000261657
+
+#THEREFORE, if we use the gene list as a guide for searching genes, we will have these genes but NOT the patches
+
+
+
+##### por aquii
 
 #remove these patches and the X-Y chromosome from exon data
-full_exon_data_filtered_final = full_exon_data_filtered[which(full_exon_data_filtered$ensembl_gene_id %in% unique(all_genes_grch37_exon_filter$ensembl_gene_id)),]
+full_exon_data_filtered_final <- full_exon_data_filtered[which(full_exon_data_filtered$ensembl_gene_id %in% unique(all_genes_grch38_exon_filter$ensembl_gene_id)), ]
 
-#check that the X and Y chromosome are not included. 
-c("X", "Y") %in% unique(full_exon_data_filtered_final$chromosome_name)
+#check that the X and Y chromosome are not included
+if (TRUE %in% c(c("X", "Y") %in% unique(full_exon_data_filtered_final$chromosome_name))) {
+	stop("WE HAVE NOT CORRECTLY FILTERED OUT X AND Y")
+}
 
 #check that only genes included in the gene list are present in the exon data
 summary(full_exon_data_filtered_final$ensembl_gene_id %in% all_genes_grch37_exon_filter$ensembl_gene_id)
