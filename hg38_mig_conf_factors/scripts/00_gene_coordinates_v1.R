@@ -476,501 +476,109 @@ if( whole_transcript_length != sum(exon_sizes_first_transcript) + sum(intron_len
 
 
 
-###########################################################################
-### USE OF CDS START AND END TO CALCULATE THE LENGTH OF CODING REGIONS ####
-###########################################################################
+#################################################################
+### CHECK CDS START-END MATCHES BETWEEN ENSEMBLE AND MY DATA ####
+#################################################################
 
-#cds start and end can be used to calculate when the coding regions start and end. Below you have support for this. HOWEVER, it much easier to use genomic coding start and genomic coding end. These variables give the exact position in which the coding region start and end in each exon.
+#cds start and end can be used to calculate when the coding regions start and end. Below you have support for this. HOWEVER, it much easier to use genomic coding start and genomic coding end (see below). These variables give the exact position in which the coding region start and end in each exon.
 sema4a_full_first_transcript
 
 #cds_start seems to indicate the beginning of the coding region in a exon, what it is the coding sequence length at that point. 1 for example would indicate that this is the beginning of the exon. If that exon have a total transcript length of 60, the coding sequences would end at 60. See several examples
-#The transcript (ENST00000435124) of SEMA4A (ENST00000435124.1; https://www.ensembl.org/Homo_sapiens/Transcript/Summary?db=core;g=ENSG00000196189;r=1:156147366-156177752;t=ENST00000435124; FIGURE 14):
+#The transcript (ENST00000435124) of SEMA4A (ENST00000435124.5; https://www.ensembl.org/Homo_sapiens/Transcript/Summary?db=core;g=ENSG00000196189;r=1:156147366-156161498;t=ENST00000435124; FIGURE 14):
 #The first exon (ENSE00001737906; 156147366-156147430) has no coding sequence, so cds_start is NA.
-#The second exon (ENSE00003474176; 156154717-156154550) has the first coding sequence, so cds_start is 1, and the end is 139. The transcript length according to the webpage is 168, but according to the map, the start of the exon is not translated. If we count the splice region (removed in splicing and hence not translated; in orange) and the blue region (UTR) at the beginning we get 29 bases (I have seen this pasting the exon sequence into libre office, selecting the orange and blue bases at the beginning, then tools and word count to check the number of characters). 168 - 29 makes 139 which is exactly the value of cds_end.
-#The third exon (ENSE00003784807; 156156574-156156414) has a transcript length of 161 and coding sequences are at the beginning and end of the exon, according the webpage. According to my data, cds_start and end are 140 and 300, which makes 300-140+1=161 (we sum 1 because we want to include both 300 and 140 as they are start and end of coding sequence in this exon), exactly the length of the transcript according to the webpage.
+#The second exon (ENSE00003474176; 156154550-156154717) has the first coding sequence, so cds_start is 1, and the end is 139. The transcript length according to the webpage is 168, but according to the map, the start of the exon is not translated. If we count the splice region (removed in splicing and hence not translated; in orange) and the blue-greenish region (UTR) at the beginning we get 29 bases (I have seen this pasting the exon sequence into libre office, selecting the orange and blue bases at the beginning, then tools and word count to check the number of characters). 168 - 29 makes 139 which is exactly the value of cds_end.
+#The third exon (ENSE00003784807; 156156414-156156574) has a transcript length of 161 and coding sequences are at the beginning and end of the exon, according the webpage. According to my data, cds_start and end are 140 and 300, which makes 300-140+1=161 (we sum 1 because we want to include both 300 and 140 as they are start and end of coding sequence in this exon), exactly the length of the transcript according to the webpage.
 
-#the fourth exon (ENSE00003623497; 156127861-156127923) has a transcript length of 161 and coding sequences are at the beginning and end of the exon, according the webpage. It has a transcript length of 63 according to the webpage, and according to my data the cds start and end are 301 and 363, respectively. 363-301+1=63, which is exactly the length of transcripts
-			#the fifth exon (ENSE00003487912; 156128179-156128277) it has a transcript length of 99 and the beginning and end of the exon has coding basis according to the webpage. According to my data, the cds start and end is 364 and 462, so the length of the coding sequence is 462-364+1=99, same transcript length.
-			#For the last exon occurs the same, 811 and 963 for start and end of coding sequence, which makes 963-811+1=153, which is the transcript length according the webpage. Again, the first and last base is coding in this exon according to the webpage.
-		#The transcript (ENST00000368282):
-			#The first exon (ENSE00001446766; 156124162-156124508) has as start and end cds 1 and 139, which makes 139-1+1=139 cosing bases. According the webpage, the last 139 bases are coding bases (blue color). 
-			#The rest of exons are complete coding except the last one (ENSE00001446765; 156146196-156147543). The start and end coding sequence is 1694 and 2286, respectively. 2286 - 1694 + 1 = 593, which is the exact number of coding basis in the last exon according to the webpage (I have seen this pasting the exon sequence into libre office, selecting the blue bases, then tools and word count to check the number of characters).
-			#Again, with start and end cds we can calculate the position of the starting and end coding sequences
+#the fourth exon (ENSE00003623497; 156158070-156158132) has a transcript length of 63 and coding sequences are at the beginning and end of the exon, according the webpage. It has a transcript length of 63 according to the webpage, and according to my data the cds start and end are 301 and 363, respectively. 363-301+1=63, which is exactly the length of transcripts
 
-	#CDS start = 1 indicates the frist coding exon, without the UTR 5' sequence. The last cds end of the transcript has the same value of the cds length. Therefore we can use cds_start = 1 and cds_end=cds_length to select the data of start and end exon. We can count from the end of the first exon with coding sequence, as many bases as the cds end. For example, cds start and end of the first exon with coding sequence is 1 and 100, the end of that exon is at 110, we should rest 100 from 110 plus 1 to get the range of coding basis. For the end, we should look for the exon whose cds end is equal to cds length. In that exon, we calculate the range of coding baes (cds_end - cds_start) and sum to the exon start. We dont need to rest 1 to the range because the left extreme would be inclued when summing the range to the begining of the exon. For example, 500-400=100, and the exon start at 1000, so 1000 + 100 makes 1100. The right extreme is included in 100 and the left in 1000. 
+#the fifth exon (ENSE00003487912; 156158388-156158486) it has a transcript length of 99 and the beginning and end of the exon has coding basis according to the webpage. According to my data, the cds start and end is 364 and 462, so the length of the coding sequence is 462-364+1=99, same transcript length.
 
-	#EXAMPLE CDS calculations IN FIGURE 15: In that figure you have the UTR extremes 5' and 3', sveral coding exons, non-coding exons and introns
-		#The first exon with coding sequence begins at 2000 pb (A) and ends 3000 pb (C). The cds_start is 1 (C position) and cds_end 501 (B position; remember cds is the length of coding sequence at that point, not the position). We will calculate the position of start of the coding sequence through two differents ways:
-			#Method A:
-				#[A,C] = C - A + 1 = 3000 - 2000 + 1 = 1001. We calculate the area included between both extremes of the exon, including these extremes. Because of this, we sum 1, to include not only one but the two extremes 
-					length(2000:3000) #1001, which is exactly we obtained
-					#Note that '[' means extreme included, while '(' means extreme not included. 
-				#[A,B) = [A,C] - [B-C] = [A,C] - cds_end = 1001 - 501 = 500. We calculate the distance betwen the begining of the exon and the start of the coding sequence. For that, we substract from the hole length of the exon, the coding region, which has a length of 501 (length(1:501) = 501) and it is called [B,C] or cds_end. As B is included in [B,C], thus B cannot be included in [A,B). 
-					1001 - 501 #if the total length of the exon is 1001, and the coding region has 501, the rest of the exon (i.e., non coding exon) would be 500 (501 + x = 1001; 1001-501 = x; x = 500)
-				#B = A + [A,B) = 2000 + 500 = 2500. To the begining of the exon, we sum the complete non-coding region to get the begining of the coding region. We don´t have to substract 1, becuase the begining (A) is included in both A and [A,B), but we don´t have the other extreme (B) included in the range ([A,B)), thus we don´t have to substract anything. If we would have sum A + [A,B], then we should substract 1. The result of this operation is exactly B, the begining of the coding region in the first coding exon.
-					length(2500:3000) #if the coding region begins at this exon and has a length of 501 pb, and the exon ends at 3000 pb, the region between the estimated begining of the coding region, i.e., 2500, to 3000 should be 501, which is true.
+#For the last exon occurs the same, 811 and 963 for start and end of coding sequence, which makes 963-811+1=153, which is the transcript length according the webpage. Again, the first and last base is coding in this exon according to the webpage.
 
-			#Method B:
-				#B = C - [B,C] + 1 = 3000 - 501 + 1 = 2500. We substract from the end of the exon the length of the coding sequence ([B,C]; cds_end) but adding 1 to include the begining of the coding region, because the element we are substracting ([B,C]) includes B, so we are removing it from C.
-					length(2500:3000) #the result is the same than the method A, and make sense. The sequence begingin at 2500 and finishing at 3000 has a length of 501, which is the cds_end of the first exon.
+#The transcript (ENST00000368282.1):
+sema4a_full_second_transcript <- full_exon_data[which(full_exon_data$ensembl_gene_id == "ENSG00000196189" & full_exon_data$ensembl_transcript_id == "ENST00000368282"), ]
+#reorder by exon position
+sema4a_full_second_transcript <- sema4a_full_second_transcript[match(sort(sema4a_full_second_transcript$exon_chrom_start), sema4a_full_second_transcript$exon_chrom_start),]
+sema4a_full_second_transcript
+#The first exon (ENSE00001446766; 156154371-156154717) has as start and end cds 1 and 139, which makes 139-1+1=139 cosing bases. According the webpage, the last 139 bases are coding bases (removing the initial bases in green).
 
-		#The last exon with coding sequence begins at 4000 pb (D) and ends 5000 pb (F). The cds_start is 1501 (D position) and cds_end is 2001 (E position; remember cds is the length of coding sequence at that point, not the position). We will calculate the position of the end of the coding sequence through two differents ways:
-			#Method A:
-				#[D,F] = F - D + 1 = 5000 - 4000 + 1 = 1001. We calculate the area included between both extremes of the exon, including these extremes. Because of this, we sum 1, to include not only one but the two extremes 
-					length(5000:4000) #1001, which is exactly we obtained
-					#Note that '[' means extreme included, while '(' means extreme not included. 
-				#[D,E] = cds_end - cds_start + 1 = 2001 - 1501 + 1 = 501. We calculate the length of the coding region calculating the distance between start and end of the coding sequence in this exon, also adding 1 to include both extremes (we want the whole coding sequence). 
-					length(1501:2001) #the sequence between 1500 and 2000, which are the cds_start and cds_end, inclduing both extremes should be 501, and this is the case.
-				#(E,F] = [D,F] - [D,E] = 1001 - 501 = 500. From the whole length of the exon. we susbtract the length of the coding sequence, obtaining in that way the non coding region of the end, withotu icnluding the E position. 
-					1001 - 501 #if the total length of the exon is 1001, and the coding region has 501, the rest of the exon (i.e., non coding exon) would be 500 (501 + x = 1001; 1001-501 = x; x = 500)
-				#E = F - (E,F] = 5000 - 500 = 4500. We susbtract from the end of the exon the non-coding region, which does not include the E extreme. This gives the complete coding region until the end. 
-					length(4501:5000) #if the coding region end at this exon with a length of 2001, at the beginign of the exon the coding length was 1501 pb, and the exon ends at 5000 pb, the region between 4501 to 5000 should be 500, because the length of the coding squence is 500 (ending at 4500, because of this the sequences begins at 4501)
-					length(1501:2001)
+#The rest of exons are complete coding except the last one (ENSE00001446765; 156176405-156177752). The start and end coding sequence is 1694 and 2286, respectively. 2286 - 1694 + 1 = 593, which is the exact number of coding basis in the last exon according to the webpage (I have seen this pasting the exon sequence into libre office, selecting all bases except the orange tail, then tools and word count to check the number of characters).
 
-			#Method B:
-				#E = D + [D,E] -1 = 4000 - 501 - 1 = 4500. We sum to the end of the exon the length of the coding sequence ([D,E]) but susbtracting 1. Note that we begin with 4000, so the begining of the exon is included, [D,E] also includes the begining of the exon becase we summed 1, so we need to remove one to get the exact end of the coding sequence.
-					length(4500:5000) #the result is the same than the method A, and make sense. The sequence begingin at 4500 and finishing at 50000 has a length of 501, which is the range between cds_start and cds_end including both extremes.
+#Again, with start and end cds we can calculate the position of the starting and end coding sequences
 
-		#Therefore, the begining position of the coding sequence is 2501 and the ending position es 4500. The range between them (including both extremes) is length(2501:4500) = 2000, which is exactly the cds_length in the example.
+#CDS start = 1 indicates the first coding exon, without the UTR 5' sequence. The last cds end of the transcript has the same value of the cds length. Therefore we can use cds_start = 1 and cds_end=cds_length to select the data of start (first) and end (last) exon. We can count from the end of the first exon with coding sequence, as many bases as the cds end. For example, cds start and end of the first exon with coding sequence is 1 and 100, the end of that exon is at 110, we should rest 100 from 110 plus 1 to get the range of coding basis. For the end, we should look for the exon whose cds end is equal to cds length. In that exon, we calculate the range of coding baes (cds_end - cds_start) and sum to the exon start. We do not need to rest 1 to the range because the left extreme would be inclued when summing the range to the begining of the exon. For example, 500-400=100, and the first exon start at 1000, so 1000 + 100 makes 1100. The right extreme is included in 100 and the left in 1000.
 
+#we are not going to calculate the number of coding bases using cds start/end. If you want a detailed example of how to calculate the number of coding bases using cds start/end, then you should go to the original script of gene coordinates for the MDR paper.
 
-### CALCULATION EXAMPLE WITH ENST00000435124 (SEMA4A) ###
 
-	#Coding example with the transcript ENST00000435124 of SEMA4A (http://grch37.ensembl.org/Homo_sapiens/Transcript/Exons?db=core;g=ENSG00000196189;r=1:156117157-156147543;t=ENST00000435124)
-	test_data_cds = sema4a_exon_data_indv_query[which(sema4a_exon_data_indv_query$ensembl_transcript_id == 'ENST00000435124'),]
-	test_data_cds
 
-	## Calculate the start/end position of the first and last coding exons
-
-	#select the first exon with coding sequence (cds_start == 1)
-	first_coding_exon = test_data_cds[which(test_data_cds$cds_start == 1),]
-		#The first exon of this transcript is an UTR sequence, then we have an intron and the second exon, which has the first coding sequence. This is the first coding exon -> ENSE00003474176 
-		
-	#select the last exon with coding sequence (cds_end == to the total cds length) and that it is not the first coding exon. This is made for the cases of genes with only one coding exon. In that way, that unique exon is only considered one time, becuase otherwise the unique exon would satisfy conditions for the first and last coding exon (cds start == 1 and cds end == cds length)
-	last_coding_exon = test_data_cds[which(test_data_cds$cds_end == test_data_cds$cds_length & test_data_cds$cds_start != 1),] 
-		#This is the last exon, and the last one with coding sequence (ENSE00001655854).
-
-	##calculate the start position of cds with method A
-	#total length of the first coding exon
-	total_length_first_coding_exon = first_coding_exon$exon_chrom_end - first_coding_exon$exon_chrom_start + 1 #equal to 168, like the transcript length of this exon accoding to ensemnl (http://grch37.ensembl.org/Homo_sapiens/Transcript/Exons?db=core;g=ENSG00000196189;r=1:156117157-156147543;t=ENST00000435124)
-	#length of the non coding region in the first coding exon
-	noncoding_region_first_coding_exon = total_length_first_coding_exon - first_coding_exon$cds_end
-		#29 bases. 29 is exactly the number of non-coding bases in the first coding exon (AGCTCCCTGGTGACAGTCTGTGGCTGAGC) according to the webpage
-			#note that the orange bases in the translated sequence (blue) indicate that in that position a SNP exist (different possibilities for that base) leading to a change in the aminoacid codified
-	#position of the start codign sequence
-	start_cds_position_method_a = first_coding_exon$exon_chrom_start + noncoding_region_first_coding_exon #we are summing A and [A,B), both contains A but not B, so the result will give B and we dont have to sum 1.
-
-	#calculate the start position of cds with method B
-	start_cds_position_method_b = first_coding_exon$exon_chrom_end - first_coding_exon$cds_end + 1 #from the end, we substract the whole coding region (including B, the beigining of the coding region), this would lead to the last base of the non-codign region, because of this we sum 1, the get the first base of the coding region.
-
-	#check that both methods match
-	start_cds_position_method_a == start_cds_position_method_b
-
-	##calculate the end position of cds with method A
-	#total length of the last coding exon
-	total_length_last_coding_exon = last_coding_exon$exon_chrom_end - last_coding_exon$exon_chrom_start + 1 #equal to 153, like the transcript length of this exon accoding to ensemnl (http://grch37.ensembl.org/Homo_sapiens/Transcript/Exons?db=core;g=ENSG00000196189;r=1:156117157-156147543;t=ENST00000435124)
-	#length of the coding region in the last coding exon
-	coding_region_last_coding_exon = last_coding_exon$cds_end - last_coding_exon$cds_start + 1
-		#153, which is cogruent the 153 coding bases indicated in the webpage for this exon. The whole exon is coding, so 153 is also the length of the transcript.
-	#length of the non-coding region in the last coding exon
-	noncoding_region_last_coding_exon = total_length_last_coding_exon - coding_region_last_coding_exon 
-	#position of the end coding sequence with method A
-	end_cds_position_method_a = last_coding_exon$exon_chrom_end - noncoding_region_last_coding_exon #we are substracting a reange of values (F and (E,F]) that does not include E, thus the result will cinlude E and we do not have to sum 1
-
-	#calculate the start position of cds with method B
-	length_coding_sequence_last_coding_exon = last_coding_exon$cds_end - last_coding_exon$cds_start + 1
-	end_cds_position_method_b = last_coding_exon$exon_chrom_start + length_coding_sequence_last_coding_exon - 1 #we rest 1 becase the two ranges (D and [D,E]) we are summing both containts D, so we have to substract 1
-
-	#check that both methods match
-	end_cds_position_method_a == end_cds_position_method_b
-
-
-	## Calculate the length of all exons between the first and last coding exon
-
-	#extract the exons between the extremes of the coding region
-	exons_between_coding_extremes = test_data_cds[-which(is.na(test_data_cds$cds_start) | test_data_cds$cds_start == 1 | test_data_cds$cds_end == unique(test_data_cds$cds_length)),] #remove those exons that are not coding (cds_start is NA), the first coding exon (cds_start=1) and the last coding exon (cds_end=total length of coding sequence). The remaining exons should be coding exons situated between the first and last coding exons, so they should be complete coding, i.e., no UTR sequence. 
-
-	#extract the position of each exon between the extremes of the coding region
-	exon_length_df = data.frame(exon_name=NA, exon_length=NA)
-	#for each exon with the extremes
-	for(i in 1:nrow(exons_between_coding_extremes)){
-
-		#sleect the [i] exon
-		selected_row = exons_between_coding_extremes[i,]
-
-		#calculate the length of the [i] exon
-		exon_length = selected_row$exon_chrom_end - selected_row$exon_chrom_start + 1
-
-		#save exon name
-		exon_name = selected_row$ensembl_exon_id
-
-		#calculate the length of the [i] exon as end less start adding 1 to include both extremes and save it
-		exon_length_df = rbind.data.frame(exon_length_df, cbind.data.frame(exon_name, exon_length))
-	}
-	#remove the frost row with NAs
-	exon_length_df = exon_length_df[-1,]
-	exon_length_df
-		#the length of each exon correspond with the transcript length of each one in the webpage (http://grch37.ensembl.org/Homo_sapiens/Transcript/Exons?db=core;g=ENSG00000196189;r=1:156117157-156147543;t=ENST00000435124). The 6 exons between the first and last coding exons are entire coding, so transcript and exon length matches (all bases are blue).
-
-	## Calculate total length of coding sequence and check with cds_length from ensemble
-	#Sum the length of all exons of the middle plus the length of the coding sequence of the first exon plus the length of the coding sequence of the last coding exon
-	length_coding_sequence_first_coding_exon = first_coding_exon$exon_chrom_end - start_cds_position_method_a + 1 #length of the sequence between the end of the first exon and the begining of the coding sequence in that exon. Remember that the coding sequence begins within this exon, so a part of the exon at the begining can be non-coding.
-	length_coding_sequence_last_coding_exon = end_cds_position_method_a - last_coding_exon$exon_chrom_start + 1 #length of the sequence between the end of the coding sequence in the last coding exon and the start of that exon. Remember that the coding sequence ends within this exon, so a part of the exon at the end can be non-coding.
-	total_cds = sum(exon_length_df$exon_length) + length_coding_sequence_first_coding_exon + length_coding_sequence_last_coding_exon
-
-	#check that matches with cds_length from ensemble
-	total_cds == unique(test_data_cds$cds_length)
-
-
-	## bind the position of each coding sequence
-
-	#bind in one row the following data of the FIRST coding exon: exon id, start position of coding sequence (which can be in the middle of the exon) and the end of that exon (if there are more than 1 coding exon, the coding sequences will continue in other exons)
-	first_coding_exon_positions = cbind.data.frame(first_coding_exon$ensembl_exon_id, start_cds_position_method_a, first_coding_exon$exon_chrom_end, first_coding_exon$cds_start, first_coding_exon$cds_end)
-
-	#bind in one row the following data of the coding exons BETWEEN the first and last exons: exon id, the start and end of these exons (the begining of the coding sequence is before and the end is later)
-	exons_between_coding_extremes_positions = cbind.data.frame(exons_between_coding_extremes$ensembl_exon_id, exons_between_coding_extremes$exon_chrom_start, exons_between_coding_extremes$exon_chrom_end, exons_between_coding_extremes$cds_start, exons_between_coding_extremes$cds_end)
-
-	#bind in one row the following data of the LAST coding exon: exon id, start position of coding sequence (the begining of the codng sequence began in previous exons) and the end of the coding sequence (which can be in the middle of the exon)	
-	last_coding_exon_positions = cbind.data.frame(last_coding_exon$ensembl_exon_id, last_coding_exon$exon_chrom_start, end_cds_position_method_a, last_coding_exon$cds_start, last_coding_exon$cds_end) #first the start position of the coding sequence in the first coding exon, then the start of all coding exons between the first/last coding exons, and finally the start of the last coding exon
-
-	#prepare column names to bind the rows
-	colnames(first_coding_exon_positions) <- c('ensembl_exon_id', 'start_position_coding', 'end_position_coding', 'cds_start', 'cds_end')
-	colnames(exons_between_coding_extremes_positions) <- c('ensembl_exon_id', 'start_position_coding', 'end_position_coding', 'cds_start', 'cds_end')	
-	colnames(last_coding_exon_positions) <- c('ensembl_exon_id', 'start_position_coding', 'end_position_coding', 'cds_start', 'cds_end')
-
-	#bind all the rows into one data frame
-	positions_coding_sequences = rbind.data.frame(first_coding_exon_positions, exons_between_coding_extremes_positions, last_coding_exon_positions) #first the end position of the first coding exon, then the end of all coding exons between the first/last coding exons, and finally the end position of the coding sequence in the last coding exon
-
-	##final checks
-	#final checks that the sum of the lengths of this start/end positions matches with cds_length from ensemble
-	sum(positions_coding_sequences$end_position_coding - positions_coding_sequences$start_position_coding + 1) == unique(test_data_cds$cds_length) #the summatory of the lengths of each sequence (end less start plus 1, i.e., complete range including both extremes) is equal to cds_length form ensemble.
-
-	#final check to test that the length of the coding sequences I have obtained are the same than those of cds start and end position
-	positions_coding_sequences$cds_end - positions_coding_sequences$cds_start + 1 == positions_coding_sequences$end_position_coding - positions_coding_sequences$start_position_coding + 1
-
-
-### CALCULATION EXAMPLE WITH ENST00000414683 (SEMA4A) ###
-
-	#Coding example with the transcript ENST00000414683 of SEMA4A (http://grch37.ensembl.org/Homo_sapiens/Transcript/Exons?db=core;g=ENSG00000196189;r=1:156117157-156147543;t=ENST00000414683)
-	test_data_cds_2 = sema4a_exon_data_indv_query[which(sema4a_exon_data_indv_query$ensembl_transcript_id == 'ENST00000414683'),]
-	test_data_cds_2 #this transcript has not the exons order based on position in my data, thus it is a good model to test my approach
-
-
-	## Calculate the start/end position of the first and last coding exons
-
-	#select the first exon with coding sequence (cds_start == 1)
-	first_coding_exon_2 = test_data_cds_2[which(test_data_cds_2$cds_start == 1),]
-		#The first exon of this transcript is an UTR sequence, then we have an intron and the second exon, which has the first coding sequence. This is the first coding exon -> ENSE00003589564
-
-	#select the last exon with coding sequence (cds_end == to the total cds length) and that it is not the first coding exon. This is made for the cases of genes with only one coding exon. In that way, that unique exon is only considered one time, becuase otherwise the unique exon would satisfy conditions for the first and last coding exon (cds start == 1 and cds end == cds length)
-	last_coding_exon_2 = test_data_cds_2[which(test_data_cds_2$cds_end == test_data_cds_2$cds_length & test_data_cds_2$cds_start != 1),] 
-		#This is the last exon, and the last one with coding sequence (ENSE00001668258).
-
-	##calculate the start position of cds with method A
-	#total length of the first coding exon
-	total_length_first_coding_exon_2 = first_coding_exon_2$exon_chrom_end - first_coding_exon_2$exon_chrom_start + 1 #equal to 161, like the transcript length of this exon accoding to ensemnl (http://grch37.ensembl.org/Homo_sapiens/Transcript/Exons?db=core;g=ENSG00000196189;r=1:156117157-156147543;t=ENST00000414683)
-	#length of the non coding region in the first coding exon
-	noncoding_region_first_coding_exon_2 = total_length_first_coding_exon_2 - first_coding_exon_2$cds_end
-		#158 non-coding bases, and hence 3 coding bases (161-158=3). 3 is exactly the number of coding bases in the first coding exon (ATG) according to the webpage.
-			#note that the orange bases in the translated sequence (blue) indicate that in that position a SNP exist (different possibilities for that base) leading to a change in the aminoacid codified
-	#position of the start codign sequence
-	start_cds_position_method_a_2 = first_coding_exon_2$exon_chrom_start + noncoding_region_first_coding_exon_2 #we are summing A and [A,B), both contains A but not B, so the result will give B and we dont have to sum 1.
-
-	#calculate the start position of cds with method B
-	start_cds_position_method_b_2 = first_coding_exon_2$exon_chrom_end - first_coding_exon_2$cds_end + 1 #from the end, we substract the whole coding region (including B, the beigining of the coding region), this would lead to the last base of the non-codign region, because of this we sum 1, the get the first base of the coding region.
-
-	#check that both methods match
-	start_cds_position_method_a_2 == start_cds_position_method_b_2
-
-	##calculate the end position of cds with method A
-	#total length of the last coding exon
-	total_length_last_coding_exon_2 = last_coding_exon_2$exon_chrom_end - last_coding_exon_2$exon_chrom_start + 1 #equal to 148, like the transcript length of this exon accoding to ensemnl (http://grch37.ensembl.org/Homo_sapiens/Transcript/Exons?db=core;g=ENSG00000196189;r=1:156117157-156147543;t=ENST00000414683). The whole exon is coding.
-	#length of the coding region in the last coding exon
-	coding_region_last_coding_exon_2 = last_coding_exon_2$cds_end - last_coding_exon_2$cds_start + 1
-		#148, which is cogruent the 148 coding bases indicated in the webpage for this exon. The whole exon is coding, so 148 is also the length of the transcript.
-	#length of the non-coding region in the last coding exon
-	noncoding_region_last_coding_exon_2 = total_length_last_coding_exon_2 - coding_region_last_coding_exon_2 
-	#position of the end coding sequence with method A
-	end_cds_position_method_a_2 = last_coding_exon_2$exon_chrom_end - noncoding_region_last_coding_exon_2 #we are substracting a reange of values (F and (E,F]) that does not include E, thus the result will cinlude E and we do not have to sum 1
-
-	#calculate the start position of cds with method B
-	length_coding_sequence_last_coding_exon_2 = last_coding_exon_2$cds_end - last_coding_exon_2$cds_start + 1
-	end_cds_position_method_b_2 = last_coding_exon_2$exon_chrom_start + length_coding_sequence_last_coding_exon_2 - 1 #we rest 1 becase the two ranges (D and [D,E]) we are summing both containts D, so we have to substract 1
-
-	#check that both methods match
-	end_cds_position_method_a_2 == end_cds_position_method_b_2
-
-
-	## Calculate the length of all exons between the first and last coding exon
-
-	#extract the exons between the extremes of the coding region
-	exons_between_coding_extremes_2 = test_data_cds_2[-which(is.na(test_data_cds_2$cds_start) | test_data_cds_2$cds_start == 1 | test_data_cds_2$cds_end == unique(test_data_cds_2$cds_length)),] #remove those exons that are not coding (cds_start is NA), the first coding exon (cds_start=1) and the last coding exon (cds_end=total length of coding sequence). The remaining exons should be coding exons situated between the first and last coding exons, so they should be complete coding, i.e., no UTR sequence. 
-
-	#extract the position of each exon between the extremes of the coding region
-	exon_length_df_2 = data.frame(exon_name=NA, exon_length=NA)
-	#for each exon with the extremes
-	for(i in 1:nrow(exons_between_coding_extremes_2)){
-
-		#sleect the [i] exon
-		selected_row = exons_between_coding_extremes_2[i,]
-
-		#calculate the length of the [i] exon
-		exon_length = selected_row$exon_chrom_end - selected_row$exon_chrom_start + 1
-
-		#save exon name
-		exon_name = selected_row$ensembl_exon_id
-
-		#calculate the length of the [i] exon as end less start adding 1 to include both extremes and save it
-		exon_length_df_2 = rbind.data.frame(exon_length_df_2, cbind.data.frame(exon_name, exon_length))
-	}
-	#remove the frost row with NAs
-	exon_length_df_2 = exon_length_df_2[-1,]
-	exon_length_df_2
-		#the length of each exon correspond with the transcript length of each one in the webpage (http://grch37.ensembl.org/Homo_sapiens/Transcript/Exons?db=core;g=ENSG00000196189;r=1:156117157-156147543;t=ENST00000414683). The 5 exons between the first and last coding exons are entire coding, so transcript and exon length matches (all bases are blue).
-
-	## Calculate total length of coding sequence and check with cds_length from ensemble
-	#Sum the length of all exons of the middle plus the length of the coding sequence of the first exon plus the length of the coding sequence of the last coding exon
-	length_coding_sequence_first_coding_exon_2 = first_coding_exon_2$exon_chrom_end - start_cds_position_method_a_2 + 1 #length of the sequence between the end of the first exon and the begining of the coding sequence in that exon. Remember that the coding sequence begins within this exon, so a part of the exon at the begining can be non-coding.
-	length_coding_sequence_last_coding_exon_2 = end_cds_position_method_a_2 - last_coding_exon_2$exon_chrom_start + 1 #length of the sequence between the end of the coding sequence in the last coding exon and the start of that exon. Remember that the coding sequence ends within this exon, so a part of the exon at the end can be non-coding.
-	total_cds_2 = sum(exon_length_df_2$exon_length) + length_coding_sequence_first_coding_exon_2 + length_coding_sequence_last_coding_exon_2
-
-	#check that matches with cds_length from ensemble
-	total_cds_2 == unique(test_data_cds_2$cds_length)
-
-
-	## bind the position of each coding sequence
-
-	#bind in one row the following data of the FIRST coding exon: exon id, start position of coding sequence (which can be in the middle of the exon) and the end of that exon (if there are more than 1 coding exon, the coding sequences will continue in other exons)
-	first_coding_exon_positions_2 = cbind.data.frame(first_coding_exon_2$ensembl_exon_id, start_cds_position_method_a_2, first_coding_exon_2$exon_chrom_end, first_coding_exon_2$cds_start, first_coding_exon_2$cds_end)
-
-	#bind in one row the following data of the coding exons BETWEEN the first and last exons: exon id, the start and end of these exons (the begining of the coding sequence is before and the end is later)
-	exons_between_coding_extremes_positions_2 = cbind.data.frame(exons_between_coding_extremes_2$ensembl_exon_id, exons_between_coding_extremes_2$exon_chrom_start, exons_between_coding_extremes_2$exon_chrom_end, exons_between_coding_extremes_2$cds_start, exons_between_coding_extremes_2$cds_end)
-
-	#bind in one row the following data of the LAST coding exon: exon id, start position of coding sequence (the begining of the codng sequence began in previous exons) and the end of the coding sequence (which can be in the middle of the exon)	
-	last_coding_exon_positions_2 = cbind.data.frame(last_coding_exon_2$ensembl_exon_id, last_coding_exon_2$exon_chrom_start, end_cds_position_method_a_2, last_coding_exon_2$cds_start, last_coding_exon_2$cds_end) #first the start position of the coding sequence in the first coding exon, then the start of all coding exons between the first/last coding exons, and finally the start of the last coding exon
-
-	#prepare column names to bind the rows
-	colnames(first_coding_exon_positions_2) <- c('ensembl_exon_id', 'start_position_coding', 'end_position_coding', 'cds_start', 'cds_end')
-	colnames(exons_between_coding_extremes_positions_2) <- c('ensembl_exon_id', 'start_position_coding', 'end_position_coding', 'cds_start', 'cds_end')	
-	colnames(last_coding_exon_positions_2) <- c('ensembl_exon_id', 'start_position_coding', 'end_position_coding', 'cds_start', 'cds_end')
-
-	#bind all the rows into one data frame
-	positions_coding_sequences_2 = rbind.data.frame(first_coding_exon_positions_2, exons_between_coding_extremes_positions_2, last_coding_exon_positions_2) #first the end position of the first coding exon, then the end of all coding exons between the first/last coding exons, and finally the end position of the coding sequence in the last coding exon
-
-	##final checks
-	#final checks that the sum of the lengths of this start/end positions matches with cds_length from ensemble
-	sum(positions_coding_sequences_2$end_position_coding - positions_coding_sequences_2$start_position_coding + 1) == unique(test_data_cds_2$cds_length) #the summatory of the lengths of each sequence (end less start plus 1, i.e., complete range including both extremes) is equal to cds_length form ensemble.
-
-	#final check to test that the length of the coding sequences I have obtained are the same than those of cds start and end position
-	positions_coding_sequences_2$cds_end - positions_coding_sequences_2$cds_start + 1 == positions_coding_sequences_2$end_position_coding - positions_coding_sequences_2$start_position_coding + 1
-
-
-### CALCULATION EXAMPLE WITH ENSG00000000457 (SCYL3) ###
-
-	#This transcript is reverse, so the first coding exon according to position, has cds_start == cds_length, whilst the last coding exon has cds_start == 1. I have checked that the positions are correct, is inverted. BUT, the start/end of each exon is correct
-
-	#Coding example with the transcript ENST00000367770 of SCYL3 (http://grch37.ensembl.org/Homo_sapiens/Transcript/Exons?db=core;g=ENSG00000000457;r=1:169818772-169863093;t=ENST00000367770)
-	test_data_cds_3 = full_exon_data[which(full_exon_data$ensembl_gene_id == 'ENSG00000000457' & full_exon_data$ensembl_transcript_id == 'ENST00000367770'),]
-	test_data_cds_3
-
-	#check that the strand is reverse if we only have 1 type of strand (the whole transcript should be in the same sense)
-	if(length(unique(test_data_cds_3$strand)) == 1){
-
-		#check that the strand is reverse
-		unique(test_data_cds_3$strand) == -1
-	}
-
-
-	## Calculate the start/end position of the first and last coding exons
-
-	#select the last exon with coding sequence (cds_end == to the total cds length) and that it is not the first coding exon. This is made for the cases of genes with only one coding exon. In that way, that unique exon is only considered one time, becuase otherwise the unique exon would satisfy conditions for the first and last coding exon (cds start == 1 and cds end == cds length)
-	first_coding_exon_3 = test_data_cds_3[which(test_data_cds_3$cds_end == test_data_cds_3$cds_length & test_data_cds_3$cds_start != 1),] 
-		#This is the first one with coding sequence (ENSE00001445605).
-
-	#select the first exon with coding sequence (cds_start == 1)
-	last_coding_exon_3 = test_data_cds_3[which(test_data_cds_3$cds_start == 1),]
-		#The last exon of this transcript with coding suquence -> ENSE00001445604
-
-	##calculate the start position of cds
-	#length of the coding region in the last coding exon
-	coding_region_first_coding_exon_3 = first_coding_exon_3$cds_end - first_coding_exon_3$cds_start + 1
-		#60, which is cogruent the 60 coding bases indicated in the webpage for this exon.
-
-	#calculate the start position of coding sequence. 
-	start_cds_position_3 = first_coding_exon_3$exon_chrom_end - coding_region_first_coding_exon_3 + 1 #we first substract from the end of the first coding exon the whole length of the coding sequence in that exon. Then we have to sum 1, this is the explanation: C is the end of the first coding exon and also cds_end, B is cds_start. C-B + 1 gives the total length of coding region in taht exon, from the first coding basis to the last one at the end of the exon, i.e., [B,C], including both extremes. Therefore, We are substracting from C a range of vales that also include C, thus we have to returned adding 1.
-
-
-	##calculate the end position of cds
-	#length of the coding region in the last coding exon
-	coding_region_last_coding_exon_3 = last_coding_exon_3$cds_end - last_coding_exon_3$cds_start + 1
-		#165, which is cogruent the 165 coding bases indicated in the webpage for this exon.
-
-	#calculate the start position of coding sequence. 
-	end_cds_position_3 = last_coding_exon_3$exon_chrom_start + coding_region_last_coding_exon_3 - 1 #we first sum from the start of the last coding exon the whole length of the coding sequence in that exon. Then we have to substract 1, this is the explanation: D is the start of the last coding exon and also cds_start, E is cds_end. E-D + 1 gives the total length of coding region in taht exon, from the first coding basis to the last one at the end of the exon, i.e., [D,E], including both extremes. Therefore, We are summing from D a range of values that also include D, thus we have to remove substracting adding 1.
-
-
-	## Calculate the length of all exons between the first and last coding exon
-
-	#extract the exons between the extremes of the coding region
-	exons_between_coding_extremes_3 = test_data_cds_3[-which(is.na(test_data_cds_3$cds_start) | test_data_cds_3$cds_start == 1 | test_data_cds_3$cds_end == unique(test_data_cds_3$cds_length)),] #remove those exons that are not coding (cds_start is NA), the first coding exon (cds_start=1) and the last coding exon (cds_end=total length of coding sequence). The remaining exons should be coding exons situated between the first and last coding exons, so they should be complete coding, i.e., no UTR sequence. 
-
-	#reorder in basis on position to get the same order of the intermediate exons than in the ensemble database
-	exons_between_coding_extremes_3 = exons_between_coding_extremes_3[order(exons_between_coding_extremes_3$exon_chrom_start, decreasing=TRUE),] #We use decreasing=TRUE because we want the last exons (higher position number) at the beining. This is the order in the ensemble webpage. 
-
-	#extract the position of each exon between the extremes of the coding region
-	exon_length_df_3 = data.frame(exon_name=NA, exon_length=NA)
-	#for each exon with the extremes
-	for(i in 1:nrow(exons_between_coding_extremes_3)){
-
-		#sleect the [i] exon
-		selected_row = exons_between_coding_extremes_3[i,]
-
-		#calculate the length of the [i] exon
-		exon_length = selected_row$exon_chrom_end - selected_row$exon_chrom_start + 1
-
-		#save exon name
-		exon_name = selected_row$ensembl_exon_id
-
-		#calculate the length of the [i] exon as end less start adding 1 to include both extremes and save it
-		exon_length_df_3 = rbind.data.frame(exon_length_df_3, cbind.data.frame(exon_name, exon_length))
-	}
-	#remove the frost row with NAs
-	exon_length_df_3 = exon_length_df_3[-1,]
-	exon_length_df_3
-		#the length of each exon correspond with the transcript length of each one in the webpage (http://grch37.ensembl.org/Homo_sapiens/Transcript/Exons?db=core;g=ENSG00000000457;r=1:169818772-169863093;t=ENST00000367770). The 11 exons between the first and last coding exons are entire coding, so transcript and exon length matches (all bases are blue).
-
-	## Calculate total length of coding sequence and check with cds_length from ensemble
-	#Sum the length of all exons of the middle plus the length of the coding sequence of the first exon plus the length of the coding sequence of the last coding exon
-	length_coding_sequence_first_coding_exon_3 = first_coding_exon_3$exon_chrom_end - start_cds_position_3 + 1 #length of the sequence between the end of the first exon and the begining of the coding sequence in that exon. Remember that the coding sequence begins within this exon, so a part of the exon at the begining can be non-coding.
-	length_coding_sequence_last_coding_exon_3 = end_cds_position_3 - last_coding_exon_3$exon_chrom_start + 1 #length of the sequence between the end of the coding sequence in the last coding exon and the start of that exon. Remember that the coding sequence ends within this exon, so a part of the exon at the end can be non-coding.
-	total_cds_3 = sum(exon_length_df_3$exon_length) + length_coding_sequence_first_coding_exon_3 + length_coding_sequence_last_coding_exon_3
-
-	#check that matches with cds_length from ensemble
-	total_cds_3 == unique(test_data_cds_3$cds_length)
-
-
-	## bind the position of each coding sequence
-
-	#bind in one row the following data of the FIRST coding exon: exon id, start position of coding sequence (which can be in the middle of the exon) and the end of that exon (if there are more than 1 coding exon, the coding sequences will continue in other exons)
-	first_coding_exon_positions_3 = cbind.data.frame(first_coding_exon_3$ensembl_exon_id, start_cds_position_3, first_coding_exon_3$exon_chrom_end, first_coding_exon_3$cds_start, first_coding_exon_3$cds_end)
-
-	#bind in one row the following data of the coding exons BETWEEN the first and last exons: exon id, the start and end of these exons (the begining of the coding sequence is before and the end is later)
-	exons_between_coding_extremes_positions_3 = cbind.data.frame(exons_between_coding_extremes_3$ensembl_exon_id, exons_between_coding_extremes_3$exon_chrom_start, exons_between_coding_extremes_3$exon_chrom_end, exons_between_coding_extremes_3$cds_start, exons_between_coding_extremes_3$cds_end)
-
-	#bind in one row the following data of the LAST coding exon: exon id, start position of coding sequence (the begining of the codng sequence began in previous exons) and the end of the coding sequence (which can be in the middle of the exon)	
-	last_coding_exon_positions_3 = cbind.data.frame(last_coding_exon_3$ensembl_exon_id, last_coding_exon_3$exon_chrom_start, end_cds_position_3, last_coding_exon_3$cds_start, last_coding_exon_3$cds_end) #first the start position of the coding sequence in the first coding exon, then the start of all coding exons between the first/last coding exons, and finally the start of the last coding exon
-
-	#prepare column names to bind the rows
-	colnames(first_coding_exon_positions_3) <- c('ensembl_exon_id', 'start_position_coding', 'end_position_coding', 'cds_start', 'cds_end')
-	colnames(exons_between_coding_extremes_positions_3) <- c('ensembl_exon_id', 'start_position_coding', 'end_position_coding', 'cds_start', 'cds_end')	
-	colnames(last_coding_exon_positions_3) <- c('ensembl_exon_id', 'start_position_coding', 'end_position_coding', 'cds_start', 'cds_end')
-
-	#bind all the rows into one data frame
-	positions_coding_sequences_3 = rbind.data.frame(first_coding_exon_positions_3, exons_between_coding_extremes_positions_3, last_coding_exon_positions_3) #first the end position of the first coding exon, then the end of all coding exons between the first/last coding exons, and finally the end position of the coding sequence in the last coding exon
-
-	##final checks
-	#final checks that the sum of the lengths of this start/end positions matches with cds_length from ensemble
-	sum(positions_coding_sequences_3$end_position_coding - positions_coding_sequences_3$start_position_coding + 1) == unique(test_data_cds_3$cds_length) #the summatory of the lengths of each sequence (end less start plus 1, i.e., complete range including both extremes) is equal to cds_length form ensemble.
-
-	#final check to test that the length of the coding sequences I have obtained are the same than those of cds start and end position
-	positions_coding_sequences_3$cds_end - positions_coding_sequences_3$cds_start + 1 == positions_coding_sequences_3$end_position_coding - positions_coding_sequences_3$start_position_coding + 1
-
-
-
-#####################################################################################
-#### CALCULATING THE LENGTH OF CODING REGIONS USING GENOMIC CODING START AND END ####
-#####################################################################################
+##############################################################################
+#### CALC THE LENGTH OF CODING REGIONS USING GENOMIC CODING START AND END ####
+##############################################################################
 
 #Calculate coding density using genomic coding start/end instead of cds start/end and compare results
+
 #cds start/end gives you the number of coding bases at the beginning and end of the coding sequence in each coding exon, but it does not give position of start and of these sequences. Genomic start and end gives you exactly the position of start and end of the coding sequence in each coding exon
 
 #In addition, I think that cds start and end, only considers the order of the strand. If the strand is negative, the last coding exons in coordinates will be the first one according to cds start (cds_start=1). In contrast, genomic start considers the coordinates of the positive strand always.
 
+#Therefore, we are going to use genomic start/end
+
 
 ## SEMA4A_1
 #extract the exon data of the ENST00000435124 transcript of SEMA4A_1
-test_genomic_start_end_sema4a_1 = sema4a_exon_data_indv_query[which(sema4a_exon_data_indv_query$ensembl_transcript_id == 'ENST00000435124'),]
+test_genomic_start_end_sema4a_1 <- sema4a_exon_data_indv_query[which(sema4a_exon_data_indv_query$ensembl_transcript_id == "ENST00000435124"), ]
 test_genomic_start_end_sema4a_1
 
 #remove the exons without any coding sequence
-test_genomic_start_end_sema4a_1 = test_genomic_start_end_sema4a_1[which(!is.na(test_genomic_start_end_sema4a_1$genomic_coding_start) | !is.na(test_genomic_start_end_sema4a_1$genomic_coding_end)),]
+test_genomic_start_end_sema4a_1 <- test_genomic_start_end_sema4a_1[
+	which(!is.na(test_genomic_start_end_sema4a_1$genomic_coding_start) | !is.na(test_genomic_start_end_sema4a_1$genomic_coding_end)), 
+]
 
 #reorder en basis on position
-test_genomic_start_end_sema4a_1 = test_genomic_start_end_sema4a_1[order(test_genomic_start_end_sema4a_1$cds_start),]
+test_genomic_start_end_sema4a_1 <- test_genomic_start_end_sema4a_1[order(test_genomic_start_end_sema4a_1$cds_start), ]
 
 #calculate the complete length of each coding region according to genomic coding start/end
-coding_length_by_genom_start_end_sema4a_1 = test_genomic_start_end_sema4a_1$genomic_coding_end - test_genomic_start_end_sema4a_1$genomic_coding_start + 1 #we sum 1 because we want the complete range
-coding_length_by_genom_start_end_sema4a_1 #First coding exon (ENSE00003474176) has a coding sequence of 139 bases, which is exactly the number of blue bases indicated in the webpage of ensemble. The rest has exactly the same coding length than that indicated in the webpage (http://grch37.ensembl.org/Homo_sapiens/Transcript/Exons?db=core;g=ENSG00000196189;r=1:156117157-156147543;t=ENST00000435124).
+coding_length_by_genom_start_end_sema4a_1 <- test_genomic_start_end_sema4a_1$genomic_coding_end - test_genomic_start_end_sema4a_1$genomic_coding_start + 1 #we sum 1 because we want the complete range
+
+#First coding exon (ENSE00003474176) has a coding sequence of 139 bases, which is exactly the number of blue bases indicated in the webpage of ensemble. The rest has exactly the same coding length than that indicated in the webpage (https://www.ensembl.org/Homo_sapiens/Transcript/Summary?db=core;g=ENSG00000196189;r=1:156147366-156161498;t=ENST00000435124).
+coding_length_by_genom_start_end_sema4a_1
 
 #check that the the complete range of coding sequences according to genomic start/start is similar to that calculated with cds start/end
 summary(coding_length_by_genom_start_end_sema4a_1 == (test_genomic_start_end_sema4a_1$cds_end - test_genomic_start_end_sema4a_1$cds_start + 1)) #we sum 1 because we want the complete range
 
 #check that the genomic starts and ends are the same than the ranges I have calculated using cds start/end
-#bind both dataset (one with ranges calculated by me and another with the genomic start/end data)
-test_genomic_start_end_sema4a_merge_positions_coding_sequences = merge(test_genomic_start_end_sema4a_1, positions_coding_sequences, by='ensembl_exon_id')
-#make the check
-summary(test_genomic_start_end_sema4a_merge_positions_coding_sequences$genomic_coding_start == test_genomic_start_end_sema4a_merge_positions_coding_sequences$start_position_coding)
-summary(test_genomic_start_end_sema4a_merge_positions_coding_sequences$genomic_coding_end == test_genomic_start_end_sema4a_merge_positions_coding_sequences$end_position_coding)
+#Check the original script for the MDR paper to see this check
 
 
 ## SEMA4A_2
 #extract the exon data of the ENST00000414683 transcript of SEMA4A_2
-test_genomic_start_end_sema4a_2 = sema4a_exon_data_indv_query[which(sema4a_exon_data_indv_query$ensembl_transcript_id == 'ENST00000414683'),]
+test_genomic_start_end_sema4a_2 <- sema4a_exon_data_indv_query[which(sema4a_exon_data_indv_query$ensembl_transcript_id == 'ENST00000414683'), ]
 test_genomic_start_end_sema4a_2
 
 #remove the exons without any coding sequence
-test_genomic_start_end_sema4a_2 = test_genomic_start_end_sema4a_2[which(!is.na(test_genomic_start_end_sema4a_2$genomic_coding_start) | !is.na(test_genomic_start_end_sema4a_2$genomic_coding_end)),]
+test_genomic_start_end_sema4a_2 <- test_genomic_start_end_sema4a_2[which(!is.na(test_genomic_start_end_sema4a_2$genomic_coding_start) | !is.na(test_genomic_start_end_sema4a_2$genomic_coding_end)), ]
 
 #reorder en basis on position
-test_genomic_start_end_sema4a_2 = test_genomic_start_end_sema4a_2[order(test_genomic_start_end_sema4a_2$cds_start),]
+test_genomic_start_end_sema4a_2 <- test_genomic_start_end_sema4a_2[order(test_genomic_start_end_sema4a_2$cds_start), ]
 
 #calculate the complete length of each coding region according to genomic coding start/end
 coding_length_by_genom_start_end_sema4a_2 = test_genomic_start_end_sema4a_2$genomic_coding_end - test_genomic_start_end_sema4a_2$genomic_coding_start + 1 #we sum 1 because we want the complete range
 coding_length_by_genom_start_end_sema4a_2 
-	#First coding exon (ENSE00003589564) has a coding sequence of 3 bases, which is exactly the number of blue bases indicated in the webpage of ensemble. The rest has exactly the same coding length than that indicated in the webpage (http://grch37.ensembl.org/Homo_sapiens/Transcript/Exons?db=core;g=ENSG00000196189;r=1:156117157-156147543;t=ENST00000414683). 
+
+#First coding exon (ENSE00003589564) has a coding sequence of 3 bases, which is exactly the number of blue bases indicated in the webpage of ensemble. The rest has exactly the same coding length than that indicated in the webpage (https://www.ensembl.org/Homo_sapiens/Transcript/Exons?db=core;g=ENSG00000196189;r=1:156147366-156161498;t=ENST00000414683). 
 
 #check that the the complete range of coding sequences accroding to genomic start/start is similar to that calculated with cds start/end
 summary(coding_length_by_genom_start_end_sema4a_2 == (test_genomic_start_end_sema4a_2$cds_end - test_genomic_start_end_sema4a_2$cds_start + 1)) #we sum 1 because we want the complete range
 
 #check that the genomic starts and ends are the same than the ranges I have calculated
-#bind both dataset (one with ranges calculated by me and another with the genomic start/end data)
-test_genomic_start_end_sema4a_2_merge_positions_coding_sequences_2 = merge(test_genomic_start_end_sema4a_2, positions_coding_sequences_2, by='ensembl_exon_id')
-#make the check
-summary(test_genomic_start_end_sema4a_2_merge_positions_coding_sequences_2$genomic_coding_start == test_genomic_start_end_sema4a_2_merge_positions_coding_sequences_2$start_position_coding)
-summary(test_genomic_start_end_sema4a_2_merge_positions_coding_sequences_2$genomic_coding_end == test_genomic_start_end_sema4a_2_merge_positions_coding_sequences_2$end_position_coding)
-
-
-## SCYL3
-#Coding example with the transcript ENST00000367770 of SCYL3 (http://grch37.ensembl.org/Homo_sapiens/Transcript/Exons?db=core;g=ENSG00000000457;r=1:169818772-169863093;t=ENST00000367770)
-test_genomic_start_end_scyl3 = full_exon_data[which(full_exon_data$ensembl_gene_id == 'ENSG00000000457' & full_exon_data$ensembl_transcript_id == 'ENST00000367770'),]
-test_genomic_start_end_scyl3
-
-#remove the exons without any coding sequence
-test_genomic_start_end_scyl3 = test_genomic_start_end_scyl3[which(!is.na(test_genomic_start_end_scyl3$genomic_coding_start) | !is.na(test_genomic_start_end_scyl3$genomic_coding_end)),]
-
-#reorder en basis on position
-test_genomic_start_end_scyl3 = test_genomic_start_end_scyl3[order(test_genomic_start_end_scyl3$exon_chrom_start, decreasing=TRUE),]
-
-#calculate the complete length of each coding region according to genomic coding start/end
-coding_length_by_genom_start_end_scyl3 = test_genomic_start_end_scyl3$genomic_coding_end - test_genomic_start_end_scyl3$genomic_coding_start + 1 #we sum 1 because we want the complete range
-coding_length_by_genom_start_end_scyl3
-	#First coding exon (ENSE00003589564) has a coding sequence of 165 bases, which is exactly the number of blue bases indicated in the webpage of ensemble. The last coding exon has 12 coding bases only. The rest coding exons have exactly the same coding length than that indicated in the webpage (https://grch37.ensembl.org/Homo_sapiens/Transcript/Exons?db=core;g=ENSG00000000457;r=1:169822215-169858029;t=ENST00000367770). 
-
-#check that the the complete range of coding sequences according to genomic start/start is similar to that calculated with cds start/end
-summary(coding_length_by_genom_start_end_scyl3 == (test_genomic_start_end_scyl3$cds_end - test_genomic_start_end_scyl3$cds_start + 1)) #we sum 1 because we want the complete range
-
-#check that the genomic starts and ends are the same than the ranges I have calculated
-#bind both dataset (one with ranges calculated by me and another with the genomic start/end data)
-test_genomic_start_end_scyl3_merge_positions_coding_sequences_scyl3 = merge(test_genomic_start_end_scyl3, positions_coding_sequences_3, by='ensembl_exon_id')
-#make the check
-summary(test_genomic_start_end_scyl3_merge_positions_coding_sequences_scyl3$genomic_coding_start == test_genomic_start_end_scyl3_merge_positions_coding_sequences_scyl3$start_position_coding)
-summary(test_genomic_start_end_scyl3_merge_positions_coding_sequences_scyl3$genomic_coding_end == test_genomic_start_end_scyl3_merge_positions_coding_sequences_scyl3$end_position_coding)
+#Check the original script for the MDR paper to see this check
 
 
 
-########################################################################################
-###### CHECK THE EXISTENCE OF SOME GENES AND TRANSCRIPTS THAT ARE NOT TRANSLATED #######
-########################################################################################
+#############################################################
+######  GENES AND TRANSCRIPTS THAT ARE NOT TRANSLATED #######
+#############################################################
 
 #extract the unique cases of gene and transcript type
 unique_gene_types = unique(full_exon_data$gene_biotype)
