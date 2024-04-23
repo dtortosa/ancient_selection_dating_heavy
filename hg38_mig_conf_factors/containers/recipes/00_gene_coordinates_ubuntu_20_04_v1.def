@@ -125,16 +125,20 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 	#install curl packages to avoid problems with R package compilation
 	apt-get -y install libcurl4-gnutls-dev libxml2-dev libssl-dev
 
+	#install package to avoid problems when installing required dependencies for devtools
+	apt-get -y install libfontconfig1-dev libharfbuzz-dev libfribidi-dev
+		#https://stackoverflow.com/a/74502157
+		#https://stackoverflow.com/a/74502207
+
 	#install R packages
+	Rscript -e 'install.packages("devtools", repos="https://cloud.r-project.org", dep=T)' 
+	Rscript -e 'devtools::install_github("jalvesaq/colorout")' 
 	Rscript -e 'install.packages("plyr", repos="https://cloud.r-project.org", dep=T)'
 	Rscript -e 'install.packages("BiocManager", repos="https://cloud.r-project.org", dep=T)'
 	Rscript -e 'BiocManager::install("rtracklayer")'
 	Rscript -e 'BiocManager::install("biomaRt")'
 	Rscript -e 'BiocManager::install("GenomicRanges")'
 	Rscript -e 'install.packages("stringr", repos="https://cloud.r-project.org", dep=T)'
-	#Rscript -e 'install.packages("devtools", repos="https://cloud.r-project.org", dep=T)' 
-	#Rscript -e 'devtools::install_github("jalvesaq/colorout")' 
-	#Rscript -e 'devtools::install_github("DanielRivasMD/SistWrapper")'
 
 	#create the .Rprofile
 	echo '
@@ -153,8 +157,9 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 		#load colorout package to have colorful outputs in the R console
 		require(colorout)
 		
-		#load SystWrapper package. In that we can use the function wideScreen to change the number of columns and rows showed in the R terminal
-		require(SystWrapper)
+		#make the width of the R console adjusts to the width of your terminal
+		options(setWidthOnResize = TRUE)
+			#https://stackoverflow.com/a/31567541
 		
 		#For this script we want to see more than 8 digits in the terminal. 8 is the default, so for example, if you make the following division: (45959538+45965751)/2. You will get 45962644, instead of 45962644.5, which is the correct solution. This is caused becasue 45962644.5 has more than 8 numbers, so the last one it is not shown. This does not mean that the calculation is wrong, the correct calculus is made (you can check it with print(x, digits=8 or 9)), but you don´t see the complete solution in the terminal. Because of this, for this work with long numbers (genetic coordinates) we will set the a higher number of digits that are shown
 		options(digits = 15)' > /opt/.Rprofile

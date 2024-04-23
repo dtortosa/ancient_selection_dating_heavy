@@ -750,6 +750,7 @@ if(
 ###### FILTER GENE LIST USING THE PREVIOUS FILTER APPLIES ON EXON DATA #######
 ##############################################################################
 
+## select only genes that are included in the gene list and the exon data
 #We are going to filter the gene list all_genes_grch38_human_filtered removing those id genes that are not included in our exon data, i.e., non coding genes or genes without protein coding transcripts.
 
 #note that you can have exon data from genes in the sexual chromosomes, but the all_genes_grch38_human_filtered list is already filtered for that. Therefore, the loop for calculating windows and coding density will only use autosomal genes. Only coding density of autosomal genes will be calculated.
@@ -791,10 +792,6 @@ all_genes_grch38_exon_filter[which(all_genes_grch38_exon_filter$hgnc_symbol == "
 
 #THEREFORE, if we use the gene list as a guide for searching genes, we will have these genes but NOT the patches
 
-
-
-##### por aquii
-
 #remove these patches and the X-Y chromosome from exon data
 full_exon_data_filtered_final <- full_exon_data_filtered[which(full_exon_data_filtered$ensembl_gene_id %in% unique(all_genes_grch38_exon_filter$ensembl_gene_id)), ]
 
@@ -804,34 +801,37 @@ if (TRUE %in% c(c("X", "Y") %in% unique(full_exon_data_filtered_final$chromosome
 }
 
 #check that only genes included in the gene list are present in the exon data
-summary(full_exon_data_filtered_final$ensembl_gene_id %in% all_genes_grch37_exon_filter$ensembl_gene_id)
-summary(all_genes_grch37_exon_filter$ensembl_gene_id %in% full_exon_data_filtered_final$ensembl_gene_id)
+summary(full_exon_data_filtered_final$ensembl_gene_id %in% all_genes_grch38_exon_filter$ensembl_gene_id)
+summary(all_genes_grch38_exon_filter$ensembl_gene_id %in% full_exon_data_filtered_final$ensembl_gene_id)
 
 
-### Remove the genes and transcript from gene list that not produce coding protein ###
-
+## Remove the genes and transcript from gene list that not produce coding protein ###
 #select those transcript that belong to coding genes and produce proteins, i.e., gene and transcript biotype equal to 'protein_coding'
-coding_transcripts = full_exon_data_filtered_final[which(full_exon_data_filtered_final$gene_biotype == 'protein_coding' & full_exon_data_filtered_final$transcript_biotype == 'protein_coding'),]$ensembl_transcript_id
-length(coding_transcripts) == nrow(full_exon_data_filtered_final) #all the rows of full_exon_data_filtered_final satisfy the condition of having gene and transcript biotype as 'protein_coding'
+coding_transcripts <- full_exon_data_filtered_final[
+	which(
+		full_exon_data_filtered_final$gene_biotype == "protein_coding" &
+		full_exon_data_filtered_final$transcript_biotype == "protein_coding"
+	), ]$ensembl_transcript_id
+length(coding_transcripts) == nrow(full_exon_data_filtered_final)
+#all the rows of full_exon_data_filtered_final satisfy the condition of having gene and transcript biotype as 'protein_coding'
 
 #select from the gene list those rows belonging to these coding transcripts
-all_genes_grch37_exon_filter_final = all_genes_grch37_exon_filter[which(all_genes_grch37_exon_filter$ensembl_transcript_id %in% unique(coding_transcripts)),] #If a gene has an coding transcript, it will be included because that transcript will have as biotype 'protein_coding' and the gene biotype will be 'protein_coding'
+all_genes_grch38_exon_filter_final <- all_genes_grch38_exon_filter[which(all_genes_grch38_exon_filter$ensembl_transcript_id %in% unique(coding_transcripts)), ] #If a gene has an coding transcript, it will be included because that transcript will have as biotype 'protein_coding' and the gene biotype will be 'protein_coding'
 
 #check 
-summary(all_genes_grch37_exon_filter_final$ensembl_transcript_id %in% full_exon_data_filtered_final$ensembl_transcript_id)
-summary(full_exon_data_filtered_final$ensembl_transcript_id %in% all_genes_grch37_exon_filter_final$ensembl_transcript_id)
+summary(all_genes_grch38_exon_filter_final$ensembl_transcript_id %in% full_exon_data_filtered_final$ensembl_transcript_id)
+summary(full_exon_data_filtered_final$ensembl_transcript_id %in% all_genes_grch38_exon_filter_final$ensembl_transcript_id)
 
-#check for no name genes (no hgnc symbol) that remained after applying the filter 
-nrow(all_genes_grch37_exon_filter_final[which(all_genes_grch37_exon_filter_final$hgnc_symbol == ''),])
-	#There are cases of uncharacterized proteins like AP000350.10 (ENSG00000251357)
-	#These are proteins that are not very well studied and we don´t know their function, but according to David we should include them. They are translated, and can be under selection...
+#check for no name genes (no hgnc symbol) that remained after applying the filter
+nrow(all_genes_grch38_exon_filter_final[which(all_genes_grch38_exon_filter_final$hgnc_symbol == ""), ])
+#There are cases of uncharacterized proteins like AP000350.10 (ENSG00000251357)
+#These are proteins that are not very well studied and we don´t know their function, but according to David we should include them. They are translated, and can be under selection...
 
-#Resuming:
-	#I have selected coding data data for coding density. This does NOT include non-coding genes, non-coding transcripts, non-functional transcripts (biotype different from coding protein), and the non-coding regions inside the coding exons. 
-	#BUT for gene length I am using gene start and end, which can include in the gene length some areas of non-coding or non-functional transcripts. I think you told me that this only changes the gene length and center position of a few bases, which is nothing compare to the bigger size of LD blocks in human genome.
-	#That´s right?			
-		#YES, that it is perfect.
-	#Also we have removed genes whose chromosome names is not 1:22.
+#Summary:
+#I have selected coding data data for coding density. This does NOT include non-coding genes, non-coding transcripts, non-functional transcripts (biotype different from coding protein), and the non-coding regions inside the coding exons.
+#BUT for gene length I am using gene start and end, which can include in the gene length some areas of non-coding or non-functional transcripts. I think you told me that this only changes the gene length and center position of a few bases, which is nothing compare to the bigger size of LD blocks in human genome.
+#That´s right? #YES, that it is perfect.
+#Also we have removed genes whose chromosome names is not 1:22.
 
 
 
@@ -839,21 +839,20 @@ nrow(all_genes_grch37_exon_filter_final[which(all_genes_grch37_exon_filter_final
 ###### CHECKS FOR FILTERS IN THE FINAL DATASETS #######
 #######################################################
 
-### check that there is not row with other chromosome_name rather than 1:22 ###
-
-#for all_genes_grch37_exon_filter_final
+##check that there is no row with other chromosome_name rather than 1:22 ###
+#for all_genes_grch38_exon_filter_final
 #check that no row has as a chromosome name different from 1:22
-nrow(all_genes_grch37_exon_filter_final[which(!(all_genes_grch37_exon_filter_final$chromosome_name %in% c(1:22))),]) == 0 
+nrow(all_genes_grch38_exon_filter_final[which(!(all_genes_grch38_exon_filter_final$chromosome_name %in% c(1:22))), ]) == 0
 
 #check that 1:22 are included as chromosome names
-c(1:22) %in% unique(all_genes_grch37_exon_filter_final$chromosome_name)
+c(1:22) %in% unique(all_genes_grch38_exon_filter_final$chromosome_name)
 
 #check that all chromosome names are included in 1:22
-unique(all_genes_grch37_exon_filter_final$chromosome_name) %in% c(1:22)
+unique(all_genes_grch38_exon_filter_final$chromosome_name) %in% c(1:22)
 
 #for full_exon_data_filtered_final
 #chromosome names of the genes included in exon data
-chromosome_names_exon_data = all_genes_grch37_exon_filter_final[which(all_genes_grch37_exon_filter_final$ensembl_gene_id %in% unique(full_exon_data_filtered_final$ensembl_gene_id)),]$chromosome_name
+chromosome_names_exon_data <- all_genes_grch38_exon_filter_final[which(all_genes_grch38_exon_filter_final$ensembl_gene_id %in% unique(full_exon_data_filtered_final$ensembl_gene_id)), ]$chromosome_name
 
 #check that 1:22 are included as chromosome names
 c(1:22) %in% unique(chromosome_names_exon_data)
@@ -862,53 +861,66 @@ c(1:22) %in% unique(chromosome_names_exon_data)
 unique(chromosome_names_exon_data) %in% c(1:22)
 
 
-### check that all transcripts included has 'protein_coding' as biotype and cds_length is not NA ###
-
+##check that all transcripts included has 'protein_coding' as biotype and cds_length is not NA ###
 #check that the gene and transcript biotype in exon data is protein coding
-unique(full_exon_data_filtered_final$gene_biotype) == 'protein_coding'
-unique(full_exon_data_filtered_final$transcript_biotype) == 'protein_coding'
+unique(full_exon_data_filtered_final$gene_biotype) == "protein_coding"
+unique(full_exon_data_filtered_final$transcript_biotype) == "protein_coding"
 
 #extract the from the exon data those rows with gene id included in the gene list, and see if the gene biotype is protein coding
-unique(full_exon_data_filtered_final[which(full_exon_data_filtered_final$ensembl_gene_id %in% unique(all_genes_grch37_exon_filter_final$ensembl_gene_id)),]$gene_biotype) == 'protein_coding'
+unique(full_exon_data_filtered_final[which(full_exon_data_filtered_final$ensembl_gene_id %in% unique(all_genes_grch38_exon_filter_final$ensembl_gene_id)), ]$gene_biotype) == "protein_coding"
 
 #extract the from the exon data those rows with transcript id included in the gene list, and see if the transcript biotype is protein coding
-unique(full_exon_data_filtered_final[which(full_exon_data_filtered_final$ensembl_transcript_id %in% unique(all_genes_grch37_exon_filter_final$ensembl_transcript_id)),]$transcript_biotype) == 'protein_coding'
+unique(full_exon_data_filtered_final[which(full_exon_data_filtered_final$ensembl_transcript_id %in% unique(all_genes_grch38_exon_filter_final$ensembl_transcript_id)),]$transcript_biotype) == "protein_coding"
 
 
-#### check that each gene name has only one gene id. I can not select those cases without gene name ###
-
+##check that each gene name has only one gene id. I can not select those cases without gene name
 #extract the gene names without empty cases ('')
-gene_names_no_null_v2 = unique(all_genes_grch37_exon_filter_final$hgnc_symbol)
-gene_names_no_null_v2 = gene_names_no_null_v2[-which(gene_names_no_null_v2 == '')]
-!'' %in% gene_names_no_null_v2
+gene_names_no_null_v2 <- unique(all_genes_grch38_exon_filter_final$hgnc_symbol)
+gene_names_no_null_v2 <- gene_names_no_null_v2[-which(gene_names_no_null_v2 == "")]
+!"" %in% gene_names_no_null_v2
+
 #for each gene name
-test_duplicated_gene_id_v2 = data.frame(selected_gene_name=NA, test_result=NA)
-for(i in 1:length(gene_names_no_null_v2)){
+test_duplicated_gene_id_v2 <- data.frame(selected_gene_name = NA, test_result = NA)
+#i=1
+for (i in 1:length(gene_names_no_null_v2)) {
 
 	#select the [i] gene name
-	selected_gene_name = gene_names_no_null_v2[i]
+	selected_gene_name <- gene_names_no_null_v2[i]
 
 	#extract the unique cases of gene id for the [i] hgnc symbol
-	unique_gene_id = unique(all_genes_grch37_exon_filter_final[which(all_genes_grch37_exon_filter_final$hgnc_symbol == selected_gene_name),]$ensembl_gene_id)
+	unique_gene_id <- unique(all_genes_grch38_exon_filter_final[which(all_genes_grch38_exon_filter_final$hgnc_symbol == selected_gene_name), ]$ensembl_gene_id)
 
 	#test that the number of unique cases is 1 (only 1 gene id for each gene name)
-	test_result = length(unique_gene_id) == 1
+	test_result <- length(unique_gene_id) == 1
 
 	#save
-	test_duplicated_gene_id_v2 = rbind.data.frame(test_duplicated_gene_id_v2, cbind.data.frame(selected_gene_name, test_result))
+	test_duplicated_gene_id_v2 <- rbind.data.frame(test_duplicated_gene_id_v2, cbind.data.frame(selected_gene_name, test_result))
 }
 #remove first row with NAs
-test_duplicated_gene_id_v2 = test_duplicated_gene_id_v2[-1,]
+test_duplicated_gene_id_v2 <- test_duplicated_gene_id_v2[-1, ]
 #take a look for genes with repeated gene id
 summary(test_duplicated_gene_id_v2) #we have several cases
 #extract information of these genes
-genes_with_duplicated_id_v2 = test_duplicated_gene_id_v2[which(test_duplicated_gene_id_v2$test_result == FALSE),]$selected_gene_name
-all_genes_grch37_exon_filter_final[which(all_genes_grch37_exon_filter_final$hgnc_symbol %in% genes_with_duplicated_id_v2),]
-	#As I thought, those repeated gene names for microRNAs have been removed after filtering.
-	#We have only one case remaining which is not a microRNA: UGT2A1 has two gene ids, ENSG00000270386 (http://grch37.ensembl.org/Homo_sapiens/Gene/Summary?g=ENSG00000270386;r=4:70454912-70518967;t=ENST00000514019) and ENSG00000173610 (http://grch37.ensembl.org/Homo_sapiens/Gene/Summary?g=ENSG00000173610;r=4:70454135-70518965). It is like ENSG00000270386 is a transcript of ENSG00000270386 that has been separated as an independent gene. They are in the same region, and has the same hgnc symbol. 
-		#I do not know what to do with the latter case. Should I removed the gene id with only one transcript, if not we will have the start of two windows in that region. Moreover, I don´t know how detect more cases like this in genes that have no hgnc symbol. 
+genes_with_duplicated_id_v2 <- test_duplicated_gene_id_v2[which(test_duplicated_gene_id_v2$test_result == FALSE), ]$selected_gene_name
+all_genes_grch38_exon_filter_final[which(all_genes_grch38_exon_filter_final$hgnc_symbol %in% genes_with_duplicated_id_v2),]
 
-	#According to David this is VERY rare. REMOVE THESE TWO GENES.
+
+###POR AQUIII
+#WE HAVE 4 CASES THIS TIME
+#only checked 1
+
+
+#Problematic cases
+#HERC3 has two gene ids, ENSG00000287542 (https://www.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000138641;r=4:88592434-88708541) and ENSG00000138641 (https://www.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000138641;r=4:88592434-88708541). It is like ENSG00000287542 is a transcript of ENSG00000138641 that has been separated as an independent gene (it only has 1 transcript). They are in the same region, and has the same hgnc symbol.
+
+#I do not know what to do with the latter case. Should I removed the gene id with only one transcript, if not we will have the start of two windows in that region. Moreover, I don´t know how detect more cases like this in genes that have no hgnc symbol. 
+
+#According to David in the MDR paper, cases like this are very strange, so he told me to remove each pair of cases like this.
+
+
+
+
+
 
 #remove UGT2A1 genes
 all_genes_grch37_exon_filter_final = all_genes_grch37_exon_filter_final[-which(all_genes_grch37_exon_filter_final$ensembl_gene_id %in% c('ENSG00000270386', 'ENSG00000173610')),]
