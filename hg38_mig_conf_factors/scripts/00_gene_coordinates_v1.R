@@ -902,61 +902,62 @@ test_duplicated_gene_id_v2 <- test_duplicated_gene_id_v2[-1, ]
 summary(test_duplicated_gene_id_v2) #we have several cases
 #extract information of these genes
 genes_with_duplicated_id_v2 <- test_duplicated_gene_id_v2[which(test_duplicated_gene_id_v2$test_result == FALSE), ]$selected_gene_name
-all_genes_grch38_exon_filter_final[which(all_genes_grch38_exon_filter_final$hgnc_symbol %in% genes_with_duplicated_id_v2),]
-
-
-###POR AQUIII
-#WE HAVE 4 CASES THIS TIME
-#only checked 1
-
 
 #Problematic cases
+problematic_cases <- all_genes_grch38_exon_filter_final[which(all_genes_grch38_exon_filter_final$hgnc_symbol %in% genes_with_duplicated_id_v2), ]
+
 #HERC3 has two gene ids, ENSG00000287542 (https://www.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000138641;r=4:88592434-88708541) and ENSG00000138641 (https://www.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000138641;r=4:88592434-88708541). It is like ENSG00000287542 is a transcript of ENSG00000138641 that has been separated as an independent gene (it only has 1 transcript). They are in the same region, and has the same hgnc symbol.
 
-#I do not know what to do with the latter case. Should I removed the gene id with only one transcript, if not we will have the start of two windows in that region. Moreover, I don´t know how detect more cases like this in genes that have no hgnc symbol. 
+#POLR2J3 has two gene ids: ENSG00000168255 (https://useast.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000168255;r=7:102537918-102572653) and ENSG00000285437 (https://useast.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000285437;r=7:102562133-102572583). Both IDs have a lot of transcripts, but they are in the same region. It is like they have split the transcripts in two different genes.
+
+#ZNF724 has two gene ids, ENSG00000196081 (https://useast.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000196081;r=19:23221599-23250394) and ENSG00000283201 (https://useast.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000283201;r=19:23222755-23274221;t=ENST00000611392). It is like ENSG00000283201 is a transcript of ENSG00000138641 that has been separated as an independent gene (it only has 1 transcript). They are in the same region, and has the same hgnc symbol.
+
+#PINX1 has two gene ids, ENSG00000258724 (https://useast.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000258724;r=8:10725399-10839847;t=ENST00000554914) and ENSG00000254093 (https://useast.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000254093;r=8:10764961-10839884). It is like they have splitted the transcripts of the same gene. They are relatively close.
 
 #According to David in the MDR paper, cases like this are very strange, so he told me to remove each pair of cases like this.
 
+#These are only 8 genes out 18K...
+if (length(genes_with_duplicated_id_v2)>4) {
+	stop("We have more gene symbols with several gene IDs than expected")
+}
+
+#remove these genes
+all_genes_grch38_exon_filter_final <- all_genes_grch38_exon_filter_final[which(!all_genes_grch38_exon_filter_final$ensembl_gene_id %in% problematic_cases$ensembl_gene_id), ]
+full_exon_data_filtered_final <- full_exon_data_filtered_final[which(!full_exon_data_filtered_final$ensembl_gene_id %in% problematic_cases$ensembl_gene_id), ]
 
 
-
-
-
-#remove UGT2A1 genes
-all_genes_grch37_exon_filter_final = all_genes_grch37_exon_filter_final[-which(all_genes_grch37_exon_filter_final$ensembl_gene_id %in% c('ENSG00000270386', 'ENSG00000173610')),]
-full_exon_data_filtered_final = full_exon_data_filtered_final[-which(full_exon_data_filtered_final$ensembl_gene_id %in% c('ENSG00000270386', 'ENSG00000173610')),]
-
-
-#### check AGAIN that each gene name has only one gene id. I can not select those cases without gene name ###
-
+##check AGAIN that each gene name has only one gene id. I can not select those cases without gene name
 #extract the gene names without empty cases ('')
-gene_names_no_null_v2 = unique(all_genes_grch37_exon_filter_final$hgnc_symbol)
-gene_names_no_null_v2 = gene_names_no_null_v2[-which(gene_names_no_null_v2 == '')]
-!'' %in% gene_names_no_null_v2
+gene_names_no_null_v2 <- unique(all_genes_grch38_exon_filter_final$hgnc_symbol)
+gene_names_no_null_v2 <- gene_names_no_null_v2[-which(gene_names_no_null_v2 == "")]
+!"" %in% gene_names_no_null_v2
 #for each gene name
-test_duplicated_gene_id_v2 = data.frame(selected_gene_name=NA, test_result=NA)
-for(i in 1:length(gene_names_no_null_v2)){
+test_duplicated_gene_id_v2 <- data.frame(selected_gene_name = NA, test_result = NA)
+#i=1
+for (i in 1:length(gene_names_no_null_v2)) {
 
 	#select the [i] gene name
-	selected_gene_name = gene_names_no_null_v2[i]
+	selected_gene_name <- gene_names_no_null_v2[i]
 
 	#extract the unique cases of gene id for the [i] hgnc symbol
-	unique_gene_id = unique(all_genes_grch37_exon_filter_final[which(all_genes_grch37_exon_filter_final$hgnc_symbol == selected_gene_name),]$ensembl_gene_id)
+	unique_gene_id <- unique(all_genes_grch38_exon_filter_final[which(all_genes_grch38_exon_filter_final$hgnc_symbol == selected_gene_name), ]$ensembl_gene_id)
 
 	#test that the number of unique cases is 1 (only 1 gene id for each gene name)
-	test_result = length(unique_gene_id) == 1
+	test_result <- length(unique_gene_id) == 1
 
 	#save
-	test_duplicated_gene_id_v2 = rbind.data.frame(test_duplicated_gene_id_v2, cbind.data.frame(selected_gene_name, test_result))
+	test_duplicated_gene_id_v2 <- rbind.data.frame(test_duplicated_gene_id_v2, cbind.data.frame(selected_gene_name, test_result))
 }
 #remove first row with NAs
-test_duplicated_gene_id_v2 = test_duplicated_gene_id_v2[-1,]
+test_duplicated_gene_id_v2 <- test_duplicated_gene_id_v2[-1, ]
 #take a look for genes with repeated gene id
 summary(test_duplicated_gene_id_v2) #No several cases
 #extract information of these genes
-genes_with_duplicated_id_v2 = test_duplicated_gene_id_v2[which(test_duplicated_gene_id_v2$test_result == FALSE),]$selected_gene_name
-all_genes_grch37_exon_filter_final[which(all_genes_grch37_exon_filter_final$hgnc_symbol %in% genes_with_duplicated_id_v2),]
-
+genes_with_duplicated_id_v2 <- test_duplicated_gene_id_v2[which(test_duplicated_gene_id_v2$test_result == FALSE), ]$selected_gene_name
+#check
+if (length(genes_with_duplicated_id_v2) != 0) {
+	stop("We have gene symbols with several gene IDs")
+}
 
 
 ###############################################
@@ -964,28 +965,53 @@ all_genes_grch37_exon_filter_final[which(all_genes_grch37_exon_filter_final$hgnc
 ###############################################
 
 #save the list of genes
-write.table(x=all_genes_grch37_exon_filter_final,file='/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/postdoc_enard_lab/projects/method_deep/data/search_diego/results/all_genes_grch37_exon_filter_final.txt', sep='\t', row.names=FALSE)
+write.table(
+	x = all_genes_grch38_exon_filter_final,
+	file = gzfile("./data/gene_coordinates/all_genes_grch38_exon_filter_final.txt.gz"),
+	sep = "\t",
+	row.names = FALSE)
 
 #save the exon data
-write.table(x=full_exon_data_filtered_final,file='/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/postdoc_enard_lab/projects/method_deep/data/search_diego/results/full_exon_data_filtered_final.txt', sep='\t', row.names=FALSE)
+write.table(
+	x = full_exon_data_filtered_final,
+	file = gzfile("./data/gene_coordinates/full_exon_data_filtered_final.txt.gz"),
+	sep = "\t",
+	row.names = FALSE)
 
 
 
-######################################################################################################
-###### RUN THE FUNCTION TO EXTRACT GENE POSITIONS AND SOME GENOMIC FACTORS FOR EACH CHROMOSOME #######
-######################################################################################################
+#############################################################################
+#### FUNCTION TO EXTRACT GENE POSITIONS AND SOME FACTORS PER CHROMOSOME #####
+#############################################################################
 
 ##load all the necessary data, so you can just run the script from here if you want to. 
 #load the list of genes filtered
-all_genes_grch37_exon_filter_final = read.table('/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/postdoc_enard_lab/projects/method_deep/data/search_diego/results/all_genes_grch37_exon_filter_final.txt', sep='\t', header=TRUE)
-str(all_genes_grch37_exon_filter_final)
+all_genes_grch38_exon_filter_final <- read.table(
+	"./data/gene_coordinates/all_genes_grch38_exon_filter_final.txt.gz",
+	sep = "\t",
+	header = TRUE)
+str(all_genes_grch38_exon_filter_final)
 
 #load the exon data filtered
-full_exon_data_filtered_final = read.table('/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/postdoc_enard_lab/projects/method_deep/data/search_diego/results/full_exon_data_filtered_final.txt', sep='\t', header=TRUE)
+full_exon_data_filtered_final <- read.table(
+	'./data/gene_coordinates/full_exon_data_filtered_final.txt.gz',
+	sep = "\t",
+	header = TRUE)
 str(full_exon_data_filtered_final)
 
 #load the chromosome length data to cut those windows that surpass the end of the chromosome (I will also cut those that surpass the start of the chromosome, i.e., negative bases)
-chrom_length_ucsc_hg19 = read.table("/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/postdoc_enard_lab/projects/method_deep/data/search_diego/gene_coordinates/chrom_length/chrom_length_final_v1.txt", sep="\t", header=TRUE) #you cannot have window where no chromosome exists. This can lead to problems, for example in the calculation of the recombination rate, where a window can be discarded if no data points are close to the extremes. Therefore, a window with one end outside of the chromosome could be removed even if recombination data exists within the boundaries of the chromosome. 
+chrom_length_ucsc_hg38 <- read.table(
+	"./data/gene_coordinates/chromosome_length/chrom_length_final_v1.txt",
+	sep = "\t",
+	header = TRUE)
+#you cannot have window where no chromosome exists. This can lead to problems, for example in the calculation of the recombination rate, where a window can be discarded if no data points are close to the extremes. Therefore, a window with one end outside of the chromosome could be removed even if recombination data exists within the boundaries of the chromosome.
+
+
+
+##por aquiii
+
+
+
 
 #load the gap data to subtract gap length from the window length when coding density is calculated. 
 #IMPORTANT!!! REVISE YOUR ARE USING THE LAST VERSION OF GAPS!!
