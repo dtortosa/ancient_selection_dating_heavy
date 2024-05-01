@@ -28,7 +28,7 @@
 ###### CHANGES RESPECT TO PREVIOUS VERSIONS #######
 ###################################################
 
-
+#This script comes from gene_coordinates_v10.r of the MDR paper
 
 
 

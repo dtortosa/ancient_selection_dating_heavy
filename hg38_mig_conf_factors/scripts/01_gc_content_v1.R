@@ -26,6 +26,8 @@
 ###### CHANGES RESPECT TO PREVIOUS VERSIONS #######
 ###################################################
 
+#This script comes from gc_content_v3.R of the MDR paper
+
 
 
 #################################################

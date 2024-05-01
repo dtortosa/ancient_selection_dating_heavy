@@ -1,10 +1,26 @@
+#!/usr/bin/env Rscript
+# coding: utf-8
+#to run this script: chmod +x script.R; ./script.R
+#!/bin/sh does not work with my terminal en msi of David.
+#if you are using "$" to paste the path of the executable,
+#you do not need to use "./" for running the executable.
+#you can save the output and the errors
+#./script.R > script.Rout #only output #nolint
+#./script.R 2> error.Rout #only error
+#./script.R > script.Rout 2> error.out #both in different files
+#./script.R > script.Rout 2>&1 #both in the same file
+#https://www.cyberciti.biz/faq/linux-redirect-error-output-to-file/
+
+
+
 ##################################################################################
 ########## SCRIPTS FOR CALCULATING THE ENSEMBLE GAPS INSIDE EACH WINDOW ##########
 ##################################################################################
 
-#In this script, we calculate the number of nucleotides that correspond to gaps in the ensemble 37. This will be used to remove the gaps from the calculations of the coding density. We do not want to calculate density as the number of coding bases divided by the total length of the window, because inside the window we can have gaps, in which we do not know if the base is coding or not, NA is not the same than zero. If we consider these gaps as zero, we could subestimate the coding density if the the NA data are in reality coding regions. It is better to remove it. 
+#In this script, we calculate the number of nucleotides that correspond to gaps in hg38. This will be used to remove the gaps from the calculations of the genomic factors that are densities. For example, we do not want to calculate density as the number of coding bases divided by the total length of the window, because inside the window we can have gaps, in which we do not know if the base is coding or not, NA is not the same than zero. If we consider these gaps as zero, we could subestimate the coding density if the the NA data are in reality coding regions. It is better to remove it.
 
-#ESTOS DATOS NO PUEDE USAR CALCULAR THRESHOLDS A LO LARGO DE LOS CROMOSOMAS. In that case, you need all the gaps in the chromosome, not only those inside the windows. You can only use this data to calculate the real size of each window. 
+#VERY IMPORTANT:
+#ESTOS DATOS NO PUEDE USAR CALCULAR THRESHOLDS A LO LARGO DE LOS CROMOSOMAS. In that case, you need all the gaps in the chromosome, not only those inside the windows. You can only use this data to calculate the real size of each window.
 
 
 
@@ -12,21 +28,17 @@
 ###### CHANGES RESPECT TO PREVIOUS VERSIONS #######
 ###################################################
 
-#Respect to v1, 
-	#the gap length is saved in pair bases instead of kb. 
-		#We have to change the final file of gap length. The units are in kb, but this is not useful. The idea of using kb came from the idea of subtracting that length for the window length in kb present in the column name of gene coordinates. However we cannot do that, because some windows are smaller than that as they surpass the limits of the chromosome. Therefore we have to calculate ALWAYS the window length using the window start and end. That coordinates are corrected for the problem of surpassing the length of the chromosome.
-		#These coordinates are in pair bases, not in kb!  So each time the gaps length has to be transformed to pair bases to be subtracted from the window length. 
-		#Therefore, gap lengths have to be saved in pair bases in the final data set.
-
-#Respect to v2,
-	#the windows that surpass the chromosome limit are removed. In the previous version, we trimmed these windows instead.  
+#This script comes from gaps_ensemble_v3.R in the MDR paper
 
 
 
-##########################################
-########## REMOVE PREVIOUS WORKSPACE #####
-##########################################
-remove(list=ls(all=TRUE))
+#################################################
+###### MOVE FROM CONTAINER TO MAIN FOLDER #######
+#################################################
+
+#we move the WD to the parent folder
+setwd("../")
+getwd()
 
 
 
@@ -47,21 +59,24 @@ require(GenomicRanges) #for calculating not overlapped genomic ranges
 
 #See information about genome assembly procedures: https://www.ncbi.nlm.nih.gov/assembly/basics/
 
-	#The Whole Genome Assembly (WGA) approach, which is the dominant strategy in use today, dispenses with up front mapping. The entire genome is fragmented and used to construct libraries of varying insert sizes. Typically there are libraries of some smaller size (2, 4 or 6 Kb), libraries of intermediate size (10 - 40 Kb) and libraries with large insert sequences (>100 Kb). The ends of these clones are sequenced, generating sequence reads. The reads from different ends of the same clone are referred to as mate-pairs.
-		#Clones are cloned sequences. For example, BAC/PAC is a Bacterial Artificial Chromosome commonly used cloning vectors for the human genome project. 
+#The Whole Genome Assembly (WGA) approach, which is the dominant strategy in use today, dispenses with up front mapping. The entire genome is fragmented and used to construct libraries of varying insert sizes. Typically there are libraries of some smaller size (2, 4 or 6 Kb), libraries of intermediate size (10 - 40 Kb) and libraries with large insert sequences (>100 Kb). The ends of these clones are sequenced, generating sequence reads. The reads from different ends of the same clone are referred to as mate-pairs.
+#Clones are cloned sequences. For example, BAC/PAC is a Bacterial Artificial Chromosome commonly used cloning vectors for the human genome project.
 
-	#The original WGS assembly approach, developed using Sanger reads (which are relatively long with low throughput), typically has three major phases, known as overlap, layout, and consensus. In the initial phase (overlap), the WGS algorithm calculates the sequence overlap between all available reads. In the layout step, the reads are arranged according to their pattern of overlap, producing a multiple alignment of the reads. In the consensus step, a contig is generated by calculating the consensus base at each position of the layout. THESE CONTIGS CONTAIN NO GAPS, although the sequence may contain 'N's due to sequence ambiguity (I guess different reads gives a different base for the same position). In other words, a contig is the consensus base at each position from the arrange of reads according to their pattern of overlap. WGS contigs can be submitted to the WGS division of GenBank.
+##POR AQUIII
+#quick check info link previos paragraph in "https://genome-euro.ucsc.edu/cgi-bin/hgTrackUi?hgsid=820938253_ZcoN2Y9BnVnPsajnz6fUVIgsT03h&g=gap&hgTracksConfigPage=configure"
 
-	#After building contigs, a WGS assembler can use mate-pair information to order and orient the contigs and place them into larger structures called scaffolds (or supercontig) (see Figure 3). The contigs within a scaffold are separated by gaps of unknown size, although the library insert sizes can be used to provide good estimates of these gap sizes. The relationship between two contigs can be determined using a single mate-pair, but the level of confidence in such a relationship is not great, and most WGS assemblers require at least two such links for each pair of contigs in a scaffold. Typically, the number of mate-pairs supporting a linkage assertion is not reported, however. These scaffolds can be submitted to the CON (contig) division of GenBank using an AGP file .
 
+#The original WGS assembly approach, developed using Sanger reads (which are relatively long with low throughput), typically has three major phases, known as overlap, layout, and consensus. In the initial phase (overlap), the WGS algorithm calculates the sequence overlap between all available reads. In the layout step, the reads are arranged according to their pattern of overlap, producing a multiple alignment of the reads. In the consensus step, a contig is generated by calculating the consensus base at each position of the layout. THESE CONTIGS CONTAIN NO GAPS, although the sequence may contain 'N's due to sequence ambiguity (I guess different reads gives a different base for the same position). In other words, a contig is the consensus base at each position from the arrange of reads according to their pattern of overlap. WGS contigs can be submitted to the WGS division of GenBank.
+
+#After building contigs, a WGS assembler can use mate-pair information to order and orient the contigs and place them into larger structures called scaffolds (or supercontig) (see Figure 3). The contigs within a scaffold are separated by gaps of unknown size, although the library insert sizes can be used to provide good estimates of these gap sizes. The relationship between two contigs can be determined using a single mate-pair, but the level of confidence in such a relationship is not great, and most WGS assemblers require at least two such links for each pair of contigs in a scaffold. Typically, the number of mate-pairs supporting a linkage assertion is not reported, however. These scaffolds can be submitted to the CON (contig) division of GenBank using an AGP file .
 
 #Description if the track:
-	#This track depicts gaps in the assembly. These gaps — with the exception of intractable heterochromatic gaps — will be closed during the finishing process.
+#This track shows the gaps in the GRCh38 (hg38) genome assembly defined in the AGP file delivered with the sequence. These gaps are being closed during the finishing process on the human genome. For information on the AGP file format, see the NCBI AGP Specification. The NCBI website also provides an overview of genome assembly procedures, as well as specific information about the hg38 assembly.
 
-	#Gaps are represented as black boxes in this track. If the relative order and orientation of the contigs on either side of the gap is known, it is a bridged gap and a white line is drawn through the black box representing the gap.
+#Gaps are represented as black boxes in this track. If the relative order and orientation of the contigs on either side of the gap is known, it is a bridged gap and a white line is drawn through the black box representing the gap.
 
-	#This assembly contains the following principal types of gaps (See details about assemble):
-
+#This assembly contains the following principal types of gaps (See details about assemble):
+		
 		#Clone — gaps between clones in the same map contig. These may be bridged or not.
 			#although a contig has no gaps, it can contain 'N's due to sequence ambiguity (I guess different reads gives a different base for the same position).
 		#Contig — non-bridged gaps between map contigs.
@@ -84,14 +99,20 @@ require(GenomicRanges) #for calculating not overlapped genomic ranges
 ####### SCHEMA OF "GAP - GAP LOCATIONS" #######
 ###############################################
 
-#From: http://genome.ucsc.edu/cgi-bin/hgTables?db=hg19&hgta_group=map&hgta_track=gap&hgta_table=gap&hgta_doSchema=describe+table+schema
+#Schema from: https://genome-euro.ucsc.edu/cgi-bin/hgTables?db=hg38&hgta_group=map&hgta_track=gap&hgta_table=gap&hgta_doSchema=describe+table+schema
+
+#Data from: https://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/
 
 #load the data. Format: This is "Gaps in golden path"
-raw_gaps_data = read.table(file="/media/dftortosa/Windows/Users/dftor/Documents/diego_docs/science/postdoc_enard_lab/projects/method_deep/data/search_diego/gaps_ensemble/gap.txt", header=FALSE, sep="\t", stringsAsFactors=TRUE)
-	#header=FALSE: because the file has not header, the first row already includes data.
-	#sep="\t": The file is separated by tabs. I have checked if it works reading it with ";" or "," and it does not. 
-	#stringsAsFactors=FALSE: I used this for other data where some variables were like a path. In the case of gap data I think we can set as a factor those variables with strings. We only have one with information about if we know or not the gap (Unknown/known), other with gap type (telomere, clone, etc...) and information about bridge (yes/no).
-	#Note: In case would have some problems reading the file ("EOF within quoted string" or "number of items read is not a multiple of the number of columns") you can add 'quote=""' ("https://www.biostars.org/p/170631/"; first response).
+raw_gaps_data <- read.table(
+	file = "./data/gaps_ensemble/gap.txt.gz",
+	header = FALSE,
+	sep = "\t",
+	stringsAsFactors = TRUE)
+#header=FALSE: because the file has not header, the first row already includes data.
+#sep="\t": The file is separated by tabs. I have checked if it works reading it with ";" or "," and it does not. 
+#stringsAsFactors=FALSE: I used this for other data where some variables were like a path. In the case of gap data I think we can set as a factor those variables with strings. We only have one with information about if we know or not the gap (Unknown/known), other with gap type (telomere, clone, etc...) and information about bridge (yes/no).
+#Note: In case would have some problems reading the file ("EOF within quoted string" or "number of items read is not a multiple of the number of columns") you can add 'quote=""' ("https://www.biostars.org/p/170631/"; first response).
 str(raw_gaps_data)
 head(raw_gaps_data, 10)
 nrow(raw_gaps_data)
