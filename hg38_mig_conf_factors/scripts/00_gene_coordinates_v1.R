@@ -984,13 +984,22 @@ write.table(
 #### FUNCTION TO EXTRACT GENE POSITIONS AND SOME FACTORS PER CHROMOSOME #####
 #############################################################################
 
-##load all the necessary data, so you can just run the script from here if you want to. 
+##load all the necessary data and do minimum preparations, so you can just run the script from here if you want to. 
+
+#initial preps (wd and packages)
+setwd("../")
+getwd()
+library(biomaRt) #for connecting with ensemble
+library(GenomicRanges) #for calculating overlap between exons of a gene
+require(stringr) #for replacing "," in the total chromosome length
+
 #load the list of genes filtered
 all_genes_grch38_exon_filter_final <- read.table(
 	"./data/gene_coordinates/all_genes_grch38_exon_filter_final.txt.gz",
 	sep = "\t",
 	header = TRUE)
 str(all_genes_grch38_exon_filter_final)
+head(all_genes_grch38_exon_filter_final)
 
 #load the exon data filtered
 full_exon_data_filtered_final <- read.table(
@@ -998,12 +1007,14 @@ full_exon_data_filtered_final <- read.table(
 	sep = "\t",
 	header = TRUE)
 str(full_exon_data_filtered_final)
+head(full_exon_data_filtered_final)
 
 #load the chromosome length data to cut those windows that surpass the end of the chromosome (I will also cut those that surpass the start of the chromosome, i.e., negative bases)
 chrom_length_ucsc_hg38 <- read.table(
 	"./data/gene_coordinates/chromosome_length/chrom_length_final_v1.txt",
 	sep = "\t",
 	header = TRUE)
+print(chrom_length_ucsc_hg38)
 #you cannot have window where no chromosome exists. This can lead to problems, for example in the calculation of the recombination rate, where a window can be discarded if no data points are close to the extremes. Therefore, a window with one end outside of the chromosome could be removed even if recombination data exists within the boundaries of the chromosome.
 
 
