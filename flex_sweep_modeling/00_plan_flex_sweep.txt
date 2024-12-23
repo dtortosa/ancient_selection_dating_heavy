@@ -1,4 +1,6 @@
 
+#MIRA SOLAPAMIENTO BAT-THERMO
+
 ##THIS WAS DONE BEFORE FERRARA
 #We got very interesting results from these analyses. 
     #Mainly, that XGBoost is good enough to model flexsweep prob and be around R2=0.7 in unseen data, when MDR is able to do 0.7 on the whole data iHS dataset!!! 
