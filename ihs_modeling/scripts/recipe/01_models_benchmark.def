@@ -38,7 +38,7 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 %files
 
 	#copy scripts
-    /home/dftortosa/singularity/dating_climate_adaptation/flex_sweep_modeling/scripts/01_models_benchmark.py /opt/scripts/01_models_benchmark.py
+    /home/dftortosa/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating_heavy_analyses/dating_climate_adaptation/ihs_modeling/scripts/01_models_benchmark.py /opt/scripts/01_models_benchmark.py
 
 
     #From the original folder in the host, we copy a R script to a new folder in the container called scripts. NEVER PUT ANYTHING ELSE IN THE LINE WITH SOURCE AND DESTINATION, GIVES ERROR.
@@ -178,14 +178,14 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 
 #Command to build, enter interactively or run
 	#now apply the definition file final_test_def for creating a container
-		#sudo singularity build /home/dftortosa/singularity/dating_climate_adaptation/flex_sweep_modeling/01_models_benchmark.sif /home/dftortosa/singularity/dating_climate_adaptation/flex_sweep_modeling/scripts/recipes/01_models_benchmark.def
+		#sudo singularity build /home/dftortosa/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating_heavy_analyses/dating_climate_adaptation/ihs_modeling/containers/01_models_benchmark.sif /home/dftortosa/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating_heavy_analyses/dating_climate_adaptation/ihs_modeling/scripts/recipe/01_models_benchmark.def
 			#In the definition file is indicate that we will take an Ubuntu 20.04 container from the Singularity library. We do not need anything else. We do not need a previous image in the host system! The definition file has the instructions to get the required container from the library.
 	#you can run this image interactively with shell. For that you have to be in a specific folder in order to have the scripts workingnter in the container
-		#cd /home/dftortosa/singularity/dating_climate_adaptation/flex_sweep_modeling
-		#sudo singularity shell /home/dftortosa/singularity/dating_climate_adaptation/flex_sweep_modeling/01_models_benchmark.sif
+		#cd /home/dftortosa/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating_heavy_analyses/dating_climate_adaptation/ihs_modeling/
+		#sudo singularity shell /home/dftortosa/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating_heavy_analyses/dating_climate_adaptation/ihs_modeling/containers/01_models_benchmark.sif
 	#to run the container. For that you have to be in a specific folder in order to have the scripts workingnter in the container
-		#cd /home/dftortosa/singularity/dating_climate_adaptation/flex_sweep_modeling
-		#sudo singularity run /home/dftortosa/singularity/dating_climate_adaptation/flex_sweep_modeling/01_models_benchmark.sif
+		#cd /home/dftortosa/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating_heavy_analyses/dating_climate_adaptation/ihs_modeling/
+		#sudo singularity run /home/dftortosa/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating_heavy_analyses/dating_climate_adaptation/ihs_modeling/containers/01_models_benchmark.sif
 
 %labels
     Author dftortosa
