@@ -221,116 +221,20 @@ run_bash(" \
 # region data preparation ########
 ##################################
 print_text("data preparation", header=1)
-print_text("Set the window size selected for those variables that are calculated within windows centered around genes", header=2)
+
+print_text("define window size and response", header=4)
 gene_window_size = "1000kb"
     #see MDR paper about window selection and why we focused in 1000kb gene windows
 print(f"The selected window size is {gene_window_size}")
-
-
-
-print_text("load and clean input data", header=2)
-print_text("load mean iHS and number of data points", header=3)
-#ihs is the response
 response="mean_ihs_" + gene_window_size
 print(f"The response is {response}")
+
+print_text("load the data", header=4)
 import pandas as pd
-ihs_yoruba_mean = pd.read_csv( \
-    "../../../method_deep_heavy_analyses/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/YRID_mean_ihs_gene_windows_final_v1.txt.gz", \
+final_data_yoruba = pd.read_csv( \
+    "./data/YRID_modeling_dataset_v1.tsv.gz", \
     sep="\t", \
-    header=0, \
-    low_memory=False, \
-    compression="gzip").loc[:,["gene_id", response]]
-print(ihs_yoruba_mean)
-ihs_yoruba_n = pd.read_csv( \
-    "../../../method_deep_heavy_analyses/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/YRID_n_ihs_gene_windows_final_v1.txt.gz", \
-    sep="\t", \
-    header=0, \
-    low_memory=False, \
-    compression="gzip").loc[:,["gene_id", "n_ihs_"+gene_window_size]]
-print(ihs_yoruba_n)
-
-
-print_text("load flex-sweep probability and most predictors into pandas", header=3)
-#we will not use flexsweep just the predictors
-import pandas as pd
-exclude_columns = ["predicted_class", "prob(sweep)", "number_thermogenic_1000kb", "number_vips_1000kb"]
-main_predictors = pd.read_csv( \
-    "../flex_sweep_modeling/data/flex_sweep_closest_window_center.txt.gz", \
-    sep=",", \
-    header=0, \
-    low_memory=False, \
-    compression="gzip", \
-    usecols=lambda column: column not in exclude_columns
-)
-    #usecols is a parameter of the pd.read_csv function that specifies which columns to read from the CSV file.
-    #lambda column: column not in exclude_columns is a lambda function that takes a column name as input and returns True if the column name is not in the exclude_columns list, and False otherwise.
-    #When pd.read_csv is called with this lambda function as the usecols parameter, it will include only the columns for which the lambda function returns True.
-#check we have removed the flexsweep columns
-if(len([col for col in exclude_columns if col in main_predictors.columns]) !=0):
-    raise ValueError("ERROR: FALSE! WE HAVE NOT EXCLUDED THE COLUMNS WE WANTED TO EXCLUDE")
-else:
-    print(main_predictors)
-
-
-print_text("load BAT and SMT data, only 1% percentile for now", header=3)
-p_value_percentile = 1
-#the 1% means we have selected those genes in top 1% of p-value. In the case of the BAT, this is the BAT connectome used in the paper. So we have the distance of each coding gene to the closest gene inside the top 1% of the BAT and SMT connectomes.
-bat_distance = pd.read_csv( \
-    "../flex_sweep_modeling/data/bat_distance/bat_data_percentile_" + str(p_value_percentile) + ".tsv",
-    sep='\t', 
-    header=0, 
-    low_memory=False)
-smt_distance = pd.read_csv( \
-    "../flex_sweep_modeling/data/smt_distance/smt_data_percentile_" + str(p_value_percentile) + ".tsv",
-    sep='\t', 
-    header=0, 
-    low_memory=False)
-print(bat_distance)
-print(smt_distance)
-
-
-print_text("merge all data.frames", header=3)
-print_text("make list with all DFs", header=4)
-list_dataframes = [ihs_yoruba_mean, ihs_yoruba_n, main_predictors, bat_distance, smt_distance]
-print(list_dataframes)
-
-
-print_text("merge all of them with reduce", header=4)
-from functools import reduce
-final_data_yoruba = reduce( \
-    lambda x, y: \
-        pd.merge( \
-            left=x, \
-            right=y, \
-            how="left", \
-            on="gene_id"), \
-    list_dataframes \
-)
-        #reduce applies a function of two arguments cumulatively to the items of a sequence, from left to right, so as to reduce the sequence to a single value. For example, reduce(lambda x, y: x+y, [1, 2, 3, 4, 5]) calculates ((((1+2)+3)+4)+5).
-        #therefore, in the first iteration, we merge the first DF of the list (left) with the second (right). The resulting DF (left) is then merged with the third DF (right), and so on....
-        #the first DF is going to be the original dataset with flex-sweep probability and most of predictors, therefore using left we ensure we use only those rows with gene_id in the original DF.
-            #in any case, we should not have NA for distance to BAT and SMT as these have been calculated using the original gene coordinate file, which was in turn used to calculate many of our predictors.
-print(final_data_yoruba)
-
-print_text("count the number of NANs in distance BAT and SMT genes", header=4)
-n_nans_bat = sum(final_data_yoruba["bat_distance_percentile_1"].isna())
-n_nans_smt = sum(final_data_yoruba["smt_distance_percentile_1"].isna())
-if(n_nans_bat <= (final_data_yoruba.shape[0]*0.03)) & (n_nans_smt <= (final_data_yoruba.shape[0]*0.03)):
-    print(f"We have {n_nans_bat} NANs for the distance to the closest BAT gene")
-    print(f"We have {n_nans_smt} NANs for the distance to the closest SMT gene")
-else:
-    raise ValueError("ERROR: FALSE! WE HAVE MORE THAN 3% OF NANs FOR DISANCE TO INTEREST GENES")
-
-print_text("remove NANs", header=4)
-final_data_yoruba = final_data_yoruba.dropna()
-print(final_data_yoruba)
-
-print_text("save the data", header=4)
-final_data_yoruba.to_csv( \
-    "/home/dftortosa/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating_heavy_analyses/dating_climate_adaptation/ihs_modeling/data/YRID_modeling_dataset_v1.tsv.gz", \
-    sep="\t", \
-    compression="gzip", \
-    index=False \
+    header=0 \
 )
 
 
@@ -1578,7 +1482,7 @@ if(not os.path.exists(path_final_results)):
         header=True, \
         index=False)
 else:
-    results_df.iloc.to_csv( \
+    results_df.to_csv( \
         path_final_results, \
         mode="a", \
         sep='\t', \
@@ -1587,15 +1491,7 @@ else:
     #To append the DataFrame to an existing CSV file, you can use the mode='a' and header=False parameters in the to_csv method. We avoid the header because it is already there.
 
 
-
-##########
-# FINISH #
-##########
-print_text("finish", header=1)
-#chmod +x ./scripts/01_models_benchmark.py; ./scripts/01_models_benchmark.py --model_name="elastic_net" > ./scripts/01_models_benchmark.out 2>&1
-
-
-##THIS IS TOO SLOW DUE TO THE NEURAL NETWORKS, ALL MODELS FINISH EXCEPT NEURAL NETS. FROM THE MODELS FINSHED, XGBOOS IS THE BEST, AND ALSO HAS MUCH HIGHE R2 THAN WHAT I SAW WITH OPTUNA AND DEEP NETS BEFORE. IT IS AROUND 0.7!!
+#THIS IS TOO SLOW DUE TO THE NEURAL NETWORKS, ALL MODELS FINISH EXCEPT NEURAL NETS. FROM THE MODELS FINSHED, XGBOOS IS THE BEST, AND ALSO HAS MUCH HIGHE R2 THAN WHAT I SAW WITH OPTUNA AND DEEP NETS BEFORE. IT IS AROUND 0.7!!
 #MAYBE IT WOULD BE A GOOD IDEA TO DO THE BENCHMARK USING RMSE INSTEAD R2, you used RMSE for the fine tuning of the selected model class (i.e., XGBOOST; 03_explore_selected_model_class.py).
 
 
@@ -1603,4 +1499,11 @@ print_text("finish", header=1)
     #if you would wanted to move foward you could even use the simulation data of the MDR revision and BAT distance as a factor and model with xgboost to check that neutral simulations do not get the same results.
 
 # endregion
+
+
+##########
+# FINISH #
+##########
+print_text("finish", header=1)
+#chmod +x ./scripts/01_models_benchmark.py; ./scripts/01_models_benchmark.py --model_name="elastic_net" > ./scripts/01_models_benchmark.out 2>&1
 

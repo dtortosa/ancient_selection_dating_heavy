@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.10
+#!/usr/bin/env python3
 # coding: utf-8
     #to run this script: chmod +x script.py; ./script.py
     #!/bin/sh does not work with my terminal en msi of David.
