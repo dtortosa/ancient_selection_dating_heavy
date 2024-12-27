@@ -16,8 +16,18 @@
 ######## COMPARE DIFFERENT MODELS IN PREDICTION ########
 ########################################################
 
-#This script will perform model comparison for analysing flex-sweep probabilities 
+#This script will perform model comparison for analysing iHS.
+#We used as reference the script for model comparison in flex-sweep:
+    #"/home/dftortosa/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating_heavy_analyses/dating_climate_adaptation/flex_sweep_modeling/scripts/01_models_benchmark.py" 
 
+#The idea is to get a sense of the best model for iHS using Yoruba as reference, then deploy in the rest of populations. Ideally, if we can do the modelling and exploration of result fast and automatic enough, we could apply across the 26 pops for which we have average iHS across gene windows. Then check increases of selection in cold regions for BAT. Finally, check whether CVD markers in combat_genes show more signals of association in BAT closing the circle (we are not going to look for the sense of the selection and associaton of alleles).
+
+
+
+
+##############################
+#region INITIAL STEPS ########
+##############################
 
 
 ########################################
@@ -114,6 +124,31 @@ run_bash("ls")
 
 
 
+#######################################
+# Passing arguments of python program #
+#######################################
+
+#define input arguments to be passed when running this script in bash
+import sys
+import argparse
+parser=argparse.ArgumentParser()
+parser.add_argument("--model_name", type=str, default="elastic_net", help="Selected model. Integer string, None does not work!")
+    #type=str to use the input as string
+    #type=int converts to integer
+    #default is the default value when the argument is not passed
+args=parser.parse_args()
+    #https://docs.python.org/3/library/argparse.html
+
+#get the arguments of the function that have been passed through command line
+model_name = args.model_name
+
+
+
+############################
+# starting with the script #
+############################
+print_text("starting with model " + str(model_name), header=1)
+
 
 
 ##########################
@@ -146,18 +181,20 @@ np.random.seed(seed_value)
 
 
 print_text("Set the `tensorflow` pseudo-random generator at a fixed value", header=2)
-import tensorflow as tf
+import tensorflow as tf # type: ignore
 tf.random.set_seed(seed_value)
 
 
-print_text("Configure a new global `tensorflow` session", header=2)
-session_conf = tf.compat.v1.ConfigProto( \
-    intra_op_parallelism_threads=1,  \
-    inter_op_parallelism_threads=1)
-sess = tf.compat.v1.Session( \
-    graph=tf.compat.v1.get_default_graph(), \
-    config=session_conf)
-tf.compat.v1.keras.backend.set_session(sess)
+print_text("Configure a new global `tensorflow` session: NOT DOING IT", header=2)
+#we are not running this because it gets me an error, we will see if we can run tensorflow without this
+if False:
+    session_conf = tf.compat.v1.ConfigProto( \
+        intra_op_parallelism_threads=1,  \
+        inter_op_parallelism_threads=1)
+    sess = tf.compat.v1.Session( \
+        graph=tf.compat.v1.get_default_graph(), \
+        config=session_conf)
+    tf.compat.v1.keras.backend.set_session(sess)
 
 
 
@@ -173,43 +210,78 @@ run_bash(" \
         ./results/model_comparison/individual_results; \
     ls -l ./results")
 
+# endregion
 
 
 
 
-####################
-# data preparation #
-####################
+
+
+##################################
+# region data preparation ########
+##################################
 print_text("data preparation", header=1)
 print_text("Set the window size selected for those variables that are calculated within windows centered around genes", header=2)
 gene_window_size = "1000kb"
+    #see MDR paper about window selection and why we focused in 1000kb gene windows
 print(f"The selected window size is {gene_window_size}")
 
 
 
-
 print_text("load and clean input data", header=2)
-print_text("load flex-sweep probability and most predictors into pandas", header=3)
+print_text("load mean iHS and number of data points", header=3)
+#ihs is the response
+response="mean_ihs_" + gene_window_size
+print(f"The response is {response}")
 import pandas as pd
-final_data_yoruba_raw = pd.read_csv( \
-    "./data/flex_sweep_closest_window_center.txt.gz", \
+ihs_yoruba_mean = pd.read_csv( \
+    "../../../method_deep_heavy_analyses/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/YRID_mean_ihs_gene_windows_final_v1.txt.gz", \
+    sep="\t", \
+    header=0, \
+    low_memory=False, \
+    compression="gzip").loc[:,["gene_id", response]]
+print(ihs_yoruba_mean)
+ihs_yoruba_n = pd.read_csv( \
+    "../../../method_deep_heavy_analyses/ihs_deep_learning/ihs_calculation/results/mean_ihs_gene_windows/YRID_n_ihs_gene_windows_final_v1.txt.gz", \
+    sep="\t", \
+    header=0, \
+    low_memory=False, \
+    compression="gzip").loc[:,["gene_id", "n_ihs_"+gene_window_size]]
+print(ihs_yoruba_n)
+
+
+print_text("load flex-sweep probability and most predictors into pandas", header=3)
+#we will not use flexsweep just the predictors
+import pandas as pd
+exclude_columns = ["predicted_class", "prob(sweep)", "number_thermogenic_1000kb", "number_vips_1000kb"]
+main_predictors = pd.read_csv( \
+    "../flex_sweep_modeling/data/flex_sweep_closest_window_center.txt.gz", \
     sep=",", \
     header=0, \
     low_memory=False, \
-    compression="gzip")
-print(final_data_yoruba_raw)
-
+    compression="gzip", \
+    usecols=lambda column: column not in exclude_columns
+)
+    #usecols is a parameter of the pd.read_csv function that specifies which columns to read from the CSV file.
+    #lambda column: column not in exclude_columns is a lambda function that takes a column name as input and returns True if the column name is not in the exclude_columns list, and False otherwise.
+    #When pd.read_csv is called with this lambda function as the usecols parameter, it will include only the columns for which the lambda function returns True.
+#check we have removed the flexsweep columns
+if(len([col for col in exclude_columns if col in main_predictors.columns]) !=0):
+    raise ValueError("ERROR: FALSE! WE HAVE NOT EXCLUDED THE COLUMNS WE WANTED TO EXCLUDE")
+else:
+    print(main_predictors)
 
 
 print_text("load BAT and SMT data, only 1% percentile for now", header=3)
 p_value_percentile = 1
+#the 1% means we have selected those genes in top 1% of p-value. In the case of the BAT, this is the BAT connectome used in the paper. So we have the distance of each coding gene to the closest gene inside the top 1% of the BAT and SMT connectomes.
 bat_distance = pd.read_csv( \
-    "./data/bat_distance/bat_data_percentile_" + str(p_value_percentile) + ".tsv",
+    "../flex_sweep_modeling/data/bat_distance/bat_data_percentile_" + str(p_value_percentile) + ".tsv",
     sep='\t', 
     header=0, 
     low_memory=False)
 smt_distance = pd.read_csv( \
-    "./data/smt_distance/smt_data_percentile_" + str(p_value_percentile) + ".tsv",
+    "../flex_sweep_modeling/data/smt_distance/smt_data_percentile_" + str(p_value_percentile) + ".tsv",
     sep='\t', 
     header=0, 
     low_memory=False)
@@ -219,7 +291,7 @@ print(smt_distance)
 
 print_text("merge all data.frames", header=3)
 print_text("make list with all DFs", header=4)
-list_dataframes = [final_data_yoruba_raw, bat_distance, smt_distance]
+list_dataframes = [ihs_yoruba_mean, ihs_yoruba_n, main_predictors, bat_distance, smt_distance]
 print(list_dataframes)
 
 
@@ -232,13 +304,13 @@ final_data_yoruba = reduce( \
             right=y, \
             how="left", \
             on="gene_id"), \
-    list_dataframes)
+    list_dataframes \
+)
         #reduce applies a function of two arguments cumulatively to the items of a sequence, from left to right, so as to reduce the sequence to a single value. For example, reduce(lambda x, y: x+y, [1, 2, 3, 4, 5]) calculates ((((1+2)+3)+4)+5).
         #therefore, in the first iteration, we merge the first DF of the list (left) with the second (right). The resulting DF (left) is then merged with the third DF (right), and so on....
         #the first DF is going to be the original dataset with flex-sweep probability and most of predictors, therefore using left we ensure we use only those rows with gene_id in the original DF.
             #in any case, we should not have NA for distance to BAT and SMT as these have been calculated using the original gene coordinate file, which was in turn used to calculate many of our predictors.
 print(final_data_yoruba)
-
 
 print_text("count the number of NANs in distance BAT and SMT genes", header=4)
 n_nans_bat = sum(final_data_yoruba["bat_distance_percentile_1"].isna())
@@ -249,75 +321,25 @@ if(n_nans_bat <= (final_data_yoruba.shape[0]*0.03)) & (n_nans_smt <= (final_data
 else:
     raise ValueError("ERROR: FALSE! WE HAVE MORE THAN 3% OF NANs FOR DISANCE TO INTEREST GENES")
 
-
 print_text("remove NANs", header=4)
 final_data_yoruba = final_data_yoruba.dropna()
 print(final_data_yoruba)
 
-
-
-
-'''
-print_text("clean predicted class", header=3)
-if FALSE:
-    #if you want to do classification, you have to calculate the number of sweeps based on the probability and then convert "predicted_class" to 0-1 integer
-    final_data_yoruba["predicted_class"] = ["neutral" if prob < 0.5 else "sweep" for prob in final_data_yoruba["prob(sweep)"]]
-    decode_response = {"predicted_class": {"neutral": 0, "sweep": 1}}
-    final_data_yoruba = final_data_yoruba.replace(decode_response)
-       #https://pbpython.com/categorical-encoding.html
-    final_data_yoruba["predicted_class"]=final_data_yoruba["predicted_class"].astype("int")
-        #https://stackoverflow.com/questions/41925157/logisticregression-unknown-label-type-continuous-using-sklearn-in-python
-    #discrete is not bad! but regression seems to work better and we avoid issues related to dicomitize a continuous variable and using an arbitrary threshold.
-        #results RandomForestRegressor in CV - 5 fold
-            #accuracy: array([0.80921584, 0.81601294, 0.82531338, 0.82248281, 0.82207845]),
-            #precision: array([0.78202677, 0.80529301, 0.82278481, 0.77163904, 0.81785714]),
-            #recall: array([0.53324641, 0.54755784, 0.57667934, 0.57084469, 0.57537688]),
-            #f1: array([0.63410853, 0.65187452, 0.6780924 , 0.65622553, 0.67551622])}
-        #results RandomForestRegressor in the test set
-            #accuracy = 0.8479948253557568
-            #precision = 0.8280346820809249
-            #recall = 0.6201298701298701
-            #f1 = 0.7091584158415841
-        #explanation about metrics
-            #accuracy does not work very well for imbalanced datasets like ours, we have 1/3 of sweeps compared to non-sweeps.
-            #precision minimice false positives
-            #recall minimize false negative
-            #f1 is the harmomic average of precision and recall, so if any of the two parameters is low, the average will be much lower than it was an aritmetic or geometric average. 
-                #this is useful if you want to minimize both false negatives and positives
-                #https://towardsdatascience.com/essential-things-you-need-to-know-about-f1-score-dbd973bf1a3
-                #https://stephenallwright.com/good-f1-score/
-        #Interpretation
-            #Overall we are OK: f1 value around 0.6 is OK but not good (pasable)! 
-                #https://stephenallwright.com/good-f1-score/
-            #we do not have a higher f1 because recall is lower than precision, i.e., we are not minimizing false negatives as much as false positives.
-            #in other words, we have more sweeps that are classified as non-sweeps than neutral classified as sweep.
-                #you can also see this with the continuous variable because there is more error in the prediction of strong sweeps candidates (log probability equal to zero).
-        #setting the threshold at 0.75 make recall worse. Also not sure if using the prediciton improvement is a good a idea to select the threshold.
-            #https://stats.stackexchange.com/a/94044
-        #this is not too bad, but regression gets better results and we avoid the use of arbitrary thresholds for classification
-'''
-
+print_text("save the data", header=4)
+final_data_yoruba.to_csv( \
+    "/home/dftortosa/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating_heavy_analyses/dating_climate_adaptation/ihs_modeling/data/YRID_modeling_dataset_v1.tsv.gz", \
+    sep="\t", \
+    compression="gzip", \
+    index=False \
+)
 
 
 print_text("clean the data", header=3)
 print_text("exclude some columns we are not interested in", header=4)
-columns_to_exclude = [ \
-    "gene_id", \
-    "predicted_class", \
-    "number_thermogenic_1000kb", \
-    "number_vips_1000kb"]
+columns_to_exclude = ["gene_id"]
 final_data_yoruba_subset = final_data_yoruba[[column for column in final_data_yoruba.columns if column not in columns_to_exclude]]
 print(final_data_yoruba_subset)
 print(f"Columns excluded: {columns_to_exclude}")
-
-
-print_text("put the response as first column", header=4)
-response_name = "prob(sweep)"
-first_column = final_data_yoruba_subset.pop(response_name)
-final_data_yoruba_subset.insert(0, response_name, first_column)
-    #https://www.geeksforgeeks.org/how-to-move-a-column-to-first-position-in-pandas-dataframe/
-print(final_data_yoruba_subset)
-
 
 print_text("make deep copy of the data to do further operations", header=4)
 modeling_data = final_data_yoruba_subset.copy(deep=True)
@@ -328,7 +350,7 @@ print(modeling_data)
 
 print_text("Apply log transformation to the target variable using the original DF as source", header=4)
 import numpy as np
-modeling_data["prob(sweep)"] = final_data_yoruba_subset["prob(sweep)"].apply(lambda x: np.log(x))
+modeling_data[response] = final_data_yoruba_subset[response].apply(lambda x: np.log(x))
     #It is should be ok to apply the log before splitting the dataset. There is a problem if you use a transformation that requires learn something from the rest of the data. For example, if you scale the whole dataset, you are using the mean and sd of the whole dataset, influencing data that will be used for test. In other words, there is room for a data leak. In this case, however, log(1.5) is always 0.4, independently of the rest of the data, so I think no data leak is possible. You could do a pipeline with log but it is a little bit more complicated (see [link](https://stats.stackexchange.com/questions/402470/how-can-i-use-scaling-and-log-transforming-together)), so we leave it for now.
         #Indeed I have found people in stack exchange saying this: However, yours (i.e. np.log1p) is a simple transformation that doesn't use any learnable parameters, and it won't matter if you do it before or after the split. It's like dividing a feature by 1000. 
             #https://stats.stackexchange.com/a/456056
@@ -389,11 +411,18 @@ print_text("Explanations about the non-independence of genes", header=4)
     #Because of this, it is very important that when we want to check the impact of a selective pressure, we perform the enrichment test of David.
     #We select control genes based on the probability of selection (obtained from our model) but also at enough distance from the BAT genes.
     #In this way, we are not counting twice the same sweep
-            #maybe some BAT genes are physically close to each other?
+        #maybe some BAT genes are physically close to each other?
+
+# endregion
 
 
 
 
+
+
+########################################
+# region prepare models and HPs ########
+########################################
 
 print_text("define function to run across folds and model classes within a nested CV schema", header=1)
 print_text("prepare models and HPs", header=2)
@@ -407,8 +436,8 @@ print_text("define a dict with model instances and grids of HPs", header=3)
         #Note that the reproducibility is ensured as we have set the seeds of python, numpy and tensorflow before.
 from sklearn.linear_model import ElasticNet
 from sklearn.ensemble import RandomForestRegressor
-import xgboost as xgb
-from scikeras.wrappers import KerasRegressor
+import xgboost as xgb # type: ignore
+from scikeras.wrappers import KerasRegressor # type: ignore
 dict_models = { \
     "elastic_net": {"instance": "ElasticNet()"}, \
     "random_forest": {"instance": "RandomForestRegressor()"}, \
@@ -809,22 +838,23 @@ print("define a function to generate DNNs to be used in scikeras. This will be a
 #First, we are going to create a function to get the keras models. This function will be in turn used as input in scikeras.KerasRegressor().
     #https://coderzcolumn.com/tutorials/artificial-intelligence/scikeras-give-scikit-learn-like-api-to-your-keras-networks#1
     #https://www.adriangb.com/scikeras/stable/quickstart.html
-from tensorflow.keras.layers import Dropout
-from tensorflow.keras.constraints import MaxNorm
-from tensorflow.keras import regularizers
+from tensorflow.keras.layers import Dropout # type: ignore
+from tensorflow.keras.constraints import MaxNorm # type: ignore
+from tensorflow.keras import regularizers # type: ignore
 def get_neural_reg(meta, n_layers, n_units, activation, init_mode, dropout_rate, weight_constraint, regu_L1, regu_L2):
     #note that meta is a dict with input metadata. I think this generated by KerasRegressor automatically once the input data is included
     
     #we import keras inside the function to avoid problems with parallelization
-    from tensorflow import keras
+    from tensorflow import keras # type: ignore
         #https://stackoverflow.com/questions/42504669/keras-tensorflow-and-multiprocessing-in-python/42506478#42506478
 
     #start the sequential model
     model = keras.Sequential()
     
     #add the input layer
-    model.add(keras.layers.Input(shape=(meta["n_features_in_"])))
+    model.add(keras.layers.Input(shape=(meta["n_features_in_"],)))
         #input shape obtained from meta, a dict containing input metadata
+        #The error you're encountering indicates that the shape provided to the Input layer is not in the correct format. The shape parameter should be a tuple, even if it contains only one dimension.
 
     #for each of the layer sizes we have
     for i in range(n_layers):
@@ -1229,8 +1259,16 @@ print(dict_models["neural_nets"])
         # We are going to apply the same dropout rate for all inner layers. Once we have an optimized architecture, we can try to improve it by setting the dropout only in specific layers.
         #remove Dropout and add batch normalization?
 
+# endregion
 
 
+
+
+
+
+###################################
+# region prepare CV scheme ########
+###################################
 
 print_text("prepare CV scheme", header=2)
 #It is VERY important that we avoid overfitting given the use we are going to make of the models.
@@ -1310,8 +1348,16 @@ print("Do we have the correct number of splits*models combinations?")
 print(len(indexes_cv_outer) == cv_outer.n_splits * len(dict_models.keys()))
     #that number should be the number of splits times the number of model classes
     
+#endregion
 
 
+
+
+
+
+#################################################################
+# region Define function and run it only for elastic net ########
+#################################################################
 
 print_text("Define function and run it only for elastic net", header=2)
 from sklearn.pipeline import Pipeline
@@ -1480,19 +1526,30 @@ def model_evaluation(split, train_index, test_index, model_class):
 #run it in 1 split for random forest
 #[model_evaluation(*i) for i in indexes_cv_outer if (i[3]=="xgboost") & (i[0]==0)]
 
+# endregion
 
 
+
+
+
+
+##########################################
+# region parallelize the function ########
+##########################################
 
 print_text("parallelize the function", header=2)
 print_text("open pool with as many cores as splits*model class combinations we have", header=3)
 import multiprocessing as mp
-pool = mp.Pool(len(indexes_cv_outer))
+#parallelize across CV outer splits we have
+pool = mp.Pool(cv_outer.n_splits)
 print(pool)
     #40 splits*model classes combinations multiplied by 10 jobs/combination = 400 cores 
 
 
 print_text("run the function using starmap, which is useful to apply function across iterable whose elements are in turn also iterables storing arguments (tuples in our case)", header=3)
-results = pool.starmap(model_evaluation, indexes_cv_outer)
+#results = pool.starmap(model_evaluation, indexes_cv_outer)
+indexes_cv_outer_subset = [i for i in indexes_cv_outer if i[3]==model_name]
+results = pool.starmap(model_evaluation, indexes_cv_outer_subset)
     #map: Apply `func` to each element in `iterable`, collecting the results in a list that is returned
     #starmap: Like `map()` method but the elements of the `iterable` are expected to be iterables as well and will be unpacked as arguments. Hence `func` and (a, b) becomes func(a, b).
         #this is our case, as we have a list of tuples. Therefore, each element of the iterable (list) is in turn another iterable (tuple).
@@ -1501,6 +1558,8 @@ results = pool.starmap(model_evaluation, indexes_cv_outer)
         #https://discuss.python.org/t/differences-between-pool-map-pool-apply-and-pool-apply-async/6575
 print(results)
 
+#close the pool
+pool.close()
 
 
 print_text("convert the list of results to DF", header=3)
@@ -1510,11 +1569,38 @@ print(results_df)
 
 
 print_text("save the table", header=3)
-results_df.to_csv( \
-    "./results/model_comparison/model_class_selection_yoruba_hg19.tsv", \
-    sep='\t', \
-    header=True, \
-    index=False)
+import os
+path_final_results = "./results/model_comparison/model_class_selection_yoruba_hg19.tsv"
+if(not os.path.exists(path_final_results)):
+    results_df.to_csv( \
+        path_final_results, \
+        sep='\t', \
+        header=True, \
+        index=False)
+else:
+    results_df.iloc.to_csv( \
+        path_final_results, \
+        mode="a", \
+        sep='\t', \
+        header=False, \
+        index=False)
+    #To append the DataFrame to an existing CSV file, you can use the mode='a' and header=False parameters in the to_csv method. We avoid the header because it is already there.
+
+
+
+##########
+# FINISH #
+##########
+print_text("finish", header=1)
+#chmod +x ./scripts/01_models_benchmark.py; ./scripts/01_models_benchmark.py --model_name="elastic_net" > ./scripts/01_models_benchmark.out 2>&1
+
 
 ##THIS IS TOO SLOW DUE TO THE NEURAL NETWORKS, ALL MODELS FINISH EXCEPT NEURAL NETS. FROM THE MODELS FINSHED, XGBOOS IS THE BEST, AND ALSO HAS MUCH HIGHE R2 THAN WHAT I SAW WITH OPTUNA AND DEEP NETS BEFORE. IT IS AROUND 0.7!!
 #MAYBE IT WOULD BE A GOOD IDEA TO DO THE BENCHMARK USING RMSE INSTEAD R2, you used RMSE for the fine tuning of the selected model class (i.e., XGBOOST; 03_explore_selected_model_class.py).
+
+
+#WHEN YOU ARE DONE HERE, you can re-run the best model on the subset of non-overlapped 1000Kb windows used in the MDR revision to confirm non-independence of the genes is not affecting our results, although probably not worth it.
+    #if you would wanted to move foward you could even use the simulation data of the MDR revision and BAT distance as a factor and model with xgboost to check that neutral simulations do not get the same results.
+
+# endregion
+

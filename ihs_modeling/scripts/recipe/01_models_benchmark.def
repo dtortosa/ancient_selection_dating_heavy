@@ -96,7 +96,10 @@ From: ubuntu:20.04 #When using the library bootstrap agent, the From keyword bec
 
 	#python3.9 -m pip install future #the "-m" flag search for the last version of the package.
 	python3.9 -m pip install xgboost
-	python3.9 -m pip install scikit-learn
+	python3.9 -m pip install scikit-learn==1.5.2
+	#python3.9 -m pip install scikit-learn 
+		#we avoid the newest version because our regressors are not yet updated for recent changes in scikit learn
+		#https://stackoverflow.com/questions/79290968/super-object-has-no-attribute-sklearn-tags
 	python3.9 -m pip install eli5
 	python3.9 -m pip install tensorflow
 	python3.9 -m pip install scikeras
