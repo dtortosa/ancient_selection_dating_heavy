@@ -8,4 +8,4 @@ sbatch ./slurm_files/01_models_benchmark_neural_nets.slurm;
 n_jobs=$(squeue -u dsalazar | awk '{if(NR!=1){count++}}END{print count}')
 echo 'WE HAVE ' $n_jobs ' jobs'
 #to stop all jobs #squeue -u dsalazar | awk '{if(NR!=1){print $1}}' | xargs scancel
-#chmod +x 00b_master_bash_script.sh; ./00b_master_bash_script.sh > 00b_master_bash_script.out 2>&1
+#chmod +x ./00b_master_bash_script.sh; ./00b_master_bash_script.sh > 00b_master_bash_script.out 2>&1

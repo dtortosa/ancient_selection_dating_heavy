@@ -160,8 +160,8 @@ for model in list_models:
         #SBATCH --partition=albaicin \n \
         ### REQUIRED. Set the number of cores and nodes that will be used for this job. It seems that each node has 56 cores, so you have to adjust accordingly \n \
         #SBATCH --nodes=1 \n \
-        #SBATCH --ntasks=10 \n \
-        #SBATCH --ntasks-per-node=10 \n \
+        #SBATCH --ntasks=50 \n \
+        #SBATCH --ntasks-per-node=50 \n \
         ### OPTIONAL. You can set the number of cores per task. This can be useful for scripts in which inside the parallelized process there are other subprocesses. For example, you run 22 independent processes for each chromosome and then you also parallelize the calculations inside each chromosome (https://stackoverflow.com/a/51141287) \n \
         #SBATCH --cpus-per-task=1 \n \
         ### REQUIRED. Set the memory required for this job. I will set 40GC per each of the 100 cores=4000GB; https://public.confluence.arizona.edu/display/UAHPC/Allocation+and+Limits \n \
@@ -171,7 +171,7 @@ for model in list_models:
         ### set the constraint for high memory nodes in case you use a lot of memory per node. Normal nodes have a 512Gb limit. \n \
         ###SBATCH --constraint=hi_mem \n \
         ### REQUIRED. Specify the time required for this job, hhh:mm:ss \n \
-        #SBATCH --time=24:00:00 \n \
+        #SBATCH --time=72:00:00 \n \
         # -------------------------------------------------------------- \n \
         ### PART 2: Executes bash commands to run your job \n \
         # -------------------------------------------------------------- \n \
@@ -210,7 +210,7 @@ print_text("add check", header=2)
 bash_string = bash_string+"\nn_jobs=$(squeue -u dsalazar | awk '{if(NR!=1){count++}}END{print count}')\n"
 bash_string = bash_string+"echo 'WE HAVE ' $n_jobs ' jobs'\n"
 bash_string = bash_string+"#to stop all jobs #squeue -u dsalazar | awk '{if(NR!=1){print $1}}' | xargs scancel\n"
-bash_string = bash_string+"#chmod +x 00_master_bash.sh; ./00_master_bash.sh > 00_master_bash.out 2>&1\n" 
+bash_string = bash_string+"#chmod +x ./00b_master_bash_script.sh; ./00b_master_bash_script.sh > 00b_master_bash_script.out 2>&1\n" 
 
 print_text("see bash script", header=2)
 print(bash_string)

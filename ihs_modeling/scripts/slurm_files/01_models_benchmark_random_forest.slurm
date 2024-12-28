@@ -17,8 +17,8 @@
 #SBATCH --partition=albaicin 
 ### REQUIRED. Set the number of cores and nodes that will be used for this job. It seems that each node has 56 cores, so you have to adjust accordingly 
 #SBATCH --nodes=1 
-#SBATCH --ntasks=10 
-#SBATCH --ntasks-per-node=10 
+#SBATCH --ntasks=50 
+#SBATCH --ntasks-per-node=50 
 ### OPTIONAL. You can set the number of cores per task. This can be useful for scripts in which inside the parallelized process there are other subprocesses. For example, you run 22 independent processes for each chromosome and then you also parallelize the calculations inside each chromosome (https://stackoverflow.com/a/51141287) 
 #SBATCH --cpus-per-task=1 
 ### REQUIRED. Set the memory required for this job. I will set 40GC per each of the 100 cores=4000GB; https://public.confluence.arizona.edu/display/UAHPC/Allocation+and+Limits 
@@ -28,7 +28,7 @@
 ### set the constraint for high memory nodes in case you use a lot of memory per node. Normal nodes have a 512Gb limit. 
 ###SBATCH --constraint=hi_mem 
 ### REQUIRED. Specify the time required for this job, hhh:mm:ss 
-#SBATCH --time=24:00:00 
+#SBATCH --time=72:00:00 
 # -------------------------------------------------------------- 
 ### PART 2: Executes bash commands to run your job 
 # -------------------------------------------------------------- 
