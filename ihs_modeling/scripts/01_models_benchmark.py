@@ -1281,7 +1281,6 @@ from sklearn.metrics import r2_score
             #We know that the three first model classes can be run fast, so we should not have any problem using optuna with them.
             #Maybe we could increase the number of iterations/processes for DNNs if we use more HPs.
         #Reduce the list of HPs in DNNs and also use optuna for all model classes
-n_jobs=5 #number of jobs inside gridsearch
 def model_evaluation(split, train_index, test_index, model_class):
 
     print_text(f"Starting with split: {split}, model: {model_class}", header=3)
@@ -1332,7 +1331,7 @@ def model_evaluation(split, train_index, test_index, model_class):
     print(space)
     
     print_text("set the number of jobs", header=4)
-    n_jobs=n_jobs
+    n_jobs=5 #number of jobs inside gridsearch
     pre_dispatch_value="1*n_jobs" 
         #pre_dispatch_value="1*n_jobs" to avoid memory explosion, see below function help
         #When running optuna on Yoruba for first time I had to reduce the number of jobs
@@ -1446,7 +1445,7 @@ print_text("parallelize the function", header=2)
 print_text("open pool with as many cores as splits*model class combinations we have", header=3)
 import multiprocessing as mp
 #parallelize across CV outer splits we have
-pool = mp.Pool(cv_outer.n_splits*n_jobs)
+pool = mp.Pool(cv_outer.n_splits*5)
 print(pool)
     #10 splits in each model class multipled by 5 jobs as we do n_jobs=5 in grid searchCV within each of the 10 training-test sets. This makes 50, which is below the 56 cores we get in a node of albaicin.
 
