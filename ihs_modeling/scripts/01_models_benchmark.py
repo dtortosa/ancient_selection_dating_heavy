@@ -1491,6 +1491,9 @@ else:
     #To append the DataFrame to an existing CSV file, you can use the mode='a' and header=False parameters in the to_csv method. We avoid the header because it is already there.
 
 
+#IF AFTER 3 DAYS XGBOOST AND NEURAL NETS NOT FINISHED: solve the n_jobs waninrg. It seems you cannot parallelize gridsearchCV within pool, so just add an additional argument, the partition number and create 10 slurm files per model (xgboost and neural nets only), so you can run each partition separately and do n_jobs=5 within each one.
+
+
 #THIS IS TOO SLOW DUE TO THE NEURAL NETWORKS, ALL MODELS FINISH EXCEPT NEURAL NETS. FROM THE MODELS FINSHED, XGBOOS IS THE BEST, AND ALSO HAS MUCH HIGHE R2 THAN WHAT I SAW WITH OPTUNA AND DEEP NETS BEFORE. IT IS AROUND 0.7!!
 #MAYBE IT WOULD BE A GOOD IDEA TO DO THE BENCHMARK USING RMSE INSTEAD R2, you used RMSE for the fine tuning of the selected model class (i.e., XGBOOST; 03_explore_selected_model_class.py).
 
