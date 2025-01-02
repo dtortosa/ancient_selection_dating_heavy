@@ -131,66 +131,75 @@ print_text("list of models", header=2)
 list_models = ["elastic_net", "random_forest", "xgboost", "neural_nets"]
 print(list_models)
 
+print_text("list of CV partitions", header=2)
+cv_iterations = range(0,10)
+print(list(cv_iterations))
+
 print_text("loop", header=2)
 #model=list_models[0]
+#iterate across models
 for model in list_models:
 
     #print the model
     print_text(model, header=3)
 
-    #create a string
-    print_text("create the string", header=3)
-    string_to_write = " \
-        #!/bin/bash \n \
-        # -------------------------------------------------------------- \n \
-        ### PART 1: Requests resources to run your job. \n \
-        # -------------------------------------------------------------- \n \
-        ###info about slurm commands: https://slurm.schedmd.com/pdfs/summary.pdf \n \
-        ### Optional. Set the job name \n \
-        #SBATCH --job-name=01_models_benchmark_" + model + " \n \
-        ### Optional. Set the output filename. \n \
-        ### SLURM reads %x as the job name and %j as the job ID \n \
-        #SBATCH --output=%x-%j.out \n \
-        #SBATCH --error=%x-%j.err \n \
-        ### Optional. Request email when job begins and ends \n \
-        ### SBATCH --mail-type=ALL \n \
-        ### Optional. Specify email address to use for notification \n \
-        ### SBATCH --mail-user=dftortosa@gmail.com \n \
-        ### REQUIRED. Set the partition for your job. \n \
-        #SBATCH --partition=albaicin \n \
-        ### REQUIRED. Set the number of cores and nodes that will be used for this job. It seems that each node has 56 cores, so you have to adjust accordingly \n \
-        #SBATCH --nodes=1 \n \
-        #SBATCH --ntasks=50 \n \
-        #SBATCH --ntasks-per-node=50 \n \
-        ### OPTIONAL. You can set the number of cores per task. This can be useful for scripts in which inside the parallelized process there are other subprocesses. For example, you run 22 independent processes for each chromosome and then you also parallelize the calculations inside each chromosome (https://stackoverflow.com/a/51141287) \n \
-        #SBATCH --cpus-per-task=1 \n \
-        ### REQUIRED. Set the memory required for this job. I will set 40GC per each of the 100 cores=4000GB; https://public.confluence.arizona.edu/display/UAHPC/Allocation+and+Limits \n \
-        ###SBATCH --mem=400gb \n \
-        ### REQUIRED. Set the gb per core. YOU HAVE TO SELECT --mem or --mem-per-cpu but NOT BOTH. If you get a .core file, this usually means that the program fails because it asked for too much memory, so it creates a record of the working memory at the time that can be used for debugging. MPI jobs will usually create a core file for each task. You should increase memory limits (https://researchcomputing.princeton.edu/support/knowledge-base/memory). \n \
-        #SBATCH --mem-per-cpu=3gb \n \
-        ### set the constraint for high memory nodes in case you use a lot of memory per node. Normal nodes have a 512Gb limit. \n \
-        ###SBATCH --constraint=hi_mem \n \
-        ### REQUIRED. Specify the time required for this job, hhh:mm:ss \n \
-        #SBATCH --time=72:00:00 \n \
-        # -------------------------------------------------------------- \n \
-        ### PART 2: Executes bash commands to run your job \n \
-        # -------------------------------------------------------------- \n \
-        module load singularity \n \
-        ### change to your script directory \n \
-        cd /home/UGR002/dsalazar/climahealth/ihs_modeling \n \
-            #/home is the stable directory, while scratch is where results of analyses can be stored temporary, as stuff gets removed after 20 days \n \
-        ### Run your work \n \
-        singularity exec ./containers/01_models_benchmark.sif ./scripts/01_models_benchmark.py --model_name='" + model + "' > ./scripts/01_models_benchmark_" + model + ".out 2>&1"
+    #iterate across CV iterations
+    #iteration=0
+    for iteration in cv_iterations:
+        
+        #create a string
+        print_text("create the string", header=3)
+        string_to_write = " \
+            #!/bin/bash \n \
+            # -------------------------------------------------------------- \n \
+            ### PART 1: Requests resources to run your job. \n \
+            # -------------------------------------------------------------- \n \
+            ###info about slurm commands: https://slurm.schedmd.com/pdfs/summary.pdf \n \
+            ### Optional. Set the job name \n \
+            #SBATCH --job-name=01_models_benchmark_" + model + "_cv_partition_" + str(iteration) + " \n \
+            ### Optional. Set the output filename. \n \
+            ### SLURM reads %x as the job name and %j as the job ID \n \
+            #SBATCH --output=%x-%j.out \n \
+            #SBATCH --error=%x-%j.err \n \
+            ### Optional. Request email when job begins and ends \n \
+            ### SBATCH --mail-type=ALL \n \
+            ### Optional. Specify email address to use for notification \n \
+            ### SBATCH --mail-user=dftortosa@gmail.com \n \
+            ### REQUIRED. Set the partition for your job. \n \
+            #SBATCH --partition=albaicin \n \
+            ### REQUIRED. Set the number of cores and nodes that will be used for this job. It seems that each node has 56 cores, so you have to adjust accordingly \n \
+            #SBATCH --nodes=1 \n \
+            #SBATCH --ntasks=56 \n \
+            #SBATCH --ntasks-per-node=56 \n \
+            ### OPTIONAL. You can set the number of cores per task. This can be useful for scripts in which inside the parallelized process there are other subprocesses. For example, you run 22 independent processes for each chromosome and then you also parallelize the calculations inside each chromosome (https://stackoverflow.com/a/51141287) \n \
+            #SBATCH --cpus-per-task=1 \n \
+            ### REQUIRED. Set the memory required for this job. I will set 40GC per each of the 100 cores=4000GB; https://public.confluence.arizona.edu/display/UAHPC/Allocation+and+Limits \n \
+            ###SBATCH --mem=400gb \n \
+            ### REQUIRED. Set the gb per core. YOU HAVE TO SELECT --mem or --mem-per-cpu but NOT BOTH. If you get a .core file, this usually means that the program fails because it asked for too much memory, so it creates a record of the working memory at the time that can be used for debugging. MPI jobs will usually create a core file for each task. You should increase memory limits (https://researchcomputing.princeton.edu/support/knowledge-base/memory). \n \
+            #SBATCH --mem-per-cpu=3gb \n \
+            ### set the constraint for high memory nodes in case you use a lot of memory per node. Normal nodes have a 512Gb limit. \n \
+            ###SBATCH --constraint=hi_mem \n \
+            ### REQUIRED. Specify the time required for this job, hhh:mm:ss \n \
+            #SBATCH --time=72:00:00 \n \
+            # -------------------------------------------------------------- \n \
+            ### PART 2: Executes bash commands to run your job \n \
+            # -------------------------------------------------------------- \n \
+            module load singularity \n \
+            ### change to your script directory \n \
+            cd /home/UGR002/dsalazar/climahealth/ihs_modeling \n \
+                #/home is the stable directory, while scratch is where results of analyses can be stored temporary, as stuff gets removed after 20 days \n \
+            ### Run your work \n \
+            singularity exec ./containers/01_models_benchmark.sif ./scripts/01_models_benchmark.py --n_jobs=56 --model_name='" + model + "' --partition_number='" + str(iteration) + "' > ./scripts/01_models_benchmark_" + model + "_cv_partition_" + str(iteration) + ".out 2>&1"
 
-    print_text("remove spaces at the beginning", header=3)
-    string_to_write = string_to_write.replace("         ", "")
+        print_text("remove spaces at the beginning", header=3)
+        string_to_write = string_to_write.replace("             ", "")
 
-    print_text("Open the file in write mode", header=3)
-    with open("./scripts/slurm_files/01_models_benchmark_" + model + ".slurm", 'w') as file:
-        # Write the string to the file
-        file.write(string_to_write)
+        print_text("Open the file in write mode", header=3)
+        with open("./scripts/slurm_files/01_models_benchmark_" + model + "_cv_partition_" + str(iteration) + ".slurm", 'w') as file:
+            # Write the string to the file
+            file.write(string_to_write)
 
-    print_text("end of the model: " + model, header=3)
+        print_text("end of the model: " + model, header=3)
 
 
 
@@ -204,7 +213,12 @@ bash_string="#!/bin/bash\nchmod +x ./01_models_benchmark.py\n"
 
 print_text("add the models", header=2)
 for model in list_models:
-    bash_string=bash_string+"sbatch ./slurm_files/01_models_benchmark_"+model+".slurm;\n" 
+    for iteration in cv_iterations:
+        if (model == "xgboost") | (model == "neural_nets"): 
+            bash_string=bash_string+"sbatch ./slurm_files/01_models_benchmark_"+model+"_cv_partition_" + str(iteration) +".slurm;\n" 
+        else:
+            bash_string=bash_string+"#sbatch ./slurm_files/01_models_benchmark_"+model+"_cv_partition_" + str(iteration) +".slurm;\n" 
+            #we only want to run neural nets and xgboost in the master bash script, the rest are already run
 
 print_text("add check", header=2)
 bash_string = bash_string+"\nn_jobs=$(squeue -u dsalazar | awk '{if(NR!=1){count++}}END{print count}')\n"
@@ -231,7 +245,7 @@ n_files=run_bash(" \
     n_files=$(ls -1 | wc -l); \
     echo $n_files", return_value=True \
 ).strip()
-if(n_files!=str(len(list_models))):
+if(n_files!=str((len(list_models)*len(list(cv_iterations))))):
     raise ValueError("ERROR! FALSE! WE HAVE NOT OBTAINED JOB FILES FOR ALL models")
 
 
@@ -245,7 +259,7 @@ sbatch_appearance = run_bash(" \
     #--only-matching: show only nonempty parts of lines that match
         #we get only "sbatch" as many times as it appears even if it is repeated in the same row
         #https://stackoverflow.com/a/3249761
-if(len(sbatch_appearance)!=len(list_models)):
+if(len(sbatch_appearance)!=(len(list_models)*len(list(cv_iterations)))):
     raise ValueError("ERROR! FALSE! WE HAVE NOT OBTAINED JOB FILES FOR ALL models")
 
 

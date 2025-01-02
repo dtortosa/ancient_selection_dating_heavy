@@ -132,7 +132,9 @@ run_bash("ls")
 import sys
 import argparse
 parser=argparse.ArgumentParser()
-parser.add_argument("--model_name", type=str, default="elastic_net", help="Selected model. Integer string, None does not work!")
+parser.add_argument("--model_name", type=str, default="elastic_net", help="Selected model. String, None does not work!")
+parser.add_argument("--partition_number", type=int, default=0, help="CV partition. Integer, None does not work!")
+parser.add_argument("--n_jobs", type=int, default=5, help="Number jobs Gridsearch. Integer, None does not work!")
     #type=str to use the input as string
     #type=int converts to integer
     #default is the default value when the argument is not passed
@@ -141,13 +143,14 @@ args=parser.parse_args()
 
 #get the arguments of the function that have been passed through command line
 model_name = args.model_name
-
+partition_number = args.partition_number
+n_jobs = args.n_jobs
 
 
 ############################
 # starting with the script #
 ############################
-print_text("starting with model " + str(model_name), header=1)
+print_text("starting with model " + str(model_name) + " and partition " +  str(partition_number), header=1)
 
 
 
@@ -1281,7 +1284,7 @@ from sklearn.metrics import r2_score
             #We know that the three first model classes can be run fast, so we should not have any problem using optuna with them.
             #Maybe we could increase the number of iterations/processes for DNNs if we use more HPs.
         #Reduce the list of HPs in DNNs and also use optuna for all model classes
-def model_evaluation(split, train_index, test_index, model_class):
+def model_evaluation(split, train_index, test_index, model_class, n_jobs=5):
 
     print_text(f"Starting with split: {split}, model: {model_class}", header=3)
     print_text("split the data", header=4)
@@ -1331,7 +1334,7 @@ def model_evaluation(split, train_index, test_index, model_class):
     print(space)
     
     print_text("set the number of jobs", header=4)
-    n_jobs=5 #number of jobs inside gridsearch
+    n_jobs=n_jobs #number of jobs inside gridsearch
     pre_dispatch_value="1*n_jobs" 
         #pre_dispatch_value="1*n_jobs" to avoid memory explosion, see below function help
         #When running optuna on Yoruba for first time I had to reduce the number of jobs
@@ -1437,23 +1440,17 @@ def model_evaluation(split, train_index, test_index, model_class):
 
 
 
-##########################################
-# region parallelize the function ########
-##########################################
+#############################
+# region apply the function #
+#############################
 
-print_text("parallelize the function", header=2)
-print_text("open pool with as many cores as splits*model class combinations we have", header=3)
-import multiprocessing as mp
-#parallelize across CV outer splits we have
-pool = mp.Pool(cv_outer.n_splits*5)
-print(pool)
-    #10 splits in each model class multipled by 5 jobs as we do n_jobs=5 in grid searchCV within each of the 10 training-test sets. This makes 50, which is below the 56 cores we get in a node of albaicin.
-
-
+print_text("apply the function", header=2)
 print_text("run the function using starmap, which is useful to apply function across iterable whose elements are in turn also iterables storing arguments (tuples in our case)", header=3)
 #results = pool.starmap(model_evaluation, indexes_cv_outer)
-indexes_cv_outer_subset = [i for i in indexes_cv_outer if i[3]==model_name]
-results = pool.starmap(model_evaluation, indexes_cv_outer_subset)
+indexes_cv_outer_subset = [i for i in indexes_cv_outer if i[3]==model_name and i[0]==partition_number][0]
+    #get the 10 CV partitions for the selected model and from there select the partition number we are interested in
+results = model_evaluation(*indexes_cv_outer_subset, n_jobs=n_jobs)
+    #"*": This will unpack the values in indexes_cv_outer_subset and pass them as positional arguments to the model_evaluation function.
     #map: Apply `func` to each element in `iterable`, collecting the results in a list that is returned
     #starmap: Like `map()` method but the elements of the `iterable` are expected to be iterables as well and will be unpacked as arguments. Hence `func` and (a, b) becomes func(a, b).
         #this is our case, as we have a list of tuples. Therefore, each element of the iterable (list) is in turn another iterable (tuple).
@@ -1462,12 +1459,9 @@ results = pool.starmap(model_evaluation, indexes_cv_outer_subset)
         #https://discuss.python.org/t/differences-between-pool-map-pool-apply-and-pool-apply-async/6575
 print(results)
 
-#close the pool
-pool.close()
-
 
 print_text("convert the list of results to DF", header=3)
-results_df = pd.DataFrame(results, columns=["split", "model_class", "best_params", "score"])
+results_df = pd.DataFrame([results], columns=["split", "model_class", "best_params", "score"])
 print(results_df)
 
 
@@ -1489,9 +1483,6 @@ else:
         header=False, \
         index=False)
     #To append the DataFrame to an existing CSV file, you can use the mode='a' and header=False parameters in the to_csv method. We avoid the header because it is already there.
-
-
-#IF AFTER 3 DAYS XGBOOST AND NEURAL NETS NOT FINISHED: solve the n_jobs waninrg. It seems you cannot parallelize gridsearchCV within pool, so just add an additional argument, the partition number and create 10 slurm files per model (xgboost and neural nets only), so you can run each partition separately and do n_jobs=5 within each one.
 
 
 #THIS IS TOO SLOW DUE TO THE NEURAL NETWORKS, ALL MODELS FINISH EXCEPT NEURAL NETS. FROM THE MODELS FINSHED, XGBOOS IS THE BEST, AND ALSO HAS MUCH HIGHE R2 THAN WHAT I SAW WITH OPTUNA AND DEEP NETS BEFORE. IT IS AROUND 0.7!!
