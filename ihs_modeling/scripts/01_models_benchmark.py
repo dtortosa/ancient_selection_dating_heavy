@@ -1485,7 +1485,14 @@ else:
     #To append the DataFrame to an existing CSV file, you can use the mode='a' and header=False parameters in the to_csv method. We avoid the header because it is already there.
 
 
-#THIS IS TOO SLOW DUE TO THE NEURAL NETWORKS, ALL MODELS FINISH EXCEPT NEURAL NETS. FROM THE MODELS FINSHED, XGBOOS IS THE BEST, AND ALSO HAS MUCH HIGHE R2 THAN WHAT I SAW WITH OPTUNA AND DEEP NETS BEFORE. IT IS AROUND 0.7!!
+###TO DO
+#check the outputs and eveythign finished ok
+#check if we have eplxore too little in neural nets, but in any case, it is already the best, so exploring more could only improve. We have explored xgboost a lot, and it has been unable to beat neural nets in this case.
+#we have average ihs in gene windows across all pops, we coula just run the best neural net model in each pop, check the R2 in the whole dataset (it was trained with other data), and discar pops with low R2. Then check enrichment in BAT and thermo genes using ALE and permutation importante in the populations with interest. This will go the MSCA as this is a test specific for 60K years ago and after, which is the period we are interested in.
+#apply the
+
+
+
 #MAYBE IT WOULD BE A GOOD IDEA TO DO THE BENCHMARK USING RMSE INSTEAD R2, you used RMSE for the fine tuning of the selected model class (i.e., XGBOOST; 03_explore_selected_model_class.py).
 
 
