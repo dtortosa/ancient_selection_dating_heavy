@@ -1487,6 +1487,7 @@ else:
 
 ###TO DO
 #check the outputs and eveythign finished ok
+    #check the output files for each model and parititon, for elasit and random there is only 1
 #check if we have eplxore too little in neural nets, but in any case, it is already the best, so exploring more could only improve. We have explored xgboost a lot, and it has been unable to beat neural nets in this case.
 #we have average ihs in gene windows across all pops, we coula just run the best neural net model in each pop, check the R2 in the whole dataset (it was trained with other data), and discar pops with low R2. Then check enrichment in BAT and thermo genes using ALE and permutation importante in the populations with interest. This will go the MSCA as this is a test specific for 60K years ago and after, which is the period we are interested in.
 #apply the
