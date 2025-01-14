@@ -1,5 +1,3 @@
 # **Heavy analyses of the project about signals of climate adaptation**
 
-This repository includes pipelines performed within singularity containers.
-
-The list of metabolic genes used here was obtained in other repo: [dtortosa/ancient_selection_dating.git](https://github.com/dtortosa/ancient_selection_dating). These analyses are in different repos because I created in different directories. The analyses of this repo are done within singularity containers, which only works in my linux partition, not in my windows partition.
+This repository includes the estimate signals of adaptation across human populations and model their association with protential drivers of adaptation. To achieve that, we develope a new modeling framework to better fit the complex distribution selection signatures.
