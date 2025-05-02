@@ -16,7 +16,7 @@ ihs_eur_ranks*
 ihs_eas_ranks*
 ihs_all_ranks*
 
-
+ihs_modeling/results/
 ihs_modeling/scripts/slurm_files
 hg38_mig/scripts/00b_map_calcs_outputs
 hg38_mig/scripts/01_hap_map_calcs_outputs
