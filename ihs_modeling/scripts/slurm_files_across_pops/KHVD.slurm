@@ -24,7 +24,7 @@
 ### REQUIRED. Set the memory required for this job. I will set 40GC per each of the 100 cores=4000GB; https://public.confluence.arizona.edu/display/UAHPC/Allocation+and+Limits
 ###SBATCH --mem=400gb
 ### REQUIRED. Set the gb per core. YOU HAVE TO SELECT --mem or --mem-per-cpu but NOT BOTH. If you get a .core file, this usually means that the program fails because it asked for too much memory, so it creates a record of the working memory at the time that can be used for debugging. MPI jobs will usually create a core file for each task. You should increase memory limits (https://researchcomputing.princeton.edu/support/knowledge-base/memory).
-#SBATCH --mem-per-cpu=15gb
+#SBATCH --mem-per-cpu=20gb
 ### set the constraint for high memory nodes in case you use a lot of memory per node. Normal nodes have a 512Gb limit.
 ###SBATCH --constraint=hi_mem
 ### REQUIRED. Specify the time required for this job, hhh:mm:ss
@@ -39,4 +39,6 @@ module load singularity
 cd /home/UGR002/dsalazar/climahealth/ihs_modeling
     #/home is the stable directory, while scratch is where results of analyses can be stored temporary, as stuff gets removed after 20 days
 ### Run your work
-singularity exec ./containers/03_explore_selected_model_class.sif ./scripts/02_ihs_modeling_across_pops.py --pop_name=KHVD --n_iterations=20 > ./02_ihs_modeling_across_pops_KHVD.out 2>&1
+singularity exec ./containers/03_explore_selected_model_class.sif ./scripts/02_ihs_modeling_across_pops.py --pop_name='KHVD' --n_iterations=10 --energy_type='thermogenic' > ./02_ihs_modeling_across_pops_KHVD_thermogenic.out 2>&1
+singularity exec ./containers/03_explore_selected_model_class.sif ./scripts/02_ihs_modeling_across_pops.py --pop_name='KHVD' --n_iterations=10 --energy_type='bat' > ./02_ihs_modeling_across_pops_KHVD_bat.out 2>&1
+singularity exec ./containers/03_explore_selected_model_class.sif ./scripts/02_ihs_modeling_across_pops.py --pop_name='KHVD' --n_iterations=10 --energy_type='smt' > ./02_ihs_modeling_across_pops_KHVD_smt.out 2>&1

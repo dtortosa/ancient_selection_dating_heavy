@@ -199,7 +199,8 @@ import sys
 import argparse
 parser=argparse.ArgumentParser()
 parser.add_argument("--pop_name", type=str, default="CEUD", help="Selected population. String, None does not work!")
-parser.add_argument("--n_iterations", type=int, default=1, help="The number of training-evaluation set to run. String, None does not work!")
+parser.add_argument("--n_iterations", type=int, default=1, help="The number of training-evaluation set to run. Int, None does not work!")
+parser.add_argument("--energy_type", type=str, default="thermogenic", help="The variable related to energy metabolism to be included. String, None does not work!")
     #type=str to use the input as string
     #type=int converts to integer
     #default is the default value when the argument is not passed
@@ -209,6 +210,7 @@ args=parser.parse_args()
 #get the arguments of the function that have been passed through command line
 pop_name = args.pop_name
 n_iterations = args.n_iterations
+energy_type = args.energy_type
 
 # endregion
 
@@ -334,6 +336,14 @@ yoruba_modeling_data = pd.read_csv( \
 )
     #just took this from the previous step, 00c_data_preparation.py. There I took predictors from elise´s flex-sweep dataset (she combined my predictors) and also BAT....
 
+print_text("decide what energy predictors to be included", header=3)
+if(energy_type=="thermogenic"):
+    energy_predictors_to_remove = ["bat_distance_percentile_1", "smt_distance_percentile_1"]
+elif(energy_type=="bat"):
+    energy_predictors_to_remove = ["thermogenic_distance", "smt_distance_percentile_1"]
+elif(energy_type=="smt"):
+    energy_predictors_to_remove = ["thermogenic_distance", "bat_distance_percentile_1"]
+
 print_text("merge the three DFs using 1000kb window data", header=3)
 merged_ihs_data = pd.merge( \
     mean_ihs.loc[:, ["gene_id", "mean_ihs_1000kb"]], \
@@ -343,7 +353,7 @@ merged_ihs_data = pd.merge( \
 )
 modeling_data = pd.merge( \
     merged_ihs_data, \
-    yoruba_modeling_data.loc[:,~yoruba_modeling_data.columns.isin(["mean_ihs_1000kb", "n_ihs_1000kb"])], \
+    yoruba_modeling_data.loc[:,~yoruba_modeling_data.columns.isin(["mean_ihs_1000kb", "n_ihs_1000kb"]+energy_predictors_to_remove)], \
     on="gene_id", \
     how="inner" \
 )
@@ -452,6 +462,12 @@ for iteration in range(0, n_iterations):
         "bat_distance_percentile_1": "Distance to Brown Adipose Tissue (BAT) genes",
         "smt_distance_percentile_1": "Distance Skeletal Muscle Tissue (SMT) genes"
     }
+
+    print_text("remove the non-selected energy predictors from the dict", header=4)
+    #predictor_to_remove=energy_predictors_to_remove[0]
+    for predictor_to_remove in energy_predictors_to_remove:
+        del dict_nice_feature_names[predictor_to_remove]
+
     print_text("check that the keys in the dict are the features in the same order than in the data", header=4)
     predictors=[i for i in modeling_data.columns if i not in ["mean_ihs_1000kb", "gene_id"]]
     predictors_nice=[dict_nice_feature_names[i] for i in modeling_data.columns if i not in ["mean_ihs_1000kb", "gene_id"]]
@@ -531,12 +547,12 @@ for iteration in range(0, n_iterations):
     run_bash(f" \
         mkdir \
             -p \
-            ./results/ihs_modeling_across_pops/{pop_name}/permutation_importance/ \
+            ./results/ihs_modeling_across_pops/{pop_name}/{energy_type}/permutation_importance/ \
     ")
     pickle.dump( \
         perm_exp, \
         open( \
-            f"./results/ihs_modeling_across_pops/{pop_name}/permutation_importance/{pop_name}_{iteration}_hg19_dnn_permutation_importance_test_set.sav", \
+            f"./results/ihs_modeling_across_pops/{pop_name}/{energy_type}/permutation_importance/{pop_name}_{iteration}_{energy_type}_hg19_dnn_permutation_importance_test_set.sav", \
             'wb' \
         ) \
     )
@@ -581,7 +597,7 @@ for iteration in range(0, n_iterations):
     ax.xaxis.label.set_size(13.5)
     ax.tick_params(axis='y', labelsize=11)
     plt.savefig( \
-        fname=f"./results/ihs_modeling_across_pops/{pop_name}/permutation_importance/{pop_name}_{iteration}_permutation_importance_all.png", dpi=300)
+        fname=f"./results/ihs_modeling_across_pops/{pop_name}/{energy_type}/permutation_importance/{pop_name}_{iteration}_{energy_type}_permutation_importance_all.png", dpi=300)
     plt.close()
         #RESULTS:
             #As expected, recombination rate is the most important feature by far. the we have the density of conserved elements.
@@ -673,7 +689,13 @@ for iteration in range(0, n_iterations):
             "bat_distance_percentile_1": "Distance to BAT genes (pb)",
             "smt_distance_percentile_1": "Distance SMT genes (pb)"
         }
-        print("check that the keys in the dict are the features in the same order than in the data")
+        
+        print_text("remove the non-selected energy predictors from the dict", header=4)
+        #predictor_to_remove=energy_predictors_to_remove[0]
+        for predictor_to_remove in energy_predictors_to_remove:
+            del dict_nice_feature_names_ale[predictor_to_remove]
+
+        print_text("check that the keys in the dict are the features in the same order than in the data", header=4)
         predictors_ale=[i for i in modeling_data.columns if i not in ["gene_id", "mean_ihs_1000kb"]]
         predictors_nice_ale=[dict_nice_feature_names_ale[i] for i in modeling_data.columns if i not in ["gene_id", "mean_ihs_1000kb"]]
         print(predictors_nice_ale)
@@ -751,12 +773,12 @@ for iteration in range(0, n_iterations):
         run_bash(f" \
             mkdir \
                 -p \
-                ./results/ihs_modeling_across_pops/{pop_name}/aleplots/ \
+                ./results/ihs_modeling_across_pops/{pop_name}/{energy_type}/aleplots/ \
         ")
         pickle.dump( \
             lr_exp, \
             open( \
-                f"./results/ihs_modeling_across_pops/{pop_name}/aleplots/{pop_name}_hg19_dnn_fit_to_full_dataset_ale_alibi_explanations.sav", \
+                f"./results/ihs_modeling_across_pops/{pop_name}/{energy_type}/aleplots/{pop_name}_{energy_type}_hg19_dnn_fit_to_full_dataset_ale_alibi_explanations.sav", \
                 'wb' \
             ) \
         )
@@ -791,7 +813,7 @@ for iteration in range(0, n_iterations):
             ax.get_legend().remove()
                 #https://stackoverflow.com/questions/59352887/how-to-remove-legend-from-an-image-plot
             plt.savefig( \
-                fname=f"./results/ihs_modeling_across_pops/{pop_name}/aleplots/{pop_name}_aleplot_" + feature + ".png", dpi=300)
+                fname=f"./results/ihs_modeling_across_pops/{pop_name}/{energy_type}/aleplots/{pop_name}_{energy_type}_aleplot_" + feature + ".png", dpi=300)
             plt.close()
                 #exp
                     #An Explanation object produced by a call to the alibi.explainers.ale.ALE.explain() method.
@@ -824,7 +846,7 @@ results_df = pd.DataFrame(results)
 
 print_text("save the results", header=4)
 results_df.to_csv( \
-    f"./results/ihs_modeling_across_pops/{pop_name}/{pop_name}_model_eval.tsv", \
+    f"./results/ihs_modeling_across_pops/{pop_name}/{energy_type}/{pop_name}_{energy_type}_model_eval.tsv", \
     sep="\t", \
     header=True, \
     index=False \
@@ -840,9 +862,9 @@ print_text("FINISH", header=1)
 #to run the script:
 #cd /home/dftortosa/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating_heavy_analyses/dating_climate_adaptation/ihs_modeling/
 #chmod +x ./scripts/02_ihs_modeling_across_pops.py
-#singularity exec ./containers/03_explore_selected_model_class.sif ./scripts/02_ihs_modeling_across_pops.py --pop_name="FIND" --n_iterations=1 > ./02_ihs_modeling_across_pops_FIND.out 2>&1
+#singularity exec ./containers/03_explore_selected_model_class.sif ./scripts/02_ihs_modeling_across_pops.py --pop_name="FIND" --n_iterations=1 --energy_type="thermogenic" > ./02_ihs_modeling_across_pops_FIND_thermogenic.out 2>&1
     #we use the container of previous steps because it has alibi installed. I have been unable to install alibi in the container of this step.
-#grep -Ei 'error|false|fail' ./02_ihs_modeling_across_pops_FIND.out
+#grep -Ei 'error|false|fail' ./02_ihs_modeling_across_pops_FIND_thermogenic.out
     #grep: The command used to search for patterns in files.
     #-E: Enables extended regular expressions.
     #-i: Makes the search case-insensitive.
