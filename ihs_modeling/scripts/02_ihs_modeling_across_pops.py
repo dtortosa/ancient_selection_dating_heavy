@@ -30,6 +30,8 @@
 # imports #
 ###########
 
+import random
+import tensorflow as tf # type: ignore
 from scikeras.wrappers import KerasRegressor #type: ignore
 from tensorflow.keras.layers import Dropout # type: ignore
 from tensorflow.keras.constraints import MaxNorm # type: ignore
@@ -142,6 +144,49 @@ print_text("see working directory", header=2)
 run_bash("pwd")
 print_text("list files/folders there", header=2)
 run_bash("ls")
+
+
+
+##########################
+# ensure reproducibility #
+##########################
+print_text("set seeds for reproducibility", header=1)
+#No need to set random_state for any model after this
+#https://stackoverflow.com/a/52897216/12772630
+
+
+print_text("Seed value", header=2)
+seed_value=0
+print(seed_value)
+
+
+print_text("Set the `PYTHONHASHSEED` environment variable at a fixed value", header=2)
+os.environ["PYTHONHASHSEED"]=str(seed_value)
+print(os.environ["PYTHONHASHSEED"])
+
+
+print_text("Set the `python` built-in pseudo-random generator at a fixed value", header=2)
+random.seed(seed_value)
+
+
+print_text("Set the `numpy` pseudo-random generator at a fixed value", header=2)
+np.random.seed(seed_value)
+
+
+print_text("Set the `tensorflow` pseudo-random generator at a fixed value", header=2)
+tf.random.set_seed(seed_value)
+
+
+print_text("Configure a new global `tensorflow` session: NOT DOING IT", header=2)
+#we are not running this because it gets me an error, we will see if we can run tensorflow without this
+if False:
+    session_conf = tf.compat.v1.ConfigProto( \
+        intra_op_parallelism_threads=1,  \
+        inter_op_parallelism_threads=1)
+    sess = tf.compat.v1.Session( \
+        graph=tf.compat.v1.get_default_graph(), \
+        config=session_conf)
+    tf.compat.v1.keras.backend.set_session(sess)
 
 
 
@@ -304,6 +349,17 @@ modeling_data = pd.merge( \
 )
     #we only want genes that are present in the three datasets, so inner merge in all cases.
 
+print_text("Apply log transformation to the target variable using the original DF as source", header=3)
+modeling_data["mean_ihs_1000kb"] = modeling_data["mean_ihs_1000kb"].apply(lambda x: np.log(x))
+    #It is should be ok to apply the log before splitting the dataset. There is a problem if you use a transformation that requires learn something from the rest of the data. For example, if you scale the whole dataset, you are using the mean and sd of the whole dataset, influencing data that will be used for test. In other words, there is room for a data leak. In this case, however, log(1.5) is always 0.4, independently of the rest of the data, so I think no data leak is possible. You could do a pipeline with log but it is a little bit more complicated (see [link](https://stats.stackexchange.com/questions/402470/how-can-i-use-scaling-and-log-transforming-together)), so we leave it for now.
+        #Indeed I have found people in stack exchange saying this: However, yours (i.e. np.log1p) is a simple transformation that doesn't use any learnable parameters, and it won't matter if you do it before or after the split. It's like dividing a feature by 1000. 
+            #https://stats.stackexchange.com/a/456056
+    #From all these follow that if you use other transformations like preprocessing.PowerTransformer or QuantileTransformer ([link](https://yashowardhanshinde.medium.com/what-is-skewness-in-data-how-to-fix-skewed-data-in-python-a792e98c0fa6)), it is possible to have data leaks, so be careful.
+    #In previous versions I was not using scaling or log transform for deep learning, because I assumed that the DNNs can deal with that, but maybe that was too much and in any case, we are going to use here also more simpler models that can be helped by scaling
+    #Update: If I apply the log transformation within the pipeline I get a much lower R2 both in the training and test datasets! Not sure what is going on, but given this transformation does not summarize anything from the whole dataset, I can use it before splitting in training and evaluation. If this transformation was helping the training model to learn from the test set, the R2 in the test would be higher, but we have the opposite scenario.
+    #in case you want to apply the log transformation within the pipeline, but this make the model MUCH WORSE compared to just apply the log to the original DF. Do not know why.
+        #you can do it with func=np.log and inverse_func=np.exp in TransformedTargetRegressor
+
 
 print_text("train, eval and visualize predictor's effect across iterations", header=2)
 print_text("empty list to save results", header=3)
@@ -337,6 +393,7 @@ for iteration in range(0, n_iterations):
 
     print_text("calculate evaluation score in the test set", header=4)
     score = r2_score(y_test, y_pred)
+    print(f"The R2 is {score}")
 
     print_text("save the results into the list", header=4)
     results.append({
@@ -517,7 +574,7 @@ for iteration in range(0, n_iterations):
         #fig_kw –
             #Keyword arguments passed to the matplotlib.figure.set function.
     max_x_values = max([i["mean"] for i in perm_exp["feature_importance"][0]])
-    ax.update({"xlim": (1, max_x_values+0.2), "xlabel": "Permutation importance (original RMSE / permuted RMSE)"})
+    ax.update({"xlim": (1, max_x_values+0.2), "xlabel": "Permutation importance (permuted RMSE / original RMSE)"})
         #update the axis to change the xlim and focus on values above 1
         #https://www.geeksforgeeks.org/matplotlib-axes-axes-update-in-python/
     ax.set_title("", fontsize=18)
@@ -623,6 +680,11 @@ for iteration in range(0, n_iterations):
         if([i for i in dict_nice_feature_names_ale.keys()] != predictors_ale):
             raise ValueError("ERROR: the keys in the dict are not the same as the features in the data")
 
+        print_text("train the model with the whole dataset", header=4)
+        X_full_dataset = modeling_data.loc[:, ~modeling_data.columns.isin(["gene_id", "mean_ihs_1000kb"])].to_numpy()
+        y_full_dataset = modeling_data.loc[:, modeling_data.columns.isin(["mean_ihs_1000kb"])].to_numpy()
+        training_model_full_dataset = pipeline.fit(X_full_dataset, y_full_dataset)
+
         print_text("initialize ALE plots using alibi", header=4)
         #alibi is much more maintained than aleplot and it is much easier to install in container
         #we have already used this package for permutation importance
@@ -631,7 +693,7 @@ for iteration in range(0, n_iterations):
             #It seems that this is ok and it is related to shap. This is going to be solved in new versions of shap and we are not using shap anyways.
                 #https://github.com/slundberg/shap/issues/2909
         lr_ale = ALE( \
-            predictor=training_model.predict, \
+            predictor=training_model_full_dataset.predict, \
             feature_names=predictors_ale, \
             target_names=None, \
             check_feature_resolution=True, \

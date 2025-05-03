@@ -203,7 +203,7 @@ for pop in list_pops:
     cd /home/UGR002/dsalazar/climahealth/ihs_modeling
         #/home is the stable directory, while scratch is where results of analyses can be stored temporary, as stuff gets removed after 20 days
     ### Run your work
-    singularity exec ./containers/03_explore_selected_model_class.sif ./scripts/02_ihs_modeling_across_pops.py --pop_name={pop} --n_iterations=10 > ./02_ihs_modeling_across_pops_{pop}.out 2>&1
+    singularity exec ./containers/03_explore_selected_model_class.sif ./scripts/02_ihs_modeling_across_pops.py --pop_name={pop} --n_iterations=20 > ./02_ihs_modeling_across_pops_{pop}.out 2>&1
     """
 
     #remove the first empty line and the spaces at the beginning of the lines
