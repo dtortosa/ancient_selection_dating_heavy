@@ -372,6 +372,11 @@ if(energy_type=="all_thermogenic"):
         #correlation
         correlation, p_value = spearmanr(modeling_data[thermo_pair[0]], modeling_data[thermo_pair[1]])
         print(f"Spearman's correlation between {thermo_pair[0]} and {thermo_pair[1]}: Rho: {correlation} and P-value: {p_value}")
+        
+        #overlapping (done in 03f_bat_smt_analyses.py from combat genes project)
+            #61 out 168 genes of the BAT connectome (percentile 1%) are included in metabolic genes
+            #47 out 168 genes of the SMT connectome (percentile 1%) are included in metabolic genes
+            #23 out 168 genes of the SMT connectome (percentile 1%) are included in the BAT connectome (percentile 1%)
 
 print_text("Apply log transformation to the target variable using the original DF as source", header=3)
 modeling_data["mean_ihs_1000kb"] = modeling_data["mean_ihs_1000kb"].apply(lambda x: np.log(x))
