@@ -42,3 +42,4 @@ cd /home/UGR002/dsalazar/climahealth/ihs_modeling
 singularity exec ./containers/03_explore_selected_model_class.sif ./scripts/02_ihs_modeling_across_pops.py --pop_name='MSLD' --n_iterations=10 --energy_type='thermogenic' > ./02_ihs_modeling_across_pops_MSLD_thermogenic.out 2>&1
 singularity exec ./containers/03_explore_selected_model_class.sif ./scripts/02_ihs_modeling_across_pops.py --pop_name='MSLD' --n_iterations=10 --energy_type='bat' > ./02_ihs_modeling_across_pops_MSLD_bat.out 2>&1
 singularity exec ./containers/03_explore_selected_model_class.sif ./scripts/02_ihs_modeling_across_pops.py --pop_name='MSLD' --n_iterations=10 --energy_type='smt' > ./02_ihs_modeling_across_pops_MSLD_smt.out 2>&1
+singularity exec ./containers/03_explore_selected_model_class.sif ./scripts/02_ihs_modeling_across_pops.py --pop_name='MSLD' --n_iterations=10 --energy_type='all_thermogenic' > ./02_ihs_modeling_across_pops_MSLD_all_thermogenic.out 2>&1

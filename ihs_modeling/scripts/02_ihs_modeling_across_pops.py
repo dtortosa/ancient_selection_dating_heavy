@@ -30,6 +30,7 @@
 # imports #
 ###########
 
+from scipy.stats import spearmanr
 import random
 import tensorflow as tf # type: ignore
 from scikeras.wrappers import KerasRegressor #type: ignore
@@ -200,7 +201,7 @@ import argparse
 parser=argparse.ArgumentParser()
 parser.add_argument("--pop_name", type=str, default="CEUD", help="Selected population. String, None does not work!")
 parser.add_argument("--n_iterations", type=int, default=1, help="The number of training-evaluation set to run. Int, None does not work!")
-parser.add_argument("--energy_type", type=str, default="thermogenic", help="The variable related to energy metabolism to be included. String, None does not work!")
+parser.add_argument("--energy_type", type=str, default="all_thermogenic", help="The variable related to energy metabolism to be included. String, None does not work!")
     #type=str to use the input as string
     #type=int converts to integer
     #default is the default value when the argument is not passed
@@ -343,6 +344,8 @@ elif(energy_type=="bat"):
     energy_predictors_to_remove = ["thermogenic_distance", "smt_distance_percentile_1"]
 elif(energy_type=="smt"):
     energy_predictors_to_remove = ["thermogenic_distance", "bat_distance_percentile_1"]
+elif(energy_type=="all_thermogenic"):
+    energy_predictors_to_remove = []
 
 print_text("merge the three DFs using 1000kb window data", header=3)
 merged_ihs_data = pd.merge( \
@@ -358,6 +361,17 @@ modeling_data = pd.merge( \
     how="inner" \
 )
     #we only want genes that are present in the three datasets, so inner merge in all cases.
+
+print_text("check the correlation between the thermogenic variables", header=3)
+if(energy_type=="all_thermogenic"):
+    
+    print_text("calculate Spearman's rank correlation and overlapping", header=4)
+    #thermo_pair=["thermogenic_distance", "bat_distance_percentile_1"]
+    for thermo_pair in [["thermogenic_distance", "bat_distance_percentile_1"], ["thermogenic_distance", "smt_distance_percentile_1"], ["bat_distance_percentile_1", "smt_distance_percentile_1"]]:
+        
+        #correlation
+        correlation, p_value = spearmanr(modeling_data[thermo_pair[0]], modeling_data[thermo_pair[1]])
+        print(f"Spearman's correlation between {thermo_pair[0]} and {thermo_pair[1]}: Rho: {correlation} and P-value: {p_value}")
 
 print_text("Apply log transformation to the target variable using the original DF as source", header=3)
 modeling_data["mean_ihs_1000kb"] = modeling_data["mean_ihs_1000kb"].apply(lambda x: np.log(x))

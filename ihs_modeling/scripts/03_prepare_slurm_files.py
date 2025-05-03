@@ -206,6 +206,7 @@ for pop in list_pops:
     singularity exec ./containers/03_explore_selected_model_class.sif ./scripts/02_ihs_modeling_across_pops.py --pop_name='{pop}' --n_iterations=10 --energy_type='thermogenic' > ./02_ihs_modeling_across_pops_{pop}_thermogenic.out 2>&1
     singularity exec ./containers/03_explore_selected_model_class.sif ./scripts/02_ihs_modeling_across_pops.py --pop_name='{pop}' --n_iterations=10 --energy_type='bat' > ./02_ihs_modeling_across_pops_{pop}_bat.out 2>&1
     singularity exec ./containers/03_explore_selected_model_class.sif ./scripts/02_ihs_modeling_across_pops.py --pop_name='{pop}' --n_iterations=10 --energy_type='smt' > ./02_ihs_modeling_across_pops_{pop}_smt.out 2>&1
+    singularity exec ./containers/03_explore_selected_model_class.sif ./scripts/02_ihs_modeling_across_pops.py --pop_name='{pop}' --n_iterations=10 --energy_type='all_thermogenic' > ./02_ihs_modeling_across_pops_{pop}_all_thermogenic.out 2>&1
     """
 
     #remove the first empty line and the spaces at the beginning of the lines
