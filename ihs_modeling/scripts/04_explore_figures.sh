@@ -9,61 +9,118 @@
 		#./script.sh > script.out 2>&1 #both in the same file
 		#https://www.cyberciti.biz/faq/linux-redirect-error-output-to-file/
 
-#script to copy aleplot images from different populations into a single folder for each gene set, ordering by superpopulations, i.e., all european first, then african....
+#script to copy process the results
+
+
+
+#############################################################################################
+### copy figures from different populations into a single folder per gene set and metric ####
+#############################################################################################
 
 #list of population codes
 populations=("CEUD" "GBRD" "TSID" "IBSD" "FIND" "CDXD" "CHBD" "CHSD" "JPTD" "KHVD" "YRID" "LWKD" "GWDD" "MSLD" "ESND" "ASWD" "ACBD" "PURD" "MXLD" "CLMD" "PELD" "GIHD" "PJLD" "BEBD" "STUD" "ITUD")
 
 #list of gene sets
-gene_sets=("thermogenic" "bat")
+gene_sets=("thermogenic" "bat" "smt" "all_thermogenic")
+
+#list of metrics
+metrics=("aleplots" "permutation")
 
 #iterate over each gene set 
 #gene_set="thermogenic"
 for gene_set in "${gene_sets[@]}"; do
 
-    #set name for a new folder for the gene set
-    new_folder="./results/ihs_modeling_across_pops/00_all_aleplots/${gene_set}"
+    #iterate over each metric
+    #metric="aleplots"
+    for metric in "${metrics[@]}"; do
 
-    #if the folder already exists, remove it
-    if [[ -d "${new_folder}" ]]; then
-        rm -rf "${new_folder}"
-    fi
-
-    #then create the new folder
-    mkdir -p "${new_folder}"
-
-    #initialize a counter to give a number to each image
-    counter=0
-
-    #iterate over each population
-    for pop in "${populations[@]}"; do
-
-        #construct the file name differnetly for each gene set
-        if [[ "${gene_set}" == "thermogenic" ]]; then
-            file_name="${pop}_${gene_set}_aleplot_${gene_set}_distance.png";
-        else
-            file_name="${pop}_${gene_set}_aleplot_${gene_set}_distance_percentile_1.png";
+        #skip if gene_set is "all_thermogenic" and metric is "aleplots"
+        if [[ "${gene_set}" == "all_thermogenic" && "${metric}" == "aleplots" ]]; then
+            echo "Skipping gene_set=${gene_set} and metric=${metric}"
+            continue
         fi
+        #continue: Skips the current iteration of the inner loop (for metric) and moves to the next iteration.
 
-        #check if the file exists
-        if [[ -f "./results/ihs_modeling_across_pops/${pop}/${gene_set}/aleplots/${file_name}" ]]; then
-            
-            #copy the file adding the counter to the file name
-            cp "./results/ihs_modeling_across_pops/${pop}/${gene_set}/aleplots/${file_name}" "${new_folder}/${counter}_${file_name}"
-            
-            #increment the counter
-            ((counter++))
+        #create a new folder for each metric
+        new_folder="./results/ihs_modeling_across_pops/00_all_metrics/${gene_set}/${metric}"
         
-            #show message of the copied file
-            echo "File copied: ${file_name} to ${new_folder}/${counter}_${file_name}"
-
-        else
-            
-            #print a warning if the file does not exist
-            echo "ERROR! FALSE! File not found: ${file_name}"
+        #if the folder already exists, remove it
+        if [[ -d "${new_folder}" ]]; then
+            rm -rf "${new_folder}"
         fi
+
+        #then create the new folder
+        mkdir -p "${new_folder}"
+
+        #initialize a counter to give a number to each image
+        counter=0
+
+        #iterate over each population
+        for pop in "${populations[@]}"; do
+
+            #construct the file name differnetly for each gene set
+            if [[ "${metric}" == "aleplots" ]]; then
+                file_path="./results/ihs_modeling_across_pops/${pop}/${gene_set}/aleplots"
+                if [[ "${gene_set}" == "thermogenic" ]]; then
+                    file_name="${pop}_${gene_set}_aleplot_${gene_set}_distance.png";
+                else
+                    file_name="${pop}_${gene_set}_aleplot_${gene_set}_distance_percentile_1.png";
+                fi
+            elif [[ "${metric}" == "permutation" ]]; then
+                file_path="./results/ihs_modeling_across_pops/${pop}/${gene_set}/permutation_importance"
+                file_name="${pop}_0_${gene_set}_permutation_importance_all.png";
+            fi
+
+            #check if the file exists
+            if [[ -f "${file_path}/${file_name}" ]]; then
+                
+                #copy the file adding the counter to the file name
+                cp "${file_path}/${file_name}" "${new_folder}/${counter}_${file_name}"
+                
+                #increment the counter
+                ((counter++))
+            
+                #show message of the copied file
+                echo "File copied: ${file_path}/${file_name} to ${new_folder}/${counter}_${file_name}"
+
+            else
+                
+                #print a warning if the file does not exist
+                echo "ERROR! FALSE! File not found: ${file_name}"
+            fi
+        done
     done
 done
+
+
+
+#############################################################################################
+### copy figures from different populations into a single folder per gene set and metric ####
+#############################################################################################
+
+#define the source folder
+source_folder="./results/ihs_modeling_across_pops/"
+
+#define the destination folder
+destination_folder="./results/ihs_modeling_across_pops/01_all_permutation_importance/"
+
+#remove the destination folder if it exists and then make a new one
+if [[ -d "${destination_folder}" ]]; then
+    rm -rf "${destination_folder}"
+fi
+mkdir -p "${destination_folder}"
+
+#find and copy all files ending with *_permutation_importance_all.png
+find "${source_folder}" -type f -name "*_permutation_importance_all.png" -exec cp {} "${destination_folder}" \;
+    #find "${source_folder}" -type f -name "*_permutation_importance_all.png"
+        #Searches for files (-type f) in the source_folder that match the pattern *_permutation_importance_all.png.
+    #-exec cp {} "${destination_folder}" \;
+        #Executes the cp command for each file found, copying it to the destination_folder.
+
+
+#print a message indicating completion
+echo "All *_permutation_importance_all.png files have been copied to ${destination_folder}."
+
 
 #to run the script:
 #cd /home/dftortosa/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating_heavy_analyses/dating_climate_adaptation/ihs_modeling/

@@ -271,8 +271,8 @@ print_text("FINISH", header=1)
 #to run the script:
 #cd /home/dftortosa/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating_heavy_analyses/dating_climate_adaptation/ihs_modeling/
 #chmod +x ./scripts/03_prepare_slurm_files.py
-#singularity exec ./containers/03_explore_selected_model_class.sif ./scripts/03_prepare_slurm_files.py > ./03_prepare_slurm_files.out 2>&1
-#grep -Ei 'error|false|fail' ./03_prepare_slurm_files.out
+#singularity exec ./containers/03_explore_selected_model_class.sif ./scripts/03_prepare_slurm_files.py > ./scripts/03_prepare_slurm_files.out 2>&1
+#grep -Ei 'error|false|fail' ./scripts/03_prepare_slurm_files.out
     #grep: The command used to search for patterns in files.
     #-E: Enables extended regular expressions.
     #-i: Makes the search case-insensitive.
