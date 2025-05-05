@@ -122,6 +122,35 @@ find "${source_folder}" -type f -name "*_permutation_importance_all.png" -exec c
 echo "All *_permutation_importance_all.png files have been copied to ${destination_folder}."
 
 
+
+
+
+
+
+#!/bin/bash
+
+# Define the source folder
+source_folder="./results/ihs_modeling_across_pops/"
+
+# Define the output file
+output_file="./results/ihs_modeling_across_pops/02_all_thermogenic_model_eval_combined.tsv"
+
+# Get the header from the first file
+header=$(find "${source_folder}" -type f -name "*_all_thermogenic_model_eval.tsv" | head -n 1 | xargs head -n 1)
+
+# Write the header to the output file
+echo "${header}" > "${output_file}"
+
+# Concatenate all files, skipping their headers, without printing file names
+find "${source_folder}" -type f -name "*_all_thermogenic_model_eval.tsv" -exec tail -n +2 {} \; >> "${output_file}"
+
+# Print a message indicating completion
+echo "All *_all_thermogenic_model_eval.tsv files have been concatenated into ${output_file} with a single header."
+
+
+
+
+
 #to run the script:
 #cd /home/dftortosa/diego_docs/science/postdoc_enard_lab/projects/ancient_selection_dating_heavy_analyses/dating_climate_adaptation/ihs_modeling/
 #chmod +x ./scripts/04_explore_figures.sh
