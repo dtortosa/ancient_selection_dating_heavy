@@ -2,6 +2,11 @@
 
 This repository includes scripts to estimate signals of adaptation across human populations and model their association with protential drivers of adaptation. We developed a new modeling framework to compare a battery of algorithms (from linear models to deep neural networks) and select the best to model adaption signals across 26 human populations in 4 continents. See below for details of the projects and the analyses performed.
 
+The main scripts used to perform the analyses are the folliwing:
+
+- Exploration of multiple alrogithms and their hyperparameter space in one population to select the best approach using for that a rigorous training-evaluation-test scheme ([01_models_benchmark.py](/ihs_modeling/scripts/01_models_benchmark.py)).
+- Deployment of the best approach (i.e., DNNs) on new populations including its evaluation and exploration of relevant features through permutation importance and ALE plots ([02_ihs_modeling_across_pops.py](/ihs_modeling/scripts/02_ihs_modeling_across_pops.py)).
+
 
 ## Summary of the project
 After migrating out of Africa, human populations were exposed to a wide range of environmental conditions and, particularly, temperatures. Over millennia, exposure to varying temperatures could have modified the response to external temperature in these populations. In other words, this exposure could act as a selective pressure, shaping the metabolism of human populations and leading them to adapt to different temperature regimes. This process leaves detectable signals in the genome, known as signatures of positive selection or adaptation. We can identify these signals using various statistical and machine learning methods. 
