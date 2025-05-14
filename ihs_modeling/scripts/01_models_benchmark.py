@@ -1485,6 +1485,9 @@ else:
     #To append the DataFrame to an existing CSV file, you can use the mode='a' and header=False parameters in the to_csv method. We avoid the header because it is already there.
 
 
+###YOU COULD TRY catboost TO BETTER INCLUDE CATEGORICAL PREDICTORS USING BOOSTING TREES
+
+
 ###TO DO
 #check the outputs and eveythign finished ok
     #check the output files for each model and parititon, for elasit and random there is only 1
